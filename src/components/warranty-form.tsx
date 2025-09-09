@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Separator } from '@/components/ui/separator';
 
 const formSchema = z.object({
   codigo: z.string().optional(),
@@ -98,45 +99,66 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear }: Warr
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)}>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField name="codigo" control={form.control} render={({ field }) => (
-                  <FormItem><FormLabel>Código</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField name="descricao" control={form.control} render={({ field }) => (
-                  <FormItem><FormLabel>Descrição</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField name="quantidade" control={form.control} render={({ field }) => (
-                <FormItem><FormLabel>Quantidade</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField name="defeito" control={form.control} render={({ field }) => (
-                  <FormItem><FormLabel>Defeito</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-               <FormField name="cliente" control={form.control} render={({ field }) => (
-                  <FormItem><FormLabel>Cliente</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-               <FormField name="mecanico" control={form.control} render={({ field }) => (
-                  <FormItem><FormLabel>Mecânico</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField name="requisicaoVenda" control={form.control} render={({ field }) => (
-                <FormItem><FormLabel>Requisição Venda</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField name="requisicaoGarantia" control={form.control} render={({ field }) => (
-                <FormItem><FormLabel>Requisição Garantia</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField name="nfCompra" control={form.control} render={({ field }) => (
-                <FormItem><FormLabel>NF Compra</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField name="valorCompra" control={form.control} render={({ field }) => (
-                  <FormItem><FormLabel>Valor Compra</FormLabel><FormControl><Input placeholder="R$ 0,00" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField name="notaRetorno" control={form.control} render={({ field }) => (
+          <CardContent className="space-y-6">
+            {/* Seção de Informações do Produto */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium text-foreground">Informações do Produto</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField name="codigo" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>Código</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField name="descricao" control={form.control} render={({ field }) => (
+                    <FormItem className="md:col-span-2"><FormLabel>Descrição</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField name="quantidade" control={form.control} render={({ field }) => (
+                  <FormItem><FormLabel>Quantidade</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                 <FormField name="defeito" control={form.control} render={({ field }) => (
+                    <FormItem className="md:col-span-2"><FormLabel>Defeito Apresentado</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Seção de Dados da Venda e Cliente */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium text-foreground">Dados da Venda e Cliente</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                 <FormField name="cliente" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>Cliente</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                 <FormField name="mecanico" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>Mecânico</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField name="requisicaoVenda" control={form.control} render={({ field }) => (
+                  <FormItem><FormLabel>Requisição Venda</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField name="requisicaoGarantia" control={form.control} render={({ field }) => (
+                  <FormItem><FormLabel>Requisição Garantia</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField name="nfCompra" control={form.control} render={({ field }) => (
+                  <FormItem><FormLabel>NF Compra</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField name="valorCompra" control={form.control} render={({ field }) => (
+                    <FormItem><FormLabel>Valor Compra</FormLabel><FormControl><Input placeholder="R$ 0,00" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                 <FormField name="notaRetorno" control={form.control} render={({ field }) => (
                   <FormItem><FormLabel>Nota Retorno</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
               )} />
+              </div>
             </div>
-             <FormField name="observacao" control={form.control} render={({ field }) => (
-                  <FormItem><FormLabel>Observação</FormLabel><FormControl><Textarea rows={4} {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
+            
+            <Separator />
+
+            {/* Seção de Observações */}
+            <div className="space-y-4">
+               <h3 className="text-lg font-medium text-foreground">Observações</h3>
+               <FormField name="observacao" control={form.control} render={({ field }) => (
+                    <FormItem><FormControl><Textarea rows={3} placeholder="Adicione qualquer observação relevante aqui..." {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+            </div>
+
           </CardContent>
           <CardFooter className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={handleClear}>Limpar</Button>
