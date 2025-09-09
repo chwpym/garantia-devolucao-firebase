@@ -164,10 +164,10 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear }: Warr
                 <h3 className="text-lg font-medium text-foreground">Dados Fiscais e de Venda</h3>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <FormField name="cliente" control={form.control} render={({ field }) => (
-                        <FormItem><FormLabel>Cliente</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem className="md:col-span-2"><FormLabel>Cliente</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField name="mecanico" control={form.control} render={({ field }) => (
-                        <FormItem><FormLabel>Mecânico</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem className="md:col-span-2"><FormLabel>Mecânico</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField name="nfCompra" control={form.control} render={({ field }) => (
                     <FormItem><FormLabel>NF Compra</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
