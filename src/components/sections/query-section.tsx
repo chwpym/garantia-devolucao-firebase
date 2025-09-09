@@ -147,6 +147,7 @@ export default function QuerySection() {
       return (
         warranty.codigo?.toLowerCase().includes(lowercasedTerm) ||
         warranty.descricao?.toLowerCase().includes(lowercasedTerm) ||
+        warranty.fornecedor?.toLowerCase().includes(lowercasedTerm) ||
         warranty.cliente?.toLowerCase().includes(lowercasedTerm) ||
         warranty.defeito?.toLowerCase().includes(lowercasedTerm) ||
         warranty.status?.toLowerCase().includes(lowercasedTerm)
@@ -187,7 +188,7 @@ export default function QuerySection() {
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                        placeholder="Buscar por código, descrição, cliente, defeito ou status..."
+                        placeholder="Buscar por código, descrição, fornecedor, cliente, defeito ou status..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-10"

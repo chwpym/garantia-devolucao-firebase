@@ -11,7 +11,7 @@ import { Loader2, FileDown } from 'lucide-react';
 import type { Warranty } from '@/lib/types';
 
 const ALL_FIELDS: (keyof Omit<Warranty, 'id'>)[] = [
-  'codigo', 'descricao', 'quantidade', 'defeito', 'requisicaoVenda',
+  'codigo', 'descricao', 'fornecedor', 'quantidade', 'defeito', 'requisicaoVenda',
   'requisicaoGarantia', 'nfCompra', 'valorCompra', 'cliente', 'mecanico',
   'notaRetorno', 'observacao', 'status', 'dataRegistro'
 ];
@@ -19,6 +19,7 @@ const ALL_FIELDS: (keyof Omit<Warranty, 'id'>)[] = [
 const FIELD_LABELS: Record<keyof Omit<Warranty, 'id'>, string> = {
     codigo: 'Código',
     descricao: 'Descrição',
+    fornecedor: 'Fornecedor',
     quantidade: 'Quantidade',
     defeito: 'Defeito',
     requisicaoVenda: 'Req. Venda',
@@ -39,7 +40,7 @@ interface ReportGeneratorProps {
 
 export default function ReportGenerator({ selectedWarrantyIds }: ReportGeneratorProps) {
   const [selectedFields, setSelectedFields] = useState<string[]>([
-    'codigo', 'descricao', 'quantidade', 'defeito', 'cliente', 'status'
+    'codigo', 'descricao', 'quantidade', 'defeito', 'cliente', 'status', 'fornecedor'
   ]);
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();

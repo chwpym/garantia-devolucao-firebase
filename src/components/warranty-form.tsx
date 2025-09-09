@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 const formSchema = z.object({
   codigo: z.string().optional(),
   descricao: z.string().optional(),
+  fornecedor: z.string().optional(),
   quantidade: z.coerce.number().min(0).optional(),
   defeito: z.string().optional(),
   requisicaoVenda: z.string().optional(),
@@ -43,6 +44,7 @@ interface WarrantyFormProps {
 const defaultValues: WarrantyFormValues = {
   codigo: '',
   descricao: '',
+  fornecedor: '',
   quantidade: 1,
   defeito: '',
   requisicaoVenda: '',
@@ -147,8 +149,11 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear }: Warr
                     <FormField name="quantidade" control={form.control} render={({ field }) => (
                     <FormItem><FormLabel>Quantidade</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
-                    <FormField name="defeito" control={form.control} render={({ field }) => (
-                        <FormItem className="md:col-span-4"><FormLabel>Defeito Apresentado</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormField name="fornecedor" control={form.control} render={({ field }) => (
+                        <FormItem className="md:col-span-2"><FormLabel>Fornecedor</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                     <FormField name="defeito" control={form.control} render={({ field }) => (
+                        <FormItem className="md:col-span-2"><FormLabel>Defeito Apresentado</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                 </div>
                 </div>

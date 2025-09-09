@@ -47,6 +47,7 @@ export default function WarrantyTable({ warranties, onEdit, onDelete }: Warranty
               <TableHead>Data</TableHead>
               <TableHead>Código</TableHead>
               <TableHead>Descrição</TableHead>
+              <TableHead>Fornecedor</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="w-[50px] text-right">Ações</TableHead>
@@ -61,6 +62,7 @@ export default function WarrantyTable({ warranties, onEdit, onDelete }: Warranty
                   </TableCell>
                   <TableCell className="font-medium">{warranty.codigo || '-'}</TableCell>
                   <TableCell>{warranty.descricao || '-'}</TableCell>
+                  <TableCell>{warranty.fornecedor || '-'}</TableCell>
                   <TableCell>{warranty.cliente || '-'}</TableCell>
                   <TableCell>
                     {warranty.status ? (
@@ -93,7 +95,7 @@ export default function WarrantyTable({ warranties, onEdit, onDelete }: Warranty
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
+                <TableCell colSpan={7} className="h-24 text-center">
                   Nenhuma garantia encontrada para os filtros selecionados.
                 </TableCell>
               </TableRow>

@@ -4,6 +4,7 @@ export interface Warranty {
   id?: number;
   codigo?: string;
   descricao?: string;
+  fornecedor?: string;
   quantidade?: number;
   defeito?: string;
   requisicaoVenda?: string;
