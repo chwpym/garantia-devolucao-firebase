@@ -7,6 +7,7 @@ import DashboardSection from '@/components/sections/dashboard-section';
 import RegisterSection from '@/components/sections/register-section';
 import QuerySection from '@/components/sections/query-section';
 import ReportSection from '@/components/sections/report-section';
+import BackupSection from '@/components/sections/backup-section';
 
 export default function Home() {
   const [activeView, setActiveView] = useState('dashboard');
@@ -21,6 +22,8 @@ export default function Home() {
         return <QuerySection />;
       case 'reports':
         return <ReportSection />;
+      case 'backup':
+        return <BackupSection />;
       default:
         return <DashboardSection />;
     }
