@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import type { Lote, Supplier } from '@/lib/types';
+import type { Lote, Supplier, Warranty } from '@/lib/types';
 import * as db from '@/lib/db';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, MoreHorizontal, Pencil, Trash2, Package, Calendar, Building, FileText } from 'lucide-react';
@@ -29,8 +29,17 @@ import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 
 
-export default function LotesSection() {
-  const [lotes, setLotes] = useState<Lote[]>([]);
+interface LotesSectionProps {
+    onNavigateToLote: (loteId: number) => void;
+}
+
+interface LoteWithItemCount extends Lote {
+    itemCount: number;
+}
+
+
+export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
+  const [lotes, setLotes] = useState<LoteWithItemCount[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLote, setEditingLote] = useState<Lote | null>(null);
@@ -40,11 +49,18 @@ export default function LotesSection() {
   const loadData = useCallback(async () => {
     try {
       await db.initDB();
-      const [allLotes, allSuppliers] = await Promise.all([
+      const [allLotes, allSuppliers, allWarranties] = await Promise.all([
         db.getAllLotes(),
-        db.getAllSuppliers()
+        db.getAllSuppliers(),
+        db.getAllWarranties()
       ]);
-      setLotes(allLotes.sort((a, b) => parseISO(b.dataCriacao).getTime() - parseISO(a.dataCriacao).getTime()));
+
+      const lotesWithCounts = allLotes.map(lote => {
+          const itemCount = allWarranties.filter(w => w.loteId === lote.id).length;
+          return { ...lote, itemCount };
+      })
+
+      setLotes(lotesWithCounts.sort((a, b) => parseISO(b.dataCriacao).getTime() - parseISO(a.dataCriacao).getTime()));
       setSuppliers(allSuppliers);
     } catch (error) {
       console.error('Failed to load data:', error);
@@ -78,7 +94,7 @@ export default function LotesSection() {
     if (!deleteTarget?.id) return;
     try {
       await db.deleteLote(deleteTarget.id);
-      // Also delete associated LoteItems in a real scenario
+      // TODO: Handle unlinking warranties from the lote
       toast({ title: 'Sucesso', description: 'Lote excluído com sucesso.' });
       window.dispatchEvent(new CustomEvent('datachanged'));
     } catch (error) {
@@ -145,7 +161,11 @@ export default function LotesSection() {
       {lotes.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {lotes.map((lote) => (
-            <Card key={lote.id} className="flex flex-col shadow-md hover:border-primary transition-colors">
+            <Card 
+                key={lote.id} 
+                className="flex flex-col shadow-md hover:border-primary transition-colors cursor-pointer"
+                onClick={() => onNavigateToLote(lote.id!)}
+            >
               <CardHeader className="flex flex-row items-start justify-between">
                 <div>
                    <CardTitle className="text-xl">{lote.nome}</CardTitle>
@@ -154,19 +174,19 @@ export default function LotesSection() {
                         {lote.fornecedor}
                    </CardDescription>
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
+                <DropdownMenu onOpenChange={(e) => e.stopPropagation()}>
+                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                     <Button variant="ghost" className="h-8 w-8 p-0">
                       <span className="sr-only">Abrir menu</span>
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleEdit(lote)}>
+                    <DropdownMenuItem onClick={(e) => {e.stopPropagation(); handleEdit(lote)}}>
                       <Pencil className="mr-2 h-4 w-4" />
                       Editar
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setDeleteTarget(lote)} className="text-destructive focus:text-destructive">
+                    <DropdownMenuItem onClick={(e) => {e.stopPropagation(); setDeleteTarget(lote)}} className="text-destructive focus:text-destructive">
                       <Trash2 className="mr-2 h-4 w-4" />
                       Excluir
                     </DropdownMenuItem>
@@ -176,15 +196,15 @@ export default function LotesSection() {
               <CardContent className="flex-grow space-y-4">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Package className="h-4 w-4" />
-                    <span>0 Itens no lote</span>
+                    <span>{lote.itemCount} Itens no lote</span>
                   </div>
                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Calendar className="h-4 w-4" />
-                    <span>Criado em: {format(parseISO(lote.dataCriacao), 'dd/MM/yyyy')}</span>
+                    <span>Criado em: {lote.dataCriacao ? format(parseISO(lote.dataCriacao), 'dd/MM/yyyy') : '-'}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                      <FileText className="h-4 w-4" />
-                     <span>NF de Retorno: N/D</span>
+                     <span>NF de Retorno: {lote.notasFiscaisRetorno?.join(', ') || 'N/D'}</span>
                   </div>
 
               </CardContent>
@@ -205,11 +225,11 @@ export default function LotesSection() {
       )}
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
           <AlertDialogHeader>
             <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação não pode ser desfeita. Isso excluirá permanentemente o lote <span className="font-bold">{deleteTarget?.nome}</span> e todos os seus itens.
+              Esta ação não pode ser desfeita. Isso excluirá permanentemente o lote <span className="font-bold">{deleteTarget?.nome}</span> e desvinculará suas garantias.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

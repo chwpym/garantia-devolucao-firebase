@@ -11,9 +11,21 @@ import ReportSection from '@/components/sections/report-section';
 import PersonsSection from '@/components/sections/persons-section';
 import SuppliersSection from '@/components/sections/suppliers-section';
 import BackupSection from '@/components/sections/backup-section';
+import LoteDetailSection from '@/components/sections/lote-detail-section';
 
 export default function Home() {
   const [activeView, setActiveView] = useState('dashboard');
+  const [selectedLoteId, setSelectedLoteId] = useState<number | null>(null);
+
+  const handleNavigateToLote = (loteId: number) => {
+    setSelectedLoteId(loteId);
+    setActiveView('loteDetail');
+  };
+
+  const handleBackToList = () => {
+    setSelectedLoteId(null);
+    setActiveView('lotes');
+  }
 
   const renderContent = () => {
     switch (activeView) {
@@ -24,7 +36,9 @@ export default function Home() {
       case 'query':
         return <QuerySection />;
       case 'lotes':
-        return <LotesSection />;
+        return <LotesSection onNavigateToLote={handleNavigateToLote} />;
+      case 'loteDetail':
+        return <LoteDetailSection loteId={selectedLoteId!} onBack={handleBackToList} />;
       case 'reports':
         return <ReportSection />;
       case 'persons':

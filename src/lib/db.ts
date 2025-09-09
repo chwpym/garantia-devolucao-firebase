@@ -29,9 +29,20 @@ const getDB = (): Promise<IDBDatabase> => {
 
       request.onupgradeneeded = (event) => {
         const dbInstance = (event.target as IDBOpenDBRequest).result;
+        
         if (!dbInstance.objectStoreNames.contains(GARANTIAS_STORE_NAME)) {
-          dbInstance.createObjectStore(GARANTIAS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+          const warrantyStore = dbInstance.createObjectStore(GARANTIAS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+          warrantyStore.createIndex('loteId', 'loteId', { unique: false });
+        } else {
+            const transaction = (event.target as IDBOpenDBRequest).transaction;
+            if (transaction) {
+                const warrantyStore = transaction.objectStore(GARANTIAS_STORE_NAME);
+                if (!warrantyStore.indexNames.contains('loteId')) {
+                    warrantyStore.createIndex('loteId', 'loteId', { unique: false });
+                }
+            }
         }
+        
         if (!dbInstance.objectStoreNames.contains(PERSONS_STORE_NAME)) {
           dbInstance.createObjectStore(PERSONS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
         }
@@ -305,18 +316,51 @@ export const updateLote = (lote: Lote): Promise<number> => {
   });
 };
 
-export const deleteLote = (id: number): Promise<void> => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const store = await getStore(LOTES_STORE_NAME, 'readwrite');
-      const request = store.delete(id);
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-    } catch (err) {
-      reject(err);
-    }
+export const deleteLote = async (id: number): Promise<void> => {
+  const db = await getDB();
+  const transaction = db.transaction([GARANTIAS_STORE_NAME, LOTES_STORE_NAME], 'readwrite');
+  const lotesStore = transaction.objectStore(LOTES_STORE_NAME);
+  const warrantiesStore = transaction.objectStore(GARANTIAS_STORE_NAME);
+
+  return new Promise((resolve, reject) => {
+    // 1. Delete the lote itself
+    const deleteLoteRequest = lotesStore.delete(id);
+
+    deleteLoteRequest.onerror = () => reject(deleteLoteRequest.error);
+    
+    deleteLoteRequest.onsuccess = () => {
+        // 2. Unlink all warranties associated with this lote
+        const warrantyIndex = warrantiesStore.index('loteId');
+        const getWarrantiesRequest = warrantyIndex.getAll(id);
+
+        getWarrantiesRequest.onerror = () => reject(getWarrantiesRequest.error);
+
+        getWarrantiesRequest.onsuccess = () => {
+            const warrantiesToUpdate = getWarrantiesRequest.result;
+            if (warrantiesToUpdate.length === 0) {
+                resolve();
+                return;
+            }
+
+            let updatedCount = 0;
+            warrantiesToUpdate.forEach(warranty => {
+                warranty.loteId = null; // or delete warranty.loteId;
+                const updateRequest = warrantiesStore.put(warranty);
+                updateRequest.onerror = () => reject(updateRequest.error);
+                updateRequest.onsuccess = () => {
+                    updatedCount++;
+                    if (updatedCount === warrantiesToUpdate.length) {
+                        resolve();
+                    }
+                };
+            });
+        };
+    };
+
+    transaction.onabort = () => reject(transaction.error);
   });
 };
+
 
 // --- LoteItem Functions ---
 export const addLoteItem = (loteItem: Omit<LoteItem, 'id'>): Promise<number> => {
