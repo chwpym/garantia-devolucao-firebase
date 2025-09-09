@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import ReportGenerator from '@/components/report-generator';
 import type { Warranty } from '@/lib/types';
 import * as db from '@/lib/db';
@@ -8,10 +8,20 @@ import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { DatePickerWithRange } from '@/components/ui/date-range-picker';
+import { Search } from 'lucide-react';
+import { DateRange } from 'react-day-picker';
+import { addDays, parseISO } from 'date-fns';
 
 export default function ReportSection() {
   const [warranties, setWarranties] = useState<Warranty[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [searchTerm, setSearchTerm] = useState('');
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: addDays(new Date(), -30),
+    to: new Date(),
+  });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -31,6 +41,35 @@ export default function ReportSection() {
     }
     loadWarranties();
   }, [toast]);
+  
+  const filteredWarranties = useMemo(() => {
+    const lowercasedTerm = searchTerm.toLowerCase();
+    
+    return warranties.filter(warranty => {
+      // Date filter
+      const { from, to } = dateRange || {};
+      if (from && warranty.dataRegistro) {
+        if (parseISO(warranty.dataRegistro) < from) return false;
+      }
+      if (to && warranty.dataRegistro) {
+        // To include the selected end date, we compare with the start of the next day
+        const toDate = addDays(to, 1);
+        if (parseISO(warranty.dataRegistro) >= toDate) return false;
+      }
+      
+      // Search term filter
+      if (!lowercasedTerm) {
+        return true;
+      }
+      return (
+        warranty.codigo?.toLowerCase().includes(lowercasedTerm) ||
+        warranty.descricao?.toLowerCase().includes(lowercasedTerm) ||
+        warranty.cliente?.toLowerCase().includes(lowercasedTerm) ||
+        warranty.defeito?.toLowerCase().includes(lowercasedTerm)
+      );
+    });
+  }, [searchTerm, warranties, dateRange]);
+
 
   const handleSelectionChange = (id: number) => {
     setSelectedIds(prev => {
@@ -46,13 +85,13 @@ export default function ReportSection() {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedIds(new Set(warranties.map(w => w.id!)));
+      setSelectedIds(new Set(filteredWarranties.map(w => w.id!)));
     } else {
       setSelectedIds(new Set());
     }
   };
   
-  const isAllSelected = warranties.length > 0 && selectedIds.size === warranties.length;
+  const isAllSelected = filteredWarranties.length > 0 && selectedIds.size === filteredWarranties.length;
 
   return (
     <div className="space-y-8">
@@ -60,10 +99,22 @@ export default function ReportSection() {
         <CardHeader>
           <CardTitle>Seleção de Garantias para Relatório</CardTitle>
           <CardDescription>
-            Marque as garantias que você deseja incluir no relatório em PDF.
+            Filtre e marque as garantias que você deseja incluir no relatório em PDF.
           </CardDescription>
         </CardHeader>
         <CardContent>
+           <div className="flex flex-col md:flex-row gap-4 mb-4">
+              <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                      placeholder="Buscar por código, descrição, cliente ou defeito..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-10"
+                  />
+              </div>
+              <DatePickerWithRange date={dateRange} setDate={setDateRange} />
+          </div>
           <div className="border rounded-md">
              <Table>
               <TableHeader>
@@ -82,8 +133,8 @@ export default function ReportSection() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {warranties.length > 0 ? (
-                  warranties.map(warranty => (
+                {filteredWarranties.length > 0 ? (
+                  filteredWarranties.map(warranty => (
                     <TableRow key={warranty.id} data-state={selectedIds.has(warranty.id!) ? 'selected' : ''}>
                       <TableCell className="text-center">
                         <Checkbox
@@ -101,7 +152,7 @@ export default function ReportSection() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={5} className="h-24 text-center">
-                      Nenhuma garantia registrada para selecionar.
+                      Nenhuma garantia encontrada para os filtros selecionados.
                     </TableCell>
                   </TableRow>
                 )}
