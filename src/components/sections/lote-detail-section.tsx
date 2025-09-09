@@ -1,17 +1,17 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import type { Lote, Warranty, Supplier } from '@/lib/types';
+import type { Lote, Warranty, Supplier, WarrantyStatus } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '../ui/button';
-import { ArrowLeft, Package, Calendar, Building, FileText, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { ArrowLeft, Package, Calendar, Building, FileText, MoreHorizontal, Pencil, Trash2, CheckSquare } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { format, parseISO } from 'date-fns';
 import { Skeleton } from '../ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuPortal, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,6 +32,8 @@ interface LoteDetailSectionProps {
   loteId: number;
   onBack: () => void;
 }
+
+const warrantyStatuses: WarrantyStatus[] = ['Em análise', 'Aprovada', 'Recusada', 'Paga'];
 
 export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionProps) {
   const [lote, setLote] = useState<Lote | null>(null);
@@ -201,8 +203,13 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
         }
         toast({
             title: 'Sucesso!',
-            description: `NF ${nfRetornoValue} aplicada a ${selectedWarrantyIds.size} garantias.`
+            description: `NF ${nfRetornoValue} aplicada a ${selectedWarrantyIds.size} garantias.`,
         });
+        toast({
+            title: "Lembrete",
+            description: "Não se esqueça de alterar o status das garantias para 'Aprovada'.",
+            duration: 5000,
+        })
         setNfRetornoValue('');
         setSelectedWarrantyIds(new Set());
         window.dispatchEvent(new CustomEvent('datachanged'));
@@ -213,6 +220,25 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
             description: 'Não foi possível aplicar a NF às garantias selecionadas.',
             variant: 'destructive'
         });
+    }
+  };
+
+  const handleStatusChange = async (warranty: Warranty, status: WarrantyStatus) => {
+    try {
+      const updatedWarranty = { ...warranty, status };
+      await db.updateWarranty(updatedWarranty);
+      toast({
+        title: 'Status Alterado',
+        description: `O status da garantia foi alterado para "${status}".`,
+      });
+      window.dispatchEvent(new CustomEvent('datachanged'));
+    } catch (error) {
+      console.error('Failed to update warranty status:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível alterar o status da garantia.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -359,6 +385,22 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Remover do Lote
                               </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                                <DropdownMenuSub>
+                                    <DropdownMenuSubTrigger>
+                                        <CheckSquare className="mr-2 h-4 w-4" />
+                                        <span>Alterar Status</span>
+                                    </DropdownMenuSubTrigger>
+                                    <DropdownMenuPortal>
+                                        <DropdownMenuSubContent>
+                                            {warrantyStatuses.map(status => (
+                                                <DropdownMenuItem key={status} onClick={() => handleStatusChange(warranty, status)}>
+                                                    <span>{status}</span>
+                                                </DropdownMenuItem>
+                                            ))}
+                                        </DropdownMenuSubContent>
+                                    </DropdownMenuPortal>
+                                </DropdownMenuSub>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
