@@ -47,6 +47,23 @@ export default function ReportGenerator({ selectedWarrantyIds }: ReportGenerator
   };
 
   const handleGeneratePdf = async () => {
+    if (selectedWarrantyIds.length === 0) {
+        toast({
+            title: 'Nenhuma garantia selecionada',
+            description: 'Por favor, selecione pelo menos uma garantia na tabela acima para gerar o relatório.',
+            variant: 'destructive'
+        });
+        return;
+    }
+    if (selectedFields.length === 0) {
+        toast({
+            title: 'Nenhum campo selecionado',
+            description: 'Por favor, selecione pelo menos um campo para incluir no relatório.',
+            variant: 'destructive'
+        });
+        return;
+    }
+
     setIsGenerating(true);
     try {
       const result = await generateFilteredWarrantyReport({
@@ -84,7 +101,7 @@ export default function ReportGenerator({ selectedWarrantyIds }: ReportGenerator
   return (
     <Card className="shadow-lg">
       <CardHeader>
-        <CardTitle>Relatório para Fornecedor</CardTitle>
+        <CardTitle>Gerador de Relatório para Fornecedor</CardTitle>
         <CardDescription>Selecione os campos a serem incluídos no relatório em PDF.</CardDescription>
       </CardHeader>
       <CardContent>
@@ -92,11 +109,11 @@ export default function ReportGenerator({ selectedWarrantyIds }: ReportGenerator
           {ALL_FIELDS.map(field => (
             <div key={field} className="flex items-center space-x-2">
               <Checkbox
-                id={field}
+                id={`field-${field}`}
                 checked={selectedFields.includes(field)}
                 onCheckedChange={checked => handleFieldSelection(field, !!checked)}
               />
-              <Label htmlFor={field} className="capitalize text-sm font-normal cursor-pointer">
+              <Label htmlFor={`field-${field}`} className="capitalize text-sm font-normal cursor-pointer">
                 {FIELD_LABELS[field as keyof typeof FIELD_LABELS]}
               </Label>
             </div>
