@@ -3,20 +3,23 @@
 import { useState } from 'react';
 import AppLayout from '@/components/app-layout';
 
-import WarrantyFormSection from '@/components/sections/warranty-form-section';
+import RegisterSection from '@/components/sections/register-section';
+import QuerySection from '@/components/sections/query-section';
 import ReportSection from '@/components/sections/report-section';
 
 export default function Home() {
-  const [activeView, setActiveView] = useState('dashboard');
+  const [activeView, setActiveView] = useState('register');
 
   const renderContent = () => {
     switch (activeView) {
-      case 'dashboard':
-        return <WarrantyFormSection />;
+      case 'register':
+        return <RegisterSection />;
+      case 'query':
+        return <QuerySection />;
       case 'reports':
         return <ReportSection />;
       default:
-        return <WarrantyFormSection />;
+        return <RegisterSection />;
     }
   };
 
