@@ -51,7 +51,7 @@ export default function WarrantyTable({ warranties, onEdit, onDelete }: Warranty
               <TableHead>Descrição</TableHead>
               <TableHead>Fornecedor</TableHead>
               <TableHead>Cliente</TableHead>
-              <TableHead>Nota Retorno</TableHead>
+              <TableHead>NF Retorno</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="w-[50px] text-right">Ações</TableHead>
             </TableRow>
@@ -67,7 +67,7 @@ export default function WarrantyTable({ warranties, onEdit, onDelete }: Warranty
                   <TableCell>{warranty.descricao || '-'}</TableCell>
                   <TableCell>{warranty.fornecedor || '-'}</TableCell>
                   <TableCell>{warranty.cliente || '-'}</TableCell>
-                  <TableCell>{warranty.notaRetorno || '-'}</TableCell>
+                  <TableCell>{warranty.notaFiscalRetorno || '-'}</TableCell>
                   <TableCell>
                     {warranty.status ? (
                         <Badge variant={getStatusVariant(warranty.status)}>{warranty.status}</Badge>

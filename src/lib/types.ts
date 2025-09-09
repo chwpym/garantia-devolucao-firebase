@@ -12,7 +12,7 @@ export interface Warranty {
   valorCompra?: string;
   cliente?: string;
   mecanico?: string;
-  notaRetorno?: string;
+  notaFiscalRetorno?: string;
   observacao?: string;
   dataRegistro?: string;
   status?: WarrantyStatus;

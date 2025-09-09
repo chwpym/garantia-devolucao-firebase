@@ -33,7 +33,7 @@ const WarrantyDataSchema = z.object({
   valorCompra: z.string().optional(),
   cliente: z.string().optional(),
   mecanico: z.string().optional(),
-  notaRetorno: z.string().optional(),
+  notaFiscalRetorno: z.string().optional(),
   observacao: z.string().optional(),
   dataRegistro: z.string().optional(),
   status: z.enum(['Em análise', 'Aprovada', 'Recusada', 'Paga']).optional(),
