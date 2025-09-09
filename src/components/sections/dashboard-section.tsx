@@ -6,9 +6,15 @@ import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Wrench, ShieldCheck, Hourglass, BarChart3 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+
+interface DashboardStats {
+  total: number;
+  totalDefeitos: number;
+}
 
 export default function DashboardSection() {
-  const [stats, setStats] = useState({ total: 0 });
+  const [stats, setStats] = useState<DashboardStats>({ total: 0, totalDefeitos: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
@@ -18,8 +24,14 @@ export default function DashboardSection() {
       try {
         await db.initDB();
         const allWarranties = await db.getAllWarranties();
+        
+        const totalDefeitos = allWarranties.reduce((acc, warranty) => {
+            return acc + (warranty.quantidade ?? 0);
+        }, 0);
+
         setStats({
           total: allWarranties.length,
+          totalDefeitos: totalDefeitos
         });
       } catch (error) {
         console.error('Failed to load warranty stats:', error);
@@ -47,51 +59,51 @@ export default function DashboardSection() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="shadow-md border-primary/20 hover:border-primary/50 transition-colors">
+            <Card className="shadow-md hover:border-primary transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total de Garantias</CardTitle>
                     <BarChart3 className="h-4 w-4 text-primary" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{stats.total}</div>
+                    {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.total}</div>}
                     <p className="text-xs text-muted-foreground">
                         Total de registros no sistema
                     </p>
                 </CardContent>
             </Card>
-             <Card className="shadow-md border-amber-500/20 hover:border-amber-500/50 transition-colors">
+             <Card className="shadow-md hover:border-amber-500 transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Garantias Pendentes</CardTitle>
                     <Hourglass className="h-4 w-4 text-amber-500" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">...</div>
+                    {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">...</div>}
                     <p className="text-xs text-muted-foreground">
                         Aguardando retorno do fornecedor
                     </p>
                 </CardContent>
             </Card>
-             <Card className="shadow-md border-green-500/20 hover:border-green-500/50 transition-colors">
+             <Card className="shadow-md hover:border-green-500 transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Garantias Aprovadas</CardTitle>
                     <ShieldCheck className="h-4 w-4 text-green-500" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">...</div>
+                    {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">...</div>}
                     <p className="text-xs text-muted-foreground">
                         Crédito ou peça nova recebida
                     </p>
                 </CardContent>
             </Card>
-             <Card className="shadow-md border-destructive/20 hover:border-destructive/50 transition-colors">
+             <Card className="shadow-md hover:border-destructive transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Itens com Defeito</CardTitle>
                     <Wrench className="h-4 w-4 text-destructive" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">...</div>
+                    {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.totalDefeitos}</div>}
                     <p className="text-xs text-muted-foreground">
-                        Total de defeitos registrados
+                        Soma das quantidades com defeito
                     </p>
                 </CardContent>
             </Card>
