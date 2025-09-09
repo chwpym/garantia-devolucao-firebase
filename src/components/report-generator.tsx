@@ -34,10 +34,10 @@ const FIELD_LABELS: Record<keyof Omit<Warranty, 'id'>, string> = {
 };
 
 interface ReportGeneratorProps {
-  selectedWarrantyIds: number[];
+  selectedWarranties: Warranty[];
 }
 
-export default function ReportGenerator({ selectedWarrantyIds }: ReportGeneratorProps) {
+export default function ReportGenerator({ selectedWarranties }: ReportGeneratorProps) {
   const [selectedFields, setSelectedFields] = useState<string[]>([
     'codigo', 'descricao', 'quantidade', 'defeito', 'cliente', 'status', 'fornecedor'
   ]);
@@ -51,7 +51,7 @@ export default function ReportGenerator({ selectedWarrantyIds }: ReportGenerator
   };
 
   const handleGeneratePdf = async () => {
-    if (selectedWarrantyIds.length === 0) {
+    if (selectedWarranties.length === 0) {
         toast({
             title: 'Nenhuma garantia selecionada',
             description: 'Por favor, selecione pelo menos uma garantia na tabela acima para gerar o relatório.',
@@ -70,8 +70,11 @@ export default function ReportGenerator({ selectedWarrantyIds }: ReportGenerator
 
     setIsGenerating(true);
     try {
+      // Remove id before sending to the flow
+      const warrantiesToSend = selectedWarranties.map(({ id, ...rest }) => rest);
+
       const result = await generateFilteredWarrantyReport({
-        selectedWarrantyIds: selectedWarrantyIds.map(String),
+        selectedWarranties: warrantiesToSend,
         selectedFields,
       });
       
@@ -125,7 +128,7 @@ export default function ReportGenerator({ selectedWarrantyIds }: ReportGenerator
         </div>
         <Button 
           onClick={handleGeneratePdf}
-          disabled={isGenerating || selectedWarrantyIds.length === 0 || selectedFields.length === 0}
+          disabled={isGenerating || selectedWarranties.length === 0 || selectedFields.length === 0}
         >
           {isGenerating ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -134,9 +137,9 @@ export default function ReportGenerator({ selectedWarrantyIds }: ReportGenerator
           )}
           Gerar PDF para Fornecedor
         </Button>
-        {(selectedWarrantyIds.length === 0 || selectedFields.length === 0) && (
+        {(selectedWarranties.length === 0 || selectedFields.length === 0) && (
             <p className="text-sm text-muted-foreground mt-2">
-                {selectedWarrantyIds.length === 0 ? "Selecione pelo menos uma garantia na tabela para gerar o relatório." : "Selecione pelo menos um campo para incluir no relatório."}
+                {selectedWarranties.length === 0 ? "Selecione pelo menos uma garantia na tabela para gerar o relatório." : "Selecione pelo menos um campo para incluir no relatório."}
             </p>
         )}
       </CardContent>

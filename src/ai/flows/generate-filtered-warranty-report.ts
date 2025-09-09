@@ -12,7 +12,6 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
-import { getWarrantiesByIds } from '@/lib/db';
 import type { Warranty } from '@/lib/types';
 
 
@@ -23,10 +22,28 @@ declare module 'jspdf' {
     }
 }
 
+const WarrantyDataSchema = z.object({
+  codigo: z.string().optional(),
+  descricao: z.string().optional(),
+  fornecedor: z.string().optional(),
+  quantidade: z.number().optional(),
+  defeito: z.string().optional(),
+  requisicoes: z.string().optional(),
+  nfCompra: z.string().optional(),
+  valorCompra: z.string().optional(),
+  cliente: z.string().optional(),
+  mecanico: z.string().optional(),
+  notaRetorno: z.string().optional(),
+  observacao: z.string().optional(),
+  dataRegistro: z.string().optional(),
+  status: z.enum(['Em análise', 'Aprovada', 'Recusada', 'Paga']).optional(),
+});
+
+
 const GenerateFilteredWarrantyReportInputSchema = z.object({
-  selectedWarrantyIds: z
-    .array(z.string())
-    .describe('Array of IDs of the selected warranty records.'),
+  selectedWarranties: z
+    .array(WarrantyDataSchema)
+    .describe('Array of selected warranty records.'),
   selectedFields: z
     .array(z.string())
     .describe('Array of field names to include in the report.'),
@@ -59,10 +76,7 @@ const generateFilteredWarrantyReportFlow = ai.defineFlow(
     inputSchema: GenerateFilteredWarrantyReportInputSchema,
     outputSchema: GenerateFilteredWarrantyReportOutputSchema,
   },
-  async ({ selectedWarrantyIds, selectedFields }) => {
-    const numericIds = selectedWarrantyIds.map(id => parseInt(id, 10));
-    const warranties = await getWarrantiesByIds(numericIds);
-
+  async ({ selectedWarranties, selectedFields }) => {
     const doc = new jsPDF();
     
     doc.setFontSize(18);
@@ -73,7 +87,7 @@ const generateFilteredWarrantyReportFlow = ai.defineFlow(
     doc.text(`Gerado em: ${date}`, 14, 28);
 
     const tableHeaders = selectedFields.map(field => field.replace(/([A-Z])/g, ' $1').toUpperCase());
-    const tableBody = warranties.map(warranty => {
+    const tableBody = selectedWarranties.map(warranty => {
         return selectedFields.map(field => warranty[field as keyof Warranty]?.toString() || '-');
     });
 

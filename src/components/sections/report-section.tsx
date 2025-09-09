@@ -103,6 +103,10 @@ export default function ReportSection() {
   };
   
   const isAllSelected = filteredWarranties.length > 0 && selectedIds.size === filteredWarranties.length;
+  
+  const selectedWarranties = useMemo(() => {
+    return warranties.filter(w => w.id && selectedIds.has(w.id));
+  }, [warranties, selectedIds]);
 
   const getStatusVariant = (status: Warranty['status']) => {
     switch (status) {
@@ -207,7 +211,7 @@ export default function ReportSection() {
         </CardContent>
       </Card>
       
-      <ReportGenerator selectedWarrantyIds={Array.from(selectedIds)} />
+      <ReportGenerator selectedWarranties={selectedWarranties} />
     </div>
   );
 }
