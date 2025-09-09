@@ -25,6 +25,8 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import WarrantyForm from '../warranty-form';
 import LoteForm from '../lote-form';
+import { Checkbox } from '../ui/checkbox';
+import { Input } from '../ui/input';
 
 interface LoteDetailSectionProps {
   loteId: number;
@@ -40,6 +42,8 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isLoteFormModalOpen, setIsLoteFormModalOpen] = useState(false);
   const [warrantyToRemove, setWarrantyToRemove] = useState<Warranty | null>(null);
+  const [selectedWarrantyIds, setSelectedWarrantyIds] = useState<Set<number>>(new Set());
+  const [nfRetornoValue, setNfRetornoValue] = useState('');
   const { toast } = useToast();
 
   const loadLoteDetails = useCallback(async () => {
@@ -161,6 +165,59 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
     }
   };
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedWarrantyIds(new Set(warranties.map(w => w.id!)));
+    } else {
+      setSelectedWarrantyIds(new Set());
+    }
+  };
+
+  const handleRowSelect = (id: number) => {
+    const newSet = new Set(selectedWarrantyIds);
+    if (newSet.has(id)) {
+      newSet.delete(id);
+    } else {
+      newSet.add(id);
+    }
+    setSelectedWarrantyIds(newSet);
+  };
+  
+  const handleApplyNfToSelected = async () => {
+    if (selectedWarrantyIds.size === 0 || !nfRetornoValue) {
+        toast({
+            title: 'Ação inválida',
+            description: 'Selecione pelo menos uma garantia e insira o número da NF.',
+            variant: 'destructive'
+        });
+        return;
+    }
+
+    try {
+        const warrantiesToUpdate = warranties.filter(w => selectedWarrantyIds.has(w.id!));
+        for (const warranty of warrantiesToUpdate) {
+            const updatedWarranty = { ...warranty, notaFiscalRetorno: nfRetornoValue };
+            await db.updateWarranty(updatedWarranty);
+        }
+        toast({
+            title: 'Sucesso!',
+            description: `NF ${nfRetornoValue} aplicada a ${selectedWarrantyIds.size} garantias.`
+        });
+        setNfRetornoValue('');
+        setSelectedWarrantyIds(new Set());
+        window.dispatchEvent(new CustomEvent('datachanged'));
+    } catch (error) {
+        console.error('Failed to apply NF to selected warranties:', error);
+        toast({
+            title: 'Erro',
+            description: 'Não foi possível aplicar a NF às garantias selecionadas.',
+            variant: 'destructive'
+        });
+    }
+  };
+
+  const isAllSelected = warranties.length > 0 && selectedWarrantyIds.size === warranties.length;
+
   if (isLoading) {
     return (
         <div className='space-y-4'>
@@ -236,17 +293,34 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
       <Card>
         <CardHeader>
             <CardTitle>Itens no Lote</CardTitle>
-            <CardDescription>Lista de todas as garantias incluídas neste lote.</CardDescription>
+            <CardDescription>Lista de todas as garantias incluídas neste lote. Use os checkboxes para atualizar a NF de retorno em massa.</CardDescription>
         </CardHeader>
         <CardContent>
+            <div className="flex flex-col sm:flex-row gap-2 mb-4">
+                <Input
+                    placeholder="Nº da NF de Retorno"
+                    value={nfRetornoValue}
+                    onChange={(e) => setNfRetornoValue(e.target.value)}
+                    className="max-w-xs"
+                />
+                <Button onClick={handleApplyNfToSelected} disabled={selectedWarrantyIds.size === 0}>
+                    Aplicar NF aos {selectedWarrantyIds.size > 0 ? `(${selectedWarrantyIds.size})` : ''} selecionados
+                </Button>
+            </div>
              <div className="border rounded-md">
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-[50px] text-center">
+                        <Checkbox
+                            checked={isAllSelected}
+                            onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
+                            aria-label="Selecionar todos"
+                        />
+                    </TableHead>
                     <TableHead>Código</TableHead>
                     <TableHead>Descrição</TableHead>
-                    <TableHead>Defeito</TableHead>
-                    <TableHead>Cliente</TableHead>
+                    <TableHead>NF Retorno</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="w-[50px] text-right">Ações</TableHead>
                   </TableRow>
@@ -254,11 +328,17 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                 <TableBody>
                   {warranties.length > 0 ? (
                     warranties.map(warranty => (
-                      <TableRow key={warranty.id}>
+                      <TableRow key={warranty.id} data-state={selectedWarrantyIds.has(warranty.id!) ? "selected" : ""}>
+                        <TableCell className="text-center">
+                            <Checkbox
+                                checked={selectedWarrantyIds.has(warranty.id!)}
+                                onCheckedChange={() => handleRowSelect(warranty.id!)}
+                                aria-label={`Selecionar garantia ${warranty.codigo}`}
+                            />
+                        </TableCell>
                         <TableCell className="font-medium">{warranty.codigo || '-'}</TableCell>
                         <TableCell>{warranty.descricao || '-'}</TableCell>
-                        <TableCell>{warranty.defeito || '-'}</TableCell>
-                        <TableCell>{warranty.cliente || '-'}</TableCell>
+                        <TableCell>{warranty.notaFiscalRetorno || '-'}</TableCell>
                         <TableCell>
                           <Badge variant={getWarrantyStatusVariant(warranty.status)}>{warranty.status || 'N/A'}</Badge>
                         </TableCell>
