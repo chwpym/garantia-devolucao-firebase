@@ -16,7 +16,7 @@ export interface Warranty {
   observacao?: string;
   dataRegistro?: string;
   status?: WarrantyStatus;
-  loteId?: number;
+  loteId?: number | null;
 }
 
 export type PersonType = 'Cliente' | 'Mecânico' | 'Ambos';

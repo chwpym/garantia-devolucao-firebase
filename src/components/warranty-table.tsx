@@ -9,14 +9,17 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from './ui/checkbox';
 
 interface WarrantyTableProps {
   warranties: Warranty[];
+  selectedIds: Set<number>;
+  onSelectionChange: (ids: Set<number>) => void;
   onEdit: (warranty: Warranty) => void;
   onDelete: (id: number) => Promise<void>;
 }
 
-export default function WarrantyTable({ warranties, onEdit, onDelete }: WarrantyTableProps) {
+export default function WarrantyTable({ warranties, selectedIds, onSelectionChange, onEdit, onDelete }: WarrantyTableProps) {
   const [deleteTarget, setDeleteTarget] = useState<Warranty | null>(null);
 
   const handleDeleteClick = () => {
@@ -40,12 +43,39 @@ export default function WarrantyTable({ warranties, onEdit, onDelete }: Warranty
     }
   };
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+        onSelectionChange(new Set(warranties.map(w => w.id!)));
+    } else {
+        onSelectionChange(new Set());
+    }
+  };
+
+  const handleRowSelect = (id: number) => {
+    const newSet = new Set(selectedIds);
+    if (newSet.has(id)) {
+        newSet.delete(id);
+    } else {
+        newSet.add(id);
+    }
+    onSelectionChange(newSet);
+  };
+  
+  const isAllSelected = warranties.length > 0 && selectedIds.size === warranties.length;
+
   return (
     <>
       <div className="border rounded-md">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[50px] text-center">
+                <Checkbox
+                    checked={isAllSelected}
+                    onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
+                    aria-label="Selecionar todos"
+                />
+              </TableHead>
               <TableHead>Data</TableHead>
               <TableHead>Código</TableHead>
               <TableHead>Descrição</TableHead>
@@ -59,7 +89,14 @@ export default function WarrantyTable({ warranties, onEdit, onDelete }: Warranty
           <TableBody>
             {warranties.length > 0 ? (
               warranties.map(warranty => (
-                <TableRow key={warranty.id}>
+                <TableRow key={warranty.id} data-state={selectedIds.has(warranty.id!) ? 'selected' : ''}>
+                   <TableCell className="text-center">
+                        <Checkbox
+                            checked={selectedIds.has(warranty.id!)}
+                            onCheckedChange={() => handleRowSelect(warranty.id!)}
+                            aria-label={`Selecionar garantia ${warranty.codigo}`}
+                        />
+                      </TableCell>
                   <TableCell>
                     {warranty.dataRegistro ? format(parseISO(warranty.dataRegistro), 'dd/MM/yyyy') : '-'}
                   </TableCell>
@@ -99,7 +136,7 @@ export default function WarrantyTable({ warranties, onEdit, onDelete }: Warranty
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={8} className="h-24 text-center">
+                <TableCell colSpan={9} className="h-24 text-center">
                   Nenhuma garantia encontrada para os filtros selecionados.
                 </TableCell>
               </TableRow>

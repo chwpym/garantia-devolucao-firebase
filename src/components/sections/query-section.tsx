@@ -2,9 +2,9 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import type { Warranty } from '@/lib/types';
+import type { Warranty, Lote } from '@/lib/types';
 import * as db from '@/lib/db';
-import { Search } from 'lucide-react';
+import { Search, PlusCircle } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
 import { addDays, parseISO } from 'date-fns';
 
@@ -20,10 +20,16 @@ import {
 } from '@/components/ui/card';
 import { DatePickerWithRange } from '@/components/ui/date-range-picker';
 import WarrantyForm from '../warranty-form';
+import { Button } from '../ui/button';
+import AddToLoteDialog from '../add-to-lote-dialog';
+
 
 export default function QuerySection() {
   const [warranties, setWarranties] = useState<Warranty[]>([]);
   const [editingWarranty, setEditingWarranty] = useState<Warranty | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [openLotes, setOpenLotes] = useState<Lote[]>([]);
+  const [isLoteDialogOpen, setIsLoteDialogOpen] = useState(false);
   const [isDbReady, setIsDbReady] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -32,35 +38,43 @@ export default function QuerySection() {
   });
   const { toast } = useToast();
 
-  const loadWarranties = useCallback(async () => {
+  const loadData = useCallback(async () => {
     try {
-      const allWarranties = await db.getAllWarranties();
-      setWarranties(allWarranties.sort((a, b) => (b.id ?? 0) - (a.id ?? 0)));
+      const [allWarranties, allLotes] = await Promise.all([
+          db.getAllWarranties(),
+          db.getAllLotes()
+      ]);
+      // Filter out warranties that are already in a lote
+      setWarranties(allWarranties.filter(w => !w.loteId).sort((a, b) => (b.id ?? 0) - (a.id ?? 0)));
+      setOpenLotes(allLotes.filter(l => l.status === 'Aberto'));
     } catch (error) {
-      console.error('Failed to load warranties:', error);
+      console.error('Failed to load data:', error);
       toast({
         title: 'Erro ao Carregar',
-        description: 'Não foi possível carregar as garantias.',
+        description: 'Não foi possível carregar os dados.',
         variant: 'destructive',
       });
     }
   }, [toast]);
-
+  
   const refreshData = useCallback(() => {
-    loadWarranties();
+    loadData();
+    // Also clear selection
+    setSelectedIds(new Set());
     window.dispatchEvent(new CustomEvent('datachanged'));
-  }, [loadWarranties]);
+  }, [loadData]);
+
 
   useEffect(() => {
     async function initializeDB() {
       if (isDbReady) {
-        loadWarranties();
+        loadData();
         return;
       }
       try {
         await db.initDB();
         setIsDbReady(true);
-        await loadWarranties();
+        await loadData();
       } catch (error) {
         console.error('Failed to initialize database:', error);
         toast({
@@ -77,7 +91,7 @@ export default function QuerySection() {
     return () => {
         window.removeEventListener('datachanged', refreshData);
     }
-  }, [loadWarranties, toast, isDbReady, refreshData]);
+  }, [loadData, toast, isDbReady, refreshData]);
 
   const handleEdit = (warranty: Warranty) => {
     setEditingWarranty(warranty);
@@ -158,6 +172,33 @@ export default function QuerySection() {
     });
   }, [searchTerm, warranties, dateRange]);
 
+
+  const handleAddToLote = async (loteId: number) => {
+    try {
+        const selectedWarranties = await db.getWarrantiesByIds(Array.from(selectedIds));
+        
+        for (const warranty of selectedWarranties) {
+            warranty.loteId = loteId;
+            await db.updateWarranty(warranty);
+        }
+
+        toast({
+            title: 'Sucesso!',
+            description: `${selectedIds.size} garantias foram adicionadas ao lote.`
+        });
+        refreshData();
+    } catch (error) {
+        console.error("Failed to add warranties to lote:", error);
+        toast({
+            title: 'Erro',
+            description: 'Não foi possível adicionar as garantias ao lote.',
+            variant: 'destructive'
+        });
+    } finally {
+        setIsLoteDialogOpen(false);
+    }
+  }
+
   if (!isDbReady) {
     return (
       <div className="space-y-4">
@@ -183,7 +224,7 @@ export default function QuerySection() {
         <CardHeader>
             <CardTitle>Garantias Registradas</CardTitle>
             <CardDescription>
-            Visualize, edite e exclua as garantias cadastradas.
+                Visualize, edite, exclua e adicione garantias a um lote. Itens já em um lote não são exibidos aqui.
             </CardDescription>
         </CardHeader>
         <CardContent>
@@ -199,13 +240,32 @@ export default function QuerySection() {
                 </div>
                 <DatePickerWithRange date={dateRange} setDate={setDateRange} />
             </div>
+             <div className="mb-4">
+                <Button 
+                    disabled={selectedIds.size === 0} 
+                    onClick={() => setIsLoteDialogOpen(true)}
+                >
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Adicionar {selectedIds.size > 0 ? `(${selectedIds.size})` : ''} ao Lote
+                </Button>
+            </div>
             <WarrantyTable
-            warranties={filteredWarranties}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
+              warranties={filteredWarranties}
+              selectedIds={selectedIds}
+              onSelectionChange={setSelectedIds}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
             />
         </CardContent>
         </Card>
+
+        <AddToLoteDialog 
+            isOpen={isLoteDialogOpen}
+            onOpenChange={setIsLoteDialogOpen}
+            lotes={openLotes}
+            onConfirm={handleAddToLote}
+            selectedCount={selectedIds.size}
+        />
     </div>
   );
 }
