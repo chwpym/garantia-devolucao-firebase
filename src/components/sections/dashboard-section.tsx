@@ -4,9 +4,12 @@ import { useEffect, useState } from 'react';
 import type { Warranty } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Wrench, ShieldCheck, Hourglass, BarChart3, ShieldX } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Wrench, ShieldCheck, Hourglass, BarChart3, ShieldX, Upload, Download } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { ImportButton } from '@/components/import-button';
+
 
 interface DashboardStats {
   total: number;
@@ -21,41 +24,81 @@ export default function DashboardSection() {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
-    async function loadStats() {
-      setIsLoading(true);
-      try {
-        await db.initDB();
-        const allWarranties = await db.getAllWarranties();
-        
-        const totalDefeitos = allWarranties.reduce((acc, warranty) => {
-            return acc + (warranty.quantidade ?? 0);
-        }, 0);
+  const loadStats = async () => {
+    setIsLoading(true);
+    try {
+      await db.initDB();
+      const allWarranties = await db.getAllWarranties();
+      
+      const totalDefeitos = allWarranties.reduce((acc, warranty) => {
+          return acc + (warranty.quantidade ?? 0);
+      }, 0);
 
-        const pendentes = allWarranties.filter(w => w.status === 'Em análise').length;
-        const aprovadas = allWarranties.filter(w => w.status === 'Aprovada').length;
-        const recusadas = allWarranties.filter(w => w.status === 'Recusada').length;
+      const pendentes = allWarranties.filter(w => w.status === 'Em análise').length;
+      const aprovadas = allWarranties.filter(w => w.status === 'Aprovada').length;
+      const recusadas = allWarranties.filter(w => w.status === 'Recusada').length;
 
-        setStats({
-          total: allWarranties.length,
-          totalDefeitos: totalDefeitos,
-          pendentes,
-          aprovadas,
-          recusadas,
-        });
-      } catch (error) {
-        console.error('Failed to load warranty stats:', error);
-        toast({
-          title: 'Erro ao Carregar Estatísticas',
-          description: 'Não foi possível carregar os dados do dashboard.',
-          variant: 'destructive',
-        });
-      } finally {
-        setIsLoading(false);
-      }
+      setStats({
+        total: allWarranties.length,
+        totalDefeitos: totalDefeitos,
+        pendentes,
+        aprovadas,
+        recusadas,
+      });
+    } catch (error) {
+      console.error('Failed to load warranty stats:', error);
+      toast({
+        title: 'Erro ao Carregar Estatísticas',
+        description: 'Não foi possível carregar os dados do dashboard.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
     }
+  }
+
+  useEffect(() => {
     loadStats();
   }, [toast]);
+
+  const handleExport = async () => {
+    try {
+        const warranties = await db.getAllWarranties();
+        const dataStr = JSON.stringify(warranties, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+        
+        const linkElement = document.createElement('a');
+        const date = new Date().toISOString().split('T')[0];
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', `backup_garantias_${date}.json`);
+        linkElement.click();
+        
+        toast({
+            title: "Exportação Concluída",
+            description: "Seus dados foram exportados para um arquivo JSON."
+        });
+    } catch (error) {
+        console.error("Failed to export data:", error);
+        toast({
+            title: "Erro na Exportação",
+            description: "Não foi possível exportar os dados. Tente novamente.",
+            variant: "destructive"
+        });
+    }
+  };
+
+  const handleDataImported = () => {
+    toast({
+      title: "Importação Concluída",
+      description: "Seus dados foram importados com sucesso. A página será atualizada."
+    });
+    // Reload stats after import
+    setTimeout(() => {
+        loadStats();
+        // You might want to reload other sections as well, or even the whole page
+        window.dispatchEvent(new CustomEvent('datachanged'));
+    }, 1000);
+  }
 
   return (
     <div className="space-y-8">
@@ -130,6 +173,22 @@ export default function DashboardSection() {
                 </CardContent>
             </Card>
         </div>
+
+        <Card className="shadow-lg">
+            <CardHeader>
+                <CardTitle>Gerenciamento de Dados</CardTitle>
+                <CardDescription>
+                    Faça o backup (exportação) ou restaure (importação) seus dados a partir de um arquivo JSON.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col md:flex-row gap-4">
+                <Button onClick={handleExport}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Exportar para JSON
+                </Button>
+                <ImportButton onDataImported={handleDataImported} />
+            </CardContent>
+        </Card>
     </div>
   );
 }

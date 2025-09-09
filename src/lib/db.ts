@@ -121,3 +121,16 @@ export const deleteWarranty = (id: number): Promise<void> => {
     }
   });
 };
+
+export const clearWarranties = (): Promise<void> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore('readwrite');
+      const request = store.clear();
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};

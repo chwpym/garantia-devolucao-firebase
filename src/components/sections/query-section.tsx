@@ -6,7 +6,7 @@ import type { Warranty } from '@/lib/types';
 import * as db from '@/lib/db';
 import { Search } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
-import { addDays, format, parseISO } from 'date-fns';
+import { addDays, parseISO } from 'date-fns';
 
 import WarrantyTable from '@/components/warranty-table';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -19,7 +19,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { DatePickerWithRange } from '@/components/ui/date-range-picker';
-import RegisterSection from './register-section';
+import WarrantyForm from '../warranty-form';
 
 export default function QuerySection() {
   const [warranties, setWarranties] = useState<Warranty[]>([]);
@@ -46,6 +46,10 @@ export default function QuerySection() {
     }
   }, [toast]);
 
+  const refreshData = useCallback(() => {
+    loadWarranties();
+  }, [loadWarranties]);
+
   useEffect(() => {
     async function initializeDB() {
       if (isDbReady) {
@@ -66,7 +70,13 @@ export default function QuerySection() {
       }
     }
     initializeDB();
-  }, [loadWarranties, toast, isDbReady]);
+    
+    window.addEventListener('datachanged', refreshData);
+    
+    return () => {
+        window.removeEventListener('datachanged', refreshData);
+    }
+  }, [loadWarranties, toast, isDbReady, refreshData]);
 
   const handleEdit = (warranty: Warranty) => {
     setEditingWarranty(warranty);
