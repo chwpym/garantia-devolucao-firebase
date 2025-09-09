@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/icons';
-import { LayoutDashboard, FileText, Settings, Search, PlusSquare, ChevronLeft, ChevronRight, DatabaseBackup } from 'lucide-react';
+import { LayoutDashboard, FileText, Search, PlusSquare, ChevronLeft, ChevronRight, DatabaseBackup } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 
@@ -60,15 +60,6 @@ export default function AppLayout({ children, activeView, setActiveView }: AppLa
                 </Button>
             ))}
             </nav>
-        </div>
-        <div className="mt-auto p-4 border-t">
-           <Button variant="ghost" className={cn(
-               "justify-start gap-3 w-full text-base h-11",
-                isSidebarCollapsed && "justify-center"
-           )} title={isSidebarCollapsed ? "Configurações" : undefined}>
-              <Settings className="h-5 w-5 flex-shrink-0" />
-              <span className={cn("truncate", isSidebarCollapsed && "hidden")}>Configurações</span>
-            </Button>
         </div>
       </aside>
       <div className="flex flex-1 flex-col">
