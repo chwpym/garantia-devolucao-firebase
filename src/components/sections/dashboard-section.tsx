@@ -47,10 +47,10 @@ export default function DashboardSection() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="shadow-md">
+            <Card className="shadow-md border-primary/20 hover:border-primary/50 transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total de Garantias</CardTitle>
-                    <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                    <BarChart3 className="h-4 w-4 text-primary" />
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{stats.total}</div>
@@ -59,10 +59,10 @@ export default function DashboardSection() {
                     </p>
                 </CardContent>
             </Card>
-             <Card className="shadow-md">
+             <Card className="shadow-md border-amber-500/20 hover:border-amber-500/50 transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Garantias Pendentes</CardTitle>
-                    <Hourglass className="h-4 w-4 text-muted-foreground" />
+                    <Hourglass className="h-4 w-4 text-amber-500" />
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">...</div>
@@ -71,10 +71,10 @@ export default function DashboardSection() {
                     </p>
                 </CardContent>
             </Card>
-             <Card className="shadow-md">
+             <Card className="shadow-md border-green-500/20 hover:border-green-500/50 transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Garantias Aprovadas</CardTitle>
-                    <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+                    <ShieldCheck className="h-4 w-4 text-green-500" />
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">...</div>
@@ -83,10 +83,10 @@ export default function DashboardSection() {
                     </p>
                 </CardContent>
             </Card>
-             <Card className="shadow-md">
+             <Card className="shadow-md border-destructive/20 hover:border-destructive/50 transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Itens com Defeito</CardTitle>
-                    <Wrench className="h-4 w-4 text-muted-foreground" />
+                    <Wrench className="h-4 w-4 text-destructive" />
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">...</div>
