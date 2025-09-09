@@ -9,15 +9,17 @@ import type { Lote, Supplier } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DialogFooter } from '@/components/ui/dialog';
+import { Textarea } from './ui/textarea';
 
 const formSchema = z.object({
   nome: z.string().min(2, { message: 'O nome do lote deve ter pelo menos 2 caracteres.' }),
   fornecedor: z.string({ required_error: 'Selecione um fornecedor.' }),
+  notasFiscaisRetorno: z.string().optional(),
 });
 
 type LoteFormValues = z.infer<typeof formSchema>;
@@ -32,11 +34,14 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
   const { toast } = useToast();
   const form = useForm<LoteFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: editingLote || { nome: '', fornecedor: '' },
+    defaultValues: editingLote || { nome: '', fornecedor: '', notasFiscaisRetorno: '' },
   });
 
   useEffect(() => {
-    form.reset(editingLote || { nome: '', fornecedor: '' });
+    form.reset(editingLote ? {
+      ...editingLote,
+      notasFiscaisRetorno: editingLote.notasFiscaisRetorno || '',
+    } : { nome: '', fornecedor: '', notasFiscaisRetorno: '' });
   }, [editingLote, form]);
 
   const { isSubmitting } = form.formState;
@@ -108,6 +113,22 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
                     ))}
                   </SelectContent>
                 </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            name="notasFiscaisRetorno"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nota(s) Fiscal(is) de Retorno</FormLabel>
+                <FormControl>
+                  <Textarea placeholder="Digite os números das notas, separados por vírgula" {...field} />
+                </FormControl>
+                <FormDescription>
+                    Se houver mais de uma, separe por vírgulas. Ex: 12345, 67890
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}

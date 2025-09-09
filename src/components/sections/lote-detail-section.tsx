@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import type { Lote, Warranty } from '@/lib/types';
+import type { Lote, Warranty, Supplier } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '../ui/button';
@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import WarrantyForm from '../warranty-form';
+import LoteForm from '../lote-form';
 
 interface LoteDetailSectionProps {
   loteId: number;
@@ -33,9 +34,11 @@ interface LoteDetailSectionProps {
 export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionProps) {
   const [lote, setLote] = useState<Lote | null>(null);
   const [warranties, setWarranties] = useState<Warranty[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editingWarranty, setEditingWarranty] = useState<Warranty | null>(null);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [isLoteFormModalOpen, setIsLoteFormModalOpen] = useState(false);
   const [warrantyToRemove, setWarrantyToRemove] = useState<Warranty | null>(null);
   const { toast } = useToast();
 
@@ -44,15 +47,17 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
     setIsLoading(true);
     try {
       await db.initDB();
-      const [allLotes, allWarranties] = await Promise.all([
+      const [allLotes, allWarranties, allSuppliers] = await Promise.all([
         db.getAllLotes(),
         db.getAllWarranties(),
+        db.getAllSuppliers()
       ]);
       const currentLote = allLotes.find((l) => l.id === loteId) || null;
       const associatedWarranties = allWarranties.filter((w) => w.loteId === loteId);
       
       setLote(currentLote);
       setWarranties(associatedWarranties);
+      setSuppliers(allSuppliers);
     } catch (error) {
       console.error('Failed to load lote details:', error);
       toast({
@@ -80,6 +85,10 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
   const handleEditClick = (warranty: Warranty) => {
     setEditingWarranty(warranty);
     setIsFormModalOpen(true);
+  };
+  
+  const handleEditLoteClick = () => {
+    setIsLoteFormModalOpen(true);
   };
 
   const handleRemoveClick = (warranty: Warranty) => {
@@ -125,6 +134,11 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
       });
     }
   };
+  
+  const handleLoteFormSave = () => {
+    setIsLoteFormModalOpen(false);
+    loadLoteDetails();
+  }
 
 
   const getStatusVariant = (status?: Lote['status']) => {
@@ -173,11 +187,14 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
 
   return (
     <div className="space-y-8">
-      <div>
-        <Button variant="ghost" onClick={onBack} className="mb-4">
-          <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para a Lista de Lotes
-        </Button>
-        <h1 className="text-3xl font-bold tracking-tight">Detalhes do Lote: {lote.nome}</h1>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <Button variant="ghost" onClick={onBack} className="mb-2 -ml-4">
+                <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para a Lista de Lotes
+                </Button>
+                <h1 className="text-3xl font-bold tracking-tight">Detalhes do Lote: {lote.nome}</h1>
+            </div>
+            <Button onClick={handleEditLoteClick}><Pencil className="mr-2 h-4 w-4"/> Editar Lote</Button>
       </div>
 
       <Card>
@@ -203,7 +220,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                 <FileText className="h-8 w-8 text-muted-foreground" />
                 <div>
                     <p className="text-sm text-muted-foreground">NF(s) de Retorno</p>
-                    <p className="font-medium">{lote.notasFiscaisRetorno?.join(', ') || 'Nenhuma'}</p>
+                    <p className="font-medium">{lote.notasFiscaisRetorno || 'Nenhuma'}</p>
                 </div>
             </div>
              <div className="flex items-center gap-3">
@@ -300,6 +317,23 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                     isModal={true}
                  />
             </div>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Modal for editing lote */}
+      <Dialog open={isLoteFormModalOpen} onOpenChange={setIsLoteFormModalOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Editar Lote</DialogTitle>
+                <DialogDescription>
+                    Atualize as informações do lote, como o status ou as notas fiscais de retorno.
+                </DialogDescription>
+            </DialogHeader>
+            <LoteForm
+                onSave={handleLoteFormSave}
+                editingLote={lote}
+                suppliers={suppliers}
+            />
         </DialogContent>
       </Dialog>
       

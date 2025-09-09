@@ -43,7 +43,7 @@ export interface Lote {
     fornecedor: string;
     dataCriacao: string;
     dataEnvio?: string;
-    notasFiscaisRetorno?: string[];
+    notasFiscaisRetorno?: string;
     status: LoteStatus;
 }
 

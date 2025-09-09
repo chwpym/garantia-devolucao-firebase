@@ -94,7 +94,6 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
     if (!deleteTarget?.id) return;
     try {
       await db.deleteLote(deleteTarget.id);
-      // TODO: Handle unlinking warranties from the lote
       toast({ title: 'Sucesso', description: 'Lote excluído com sucesso.' });
       window.dispatchEvent(new CustomEvent('datachanged'));
     } catch (error) {
@@ -204,7 +203,7 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                      <FileText className="h-4 w-4" />
-                     <span>NF de Retorno: {lote.notasFiscaisRetorno?.join(', ') || 'N/D'}</span>
+                     <span>NF de Retorno: {lote.notasFiscaisRetorno || 'N/D'}</span>
                   </div>
 
               </CardContent>
