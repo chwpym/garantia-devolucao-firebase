@@ -122,11 +122,15 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
     }
   };
   
-  const handleFormSave = async (data: Omit<Warranty, 'id'>, id?: number) => {
+  const handleFormSave = async (formData: Omit<Warranty, 'id'>, id?: number) => {
      try {
-      if (id) {
-        // We don't need to spread editingWarranty here because the form now contains all fields
-        const warrantyToUpdate: Warranty = { ...data, id };
+      if (id && editingWarranty) {
+        // Merge existing data with form data to preserve fields like loteId
+        const warrantyToUpdate: Warranty = { 
+            ...editingWarranty, 
+            ...formData, 
+            id 
+        };
         await db.updateWarranty(warrantyToUpdate);
         toast({ title: 'Sucesso', description: 'Garantia atualizada com sucesso.' });
       }
