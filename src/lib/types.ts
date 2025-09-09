@@ -29,5 +29,8 @@ export interface Person {
 
 export interface Supplier {
   id?: number;
-  name: string;
+  razaoSocial: string;
+  nomeFantasia: string;
+  cnpj: string;
+  cidade: string;
 }

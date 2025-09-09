@@ -172,7 +172,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear }: Warr
                                     </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        {suppliers.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
+                                        {suppliers.map(s => <SelectItem key={s.id} value={s.nomeFantasia}>{s.nomeFantasia}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                                 <FormMessage />

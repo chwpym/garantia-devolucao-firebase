@@ -46,10 +46,20 @@ import { Button } from '@/components/ui/button';
 import { MoreHorizontal, Pencil, Trash2, Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
-  name: z.string().min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' }),
+  razaoSocial: z.string().min(2, { message: 'A razão social deve ter pelo menos 2 caracteres.' }),
+  nomeFantasia: z.string().min(2, { message: 'O nome fantasia deve ter pelo menos 2 caracteres.' }),
+  cnpj: z.string().optional(),
+  cidade: z.string().optional(),
 });
 
 type SupplierFormValues = z.infer<typeof formSchema>;
+
+const defaultFormValues: SupplierFormValues = {
+  razaoSocial: '',
+  nomeFantasia: '',
+  cnpj: '',
+  cidade: ''
+};
 
 export default function SuppliersSection() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -60,14 +70,14 @@ export default function SuppliersSection() {
 
   const form = useForm<SupplierFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { name: '' },
+    defaultValues: defaultFormValues,
   });
   const { isSubmitting } = form.formState;
 
   const loadSuppliers = useCallback(async () => {
     try {
       const allSuppliers = await db.getAllSuppliers();
-      setSuppliers(allSuppliers.sort((a, b) => a.name.localeCompare(b.name)));
+      setSuppliers(allSuppliers.sort((a, b) => a.nomeFantasia.localeCompare(b.nomeFantasia)));
     } catch (error) {
       console.error('Failed to load suppliers:', error);
       toast({
@@ -101,20 +111,26 @@ export default function SuppliersSection() {
   }, [loadSuppliers, toast, isDbReady]);
   
   useEffect(() => {
-    form.reset(editingSupplier ? { name: editingSupplier.name } : { name: '' });
+    form.reset(editingSupplier ? editingSupplier : defaultFormValues);
   }, [editingSupplier, form]);
 
   const handleSave = async (data: SupplierFormValues) => {
     try {
+      const dataToSave = {
+        ...data,
+        cnpj: data.cnpj || '',
+        cidade: data.cidade || ''
+      };
+
       if (editingSupplier?.id) {
-        await db.updateSupplier({ ...data, id: editingSupplier.id });
+        await db.updateSupplier({ ...dataToSave, id: editingSupplier.id });
         toast({ title: 'Sucesso', description: 'Fornecedor atualizado com sucesso.' });
       } else {
-        await db.addSupplier(data);
+        await db.addSupplier(dataToSave);
         toast({ title: 'Sucesso', description: 'Fornecedor salvo com sucesso.' });
       }
       setEditingSupplier(null);
-      form.reset({ name: '' });
+      form.reset(defaultFormValues);
       await loadSuppliers();
       window.dispatchEvent(new CustomEvent('datachanged'));
     } catch (error) {
@@ -129,7 +145,7 @@ export default function SuppliersSection() {
 
   const handleClearForm = () => {
     setEditingSupplier(null);
-    form.reset({ name: '' });
+    form.reset(defaultFormValues);
   };
 
   const handleDelete = async (id: number) => {
@@ -164,19 +180,58 @@ export default function SuppliersSection() {
         <Card className="shadow-lg sticky top-24">
           <CardHeader>
             <CardTitle>{editingSupplier ? 'Editar Fornecedor' : 'Novo Fornecedor'}</CardTitle>
-            <CardDescription>Preencha o nome do fornecedor abaixo.</CardDescription>
+            <CardDescription>Preencha os dados do fornecedor abaixo.</CardDescription>
           </CardHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSave)}>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <FormField
-                  name="name"
+                  name="nomeFantasia"
                   control={form.control}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nome do Fornecedor</FormLabel>
+                      <FormLabel>Nome Fantasia</FormLabel>
                       <FormControl>
                         <Input placeholder="Nome da Empresa" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  name="razaoSocial"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Razão Social</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Razão Social Ltda." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  name="cnpj"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>CNPJ</FormLabel>
+                      <FormControl>
+                        <Input placeholder="00.000.000/0000-00" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  name="cidade"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cidade</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Cidade - UF" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -206,7 +261,10 @@ export default function SuppliersSection() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Nome</TableHead>
+                    <TableHead>Nome Fantasia</TableHead>
+                    <TableHead>Razão Social</TableHead>
+                    <TableHead>CNPJ</TableHead>
+                    <TableHead>Cidade</TableHead>
                     <TableHead className="w-[50px] text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -214,7 +272,10 @@ export default function SuppliersSection() {
                   {suppliers.length > 0 ? (
                     suppliers.map(supplier => (
                       <TableRow key={supplier.id}>
-                        <TableCell className="font-medium">{supplier.name}</TableCell>
+                        <TableCell className="font-medium">{supplier.nomeFantasia}</TableCell>
+                        <TableCell>{supplier.razaoSocial}</TableCell>
+                        <TableCell>{supplier.cnpj}</TableCell>
+                        <TableCell>{supplier.cidade}</TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -239,7 +300,7 @@ export default function SuppliersSection() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={2} className="h-24 text-center">
+                      <TableCell colSpan={5} className="h-24 text-center">
                         Nenhum fornecedor encontrado.
                       </TableCell>
                     </TableRow>
@@ -256,7 +317,7 @@ export default function SuppliersSection() {
           <AlertDialogHeader>
             <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação não pode ser desfeita. Isso excluirá permanentemente o fornecedor <span className="font-bold">{deleteTarget?.name}</span>.
+              Esta ação não pode ser desfeita. Isso excluirá permanentemente o fornecedor <span className="font-bold">{deleteTarget?.nomeFantasia}</span>.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
