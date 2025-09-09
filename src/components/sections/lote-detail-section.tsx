@@ -28,6 +28,7 @@ import LoteForm from '../lote-form';
 import { Checkbox } from '../ui/checkbox';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
+import { Separator } from '../ui/separator';
 
 interface LoteDetailSectionProps {
   loteId: number;
@@ -91,6 +92,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
   const [warrantyToRemove, setWarrantyToRemove] = useState<Warranty | null>(null);
   const [selectedWarrantyIds, setSelectedWarrantyIds] = useState<Set<number>>(new Set());
   const [nfRetornoValue, setNfRetornoValue] = useState('');
+  const [nfSaidaValue, setNfSaidaValue] = useState('');
   const { toast } = useToast();
 
   const loadLoteDetails = useCallback(async () => {
@@ -236,8 +238,11 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
     setSelectedWarrantyIds(newSet);
   };
   
-  const handleApplyNfToSelected = async () => {
-    if (selectedWarrantyIds.size === 0 || !nfRetornoValue) {
+  const handleApplyNf = async (type: 'retorno' | 'saida') => {
+    const nfValue = type === 'retorno' ? nfRetornoValue : nfSaidaValue;
+    const fieldToUpdate = type === 'retorno' ? 'notaFiscalRetorno' : 'notaFiscalSaida';
+    
+    if (selectedWarrantyIds.size === 0 || !nfValue) {
         toast({
             title: 'Ação inválida',
             description: 'Selecione pelo menos uma garantia e insira o número da NF.',
@@ -249,26 +254,32 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
     try {
         const warrantiesToUpdate = warranties.filter(w => selectedWarrantyIds.has(w.id!));
         for (const warranty of warrantiesToUpdate) {
-            const updatedWarranty = { ...warranty, notaFiscalRetorno: nfRetornoValue };
+            const updatedWarranty = { ...warranty, [fieldToUpdate]: nfValue };
             await db.updateWarranty(updatedWarranty);
         }
         toast({
             title: 'Sucesso!',
-            description: `NF ${nfRetornoValue} aplicada a ${selectedWarrantyIds.size} garantias.`,
+            description: `NF de ${type} ${nfValue} aplicada a ${selectedWarrantyIds.size} garantias.`,
         });
-        toast({
-            title: "Lembrete",
-            description: "Não se esqueça de alterar o status das garantias para 'Aprovada'.",
-            duration: 5000,
-        })
-        setNfRetornoValue('');
+
+        if (type === 'retorno') {
+            toast({
+                title: "Lembrete",
+                description: "Não se esqueça de alterar o status das garantias para 'Aprovada'.",
+                duration: 5000,
+            });
+            setNfRetornoValue('');
+        } else {
+            setNfSaidaValue('');
+        }
+        
         setSelectedWarrantyIds(new Set());
         window.dispatchEvent(new CustomEvent('datachanged'));
     } catch (error) {
-        console.error('Failed to apply NF to selected warranties:', error);
+        console.error(`Failed to apply NF de ${type} to selected warranties:`, error);
         toast({
             title: 'Erro',
-            description: 'Não foi possível aplicar a NF às garantias selecionadas.',
+            description: `Não foi possível aplicar a NF de ${type} às garantias selecionadas.`,
             variant: 'destructive'
         });
     }
@@ -389,20 +400,40 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
       <Card>
         <CardHeader>
             <CardTitle>Itens no Lote</CardTitle>
-            <CardDescription>Lista de todas as garantias incluídas neste lote. Use os checkboxes para atualizar a NF de retorno em massa.</CardDescription>
+            <CardDescription>Lista de todas as garantias incluídas neste lote. Use os checkboxes para atualizar as NFs em massa.</CardDescription>
         </CardHeader>
         <CardContent>
-            <div className="flex flex-col sm:flex-row gap-2 mb-4">
-                <Input
-                    placeholder="Nº da NF de Retorno"
-                    value={nfRetornoValue}
-                    onChange={(e) => setNfRetornoValue(e.target.value)}
-                    className="max-w-xs"
-                />
-                <Button onClick={handleApplyNfToSelected} disabled={selectedWarrantyIds.size === 0}>
-                    Aplicar NF aos {selectedWarrantyIds.size > 0 ? `(${selectedWarrantyIds.size})` : ''} selecionados
-                </Button>
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
+                <div className='p-4 border rounded-lg space-y-2'>
+                     <Label htmlFor="nf-saida">NF de Saída (Envio)</Label>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                        <Input
+                            id="nf-saida"
+                            placeholder="Nº da NF de Saída"
+                            value={nfSaidaValue}
+                            onChange={(e) => setNfSaidaValue(e.target.value)}
+                        />
+                        <Button onClick={() => handleApplyNf('saida')} disabled={selectedWarrantyIds.size === 0}>
+                            Aplicar NF aos {selectedWarrantyIds.size > 0 ? `(${selectedWarrantyIds.size})` : ''} selecionados
+                        </Button>
+                    </div>
+                </div>
+                 <div className='p-4 border rounded-lg space-y-2'>
+                    <Label htmlFor="nf-retorno">NF de Retorno (Recebimento)</Label>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                        <Input
+                            id="nf-retorno"
+                            placeholder="Nº da NF de Retorno"
+                            value={nfRetornoValue}
+                            onChange={(e) => setNfRetornoValue(e.target.value)}
+                        />
+                        <Button onClick={() => handleApplyNf('retorno')} disabled={selectedWarrantyIds.size === 0}>
+                            Aplicar NF aos {selectedWarrantyIds.size > 0 ? `(${selectedWarrantyIds.size})` : ''} selecionados
+                        </Button>
+                    </div>
+                 </div>
             </div>
+            <Separator className="mb-4"/>
              <div className="border rounded-md">
               <Table>
                 <TableHeader>
@@ -417,6 +448,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                     <TableHead>Código</TableHead>
                     <TableHead>Descrição</TableHead>
                     <TableHead className="w-[300px]">Observação</TableHead>
+                    <TableHead>NF Saída</TableHead>
                     <TableHead>NF Retorno</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="w-[50px] text-right">Ações</TableHead>
@@ -441,6 +473,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                                 onSave={(value) => handleObservationSave(warranty, value)}
                             />
                         </TableCell>
+                        <TableCell>{warranty.notaFiscalSaida || '-'}</TableCell>
                         <TableCell>{warranty.notaFiscalRetorno || '-'}</TableCell>
                         <TableCell>
                           <Badge variant={getWarrantyStatusVariant(warranty.status)}>{warranty.status || 'N/A'}</Badge>
@@ -485,7 +518,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={7} className="h-24 text-center">
+                      <TableCell colSpan={8} className="h-24 text-center">
                         Nenhuma garantia adicionada a este lote ainda.
                       </TableCell>
                     </TableRow>

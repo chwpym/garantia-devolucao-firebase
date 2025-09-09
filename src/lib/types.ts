@@ -13,6 +13,7 @@ export interface Warranty {
   cliente?: string;
   mecanico?: string;
   notaFiscalRetorno?: string;
+  notaFiscalSaida?: string;
   observacao?: string;
   dataRegistro?: string;
   status?: WarrantyStatus;
@@ -43,6 +44,7 @@ export interface Lote {
     fornecedor: string;
     dataCriacao: string;
     dataEnvio?: string;
+    notaFiscalSaida?: string;
     notasFiscaisRetorno?: string;
     status: LoteStatus;
 }

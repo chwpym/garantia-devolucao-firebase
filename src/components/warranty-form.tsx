@@ -31,6 +31,7 @@ const formSchema = z.object({
   valorCompra: z.string().optional(),
   cliente: z.string().optional(),
   mecanico: z.string().optional(),
+  notaFiscalSaida: z.string().optional(),
   notaFiscalRetorno: z.string().optional(),
   observacao: z.string().optional(),
   status: z.enum(['Em análise', 'Aprovada', 'Recusada', 'Paga']).optional(),
@@ -57,6 +58,7 @@ const defaultValues: WarrantyFormValues = {
   valorCompra: '',
   cliente: '',
   mecanico: '',
+  notaFiscalSaida: '',
   notaFiscalRetorno: '',
   observacao: '',
   status: 'Em análise',
@@ -316,9 +318,12 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                      <FormField name="requisicoes" control={form.control} render={({ field }) => (
                         <FormItem className="md:col-span-2"><FormLabel>Requisições</FormLabel><FormControl><Textarea rows={1} placeholder="Separe múltiplas requisições por vírgula" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
+                    <FormField name="notaFiscalSaida" control={form.control} render={({ field }) => (
+                        <FormItem><FormLabel>Nota Fiscal de Saída</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
                     <FormField name="notaFiscalRetorno" control={form.control} render={({ field }) => (
-                    <FormItem><FormLabel>Nota Fiscal de Retorno</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
+                        <FormItem><FormLabel>Nota Fiscal de Retorno</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
                     <FormField
                         control={form.control}
                         name="status"

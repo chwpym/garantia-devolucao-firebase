@@ -21,6 +21,7 @@ const loteStatuses: LoteStatus[] = ['Aberto', 'Enviado', 'Aprovado Parcialmente'
 const formSchema = z.object({
   nome: z.string().min(2, { message: 'O nome do lote deve ter pelo menos 2 caracteres.' }),
   fornecedor: z.string({ required_error: 'Selecione um fornecedor.' }),
+  notaFiscalSaida: z.string().optional(),
   notasFiscaisRetorno: z.string().optional(),
   status: z.enum(loteStatuses, { required_error: 'Selecione um status.' }),
 });
@@ -37,14 +38,15 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
   const { toast } = useToast();
   const form = useForm<LoteFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: editingLote || { nome: '', fornecedor: '', notasFiscaisRetorno: '', status: 'Aberto' },
+    defaultValues: editingLote || { nome: '', fornecedor: '', notaFiscalSaida: '', notasFiscaisRetorno: '', status: 'Aberto' },
   });
 
   useEffect(() => {
     form.reset(editingLote ? {
       ...editingLote,
+      notaFiscalSaida: editingLote.notaFiscalSaida || '',
       notasFiscaisRetorno: editingLote.notasFiscaisRetorno || '',
-    } : { nome: '', fornecedor: '', notasFiscaisRetorno: '', status: 'Aberto' });
+    } : { nome: '', fornecedor: '', notaFiscalSaida: '', notasFiscaisRetorno: '', status: 'Aberto' });
   }, [editingLote, form]);
 
   const { isSubmitting } = form.formState;
@@ -116,6 +118,19 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
                     ))}
                   </SelectContent>
                 </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+           <FormField
+            name="notaFiscalSaida"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nota Fiscal de Saída (Envio)</FormLabel>
+                <FormControl>
+                  <Input placeholder="Digite o número da nota de envio" {...field} />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
