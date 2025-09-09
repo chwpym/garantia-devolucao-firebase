@@ -7,8 +7,7 @@ export interface Warranty {
   fornecedor?: string;
   quantidade?: number;
   defeito?: string;
-  requisicaoVenda?: string;
-  requisicaoGarantia?: string;
+  requisicoes?: string;
   nfCompra?: string;
   valorCompra?: string;
   cliente?: string;

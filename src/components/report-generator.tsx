@@ -11,8 +11,8 @@ import { Loader2, FileDown } from 'lucide-react';
 import type { Warranty } from '@/lib/types';
 
 const ALL_FIELDS: (keyof Omit<Warranty, 'id'>)[] = [
-  'codigo', 'descricao', 'fornecedor', 'quantidade', 'defeito', 'requisicaoVenda',
-  'requisicaoGarantia', 'nfCompra', 'valorCompra', 'cliente', 'mecanico',
+  'codigo', 'descricao', 'fornecedor', 'quantidade', 'defeito', 'requisicoes',
+  'nfCompra', 'valorCompra', 'cliente', 'mecanico',
   'notaRetorno', 'observacao', 'status', 'dataRegistro'
 ];
 
@@ -22,8 +22,7 @@ const FIELD_LABELS: Record<keyof Omit<Warranty, 'id'>, string> = {
     fornecedor: 'Fornecedor',
     quantidade: 'Quantidade',
     defeito: 'Defeito',
-    requisicaoVenda: 'Req. Venda',
-    requisicaoGarantia: 'Req. Garantia',
+    requisicoes: 'Requisições',
     nfCompra: 'NF Compra',
     valorCompra: 'Valor Compra',
     cliente: 'Cliente',

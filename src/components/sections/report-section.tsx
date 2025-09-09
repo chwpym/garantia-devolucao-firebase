@@ -68,7 +68,8 @@ export default function ReportSection() {
         warranty.fornecedor?.toLowerCase().includes(lowercasedTerm) ||
         warranty.cliente?.toLowerCase().includes(lowercasedTerm) ||
         warranty.defeito?.toLowerCase().includes(lowercasedTerm) ||
-        warranty.status?.toLowerCase().includes(lowercasedTerm)
+        warranty.status?.toLowerCase().includes(lowercasedTerm) ||
+        warranty.requisicoes?.toLowerCase().includes(lowercasedTerm)
       );
     });
   }, [searchTerm, warranties, dateRange]);
@@ -122,7 +123,7 @@ export default function ReportSection() {
               <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                      placeholder="Buscar por código, descrição, fornecedor, cliente, defeito ou status..."
+                      placeholder="Buscar por código, descrição, requisições, fornecedor, cliente, defeito ou status..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="w-full pl-10"

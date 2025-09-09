@@ -26,8 +26,7 @@ const formSchema = z.object({
   fornecedor: z.string().optional(),
   quantidade: z.coerce.number().min(0).optional(),
   defeito: z.string().optional(),
-  requisicaoVenda: z.string().optional(),
-  requisicaoGarantia: z.string().optional(),
+  requisicoes: z.string().optional(),
   nfCompra: z.string().optional(),
   valorCompra: z.string().optional(),
   cliente: z.string().optional(),
@@ -51,8 +50,7 @@ const defaultValues: WarrantyFormValues = {
   fornecedor: '',
   quantidade: 1,
   defeito: '',
-  requisicaoVenda: '',
-  requisicaoGarantia: '',
+  requisicoes: '',
   nfCompra: '',
   valorCompra: '',
   cliente: '',
@@ -306,11 +304,8 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear }: Warr
                     <FormField name="valorCompra" control={form.control} render={({ field }) => (
                         <FormItem><FormLabel>Valor Compra</FormLabel><FormControl><Input placeholder="R$ 0,00" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
-                    <FormField name="requisicaoVenda" control={form.control} render={({ field }) => (
-                    <FormItem><FormLabel>Requisição Venda</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField name="requisicaoGarantia" control={form.control} render={({ field }) => (
-                    <FormItem><FormLabel>Requisição Garantia</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                     <FormField name="requisicoes" control={form.control} render={({ field }) => (
+                        <FormItem className="md:col-span-2"><FormLabel>Requisições</FormLabel><FormControl><Textarea rows={1} placeholder="Separe múltiplas requisições por vírgula" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField name="notaRetorno" control={form.control} render={({ field }) => (
                     <FormItem><FormLabel>Nota Retorno</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
