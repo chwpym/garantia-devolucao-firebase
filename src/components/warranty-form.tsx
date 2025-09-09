@@ -34,6 +34,7 @@ const formSchema = z.object({
   notaFiscalRetorno: z.string().optional(),
   observacao: z.string().optional(),
   status: z.enum(['Em análise', 'Aprovada', 'Recusada', 'Paga']).optional(),
+  loteId: z.number().nullable().optional(),
 });
 
 type WarrantyFormValues = z.infer<typeof formSchema>;
@@ -59,6 +60,7 @@ const defaultValues: WarrantyFormValues = {
   notaFiscalRetorno: '',
   observacao: '',
   status: 'Em análise',
+  loteId: null,
 };
 
 export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModal = false }: WarrantyFormProps) {
