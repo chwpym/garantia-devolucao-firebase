@@ -13,7 +13,7 @@ import type { Warranty } from '@/lib/types';
 const ALL_FIELDS: (keyof Omit<Warranty, 'id'>)[] = [
   'codigo', 'descricao', 'quantidade', 'defeito', 'requisicaoVenda',
   'requisicaoGarantia', 'nfCompra', 'valorCompra', 'cliente', 'mecanico',
-  'notaRetorno', 'observacao'
+  'notaRetorno', 'observacao', 'status', 'dataRegistro'
 ];
 
 const FIELD_LABELS: Record<keyof Omit<Warranty, 'id'>, string> = {
@@ -28,7 +28,9 @@ const FIELD_LABELS: Record<keyof Omit<Warranty, 'id'>, string> = {
     cliente: 'Cliente',
     mecanico: 'Mecânico',
     notaRetorno: 'Nota Retorno',
-    observacao: 'Observação'
+    observacao: 'Observação',
+    status: 'Status',
+    dataRegistro: 'Data de Registro'
 };
 
 interface ReportGeneratorProps {
@@ -36,7 +38,9 @@ interface ReportGeneratorProps {
 }
 
 export default function ReportGenerator({ selectedWarrantyIds }: ReportGeneratorProps) {
-  const [selectedFields, setSelectedFields] = useState<string[]>(ALL_FIELDS);
+  const [selectedFields, setSelectedFields] = useState<string[]>([
+    'codigo', 'descricao', 'quantidade', 'defeito', 'cliente', 'status'
+  ]);
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 

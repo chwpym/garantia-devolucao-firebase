@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface WarrantyTableProps {
   warranties: Warranty[];
@@ -25,6 +26,18 @@ export default function WarrantyTable({ warranties, onEdit, onDelete }: Warranty
     setDeleteTarget(null);
   };
 
+  const getStatusVariant = (status: Warranty['status']) => {
+    switch (status) {
+      case 'Aprovada':
+        return 'default'; // Or a custom 'success' variant
+      case 'Recusada':
+        return 'destructive';
+      case 'Em análise':
+      default:
+        return 'secondary';
+    }
+  };
+
   return (
     <>
       <div className="border rounded-md">
@@ -35,7 +48,7 @@ export default function WarrantyTable({ warranties, onEdit, onDelete }: Warranty
               <TableHead>Código</TableHead>
               <TableHead>Descrição</TableHead>
               <TableHead>Cliente</TableHead>
-              <TableHead>Defeito</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead className="w-[50px] text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -49,7 +62,13 @@ export default function WarrantyTable({ warranties, onEdit, onDelete }: Warranty
                   <TableCell className="font-medium">{warranty.codigo || '-'}</TableCell>
                   <TableCell>{warranty.descricao || '-'}</TableCell>
                   <TableCell>{warranty.cliente || '-'}</TableCell>
-                  <TableCell>{warranty.defeito || '-'}</TableCell>
+                  <TableCell>
+                    {warranty.status ? (
+                        <Badge variant={getStatusVariant(warranty.status)}>{warranty.status}</Badge>
+                    ) : (
+                        <Badge variant="secondary">N/A</Badge>
+                    )}
+                  </TableCell>
                   <TableCell className="text-right">
                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>

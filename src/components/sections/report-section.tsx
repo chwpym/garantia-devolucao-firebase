@@ -13,6 +13,7 @@ import { DatePickerWithRange } from '@/components/ui/date-range-picker';
 import { Search } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
 import { addDays, parseISO } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
 
 export default function ReportSection() {
   const [warranties, setWarranties] = useState<Warranty[]>([]);
@@ -65,7 +66,8 @@ export default function ReportSection() {
         warranty.codigo?.toLowerCase().includes(lowercasedTerm) ||
         warranty.descricao?.toLowerCase().includes(lowercasedTerm) ||
         warranty.cliente?.toLowerCase().includes(lowercasedTerm) ||
-        warranty.defeito?.toLowerCase().includes(lowercasedTerm)
+        warranty.defeito?.toLowerCase().includes(lowercasedTerm) ||
+        warranty.status?.toLowerCase().includes(lowercasedTerm)
       );
     });
   }, [searchTerm, warranties, dateRange]);
@@ -93,6 +95,18 @@ export default function ReportSection() {
   
   const isAllSelected = filteredWarranties.length > 0 && selectedIds.size === filteredWarranties.length;
 
+  const getStatusVariant = (status: Warranty['status']) => {
+    switch (status) {
+      case 'Aprovada':
+        return 'default';
+      case 'Recusada':
+        return 'destructive';
+      case 'Em análise':
+      default:
+        return 'secondary';
+    }
+  };
+
   return (
     <div className="space-y-8">
        <Card className="shadow-lg">
@@ -107,7 +121,7 @@ export default function ReportSection() {
               <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                      placeholder="Buscar por código, descrição, cliente ou defeito..."
+                      placeholder="Buscar por código, descrição, cliente, defeito ou status..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="w-full pl-10"
@@ -129,7 +143,7 @@ export default function ReportSection() {
                   <TableHead>Código</TableHead>
                   <TableHead>Descrição</TableHead>
                   <TableHead>Cliente</TableHead>
-                  <TableHead>Defeito</TableHead>
+                  <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -146,7 +160,13 @@ export default function ReportSection() {
                       <TableCell className="font-medium">{warranty.codigo || '-'}</TableCell>
                       <TableCell>{warranty.descricao || '-'}</TableCell>
                       <TableCell>{warranty.cliente || '-'}</TableCell>
-                      <TableCell>{warranty.defeito || '-'}</TableCell>
+                      <TableCell>
+                        {warranty.status ? (
+                            <Badge variant={getStatusVariant(warranty.status)}>{warranty.status}</Badge>
+                        ) : (
+                            <Badge variant="secondary">N/A</Badge>
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : (

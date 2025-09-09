@@ -5,16 +5,19 @@ import type { Warranty } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Wrench, ShieldCheck, Hourglass, BarChart3 } from 'lucide-react';
+import { Wrench, ShieldCheck, Hourglass, BarChart3, ShieldX } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface DashboardStats {
   total: number;
   totalDefeitos: number;
+  pendentes: number;
+  aprovadas: number;
+  recusadas: number;
 }
 
 export default function DashboardSection() {
-  const [stats, setStats] = useState<DashboardStats>({ total: 0, totalDefeitos: 0 });
+  const [stats, setStats] = useState<DashboardStats>({ total: 0, totalDefeitos: 0, pendentes: 0, aprovadas: 0, recusadas: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
@@ -29,9 +32,16 @@ export default function DashboardSection() {
             return acc + (warranty.quantidade ?? 0);
         }, 0);
 
+        const pendentes = allWarranties.filter(w => w.status === 'Em análise').length;
+        const aprovadas = allWarranties.filter(w => w.status === 'Aprovada').length;
+        const recusadas = allWarranties.filter(w => w.status === 'Recusada').length;
+
         setStats({
           total: allWarranties.length,
-          totalDefeitos: totalDefeitos
+          totalDefeitos: totalDefeitos,
+          pendentes,
+          aprovadas,
+          recusadas,
         });
       } catch (error) {
         console.error('Failed to load warranty stats:', error);
@@ -58,7 +68,7 @@ export default function DashboardSection() {
             </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
             <Card className="shadow-md hover:border-primary transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total de Garantias</CardTitle>
@@ -77,7 +87,7 @@ export default function DashboardSection() {
                     <Hourglass className="h-4 w-4 text-amber-500" />
                 </CardHeader>
                 <CardContent>
-                    {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">...</div>}
+                    {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.pendentes}</div>}
                     <p className="text-xs text-muted-foreground">
                         Aguardando retorno do fornecedor
                     </p>
@@ -89,9 +99,21 @@ export default function DashboardSection() {
                     <ShieldCheck className="h-4 w-4 text-green-500" />
                 </CardHeader>
                 <CardContent>
-                    {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">...</div>}
+                    {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.aprovadas}</div>}
                     <p className="text-xs text-muted-foreground">
                         Crédito ou peça nova recebida
+                    </p>
+                </CardContent>
+            </Card>
+            <Card className="shadow-md hover:border-red-500 transition-colors">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Garantias Recusadas</CardTitle>
+                    <ShieldX className="h-4 w-4 text-red-500" />
+                </CardHeader>
+                <CardContent>
+                    {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.recusadas}</div>}
+                    <p className="text-xs text-muted-foreground">
+                        Negadas pelo fornecedor
                     </p>
                 </CardContent>
             </Card>

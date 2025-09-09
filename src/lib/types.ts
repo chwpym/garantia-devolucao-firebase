@@ -1,3 +1,5 @@
+export type WarrantyStatus = 'Em análise' | 'Aprovada' | 'Recusada';
+
 export interface Warranty {
   id?: number;
   codigo?: string;
@@ -13,4 +15,5 @@ export interface Warranty {
   notaRetorno?: string;
   observacao?: string;
   dataRegistro?: string;
+  status?: WarrantyStatus;
 }

@@ -19,9 +19,11 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { DatePickerWithRange } from '@/components/ui/date-range-picker';
+import RegisterSection from './register-section';
 
 export default function QuerySection() {
   const [warranties, setWarranties] = useState<Warranty[]>([]);
+  const [editingWarranty, setEditingWarranty] = useState<Warranty | null>(null);
   const [isDbReady, setIsDbReady] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -46,6 +48,10 @@ export default function QuerySection() {
 
   useEffect(() => {
     async function initializeDB() {
+      if (isDbReady) {
+        loadWarranties();
+        return;
+      }
       try {
         await db.initDB();
         setIsDbReady(true);
@@ -60,16 +66,36 @@ export default function QuerySection() {
       }
     }
     initializeDB();
-  }, [loadWarranties, toast]);
+  }, [loadWarranties, toast, isDbReady]);
 
   const handleEdit = (warranty: Warranty) => {
-    // For now, we just log this. We could navigate to the form with the item to edit.
-    console.log('Editing:', warranty);
-    toast({
-      title: 'Edição em Breve',
-      description:
-        'A funcionalidade para editar a partir daqui será implementada em breve.',
-    });
+    setEditingWarranty(warranty);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  
+  const handleSave = async (data: Omit<Warranty, 'id'>, id?: number) => {
+    try {
+      if (id) {
+        await db.updateWarranty({ ...data, id });
+        toast({ title: 'Sucesso', description: 'Garantia atualizada com sucesso.' });
+      } else {
+        await db.addWarranty(data);
+        toast({ title: 'Sucesso', description: 'Garantia salva com sucesso.' });
+      }
+      setEditingWarranty(null); // Clear editing state
+      await loadWarranties(); // Refresh data
+    } catch (error) {
+      console.error('Failed to save warranty:', error);
+      toast({
+        title: 'Erro ao Salvar',
+        description: 'Não foi possível salvar a garantia.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleClearForm = () => {
+    setEditingWarranty(null);
   };
 
   const handleDelete = async (id: number) => {
@@ -100,7 +126,6 @@ export default function QuerySection() {
         if (parseISO(warranty.dataRegistro) < from) return false;
       }
       if (to && warranty.dataRegistro) {
-        // To include the selected end date, we compare with the start of the next day
         const toDate = addDays(to, 1);
         if (parseISO(warranty.dataRegistro) >= toDate) return false;
       }
@@ -113,7 +138,8 @@ export default function QuerySection() {
         warranty.codigo?.toLowerCase().includes(lowercasedTerm) ||
         warranty.descricao?.toLowerCase().includes(lowercasedTerm) ||
         warranty.cliente?.toLowerCase().includes(lowercasedTerm) ||
-        warranty.defeito?.toLowerCase().includes(lowercasedTerm)
+        warranty.defeito?.toLowerCase().includes(lowercasedTerm) ||
+        warranty.status?.toLowerCase().includes(lowercasedTerm)
       );
     });
   }, [searchTerm, warranties, dateRange]);
@@ -128,32 +154,44 @@ export default function QuerySection() {
   }
 
   return (
-    <Card className="shadow-lg">
-      <CardHeader>
-        <CardTitle>Garantias Registradas</CardTitle>
-        <CardDescription>
-          Visualize, edite e exclua as garantias cadastradas.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-col md:flex-row gap-4 mb-4">
-            <div className="relative flex-1">
-                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                    placeholder="Buscar por código, descrição, cliente ou defeito..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10"
+    <div className='space-y-8'>
+        {editingWarranty && (
+            <div className="mb-8">
+                 <WarrantyForm
+                    key={editingWarranty?.id ?? 'edit'}
+                    selectedWarranty={editingWarranty}
+                    onSave={handleSave}
+                    onClear={handleClearForm}
                 />
             </div>
-             <DatePickerWithRange date={dateRange} setDate={setDateRange} />
-        </div>
-        <WarrantyTable
-          warranties={filteredWarranties}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
-      </CardContent>
-    </Card>
+        )}
+        <Card className="shadow-lg">
+        <CardHeader>
+            <CardTitle>Garantias Registradas</CardTitle>
+            <CardDescription>
+            Visualize, edite e exclua as garantias cadastradas.
+            </CardDescription>
+        </CardHeader>
+        <CardContent>
+            <div className="flex flex-col md:flex-row gap-4 mb-4">
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Buscar por código, descrição, cliente, defeito ou status..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-10"
+                    />
+                </div>
+                <DatePickerWithRange date={dateRange} setDate={setDateRange} />
+            </div>
+            <WarrantyTable
+            warranties={filteredWarranties}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            />
+        </CardContent>
+        </Card>
+    </div>
   );
 }
