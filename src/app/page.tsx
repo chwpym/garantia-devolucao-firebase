@@ -7,6 +7,8 @@ import DashboardSection from '@/components/sections/dashboard-section';
 import RegisterSection from '@/components/sections/register-section';
 import QuerySection from '@/components/sections/query-section';
 import ReportSection from '@/components/sections/report-section';
+import PersonsSection from '@/components/sections/persons-section';
+import SuppliersSection from '@/components/sections/suppliers-section';
 import BackupSection from '@/components/sections/backup-section';
 
 export default function Home() {
@@ -22,6 +24,10 @@ export default function Home() {
         return <QuerySection />;
       case 'reports':
         return <ReportSection />;
+      case 'persons':
+        return <PersonsSection />;
+      case 'suppliers':
+        return <SuppliersSection />;
       case 'backup':
         return <BackupSection />;
       default:

@@ -18,3 +18,16 @@ export interface Warranty {
   dataRegistro?: string;
   status?: WarrantyStatus;
 }
+
+export type PersonType = 'Cliente' | 'Mecânico' | 'Ambos';
+
+export interface Person {
+  id?: number;
+  name: string;
+  type: PersonType;
+}
+
+export interface Supplier {
+  id?: number;
+  name: string;
+}

@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Loader2 } from 'lucide-react';
 
-import type { Warranty, WarrantyStatus } from '@/lib/types';
+import type { Warranty, WarrantyStatus, Person, Supplier } from '@/lib/types';
+import * as db from '@/lib/db';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -60,6 +61,9 @@ const defaultValues: WarrantyFormValues = {
 
 export default function WarrantyForm({ selectedWarranty, onSave, onClear }: WarrantyFormProps) {
     const formRef = useRef<HTMLFormElement>(null);
+    const [persons, setPersons] = useState<Person[]>([]);
+    const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+
     const form = useForm<WarrantyFormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: selectedWarranty ? {
@@ -70,6 +74,20 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear }: Warr
     });
 
     const { isSubmitting } = form.formState;
+
+    useEffect(() => {
+        async function loadDropdownData() {
+            const allPersons = await db.getAllPersons();
+            const allSuppliers = await db.getAllSuppliers();
+            setPersons(allPersons);
+            setSuppliers(allSuppliers);
+        }
+        loadDropdownData();
+
+        const handleDataChanged = () => loadDropdownData();
+        window.addEventListener('datachanged', handleDataChanged);
+        return () => window.removeEventListener('datachanged', handleDataChanged);
+    }, []);
 
     useEffect(() => {
         form.reset(selectedWarranty ? {
@@ -102,31 +120,23 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear }: Warr
     }
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' && e.target instanceof HTMLElement) {
-            // Prevent form submission on Enter press, except for the submit button itself
-            if (e.target.tagName !== 'BUTTON' && (e.target.tagName !== 'TEXTAREA')) {
-                e.preventDefault();
-                
-                const formElements = formRef.current?.elements;
-                if (!formElements) return;
+        if (e.key === 'Enter' && e.target instanceof HTMLElement && !(e.target instanceof HTMLTextAreaElement)) {
+            e.preventDefault();
+            const formElements = Array.from(
+                formRef.current?.querySelectorAll('input, button, select, textarea') || []
+            ) as HTMLElement[];
+            
+            const focusable = formElements.filter(el => !el.hasAttribute('disabled') && !el.hasAttribute('readonly') && el.offsetParent !== null);
+            const currentIndex = focusable.indexOf(e.target as HTMLElement);
+            const nextElement = focusable[currentIndex + 1] as HTMLElement | undefined;
 
-                const focusable = Array.from(formElements).filter(
-                    (el: any) => el.offsetParent !== null && !el.readOnly && !el.disabled
-                );
-                
-                const currentIndex = focusable.indexOf(e.target as HTMLElement);
-                const nextElement = focusable[currentIndex + 1] as HTMLElement | undefined;
-
-                if (nextElement) {
-                    nextElement.focus();
-                } else {
-                     // If it's the last element, you might want to focus the submit button
-                    const submitButton = Array.from(formElements).find((el: any) => el.type === 'submit') as HTMLElement | undefined;
-                    submitButton?.focus();
-                }
-            }
+            nextElement?.focus();
         }
     };
+
+    const clients = persons.filter(p => p.type === 'Cliente' || p.type === 'Ambos');
+    const mechanics = persons.filter(p => p.type === 'Mecânico' || p.type === 'Ambos');
+
 
     return (
         <Card className="w-full shadow-lg">
@@ -149,9 +159,26 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear }: Warr
                     <FormField name="quantidade" control={form.control} render={({ field }) => (
                     <FormItem><FormLabel>Quantidade</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
-                    <FormField name="fornecedor" control={form.control} render={({ field }) => (
-                        <FormItem className="md:col-span-2"><FormLabel>Fornecedor</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
+                     <FormField
+                        control={form.control}
+                        name="fornecedor"
+                        render={({ field }) => (
+                            <FormItem className="md:col-span-2">
+                                <FormLabel>Fornecedor</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                    <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecione um fornecedor" />
+                                    </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {suppliers.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                        />
                      <FormField name="defeito" control={form.control} render={({ field }) => (
                         <FormItem className="md:col-span-2"><FormLabel>Defeito Apresentado</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
@@ -163,12 +190,46 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear }: Warr
                 <div className="space-y-4">
                 <h3 className="text-lg font-medium text-foreground">Dados Fiscais e de Venda</h3>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <FormField name="cliente" control={form.control} render={({ field }) => (
-                        <FormItem className="md:col-span-2"><FormLabel>Cliente</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField name="mecanico" control={form.control} render={({ field }) => (
-                        <FormItem className="md:col-span-2"><FormLabel>Mecânico</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
+                    <FormField
+                        control={form.control}
+                        name="cliente"
+                        render={({ field }) => (
+                            <FormItem className="md:col-span-2">
+                                <FormLabel>Cliente</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                    <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecione um cliente" />
+                                    </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {clients.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                    <FormField
+                        control={form.control}
+                        name="mecanico"
+                        render={({ field }) => (
+                            <FormItem className="md:col-span-2">
+                                <FormLabel>Mecânico</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                    <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecione um mecânico" />
+                                    </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {mechanics.map(m => <SelectItem key={m.id} value={m.name}>{m.name}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                        />
                     <FormField name="nfCompra" control={form.control} render={({ field }) => (
                     <FormItem><FormLabel>NF Compra</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
