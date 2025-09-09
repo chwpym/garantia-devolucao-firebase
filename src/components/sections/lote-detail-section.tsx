@@ -27,6 +27,7 @@ import WarrantyForm from '../warranty-form';
 import LoteForm from '../lote-form';
 import { Checkbox } from '../ui/checkbox';
 import { Input } from '../ui/input';
+import { Textarea } from '../ui/textarea';
 
 interface LoteDetailSectionProps {
   loteId: number;
@@ -34,6 +35,50 @@ interface LoteDetailSectionProps {
 }
 
 const warrantyStatuses: WarrantyStatus[] = ['Em análise', 'Aprovada', 'Recusada', 'Paga'];
+
+const EditableObservationCell = ({ warranty, onSave }: { warranty: Warranty, onSave: (value: string) => void }) => {
+    const [value, setValue] = useState(warranty.observacao || '');
+    const [isEditing, setIsEditing] = useState(false);
+
+    const handleSave = () => {
+        setIsEditing(false);
+        if (value !== warranty.observacao) {
+            onSave(value);
+        }
+    }
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSave();
+        } else if (e.key === 'Escape') {
+            setIsEditing(false);
+            setValue(warranty.observacao || '');
+        }
+    }
+
+    if (isEditing) {
+        return (
+            <Textarea
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                onBlur={handleSave}
+                onKeyDown={handleKeyDown}
+                autoFocus
+                className="text-sm"
+            />
+        )
+    }
+
+    return (
+        <div 
+            onClick={() => setIsEditing(true)} 
+            className="w-full h-full cursor-pointer min-h-[36px] p-2 rounded-md hover:bg-muted/50"
+        >
+            {value || <span className="text-muted-foreground">-</span>}
+        </div>
+    )
+}
 
 export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionProps) {
   const [lote, setLote] = useState<Lote | null>(null);
@@ -247,6 +292,25 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
       });
     }
   };
+  
+  const handleObservationSave = async (warranty: Warranty, observation: string) => {
+    try {
+        const updatedWarranty = { ...warranty, observacao };
+        await db.updateWarranty(updatedWarranty);
+        toast({
+            title: 'Observação Atualizada',
+            description: 'A observação foi salva com sucesso.',
+        });
+        window.dispatchEvent(new CustomEvent('datachanged'));
+    } catch (error) {
+        console.error('Failed to update observation:', error);
+        toast({
+            title: 'Erro',
+            description: 'Não foi possível salvar a observação.',
+            variant: 'destructive'
+        });
+    }
+  }
 
   const isAllSelected = warranties.length > 0 && selectedWarrantyIds.size === warranties.length;
 
@@ -352,7 +416,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                     </TableHead>
                     <TableHead>Código</TableHead>
                     <TableHead>Descrição</TableHead>
-                    <TableHead>Observação</TableHead>
+                    <TableHead className="w-[300px]">Observação</TableHead>
                     <TableHead>NF Retorno</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="w-[50px] text-right">Ações</TableHead>
@@ -371,7 +435,12 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                         </TableCell>
                         <TableCell className="font-medium">{warranty.codigo || '-'}</TableCell>
                         <TableCell>{warranty.descricao || '-'}</TableCell>
-                        <TableCell className='max-w-xs truncate'>{warranty.observacao || '-'}</TableCell>
+                        <TableCell>
+                            <EditableObservationCell 
+                                warranty={warranty}
+                                onSave={(value) => handleObservationSave(warranty, value)}
+                            />
+                        </TableCell>
                         <TableCell>{warranty.notaFiscalRetorno || '-'}</TableCell>
                         <TableCell>
                           <Badge variant={getWarrantyStatusVariant(warranty.status)}>{warranty.status || 'N/A'}</Badge>

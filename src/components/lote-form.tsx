@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Loader2 } from 'lucide-react';
-import type { Lote, Supplier } from '@/lib/types';
+import type { Lote, Supplier, LoteStatus } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 
@@ -16,10 +16,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from './ui/textarea';
 
+const loteStatuses: LoteStatus[] = ['Aberto', 'Enviado', 'Aprovado Parcialmente', 'Aprovado Totalmente', 'Recusado'];
+
 const formSchema = z.object({
   nome: z.string().min(2, { message: 'O nome do lote deve ter pelo menos 2 caracteres.' }),
   fornecedor: z.string({ required_error: 'Selecione um fornecedor.' }),
   notasFiscaisRetorno: z.string().optional(),
+  status: z.enum(loteStatuses, { required_error: 'Selecione um status.' }),
 });
 
 type LoteFormValues = z.infer<typeof formSchema>;
@@ -34,14 +37,14 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
   const { toast } = useToast();
   const form = useForm<LoteFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: editingLote || { nome: '', fornecedor: '', notasFiscaisRetorno: '' },
+    defaultValues: editingLote || { nome: '', fornecedor: '', notasFiscaisRetorno: '', status: 'Aberto' },
   });
 
   useEffect(() => {
     form.reset(editingLote ? {
       ...editingLote,
       notasFiscaisRetorno: editingLote.notasFiscaisRetorno || '',
-    } : { nome: '', fornecedor: '', notasFiscaisRetorno: '' });
+    } : { nome: '', fornecedor: '', notasFiscaisRetorno: '', status: 'Aberto' });
   }, [editingLote, form]);
 
   const { isSubmitting } = form.formState;
@@ -129,6 +132,28 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
                 <FormDescription>
                     Se houver mais de uma, separe por vírgulas. Ex: 12345, 67890
                 </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            name="status"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Status do Lote</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Selecione um status para o lote" />
+                        </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                        {loteStatuses.map(status => (
+                            <SelectItem key={status} value={status}>{status}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
