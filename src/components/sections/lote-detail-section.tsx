@@ -346,6 +346,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                     </TableHead>
                     <TableHead>Código</TableHead>
                     <TableHead>Descrição</TableHead>
+                    <TableHead>Observação</TableHead>
                     <TableHead>NF Retorno</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="w-[50px] text-right">Ações</TableHead>
@@ -364,6 +365,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                         </TableCell>
                         <TableCell className="font-medium">{warranty.codigo || '-'}</TableCell>
                         <TableCell>{warranty.descricao || '-'}</TableCell>
+                        <TableCell className='max-w-xs truncate'>{warranty.observacao || '-'}</TableCell>
                         <TableCell>{warranty.notaFiscalRetorno || '-'}</TableCell>
                         <TableCell>
                           <Badge variant={getWarrantyStatusVariant(warranty.status)}>{warranty.status || 'N/A'}</Badge>
@@ -408,7 +410,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} className="h-24 text-center">
+                      <TableCell colSpan={7} className="h-24 text-center">
                         Nenhuma garantia adicionada a este lote ainda.
                       </TableCell>
                     </TableRow>
