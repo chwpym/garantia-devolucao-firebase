@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/icons';
-import { LayoutDashboard, FileText, Settings, Search, PlusSquare, PanelLeft } from 'lucide-react';
+import { LayoutDashboard, FileText, Settings, Search, PlusSquare, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 
@@ -72,8 +72,8 @@ export default function AppLayout({ children, activeView, setActiveView }: AppLa
       </aside>
       <div className="flex flex-1 flex-col">
         <header className="p-4 border-b bg-background shadow-sm sticky top-0 z-10 flex items-center gap-4 h-16">
-            <Button variant="ghost" size="icon" className="h-8 w-8 hidden md:inline-flex" onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}>
-                <PanelLeft className="h-5 w-5" />
+            <Button variant="ghost" size="icon" className="h-8 w-8 hidden md:inline-flex" onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} title={isSidebarCollapsed ? 'Expandir menu' : 'Recolher menu'}>
+                {isSidebarCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
             </Button>
             
             <div className="md:hidden flex items-center gap-3">
