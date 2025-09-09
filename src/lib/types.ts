@@ -1,4 +1,4 @@
-export type WarrantyStatus = 'Em análise' | 'Aprovada' | 'Recusada';
+export type WarrantyStatus = 'Em análise' | 'Aprovada' | 'Recusada' | 'Paga';
 
 export interface Warranty {
   id?: number;

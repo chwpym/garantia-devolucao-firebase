@@ -33,7 +33,7 @@ const formSchema = z.object({
   mecanico: z.string().optional(),
   notaRetorno: z.string().optional(),
   observacao: z.string().optional(),
-  status: z.enum(['Em análise', 'Aprovada', 'Recusada']).optional(),
+  status: z.enum(['Em análise', 'Aprovada', 'Recusada', 'Paga']).optional(),
 });
 
 type WarrantyFormValues = z.infer<typeof formSchema>;
@@ -326,6 +326,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear }: Warr
                                         <SelectItem value="Em análise">Em análise</SelectItem>
                                         <SelectItem value="Aprovada">Aprovada</SelectItem>
                                         <SelectItem value="Recusada">Recusada</SelectItem>
+                                        <SelectItem value="Paga">Paga</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <FormMessage />

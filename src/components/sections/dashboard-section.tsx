@@ -5,7 +5,7 @@ import type { Warranty } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Wrench, ShieldCheck, Hourglass, BarChart3, ShieldX } from 'lucide-react';
+import { Wrench, ShieldCheck, Hourglass, BarChart3, ShieldX, CheckCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 
@@ -15,10 +15,11 @@ interface DashboardStats {
   pendentes: number;
   aprovadas: number;
   recusadas: number;
+  pagas: number;
 }
 
 export default function DashboardSection() {
-  const [stats, setStats] = useState<DashboardStats>({ total: 0, totalDefeitos: 0, pendentes: 0, aprovadas: 0, recusadas: 0 });
+  const [stats, setStats] = useState<DashboardStats>({ total: 0, totalDefeitos: 0, pendentes: 0, aprovadas: 0, recusadas: 0, pagas: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
@@ -35,6 +36,7 @@ export default function DashboardSection() {
       const pendentes = allWarranties.filter(w => w.status === 'Em análise').length;
       const aprovadas = allWarranties.filter(w => w.status === 'Aprovada').length;
       const recusadas = allWarranties.filter(w => w.status === 'Recusada').length;
+      const pagas = allWarranties.filter(w => w.status === 'Paga').length;
 
       setStats({
         total: allWarranties.length,
@@ -42,6 +44,7 @@ export default function DashboardSection() {
         pendentes,
         aprovadas,
         recusadas,
+        pagas
       });
     } catch (error) {
       console.error('Failed to load warranty stats:', error);
@@ -80,7 +83,7 @@ export default function DashboardSection() {
             </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
             <Card className="shadow-md hover:border-primary transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total de Garantias</CardTitle>
@@ -114,6 +117,18 @@ export default function DashboardSection() {
                     {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.aprovadas}</div>}
                     <p className="text-xs text-muted-foreground">
                         Crédito ou peça nova recebida
+                    </p>
+                </CardContent>
+            </Card>
+            <Card className="shadow-md hover:border-blue-500 transition-colors">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Garantias Pagas</CardTitle>
+                    <CheckCircle className="h-4 w-4 text-blue-500" />
+                </CardHeader>
+                <CardContent>
+                    {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.pagas}</div>}
+                    <p className="text-xs text-muted-foreground">
+                        Finalizadas e pagas ao cliente
                     </p>
                 </CardContent>
             </Card>

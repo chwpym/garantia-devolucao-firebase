@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import ReportGenerator from '@/components/report-generator';
-import type { Warranty } from '@/lib/types';
+import type { Warranty, WarrantyStatus } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -14,11 +14,13 @@ import { Search } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
 import { addDays, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function ReportSection() {
   const [warranties, setWarranties] = useState<Warranty[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<WarrantyStatus | 'Todos'>('Todos');
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: addDays(new Date(), -30),
     to: new Date(),
@@ -47,6 +49,11 @@ export default function ReportSection() {
     const lowercasedTerm = searchTerm.toLowerCase();
     
     return warranties.filter(warranty => {
+      // Status filter
+      if (statusFilter !== 'Todos' && warranty.status !== statusFilter) {
+        return false;
+      }
+
       // Date filter
       const { from, to } = dateRange || {};
       if (from && warranty.dataRegistro) {
@@ -72,7 +79,7 @@ export default function ReportSection() {
         warranty.requisicoes?.toLowerCase().includes(lowercasedTerm)
       );
     });
-  }, [searchTerm, warranties, dateRange]);
+  }, [searchTerm, warranties, dateRange, statusFilter]);
 
 
   const handleSelectionChange = (id: number) => {
@@ -103,6 +110,8 @@ export default function ReportSection() {
         return 'default';
       case 'Recusada':
         return 'destructive';
+      case 'Paga':
+        return 'outline';
       case 'Em análise':
       default:
         return 'secondary';
@@ -129,6 +138,18 @@ export default function ReportSection() {
                       className="w-full pl-10"
                   />
               </div>
+               <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as any)}>
+                    <SelectTrigger className="w-full md:w-[180px]">
+                        <SelectValue placeholder="Filtrar por status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="Todos">Todos Status</SelectItem>
+                        <SelectItem value="Em análise">Em análise</SelectItem>
+                        <SelectItem value="Aprovada">Aprovada</SelectItem>
+                        <SelectItem value="Recusada">Recusada</SelectItem>
+                        <SelectItem value="Paga">Paga</SelectItem>
+                    </SelectContent>
+                </Select>
               <DatePickerWithRange date={dateRange} setDate={setDateRange} />
           </div>
           <div className="border rounded-md">

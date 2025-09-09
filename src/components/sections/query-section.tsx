@@ -27,7 +27,7 @@ export default function QuerySection() {
   const [isDbReady, setIsDbReady] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: addDays(new Date(), -30),
+    from: addDays(new Date(), -90),
     to: new Date(),
   });
   const { toast } = useToast();
@@ -48,6 +48,7 @@ export default function QuerySection() {
 
   const refreshData = useCallback(() => {
     loadWarranties();
+    window.dispatchEvent(new CustomEvent('datachanged'));
   }, [loadWarranties]);
 
   useEffect(() => {
@@ -93,8 +94,8 @@ export default function QuerySection() {
         toast({ title: 'Sucesso', description: 'Garantia salva com sucesso.' });
       }
       setEditingWarranty(null); // Clear editing state
-      await loadWarranties(); // Refresh data
-    } catch (error) {
+      refreshData(); // Refresh data
+    } catch (error)      {
       console.error('Failed to save warranty:', error);
       toast({
         title: 'Erro ao Salvar',
@@ -115,7 +116,7 @@ export default function QuerySection() {
         title: 'Sucesso',
         description: 'Garantia excluída com sucesso.',
       });
-      await loadWarranties();
+      refreshData();
     } catch (error) {
       console.error('Failed to delete warranty:', error);
       toast({

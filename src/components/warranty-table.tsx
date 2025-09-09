@@ -29,9 +29,11 @@ export default function WarrantyTable({ warranties, onEdit, onDelete }: Warranty
   const getStatusVariant = (status: Warranty['status']) => {
     switch (status) {
       case 'Aprovada':
-        return 'default'; // Or a custom 'success' variant
+        return 'default';
       case 'Recusada':
         return 'destructive';
+      case 'Paga':
+        return 'outline';
       case 'Em análise':
       default:
         return 'secondary';
