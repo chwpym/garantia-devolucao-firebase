@@ -1,0 +1,150 @@
+'use client';
+
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Loader2 } from 'lucide-react';
+import type { Supplier } from '@/lib/types';
+import * as db from '@/lib/db';
+import { useToast } from '@/hooks/use-toast';
+
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { CardContent, CardFooter } from '@/components/ui/card';
+
+const formSchema = z.object({
+  razaoSocial: z.string().min(2, { message: 'A razão social deve ter pelo menos 2 caracteres.' }),
+  nomeFantasia: z.string().min(2, { message: 'O nome fantasia deve ter pelo menos 2 caracteres.' }),
+  cnpj: z.string().optional(),
+  cidade: z.string().optional(),
+});
+
+type SupplierFormValues = z.infer<typeof formSchema>;
+
+interface SupplierFormProps {
+  onSave: (newSupplier: Supplier) => void;
+  editingSupplier?: Supplier | null;
+  onClear?: () => void;
+}
+
+const defaultFormValues: SupplierFormValues = {
+  razaoSocial: '',
+  nomeFantasia: '',
+  cnpj: '',
+  cidade: ''
+};
+
+export default function SupplierForm({ onSave, editingSupplier, onClear }: SupplierFormProps) {
+  const { toast } = useToast();
+  const form = useForm<SupplierFormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: editingSupplier || defaultFormValues,
+  });
+
+  useEffect(() => {
+    form.reset(editingSupplier || defaultFormValues);
+  }, [editingSupplier, form]);
+
+  const { isSubmitting } = form.formState;
+
+  const handleSave = async (data: SupplierFormValues) => {
+    try {
+      const dataToSave = {
+        ...data,
+        cnpj: data.cnpj || '',
+        cidade: data.cidade || ''
+      };
+
+      if (editingSupplier?.id) {
+        const updatedSupplier = { ...dataToSave, id: editingSupplier.id }
+        await db.updateSupplier(updatedSupplier);
+        toast({ title: 'Sucesso', description: 'Fornecedor atualizado com sucesso.' });
+        onSave(updatedSupplier)
+      } else {
+        const id = await db.addSupplier(dataToSave);
+        const newSupplier = { ...dataToSave, id };
+        toast({ title: 'Sucesso', description: 'Fornecedor salvo com sucesso.' });
+        onSave(newSupplier);
+      }
+      form.reset(defaultFormValues);
+      window.dispatchEvent(new CustomEvent('datachanged'));
+    } catch (error) {
+      console.error('Failed to save supplier:', error);
+      toast({
+        title: 'Erro ao Salvar',
+        description: 'Não foi possível salvar o fornecedor.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSave)}>
+        <CardContent className="space-y-4 pt-4">
+          <FormField
+            name="nomeFantasia"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nome Fantasia</FormLabel>
+                <FormControl>
+                  <Input placeholder="Nome da Empresa" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            name="razaoSocial"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Razão Social</FormLabel>
+                <FormControl>
+                  <Input placeholder="Razão Social Ltda." {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            name="cnpj"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>CNPJ</FormLabel>
+                <FormControl>
+                  <Input placeholder="00.000.000/0000-00" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            name="cidade"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Cidade</FormLabel>
+                <FormControl>
+                  <Input placeholder="Cidade - UF" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </CardContent>
+        <CardFooter className="flex justify-end gap-2 pr-0">
+          {onClear && <Button type="button" variant="outline" onClick={onClear}>Limpar</Button>}
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            {editingSupplier ? 'Atualizar' : 'Salvar'}
+          </Button>
+        </CardFooter>
+      </form>
+    </Form>
+  );
+}

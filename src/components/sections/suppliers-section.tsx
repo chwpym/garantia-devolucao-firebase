@@ -5,16 +5,12 @@ import { useEffect, useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { Supplier } from '@/lib/types';
 import * as db from '@/lib/db';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from '@/components/ui/card';
 import {
   Table,
@@ -40,26 +36,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Pencil, Trash2, Loader2 } from 'lucide-react';
-
-const formSchema = z.object({
-  razaoSocial: z.string().min(2, { message: 'A razão social deve ter pelo menos 2 caracteres.' }),
-  nomeFantasia: z.string().min(2, { message: 'O nome fantasia deve ter pelo menos 2 caracteres.' }),
-  cnpj: z.string().optional(),
-  cidade: z.string().optional(),
-});
-
-type SupplierFormValues = z.infer<typeof formSchema>;
-
-const defaultFormValues: SupplierFormValues = {
-  razaoSocial: '',
-  nomeFantasia: '',
-  cnpj: '',
-  cidade: ''
-};
+import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import SupplierForm from '../supplier-form';
 
 export default function SuppliersSection() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -67,12 +46,6 @@ export default function SuppliersSection() {
   const [deleteTarget, setDeleteTarget] = useState<Supplier | null>(null);
   const [isDbReady, setIsDbReady] = useState(false);
   const { toast } = useToast();
-
-  const form = useForm<SupplierFormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: defaultFormValues,
-  });
-  const { isSubmitting } = form.formState;
 
   const loadSuppliers = useCallback(async () => {
     try {
@@ -108,44 +81,20 @@ export default function SuppliersSection() {
       }
     }
     initializeDB();
+    
+    window.addEventListener('datachanged', loadSuppliers);
+    return () => {
+      window.removeEventListener('datachanged', loadSuppliers);
+    };
   }, [loadSuppliers, toast, isDbReady]);
   
-  useEffect(() => {
-    form.reset(editingSupplier ? editingSupplier : defaultFormValues);
-  }, [editingSupplier, form]);
 
-  const handleSave = async (data: SupplierFormValues) => {
-    try {
-      const dataToSave = {
-        ...data,
-        cnpj: data.cnpj || '',
-        cidade: data.cidade || ''
-      };
-
-      if (editingSupplier?.id) {
-        await db.updateSupplier({ ...dataToSave, id: editingSupplier.id });
-        toast({ title: 'Sucesso', description: 'Fornecedor atualizado com sucesso.' });
-      } else {
-        await db.addSupplier(dataToSave);
-        toast({ title: 'Sucesso', description: 'Fornecedor salvo com sucesso.' });
-      }
-      setEditingSupplier(null);
-      form.reset(defaultFormValues);
-      await loadSuppliers();
-      window.dispatchEvent(new CustomEvent('datachanged'));
-    } catch (error) {
-      console.error('Failed to save supplier:', error);
-      toast({
-        title: 'Erro ao Salvar',
-        description: 'Não foi possível salvar o fornecedor.',
-        variant: 'destructive',
-      });
-    }
+  const handleSave = (savedSupplier: Supplier) => {
+    setEditingSupplier(null);
   };
 
   const handleClearForm = () => {
     setEditingSupplier(null);
-    form.reset(defaultFormValues);
   };
 
   const handleDelete = async (id: number) => {
@@ -155,8 +104,6 @@ export default function SuppliersSection() {
         title: 'Sucesso',
         description: 'Fornecedor excluído com sucesso.',
       });
-      await loadSuppliers();
-      window.dispatchEvent(new CustomEvent('datachanged'));
     } catch (error) {
       console.error('Failed to delete supplier:', error);
       toast({
@@ -182,71 +129,11 @@ export default function SuppliersSection() {
             <CardTitle>{editingSupplier ? 'Editar Fornecedor' : 'Novo Fornecedor'}</CardTitle>
             <CardDescription>Preencha os dados do fornecedor abaixo.</CardDescription>
           </CardHeader>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSave)}>
-              <CardContent className="space-y-4">
-                <FormField
-                  name="nomeFantasia"
-                  control={form.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nome Fantasia</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Nome da Empresa" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  name="razaoSocial"
-                  control={form.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Razão Social</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Razão Social Ltda." {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  name="cnpj"
-                  control={form.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>CNPJ</FormLabel>
-                      <FormControl>
-                        <Input placeholder="00.000.000/0000-00" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  name="cidade"
-                  control={form.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Cidade</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Cidade - UF" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-              <CardFooter className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={handleClearForm}>Limpar</Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  {editingSupplier ? 'Atualizar' : 'Salvar'}
-                </Button>
-              </CardFooter>
-            </form>
-          </Form>
+          <SupplierForm 
+            onSave={handleSave} 
+            editingSupplier={editingSupplier} 
+            onClear={handleClearForm} 
+          />
         </Card>
       </div>
 

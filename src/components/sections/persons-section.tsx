@@ -1,20 +1,16 @@
 
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import type { Person, PersonType } from '@/lib/types';
+import type { Person } from '@/lib/types';
 import * as db from '@/lib/db';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from '@/components/ui/card';
 import {
   Table,
@@ -40,19 +36,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MoreHorizontal, Pencil, Trash2, Loader2 } from 'lucide-react';
-import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
+import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import PersonForm from '../person-form';
 
-const formSchema = z.object({
-  name: z.string().min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' }),
-  type: z.enum(['Cliente', 'Mecânico', 'Ambos'], { required_error: 'Selecione um tipo.' }),
-});
-
-type PersonFormValues = z.infer<typeof formSchema>;
 
 export default function PersonsSection() {
   const [persons, setPersons] = useState<Person[]>([]);
@@ -60,12 +48,6 @@ export default function PersonsSection() {
   const [deleteTarget, setDeleteTarget] = useState<Person | null>(null);
   const [isDbReady, setIsDbReady] = useState(false);
   const { toast } = useToast();
-
-  const form = useForm<PersonFormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: { name: '', type: 'Cliente' },
-  });
-  const { isSubmitting } = form.formState;
 
   const loadPersons = useCallback(async () => {
     try {
@@ -101,38 +83,20 @@ export default function PersonsSection() {
       }
     }
     initializeDB();
+    
+    window.addEventListener('datachanged', loadPersons);
+    return () => {
+      window.removeEventListener('datachanged', loadPersons);
+    };
   }, [loadPersons, toast, isDbReady]);
 
-  useEffect(() => {
-    form.reset(editingPerson ? { name: editingPerson.name, type: editingPerson.type } : { name: '', type: 'Cliente' });
-  }, [editingPerson, form]);
-  
-  const handleSave = async (data: PersonFormValues) => {
-    try {
-      if (editingPerson?.id) {
-        await db.updatePerson({ ...data, id: editingPerson.id });
-        toast({ title: 'Sucesso', description: 'Registro atualizado com sucesso.' });
-      } else {
-        await db.addPerson(data);
-        toast({ title: 'Sucesso', description: 'Registro salvo com sucesso.' });
-      }
-      setEditingPerson(null);
-      form.reset({ name: '', type: 'Cliente' });
-      await loadPersons();
-      window.dispatchEvent(new CustomEvent('datachanged'));
-    } catch (error) {
-      console.error('Failed to save person:', error);
-      toast({
-        title: 'Erro ao Salvar',
-        description: 'Não foi possível salvar o registro.',
-        variant: 'destructive',
-      });
-    }
+
+  const handleSave = (savedPerson: Person) => {
+    setEditingPerson(null);
   };
 
   const handleClearForm = () => {
     setEditingPerson(null);
-    form.reset({ name: '', type: 'Cliente' });
   };
 
   const handleDelete = async (id: number) => {
@@ -142,8 +106,6 @@ export default function PersonsSection() {
         title: 'Sucesso',
         description: 'Registro excluído com sucesso.',
       });
-      await loadPersons();
-      window.dispatchEvent(new CustomEvent('datachanged'));
     } catch (error) {
       console.error('Failed to delete person:', error);
       toast({
@@ -161,7 +123,7 @@ export default function PersonsSection() {
     setDeleteTarget(null);
   };
   
-  const getTypeVariant = (type: PersonType) => {
+  const getTypeVariant = (type: Person['type']) => {
     switch (type) {
       case 'Cliente':
         return 'secondary';
@@ -183,68 +145,11 @@ export default function PersonsSection() {
             <CardTitle>{editingPerson ? 'Editar Registro' : 'Novo Cliente/Mecânico'}</CardTitle>
             <CardDescription>Preencha os dados abaixo.</CardDescription>
           </CardHeader>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSave)}>
-              <CardContent className="space-y-4">
-                <FormField
-                  name="name"
-                  control={form.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nome Completo</FormLabel>
-                      <FormControl>
-                        <Input placeholder="John Doe" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="type"
-                  render={({ field }) => (
-                    <FormItem className="space-y-3">
-                      <FormLabel>Tipo</FormLabel>
-                      <FormControl>
-                        <RadioGroup
-                          onValueChange={field.onChange}
-                          value={field.value}
-                          className="flex flex-col space-y-1"
-                        >
-                          <FormItem className="flex items-center space-x-3 space-y-0">
-                            <FormControl>
-                              <RadioGroupItem value="Cliente" />
-                            </FormControl>
-                            <FormLabel className="font-normal">Cliente</FormLabel>
-                          </FormItem>
-                          <FormItem className="flex items-center space-x-3 space-y-0">
-                            <FormControl>
-                              <RadioGroupItem value="Mecânico" />
-                            </FormControl>
-                            <FormLabel className="font-normal">Mecânico</FormLabel>
-                          </FormItem>
-                          <FormItem className="flex items-center space-x-3 space-y-0">
-                            <FormControl>
-                              <RadioGroupItem value="Ambos" />
-                            </FormControl>
-                            <FormLabel className="font-normal">Ambos</FormLabel>
-                          </FormItem>
-                        </RadioGroup>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-              <CardFooter className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={handleClearForm}>Limpar</Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  {editingPerson ? 'Atualizar' : 'Salvar'}
-                </Button>
-              </CardFooter>
-            </form>
-          </Form>
+          <PersonForm 
+            onSave={handleSave}
+            editingPerson={editingPerson}
+            onClear={handleClearForm}
+          />
         </Card>
       </div>
 

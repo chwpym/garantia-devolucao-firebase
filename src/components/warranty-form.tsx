@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2 } from 'lucide-react';
+import { Loader2, PlusCircle } from 'lucide-react';
 
-import type { Warranty, WarrantyStatus, Person, Supplier } from '@/lib/types';
+import type { Warranty, Person, Supplier } from '@/lib/types';
 import * as db from '@/lib/db';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +15,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import SupplierForm from './supplier-form';
+import PersonForm from './person-form';
 
 
 const formSchema = z.object({
@@ -64,6 +67,10 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear }: Warr
     const [persons, setPersons] = useState<Person[]>([]);
     const [suppliers, setSuppliers] = useState<Supplier[]>([]);
 
+    const [isSupplierModalOpen, setSupplierModalOpen] = useState(false);
+    const [isPersonModalOpen, setPersonModalOpen] = useState(false);
+
+
     const form = useForm<WarrantyFormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: selectedWarranty ? {
@@ -75,13 +82,14 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear }: Warr
 
     const { isSubmitting } = form.formState;
 
+    const loadDropdownData = async () => {
+        const allPersons = await db.getAllPersons();
+        const allSuppliers = await db.getAllSuppliers();
+        setPersons(allPersons.sort((a, b) => a.name.localeCompare(b.name)));
+        setSuppliers(allSuppliers.sort((a, b) => a.nomeFantasia.localeCompare(b.nomeFantasia)));
+    }
+
     useEffect(() => {
-        async function loadDropdownData() {
-            const allPersons = await db.getAllPersons();
-            const allSuppliers = await db.getAllSuppliers();
-            setPersons(allPersons);
-            setSuppliers(allSuppliers);
-        }
         loadDropdownData();
 
         const handleDataChanged = () => loadDropdownData();
@@ -133,6 +141,23 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear }: Warr
             nextElement?.focus();
         }
     };
+    
+    const handleSupplierSaved = (newSupplier: Supplier) => {
+        loadDropdownData();
+        setSupplierModalOpen(false);
+        form.setValue('fornecedor', newSupplier.nomeFantasia);
+    };
+
+    const handlePersonSaved = (newPerson: Person) => {
+        loadDropdownData();
+        setPersonModalOpen(false);
+        if (newPerson.type === 'Cliente' || newPerson.type === 'Ambos') {
+             form.setValue('cliente', newPerson.name);
+        }
+        if (newPerson.type === 'Mecânico' || newPerson.type === 'Ambos') {
+             form.setValue('mecanico', newPerson.name);
+        }
+    };
 
     const clients = persons.filter(p => p.type === 'Cliente' || p.type === 'Ambos');
     const mechanics = persons.filter(p => p.type === 'Mecânico' || p.type === 'Ambos');
@@ -159,22 +184,37 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear }: Warr
                     <FormField name="quantidade" control={form.control} render={({ field }) => (
                     <FormItem><FormLabel>Quantidade</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
-                     <FormField
+                    <FormField
                         control={form.control}
                         name="fornecedor"
                         render={({ field }) => (
                             <FormItem className="md:col-span-2">
                                 <FormLabel>Fornecedor</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                    <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Selecione um fornecedor" />
-                                    </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {suppliers.map(s => <SelectItem key={s.id} value={s.nomeFantasia}>{s.nomeFantasia}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
+                                <div className="flex items-center gap-2">
+                                    <Select onValueChange={field.onChange} value={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Selecione um fornecedor" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {suppliers.map(s => <SelectItem key={s.id} value={s.nomeFantasia}>{s.nomeFantasia}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                    <Dialog open={isSupplierModalOpen} onOpenChange={setSupplierModalOpen}>
+                                        <DialogTrigger asChild>
+                                            <Button variant="outline" size="icon" className="flex-shrink-0">
+                                                <PlusCircle className="h-4 w-4" />
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent>
+                                            <DialogHeader>
+                                                <DialogTitle>Cadastrar Novo Fornecedor</DialogTitle>
+                                            </DialogHeader>
+                                            <SupplierForm onSave={handleSupplierSaved} />
+                                        </DialogContent>
+                                    </Dialog>
+                                </div>
                                 <FormMessage />
                             </FormItem>
                         )}
@@ -189,23 +229,38 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear }: Warr
 
                 <div className="space-y-4">
                 <h3 className="text-lg font-medium text-foreground">Dados Fiscais e de Venda</h3>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <FormField
                         control={form.control}
                         name="cliente"
                         render={({ field }) => (
-                            <FormItem className="md:col-span-2">
+                             <FormItem className="md:col-span-2">
                                 <FormLabel>Cliente</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                    <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Selecione um cliente" />
-                                    </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {clients.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
+                                <div className="flex items-center gap-2">
+                                    <Select onValueChange={field.onChange} value={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Selecione um cliente" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {clients.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                     <Dialog open={isPersonModalOpen} onOpenChange={setPersonModalOpen}>
+                                        <DialogTrigger asChild>
+                                            <Button variant="outline" size="icon" className="flex-shrink-0">
+                                                <PlusCircle className="h-4 w-4" />
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent>
+                                            <DialogHeader>
+                                                <DialogTitle>Cadastrar Novo Cliente/Mecânico</DialogTitle>
+                                            </DialogHeader>
+                                            <PersonForm onSave={handlePersonSaved} />
+                                        </DialogContent>
+                                    </Dialog>
+                                </div>
                                 <FormMessage />
                             </FormItem>
                         )}
@@ -216,16 +271,31 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear }: Warr
                         render={({ field }) => (
                             <FormItem className="md:col-span-2">
                                 <FormLabel>Mecânico</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                    <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Selecione um mecânico" />
-                                    </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {mechanics.map(m => <SelectItem key={m.id} value={m.name}>{m.name}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
+                                <div className="flex items-center gap-2">
+                                    <Select onValueChange={field.onChange} value={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Selecione um mecânico" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {mechanics.map(m => <SelectItem key={m.id} value={m.name}>{m.name}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                    <Dialog open={isPersonModalOpen} onOpenChange={setPersonModalOpen}>
+                                        <DialogTrigger asChild>
+                                            <Button variant="outline" size="icon" className="flex-shrink-0">
+                                                <PlusCircle className="h-4 w-4" />
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent>
+                                             <DialogHeader>
+                                                <DialogTitle>Cadastrar Novo Cliente/Mecânico</DialogTitle>
+                                            </DialogHeader>
+                                            <PersonForm onSave={handlePersonSaved} />
+                                        </DialogContent>
+                                    </Dialog>
+                                </div>
                                 <FormMessage />
                             </FormItem>
                         )}
