@@ -5,6 +5,8 @@ import { useToast } from '@/hooks/use-toast';
 import type { Warranty } from '@/lib/types';
 import * as db from '@/lib/db';
 import { Search } from 'lucide-react';
+import { DateRange } from 'react-day-picker';
+import { addDays, format, parseISO } from 'date-fns';
 
 import WarrantyTable from '@/components/warranty-table';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,11 +18,16 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { DatePickerWithRange } from '@/components/ui/date-range-picker';
 
 export default function QuerySection() {
   const [warranties, setWarranties] = useState<Warranty[]>([]);
   const [isDbReady, setIsDbReady] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: addDays(new Date(), -30),
+    to: new Date(),
+  });
   const { toast } = useToast();
 
   const loadWarranties = useCallback(async () => {
@@ -85,10 +92,23 @@ export default function QuerySection() {
 
   const filteredWarranties = useMemo(() => {
     const lowercasedTerm = searchTerm.toLowerCase();
-    if (!lowercasedTerm) {
-      return warranties;
-    }
+    
     return warranties.filter(warranty => {
+      // Date filter
+      const { from, to } = dateRange || {};
+      if (from && warranty.dataRegistro) {
+        if (parseISO(warranty.dataRegistro) < from) return false;
+      }
+      if (to && warranty.dataRegistro) {
+        // To include the selected end date, we compare with the start of the next day
+        const toDate = addDays(to, 1);
+        if (parseISO(warranty.dataRegistro) >= toDate) return false;
+      }
+      
+      // Search term filter
+      if (!lowercasedTerm) {
+        return true;
+      }
       return (
         warranty.codigo?.toLowerCase().includes(lowercasedTerm) ||
         warranty.descricao?.toLowerCase().includes(lowercasedTerm) ||
@@ -96,7 +116,7 @@ export default function QuerySection() {
         warranty.defeito?.toLowerCase().includes(lowercasedTerm)
       );
     });
-  }, [searchTerm, warranties]);
+  }, [searchTerm, warranties, dateRange]);
 
   if (!isDbReady) {
     return (
@@ -116,16 +136,17 @@ export default function QuerySection() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="mb-4">
-            <div className="relative">
+        <div className="flex flex-col md:flex-row gap-4 mb-4">
+            <div className="relative flex-1">
                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                     placeholder="Buscar por código, descrição, cliente ou defeito..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full max-w-sm pl-10"
+                    className="w-full pl-10"
                 />
             </div>
+             <DatePickerWithRange date={dateRange} setDate={setDateRange} />
         </div>
         <WarrantyTable
           warranties={filteredWarranties}

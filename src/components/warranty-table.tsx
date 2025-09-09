@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { Warranty } from '@/lib/types';
+import { format, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -30,11 +31,11 @@ export default function WarrantyTable({ warranties, onEdit, onDelete }: Warranty
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Data</TableHead>
               <TableHead>Código</TableHead>
               <TableHead>Descrição</TableHead>
-              <TableHead className="text-center">Qtd.</TableHead>
-              <TableHead>Defeito</TableHead>
               <TableHead>Cliente</TableHead>
+              <TableHead>Defeito</TableHead>
               <TableHead className="w-[50px] text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -42,11 +43,13 @@ export default function WarrantyTable({ warranties, onEdit, onDelete }: Warranty
             {warranties.length > 0 ? (
               warranties.map(warranty => (
                 <TableRow key={warranty.id}>
+                  <TableCell>
+                    {warranty.dataRegistro ? format(parseISO(warranty.dataRegistro), 'dd/MM/yyyy') : '-'}
+                  </TableCell>
                   <TableCell className="font-medium">{warranty.codigo || '-'}</TableCell>
                   <TableCell>{warranty.descricao || '-'}</TableCell>
-                  <TableCell className="text-center">{warranty.quantidade}</TableCell>
-                  <TableCell>{warranty.defeito || '-'}</TableCell>
                   <TableCell>{warranty.cliente || '-'}</TableCell>
+                  <TableCell>{warranty.defeito || '-'}</TableCell>
                   <TableCell className="text-right">
                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -72,7 +75,7 @@ export default function WarrantyTable({ warranties, onEdit, onDelete }: Warranty
             ) : (
               <TableRow>
                 <TableCell colSpan={6} className="h-24 text-center">
-                  Nenhuma garantia encontrada.
+                  Nenhuma garantia encontrada para os filtros selecionados.
                 </TableCell>
               </TableRow>
             )}

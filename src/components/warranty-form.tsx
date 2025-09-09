@@ -70,10 +70,17 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear }: Warr
   }, [selectedWarranty, form]);
 
   const handleSubmit = async (values: WarrantyFormValues) => {
-    const dataToSave = {
+    const dataToSave: Omit<Warranty, 'id'> = {
       ...values,
       quantidade: values.quantidade ?? 1,
     };
+
+    if (!selectedWarranty?.id) {
+        dataToSave.dataRegistro = new Date().toISOString();
+    } else {
+        dataToSave.dataRegistro = selectedWarranty.dataRegistro;
+    }
+
     await onSave(dataToSave, selectedWarranty?.id);
     form.reset(defaultValues);
   };

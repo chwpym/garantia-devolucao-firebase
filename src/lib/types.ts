@@ -12,4 +12,5 @@ export interface Warranty {
   mecanico?: string;
   notaRetorno?: string;
   observacao?: string;
+  dataRegistro?: string;
 }
