@@ -8,15 +8,31 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Loader2, FileDown } from 'lucide-react';
+import type { Warranty } from '@/lib/types';
 
-const ALL_FIELDS = [
+const ALL_FIELDS: (keyof Omit<Warranty, 'id'>)[] = [
   'codigo', 'descricao', 'quantidade', 'defeito', 'requisicaoVenda',
   'requisicaoGarantia', 'nfCompra', 'valorCompra', 'cliente', 'mecanico',
   'notaRetorno', 'observacao'
 ];
 
+const FIELD_LABELS: Record<keyof Omit<Warranty, 'id'>, string> = {
+    codigo: 'Código',
+    descricao: 'Descrição',
+    quantidade: 'Quantidade',
+    defeito: 'Defeito',
+    requisicaoVenda: 'Req. Venda',
+    requisicaoGarantia: 'Req. Garantia',
+    nfCompra: 'NF Compra',
+    valorCompra: 'Valor Compra',
+    cliente: 'Cliente',
+    mecanico: 'Mecânico',
+    notaRetorno: 'Nota Retorno',
+    observacao: 'Observação'
+};
+
 interface ReportGeneratorProps {
-  selectedWarrantyIds: string[];
+  selectedWarrantyIds: number[];
 }
 
 export default function ReportGenerator({ selectedWarrantyIds }: ReportGeneratorProps) {
@@ -34,7 +50,7 @@ export default function ReportGenerator({ selectedWarrantyIds }: ReportGenerator
     setIsGenerating(true);
     try {
       const result = await generateFilteredWarrantyReport({
-        selectedWarrantyIds,
+        selectedWarrantyIds: selectedWarrantyIds.map(String),
         selectedFields,
       });
       
@@ -81,7 +97,7 @@ export default function ReportGenerator({ selectedWarrantyIds }: ReportGenerator
                 onCheckedChange={checked => handleFieldSelection(field, !!checked)}
               />
               <Label htmlFor={field} className="capitalize text-sm font-normal cursor-pointer">
-                {field.replace(/([A-Z])/g, ' $1')}
+                {FIELD_LABELS[field as keyof typeof FIELD_LABELS]}
               </Label>
             </div>
           ))}

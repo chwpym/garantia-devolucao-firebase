@@ -8,8 +8,20 @@
  * - GenerateFilteredWarrantyReportOutput - The return type for the generateFilteredWarrantyReport function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
+import { getWarrantiesByIds } from '@/lib/db';
+import type { Warranty } from '@/lib/types';
+
+
+// Extend jsPDF with autoTable, which is a plugin
+declare module 'jspdf' {
+    interface jsPDF {
+      autoTable: (options: any) => jsPDF;
+    }
+}
 
 const GenerateFilteredWarrantyReportInputSchema = z.object({
   selectedWarrantyIds: z
@@ -40,18 +52,6 @@ export async function generateFilteredWarrantyReport(
   return generateFilteredWarrantyReportFlow(input);
 }
 
-const generateFilteredWarrantyReportPrompt = ai.definePrompt({
-  name: 'generateFilteredWarrantyReportPrompt',
-  input: {schema: GenerateFilteredWarrantyReportInputSchema},
-  output: {schema: GenerateFilteredWarrantyReportOutputSchema},
-  prompt: `You are an expert report generator. You will generate a PDF report based on the selected warranty records and fields.
-
-Selected Warranty IDs: {{selectedWarrantyIds}}
-Selected Fields: {{selectedFields}}
-
-Return the PDF as a data URI.
-`,
-});
 
 const generateFilteredWarrantyReportFlow = ai.defineFlow(
   {
@@ -59,25 +59,34 @@ const generateFilteredWarrantyReportFlow = ai.defineFlow(
     inputSchema: GenerateFilteredWarrantyReportInputSchema,
     outputSchema: GenerateFilteredWarrantyReportOutputSchema,
   },
-  async input => {
-    // Placeholder implementation - replace with actual PDF generation logic
-    // In a real implementation, this would use jsPDF and jsPDF-AutoTable
-    // to generate the PDF based on the selected records and fields.
-    // The generated PDF would then be converted to a data URI.
+  async ({ selectedWarrantyIds, selectedFields }) => {
+    const numericIds = selectedWarrantyIds.map(id => parseInt(id, 10));
+    const warranties = await getWarrantiesByIds(numericIds);
 
-    // This is a placeholder to satisfy the types.
-    const pdfContent = 'Placeholder PDF Content';
-    const pdfBase64 = Buffer.from(pdfContent).toString('base64');
-    const pdfDataUri = `data:application/pdf;base64,${pdfBase64}`;
+    const doc = new jsPDF();
+    
+    doc.setFontSize(18);
+    doc.text('Relatório de Garantias para Fornecedor', 14, 22);
+    doc.setFontSize(11);
+    doc.setTextColor(100);
+    const date = new Date().toLocaleDateString('pt-BR');
+    doc.text(`Gerado em: ${date}`, 14, 28);
 
-    // Use the prompt to generate the filtered report.
-    // In a real implementation, the prompt would likely be used to
-    // generate the content of the PDF, but not the PDF itself.
-    // Here, we bypass the prompt and directly return the placeholder PDF.
+    const tableHeaders = selectedFields.map(field => field.replace(/([A-Z])/g, ' $1').toUpperCase());
+    const tableBody = warranties.map(warranty => {
+        return selectedFields.map(field => warranty[field as keyof Warranty]?.toString() || '-');
+    });
 
-    // const { output } = await generateFilteredWarrantyReportPrompt(input);
-    // return output!;
+    doc.autoTable({
+        startY: 35,
+        head: [tableHeaders],
+        body: tableBody,
+        theme: 'striped',
+        headStyles: { fillColor: [41, 128, 185] },
+    });
+    
+    const pdfDataUri = doc.output('datauristring');
 
-    return {pdfDataUri: pdfDataUri};
+    return { pdfDataUri };
   }
 );
