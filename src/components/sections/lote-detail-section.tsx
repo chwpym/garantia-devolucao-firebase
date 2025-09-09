@@ -5,19 +5,25 @@ import type { Lote, Warranty } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '../ui/button';
-import { ArrowLeft, Package, Calendar, Building, FileText } from 'lucide-react';
+import { ArrowLeft, Package, Calendar, Building, FileText, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { format, parseISO } from 'date-fns';
 import { Skeleton } from '../ui/skeleton';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import WarrantyForm from '../warranty-form';
 
 interface LoteDetailSectionProps {
   loteId: number;
@@ -28,6 +34,9 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
   const [lote, setLote] = useState<Lote | null>(null);
   const [warranties, setWarranties] = useState<Warranty[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [editingWarranty, setEditingWarranty] = useState<Warranty | null>(null);
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [warrantyToRemove, setWarrantyToRemove] = useState<Warranty | null>(null);
   const { toast } = useToast();
 
   const loadLoteDetails = useCallback(async () => {
@@ -59,7 +68,64 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
 
   useEffect(() => {
     loadLoteDetails();
+     const handleDataChanged = () => {
+      loadLoteDetails();
+    };
+    window.addEventListener('datachanged', handleDataChanged);
+    return () => {
+      window.removeEventListener('datachanged', handleDataChanged);
+    };
   }, [loadLoteDetails]);
+
+  const handleEditClick = (warranty: Warranty) => {
+    setEditingWarranty(warranty);
+    setIsFormModalOpen(true);
+  };
+
+  const handleRemoveClick = (warranty: Warranty) => {
+    setWarrantyToRemove(warranty);
+  };
+
+  const handleConfirmRemove = async () => {
+    if (!warrantyToRemove) return;
+    try {
+      const updatedWarranty = { ...warrantyToRemove, loteId: null };
+      await db.updateWarranty(updatedWarranty);
+      toast({
+        title: 'Garantia Removida',
+        description: 'A garantia foi removida do lote com sucesso.',
+      });
+      setWarrantyToRemove(null);
+      window.dispatchEvent(new CustomEvent('datachanged'));
+    } catch (error) {
+      console.error('Failed to remove warranty from lote:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível remover a garantia do lote.',
+        variant: 'destructive',
+      });
+    }
+  };
+  
+  const handleFormSave = async (data: Omit<Warranty, 'id'>, id?: number) => {
+     try {
+      if (id) {
+        await db.updateWarranty({ ...data, id });
+        toast({ title: 'Sucesso', description: 'Garantia atualizada com sucesso.' });
+      }
+      setIsFormModalOpen(false);
+      setEditingWarranty(null);
+      window.dispatchEvent(new CustomEvent('datachanged'));
+    } catch (error)      {
+      console.error('Failed to save warranty:', error);
+      toast({
+        title: 'Erro ao Salvar',
+        description: 'Não foi possível salvar a garantia.',
+        variant: 'destructive',
+      });
+    }
+  };
+
 
   const getStatusVariant = (status?: Lote['status']) => {
     switch (status) {
@@ -80,7 +146,6 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
       case 'Em análise': default: return 'secondary';
     }
   };
-
 
   if (isLoading) {
     return (
@@ -151,7 +216,6 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
         </CardContent>
       </Card>
 
-
       <Card>
         <CardHeader>
             <CardTitle>Itens no Lote</CardTitle>
@@ -166,7 +230,8 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                     <TableHead>Descrição</TableHead>
                     <TableHead>Defeito</TableHead>
                     <TableHead>Cliente</TableHead>
-                    <TableHead>Status da Garantia</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="w-[50px] text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -180,11 +245,31 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                         <TableCell>
                           <Badge variant={getWarrantyStatusVariant(warranty.status)}>{warranty.status || 'N/A'}</Badge>
                         </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0">
+                                <span className="sr-only">Abrir menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleEditClick(warranty)}>
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Editar Garantia
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleRemoveClick(warranty)} className="text-destructive focus:text-destructive">
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Remover do Lote
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5} className="h-24 text-center">
+                      <TableCell colSpan={6} className="h-24 text-center">
                         Nenhuma garantia adicionada a este lote ainda.
                       </TableCell>
                     </TableRow>
@@ -194,6 +279,49 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
             </div>
         </CardContent>
       </Card>
+      
+      {/* Modal for editing warranty */}
+      <Dialog open={isFormModalOpen} onOpenChange={setIsFormModalOpen}>
+        <DialogContent className="max-w-4xl">
+            <DialogHeader>
+                <DialogTitle>Editar Garantia</DialogTitle>
+                <DialogDescription>
+                    Faça as alterações necessárias na garantia abaixo.
+                </DialogDescription>
+            </DialogHeader>
+            <div className='py-4 max-h-[70vh] overflow-y-auto'>
+                 <WarrantyForm 
+                    selectedWarranty={editingWarranty}
+                    onSave={handleFormSave}
+                    onClear={() => {
+                        setIsFormModalOpen(false);
+                        setEditingWarranty(null);
+                    }}
+                    isModal={true}
+                 />
+            </div>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Alert dialog for removing warranty from lote */}
+      <AlertDialog open={!!warrantyToRemove} onOpenChange={(open) => !open && setWarrantyToRemove(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover Garantia do Lote?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você tem certeza que deseja remover a garantia (Código: <span className="font-bold">{warrantyToRemove?.codigo || 'N/A'}</span>) deste lote? 
+              A garantia não será excluída, apenas desvinculada, e voltará para a tela de Consulta.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmRemove}>
+              Sim, remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   );
 }

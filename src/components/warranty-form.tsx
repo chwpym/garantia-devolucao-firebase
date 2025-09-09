@@ -42,6 +42,7 @@ interface WarrantyFormProps {
   selectedWarranty: Warranty | null;
   onSave: (data: Omit<Warranty, 'id'>, id?: number) => Promise<void>;
   onClear: () => void;
+  isModal?: boolean;
 }
 
 const defaultValues: WarrantyFormValues = {
@@ -60,7 +61,7 @@ const defaultValues: WarrantyFormValues = {
   status: 'Em análise',
 };
 
-export default function WarrantyForm({ selectedWarranty, onSave, onClear }: WarrantyFormProps) {
+export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModal = false }: WarrantyFormProps) {
     const formRef = useRef<HTMLFormElement>(null);
     const [persons, setPersons] = useState<Person[]>([]);
     const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -117,7 +118,9 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear }: Warr
         }
 
         await onSave(dataToSave, selectedWarranty?.id);
-        form.reset(defaultValues);
+        if (!isModal) {
+            form.reset(defaultValues);
+        }
     };
     
     const handleClear = () => {
@@ -160,16 +163,20 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear }: Warr
     const clients = persons.filter(p => p.type === 'Cliente' || p.type === 'Ambos');
     const mechanics = persons.filter(p => p.type === 'Mecânico' || p.type === 'Ambos');
 
+    const FormWrapper = isModal ? 'div' : Card;
+    const formWrapperProps = isModal ? {} : { className: "w-full shadow-lg" };
 
     return (
-        <Card className="w-full shadow-lg">
-        <CardHeader>
-            <CardTitle>{selectedWarranty ? 'Editar Garantia' : 'Cadastrar Garantia'}</CardTitle>
-            <CardDescription>Preencha os detalhes da garantia abaixo. Use "Enter" para pular para o próximo campo.</CardDescription>
-        </CardHeader>
+        <FormWrapper {...formWrapperProps}>
+        {!isModal && (
+            <CardHeader>
+                <CardTitle>{selectedWarranty ? 'Editar Garantia' : 'Cadastrar Garantia'}</CardTitle>
+                <CardDescription>Preencha os detalhes da garantia abaixo. Use "Enter" para pular para o próximo campo.</CardDescription>
+            </CardHeader>
+        )}
         <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} onKeyDown={handleKeyDown} ref={formRef}>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 pt-6">
                 <div className="space-y-4">
                 <h3 className="text-lg font-medium text-foreground">Informações do Produto e Defeito</h3>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -355,6 +362,6 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear }: Warr
             </CardFooter>
             </form>
         </Form>
-        </Card>
+        </FormWrapper>
     );
 }
