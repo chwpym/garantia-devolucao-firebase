@@ -124,8 +124,10 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
   
   const handleFormSave = async (data: Omit<Warranty, 'id'>, id?: number) => {
      try {
-      if (id) {
-        await db.updateWarranty({ ...data, id });
+      if (id && editingWarranty) {
+        // Ensure loteId is preserved when updating
+        const warrantyToUpdate: Warranty = { ...editingWarranty, ...data, id };
+        await db.updateWarranty(warrantyToUpdate);
         toast({ title: 'Sucesso', description: 'Garantia atualizada com sucesso.' });
       }
       setIsFormModalOpen(false);
