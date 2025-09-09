@@ -295,7 +295,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
   
   const handleObservationSave = async (warranty: Warranty, observation: string) => {
     try {
-        const updatedWarranty = { ...warranty, observacao };
+        const updatedWarranty = { ...warranty, observacao: observation };
         await db.updateWarranty(updatedWarranty);
         toast({
             title: 'Observação Atualizada',
