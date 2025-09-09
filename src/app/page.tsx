@@ -6,6 +6,7 @@ import AppLayout from '@/components/app-layout';
 import DashboardSection from '@/components/sections/dashboard-section';
 import RegisterSection from '@/components/sections/register-section';
 import QuerySection from '@/components/sections/query-section';
+import LotesSection from '@/components/sections/lotes-section';
 import ReportSection from '@/components/sections/report-section';
 import PersonsSection from '@/components/sections/persons-section';
 import SuppliersSection from '@/components/sections/suppliers-section';
@@ -22,6 +23,8 @@ export default function Home() {
         return <RegisterSection />;
       case 'query':
         return <QuerySection />;
+      case 'lotes':
+        return <LotesSection />;
       case 'reports':
         return <ReportSection />;
       case 'persons':

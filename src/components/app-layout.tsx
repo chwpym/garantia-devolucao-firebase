@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/icons';
-import { LayoutDashboard, FileText, Search, PlusSquare, ChevronLeft, ChevronRight, DatabaseBackup, Users, Building } from 'lucide-react';
+import { LayoutDashboard, FileText, Search, PlusSquare, ChevronLeft, ChevronRight, DatabaseBackup, Users, Building, Package } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from './theme-toggle';
 
@@ -21,6 +21,7 @@ export default function AppLayout({ children, activeView, setActiveView }: AppLa
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'register', label: 'Cadastro de Garantia', icon: PlusSquare },
     { id: 'query', label: 'Consulta de Garantias', icon: Search },
+    { id: 'lotes', label: 'Lotes de Garantia', icon: Package },
     { id: 'reports', label: 'Relatórios', icon: FileText },
     { id: 'persons', label: 'Clientes/Mecânicos', icon: Users },
     { id: 'suppliers', label: 'Fornecedores', icon: Building },

@@ -16,6 +16,7 @@ export interface Warranty {
   observacao?: string;
   dataRegistro?: string;
   status?: WarrantyStatus;
+  loteId?: number;
 }
 
 export type PersonType = 'Cliente' | 'Mecânico' | 'Ambos';
@@ -32,4 +33,22 @@ export interface Supplier {
   nomeFantasia: string;
   cnpj: string;
   cidade: string;
+}
+
+export type LoteStatus = 'Aberto' | 'Enviado' | 'Aprovado Parcialmente' | 'Aprovado Totalmente' | 'Recusado';
+
+export interface Lote {
+    id?: number;
+    nome: string;
+    fornecedor: string;
+    dataCriacao: string;
+    dataEnvio?: string;
+    notasFiscaisRetorno?: string[];
+    status: LoteStatus;
+}
+
+export interface LoteItem {
+    id?: number;
+    loteId: number;
+    warrantyId: number;
 }

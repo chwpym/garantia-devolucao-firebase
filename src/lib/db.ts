@@ -1,13 +1,15 @@
 'use client';
 
-import type { Warranty, Person, Supplier } from './types';
+import type { Warranty, Person, Supplier, Lote, LoteItem } from './types';
 
 const DB_NAME = 'GarantiasDB';
-const DB_VERSION = 2; // Incremented version
+const DB_VERSION = 3; // Incremented version
 
 const GARANTIAS_STORE_NAME = 'garantias';
 const PERSONS_STORE_NAME = 'persons';
 const SUPPLIERS_STORE_NAME = 'suppliers';
+const LOTES_STORE_NAME = 'lotes';
+const LOTE_ITEMS_STORE_NAME = 'lote_items';
 
 
 let dbPromise: Promise<IDBDatabase> | null = null;
@@ -35,6 +37,13 @@ const getDB = (): Promise<IDBDatabase> => {
         }
         if (!dbInstance.objectStoreNames.contains(SUPPLIERS_STORE_NAME)) {
           dbInstance.createObjectStore(SUPPLIERS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+        }
+        if (!dbInstance.objectStoreNames.contains(LOTES_STORE_NAME)) {
+            dbInstance.createObjectStore(LOTES_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+        }
+        if (!dbInstance.objectStoreNames.contains(LOTE_ITEMS_STORE_NAME)) {
+            const loteItemsStore = dbInstance.createObjectStore(LOTE_ITEMS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+            loteItemsStore.createIndex('loteId', 'loteId', { unique: false });
         }
       };
 
@@ -247,6 +256,100 @@ export const deleteSupplier = (id: number): Promise<void> => {
   return new Promise(async (resolve, reject) => {
     try {
       const store = await getStore(SUPPLIERS_STORE_NAME, 'readwrite');
+      const request = store.delete(id);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+// --- Lote Functions ---
+export const addLote = (lote: Omit<Lote, 'id'>): Promise<number> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(LOTES_STORE_NAME, 'readwrite');
+      const request = store.add(lote);
+      request.onsuccess = () => resolve(request.result as number);
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+export const getAllLotes = (): Promise<Lote[]> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(LOTES_STORE_NAME, 'readonly');
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result as Lote[]);
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+export const updateLote = (lote: Lote): Promise<number> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(LOTES_STORE_NAME, 'readwrite');
+      const request = store.put(lote);
+      request.onsuccess = () => resolve(request.result as number);
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+export const deleteLote = (id: number): Promise<void> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(LOTES_STORE_NAME, 'readwrite');
+      const request = store.delete(id);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+// --- LoteItem Functions ---
+export const addLoteItem = (loteItem: Omit<LoteItem, 'id'>): Promise<number> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(LOTE_ITEMS_STORE_NAME, 'readwrite');
+      const request = store.add(loteItem);
+      request.onsuccess = () => resolve(request.result as number);
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+export const getLoteItemsByLoteId = (loteId: number): Promise<LoteItem[]> => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const store = await getStore(LOTE_ITEMS_STORE_NAME, 'readonly');
+            const index = store.index('loteId');
+            const request = index.getAll(loteId);
+            request.onsuccess = () => resolve(request.result as LoteItem[]);
+            request.onerror = () => reject(request.error);
+        } catch(err) {
+            reject(err);
+        }
+    });
+};
+
+export const deleteLoteItem = (id: number): Promise<void> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(LOTE_ITEMS_STORE_NAME, 'readwrite');
       const request = store.delete(id);
       request.onsuccess = () => resolve();
       request.onerror = () => reject(request.error);
