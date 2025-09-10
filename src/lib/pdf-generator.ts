@@ -96,7 +96,6 @@ const addHeader = (doc: jsPDF, companyData: CompanyData | null, title: string) =
 export function generatePdf(input: GeneratePdfInput): string {
     const { selectedWarranties, selectedFields, companyData, supplierData } = input;
     const doc = new jsPDF();
-    const page_width = doc.internal.pageSize.getWidth();
     const margin = 14;
 
     let cursorY = addHeader(doc, companyData, 'Relatório de Garantias');

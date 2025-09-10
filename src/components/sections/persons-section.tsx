@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import type { Person, CompanyData } from '@/lib/types';
+import type { Person } from '@/lib/types';
 import * as db from '@/lib/db';
 import { generatePersonsPdf } from '@/lib/pdf-generator';
 
