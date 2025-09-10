@@ -33,6 +33,7 @@ export interface Person {
   endereco?: string;
   bairro?: string;
   cidade?: string;
+  observacao?: string;
 }
 
 export interface Supplier {

@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { DialogFooter } from '@/components/ui/dialog';
+import { Textarea } from './ui/textarea';
 
 const formSchema = z.object({
   nome: z.string().min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' }),
@@ -26,6 +27,7 @@ const formSchema = z.object({
   endereco: z.string().optional(),
   bairro: z.string().optional(),
   cidade: z.string().optional(),
+  observacao: z.string().optional(),
 });
 
 type PersonFormValues = z.infer<typeof formSchema>;
@@ -46,6 +48,7 @@ const defaultFormValues: PersonFormValues = {
   endereco: '',
   bairro: '',
   cidade: '',
+  observacao: '',
 };
 
 const formatCpfCnpj = (value: string) => {
@@ -292,6 +295,22 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
                     )}
                 />
             </div>
+            <FormField
+                name="observacao"
+                control={form.control}
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Observação</FormLabel>
+                    <FormControl>
+                    <Textarea
+                        placeholder="Adicione uma observação sobre o cliente ou mecânico..."
+                        {...field}
+                    />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
         </div>
         <DialogFooter className="pt-6">
           {onClear && <Button type="button" variant="outline" onClick={onClear}>Limpar</Button>}
