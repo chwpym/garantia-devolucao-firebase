@@ -41,7 +41,7 @@ const warrantyStatuses: WarrantyStatus[] = ['Em análise', 'Aprovada', 'Recusada
 
 // Default fields to be included in the Lote PDF report.
 const LOTE_PDF_FIELDS = [
-  'codigo', 'descricao', 'quantidade', 'defeito', 'cliente', 'status', 'observacao'
+  'codigo', 'descricao', 'quantidade', 'defeito', 'cliente', 'observacao'
 ];
 
 const EditableObservationCell = ({ warranty, onSave }: { warranty: Warranty, onSave: (value: string) => void }) => {
@@ -503,7 +503,8 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                     </TableHead>
                     <TableHead>Código</TableHead>
                     <TableHead>Descrição</TableHead>
-                    <TableHead className="w-[300px]">Observação</TableHead>
+                    <TableHead>Defeito</TableHead>
+                    <TableHead className="w-[300px]">Observação de Retorno</TableHead>
                     <TableHead>NF Saída</TableHead>
                     <TableHead>NF Retorno</TableHead>
                     <TableHead>Status</TableHead>
@@ -523,6 +524,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                         </TableCell>
                         <TableCell className="font-medium">{warranty.codigo || '-'}</TableCell>
                         <TableCell>{warranty.descricao || '-'}</TableCell>
+                        <TableCell>{warranty.defeito || '-'}</TableCell>
                         <TableCell>
                             <EditableObservationCell 
                                 warranty={warranty}
@@ -574,7 +576,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={8} className="h-24 text-center">
+                      <TableCell colSpan={9} className="h-24 text-center">
                         Nenhuma garantia adicionada a este lote ainda.
                       </TableCell>
                     </TableRow>
@@ -647,3 +649,5 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
     </div>
   );
 }
+
+    
