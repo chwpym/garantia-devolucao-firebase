@@ -40,7 +40,7 @@ interface LoteDetailSectionProps {
 const warrantyStatuses: WarrantyStatus[] = ['Em análise', 'Aprovada', 'Recusada', 'Paga'];
 
 const LOTE_PDF_DEFAULT_FIELDS = [
-  'codigo', 'descricao', 'quantidade', 'defeito', 'cliente', 'observacao'
+  'codigo', 'descricao', 'quantidade', 'defeito'
 ];
 
 const EditableObservationCell = ({ warranty, onSave }: { warranty: Warranty, onSave: (value: string) => void }) => {
