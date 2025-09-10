@@ -41,6 +41,18 @@ import { Badge } from '@/components/ui/badge';
 import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import PersonForm from '../person-form';
 
+const formatCpfCnpj = (value?: string) => {
+    if (!value) return '-';
+    const cleaned = value.replace(/\D/g, '');
+    if (cleaned.length === 11) { // CPF
+        return cleaned.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    }
+    if (cleaned.length === 14) { // CNPJ
+        return cleaned.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+    }
+    return value;
+};
+
 
 export default function PersonsSection() {
   const [persons, setPersons] = useState<Person[]>([]);
@@ -52,7 +64,7 @@ export default function PersonsSection() {
   const loadPersons = useCallback(async () => {
     try {
       const allPersons = await db.getAllPersons();
-      setPersons(allPersons.sort((a, b) => a.name.localeCompare(b.name)));
+      setPersons(allPersons.sort((a, b) => a.nome.localeCompare(b.nome)));
     } catch (error) {
       console.error('Failed to load persons:', error);
       toast({
@@ -123,7 +135,7 @@ export default function PersonsSection() {
     setDeleteTarget(null);
   };
   
-  const getTypeVariant = (type: Person['type']) => {
+  const getTypeVariant = (type: Person['tipo']) => {
     switch (type) {
       case 'Cliente':
         return 'secondary';
@@ -138,8 +150,8 @@ export default function PersonsSection() {
 
 
   return (
-    <div className='grid gap-8 md:grid-cols-3'>
-      <div className="md:col-span-1">
+    <div className='grid gap-8 lg:grid-cols-3'>
+      <div className="lg:col-span-1">
         <Card className="shadow-lg sticky top-24">
           <CardHeader>
             <CardTitle>{editingPerson ? 'Editar Registro' : 'Novo Cliente/Mecânico'}</CardTitle>
@@ -153,7 +165,7 @@ export default function PersonsSection() {
         </Card>
       </div>
 
-      <div className="md:col-span-2">
+      <div className="lg:col-span-2">
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle>Registros</CardTitle>
@@ -165,6 +177,8 @@ export default function PersonsSection() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nome</TableHead>
+                    <TableHead>CPF/CNPJ</TableHead>
+                    <TableHead>Telefone</TableHead>
                     <TableHead>Tipo</TableHead>
                     <TableHead className="w-[50px] text-right">Ações</TableHead>
                   </TableRow>
@@ -173,9 +187,11 @@ export default function PersonsSection() {
                   {persons.length > 0 ? (
                     persons.map(person => (
                       <TableRow key={person.id}>
-                        <TableCell className="font-medium">{person.name}</TableCell>
+                        <TableCell className="font-medium">{person.nome}</TableCell>
+                        <TableCell>{formatCpfCnpj(person.cpfCnpj)}</TableCell>
+                        <TableCell>{person.telefone || '-'}</TableCell>
                         <TableCell>
-                          <Badge variant={getTypeVariant(person.type)}>{person.type}</Badge>
+                          <Badge variant={getTypeVariant(person.tipo)}>{person.tipo}</Badge>
                         </TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
@@ -201,7 +217,7 @@ export default function PersonsSection() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={3} className="h-24 text-center">
+                      <TableCell colSpan={5} className="h-24 text-center">
                         Nenhum registro encontrado.
                       </TableCell>
                     </TableRow>
@@ -218,7 +234,7 @@ export default function PersonsSection() {
           <AlertDialogHeader>
             <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação não pode ser desfeita. Isso excluirá permanentemente o registro de <span className="font-bold">{deleteTarget?.name}</span>.
+              Esta ação não pode ser desfeita. Isso excluirá permanentemente o registro de <span className="font-bold">{deleteTarget?.nome}</span>.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

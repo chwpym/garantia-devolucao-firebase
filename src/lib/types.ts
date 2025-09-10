@@ -24,8 +24,15 @@ export type PersonType = 'Cliente' | 'Mecânico' | 'Ambos';
 
 export interface Person {
   id?: number;
-  name: string;
-  type: PersonType;
+  nome: string;
+  tipo: PersonType;
+  cpfCnpj?: string;
+  telefone?: string;
+  email?: string;
+  cep?: string;
+  endereco?: string;
+  bairro?: string;
+  cidade?: string;
 }
 
 export interface Supplier {

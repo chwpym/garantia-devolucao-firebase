@@ -89,7 +89,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
     const loadDropdownData = async () => {
         const allPersons = await db.getAllPersons();
         const allSuppliers = await db.getAllSuppliers();
-        setPersons(allPersons.sort((a, b) => a.name.localeCompare(b.name)));
+        setPersons(allPersons.sort((a, b) => a.nome.localeCompare(b.nome)));
         setSuppliers(allSuppliers.sort((a, b) => a.nomeFantasia.localeCompare(b.nomeFantasia)));
     }
 
@@ -157,20 +157,20 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
     const handlePersonSaved = (newPerson: Person) => {
         loadDropdownData();
         setPersonModalOpen(false);
-        if (newPerson.type === 'Cliente' || newPerson.type === 'Ambos') {
-             form.setValue('cliente', newPerson.name);
+        if (newPerson.tipo === 'Cliente' || newPerson.tipo === 'Ambos') {
+             form.setValue('cliente', newPerson.nome);
         }
-        if (newPerson.type === 'Mecânico' || newPerson.type === 'Ambos') {
-             form.setValue('mecanico', newPerson.name);
+        if (newPerson.tipo === 'Mecânico' || newPerson.tipo === 'Ambos') {
+             form.setValue('mecanico', newPerson.nome);
         }
     };
 
-    const clients = persons.filter(p => p.type === 'Cliente' || p.type === 'Ambos');
-    const mechanics = persons.filter(p => p.type === 'Mecânico' || p.type === 'Ambos');
+    const clients = persons.filter(p => p.tipo === 'Cliente' || p.tipo === 'Ambos');
+    const mechanics = persons.filter(p => p.tipo === 'Mecânico' || p.tipo === 'Ambos');
 
     const supplierOptions = suppliers.map(s => ({ value: s.nomeFantasia, label: s.nomeFantasia }));
-    const clientOptions = clients.map(c => ({ value: c.name, label: c.name }));
-    const mechanicOptions = mechanics.map(m => ({ value: m.name, label: m.name }));
+    const clientOptions = clients.map(c => ({ value: c.nome, label: c.nome }));
+    const mechanicOptions = mechanics.map(m => ({ value: m.nome, label: m.nome }));
 
     const FormWrapper = isModal ? 'div' : Card;
     const formWrapperProps = isModal ? {} : { className: "w-full shadow-lg" };
@@ -265,7 +265,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                                                 <PlusCircle className="h-4 w-4" />
                                             </Button>
                                         </DialogTrigger>
-                                        <DialogContent>
+                                        <DialogContent className="max-w-2xl">
                                             <DialogHeader>
                                                 <DialogTitle>Cadastrar Novo Cliente/Mecânico</DialogTitle>
                                             </DialogHeader>
@@ -299,7 +299,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                                                 <PlusCircle className="h-4 w-4" />
                                             </Button>
                                         </DialogTrigger>
-                                        <DialogContent>
+                                        <DialogContent className="max-w-2xl">
                                              <DialogHeader>
                                                 <DialogTitle>Cadastrar Novo Cliente/Mecânico</DialogTitle>
                                             </DialogHeader>
