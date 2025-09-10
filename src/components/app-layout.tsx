@@ -17,7 +17,7 @@ interface AppLayoutProps {
 export default function AppLayout({ children, activeView, setActiveView }: AppLayoutProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  const navItems = [
+  const mainNavItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'register', label: 'Cadastro de Garantia', icon: PlusSquare },
     { id: 'query', label: 'Consulta de Garantias', icon: Search },
@@ -26,8 +26,10 @@ export default function AppLayout({ children, activeView, setActiveView }: AppLa
     { id: 'persons', label: 'Clientes/Mecânicos', icon: Users },
     { id: 'suppliers', label: 'Fornecedores', icon: Building },
     { id: 'backup', label: 'Backup', icon: DatabaseBackup },
-    { id: 'settings', label: 'Configurações', icon: Settings },
   ];
+  
+  const settingsNavItem = { id: 'settings', label: 'Configurações', icon: Settings };
+
 
   return (
     <div className="flex min-h-screen w-full bg-muted/40">
@@ -49,7 +51,7 @@ export default function AppLayout({ children, activeView, setActiveView }: AppLa
         </div>
         <div className="flex-1 overflow-auto py-2">
             <nav className="flex flex-col gap-1 px-4">
-            {navItems.map(item => (
+            {mainNavItems.map(item => (
                 <Button
                 key={item.id}
                 variant={activeView === item.id ? 'secondary' : 'ghost'}
@@ -64,6 +66,23 @@ export default function AppLayout({ children, activeView, setActiveView }: AppLa
                 <span className={cn("truncate", isSidebarCollapsed && "hidden")}>{item.label}</span>
                 </Button>
             ))}
+            </nav>
+        </div>
+         <div className="mt-auto p-4 border-t">
+            <nav>
+                 <Button
+                    key={settingsNavItem.id}
+                    variant={activeView === settingsNavItem.id ? 'secondary' : 'ghost'}
+                    className={cn(
+                        "justify-start gap-3 text-base h-11 w-full",
+                        isSidebarCollapsed && "justify-center"
+                    )}
+                    onClick={() => setActiveView(settingsNavItem.id)}
+                    title={isSidebarCollapsed ? settingsNavItem.label : undefined}
+                    >
+                    <settingsNavItem.icon className="h-5 w-5 flex-shrink-0" />
+                    <span className={cn("truncate", isSidebarCollapsed && "hidden")}>{settingsNavItem.label}</span>
+                </Button>
             </nav>
         </div>
       </aside>
