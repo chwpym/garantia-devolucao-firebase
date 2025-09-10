@@ -36,6 +36,17 @@ const defaultFormValues: SupplierFormValues = {
   cidade: ''
 };
 
+const formatCNPJ = (value: string) => {
+    if (!value) return '';
+    const cnpj = value.replace(/[^\d]/g, '');
+    return cnpj
+        .slice(0, 14)
+        .replace(/(\d{2})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1/$2')
+        .replace(/(\d{4})(\d)/, '$1-$2');
+};
+
 export default function SupplierForm({ onSave, editingSupplier, onClear }: SupplierFormProps) {
   const { toast } = useToast();
   const form = useForm<SupplierFormValues>({
@@ -44,7 +55,11 @@ export default function SupplierForm({ onSave, editingSupplier, onClear }: Suppl
   });
 
   useEffect(() => {
-    form.reset(editingSupplier || defaultFormValues);
+    const defaultVals = editingSupplier ? {
+        ...editingSupplier,
+        cnpj: editingSupplier.cnpj ? formatCNPJ(editingSupplier.cnpj) : '',
+    } : defaultFormValues;
+    form.reset(defaultVals);
   }, [editingSupplier, form]);
 
   const { isSubmitting } = form.formState;
@@ -53,7 +68,7 @@ export default function SupplierForm({ onSave, editingSupplier, onClear }: Suppl
     try {
       const dataToSave = {
         ...data,
-        cnpj: data.cnpj || '',
+        cnpj: data.cnpj?.replace(/[^\d]/g, '') || '',
         cidade: data.cidade || ''
       };
 
@@ -117,7 +132,11 @@ export default function SupplierForm({ onSave, editingSupplier, onClear }: Suppl
               <FormItem>
                 <FormLabel>CNPJ</FormLabel>
                 <FormControl>
-                  <Input placeholder="00.000.000/0000-00" {...field} />
+                  <Input
+                    placeholder="00.000.000/0000-00"
+                    {...field}
+                    onChange={(e) => field.onChange(formatCNPJ(e.target.value))}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
