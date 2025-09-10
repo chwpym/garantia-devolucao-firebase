@@ -71,7 +71,7 @@ export default function SettingsSection() {
                         cnpj: data.cnpj ? formatCNPJ(data.cnpj) : '',
                     });
                 }
-            } catch (error) {
+            } catch {
                 toast({
                     title: "Erro ao Carregar Dados",
                     description: "Não foi possível carregar os dados da empresa.",
