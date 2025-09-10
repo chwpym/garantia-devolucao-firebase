@@ -5,7 +5,7 @@ import type { Warranty } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Wrench, ShieldCheck, Hourglass, BarChart3, ShieldX, CheckCircle, Users, Building } from 'lucide-react';
+import { Wrench, ShieldCheck, Hourglass, BarChart3, ShieldX, CheckCircle, Users, Building, DollarSign } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, Pie, PieChart, Cell } from 'recharts';
@@ -55,10 +55,10 @@ const chartConfig = {
 } satisfies ChartConfig
 
 const COLORS = {
-    'Em análise': 'hsl(var(--chart-2))', // Amber
-    'Aprovada': 'hsl(var(--chart-1))', // Green
-    'Recusada': 'hsl(var(--chart-5))', // Red
-    'Paga': 'hsl(var(--chart-3))', // Blue
+    'Em análise': 'hsl(var(--chart-2))',
+    'Aprovada': 'hsl(var(--chart-1))',
+    'Recusada': 'hsl(var(--chart-5))',
+    'Paga': 'hsl(var(--primary))',
 };
 
 export default function DashboardSection() {
@@ -66,7 +66,7 @@ export default function DashboardSection() {
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [statusData, setStatusData] = useState<any[]>([]);
   const [supplierRanking, setSupplierRanking] = useState<RankingData[]>([]);
-  const [personRanking, setPersonRanking] = useState<RankingData[]>([]);
+  const [personRanking, setPersonRanking] useState<RankingData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
@@ -173,7 +173,7 @@ export default function DashboardSection() {
             </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
             <Card className="shadow-md hover:border-primary transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total de Garantias</CardTitle>
@@ -210,10 +210,34 @@ export default function DashboardSection() {
                     </p>
                 </CardContent>
             </Card>
+             <Card className="shadow-md hover:border-blue-500 transition-colors">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Garantias Pagas</CardTitle>
+                    <DollarSign className="h-4 w-4 text-blue-500" />
+                </CardHeader>
+                <CardContent>
+                    {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.pagas}</div>}
+                    <p className="text-xs text-muted-foreground">
+                        Finalizadas e pagas ao cliente
+                    </p>
+                </CardContent>
+            </Card>
             <Card className="shadow-md hover:border-destructive transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Garantias Recusadas</CardTitle>
+                    <ShieldX className="h-4 w-4 text-destructive" />
+                </CardHeader>
+                <CardContent>
+                    {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.recusadas}</div>}
+                    <p className="text-xs text-muted-foreground">
+                        Negadas pelo fornecedor
+                    </p>
+                </CardContent>
+            </Card>
+            <Card className="shadow-md hover:border-red-500 transition-colors">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Itens com Defeito</CardTitle>
-                    <Wrench className="h-4 w-4 text-destructive" />
+                    <Wrench className="h-4 w-4 text-red-500" />
                 </CardHeader>
                 <CardContent>
                     {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.totalDefeitos}</div>}
