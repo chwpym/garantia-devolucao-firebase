@@ -104,6 +104,7 @@ export default function SuppliersSection() {
         title: 'Sucesso',
         description: 'Fornecedor excluído com sucesso.',
       });
+      window.dispatchEvent(new CustomEvent('datachanged'));
     } catch (error) {
       console.error('Failed to delete supplier:', error);
       toast({

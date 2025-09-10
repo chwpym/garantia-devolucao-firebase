@@ -64,7 +64,7 @@ export default function PersonsSection() {
   const loadPersons = useCallback(async () => {
     try {
       const allPersons = await db.getAllPersons();
-      setPersons(allPersons.sort((a, b) => a.nome.localeCompare(b.nome)));
+      setPersons(allPersons.sort((a, b) => (a.nome || '').localeCompare(b.nome || '')));
     } catch (error) {
       console.error('Failed to load persons:', error);
       toast({
@@ -118,6 +118,7 @@ export default function PersonsSection() {
         title: 'Sucesso',
         description: 'Registro excluído com sucesso.',
       });
+      window.dispatchEvent(new CustomEvent('datachanged'));
     } catch (error) {
       console.error('Failed to delete person:', error);
       toast({
