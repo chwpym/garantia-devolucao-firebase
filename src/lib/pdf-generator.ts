@@ -38,7 +38,7 @@ export function generatePdf(input: GeneratePdfInput): string {
     // --- CABEÇALHO ---
 
     // Linha 1: Nome da Empresa (esquerda) e Data (direita)
-    doc.setFontSize(14).setFont(undefined, 'bold');
+    doc.setFontSize(12).setFont(undefined, 'bold');
     doc.text(companyData?.nomeEmpresa || 'Relatório de Garantias', margin, cursorY);
     
     doc.setFontSize(10).setFont(undefined, 'normal');
@@ -76,12 +76,11 @@ export function generatePdf(input: GeneratePdfInput): string {
     }
     if (infoLine) {
         doc.text(infoLine, margin, cursorY);
-        cursorY += 5;
     }
 
 
     // Linha 3: Título do Relatório (Centralizado e com espaço)
-    cursorY += 10; // Espaço extra antes do título
+    cursorY += 15; // Espaço extra antes do título
     doc.setFontSize(16).setFont(undefined, 'bold');
     doc.text('Relatório de Garantias para Fornecedor', page_width / 2, cursorY, { align: 'center'});
     cursorY += 10;
