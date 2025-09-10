@@ -45,7 +45,7 @@ interface ReportGeneratorProps {
 
 export default function ReportGenerator({ 
     selectedWarranties, 
-    title = "Gerador de Relatório para Fornecedor",
+    title = "Gerador de Relatório",
     description = "Selecione os campos a serem incluídos no relatório em PDF.",
     supplierData,
     defaultFields = ['codigo', 'descricao', 'quantidade', 'defeito', 'cliente', 'status', 'fornecedor']
@@ -83,6 +83,7 @@ export default function ReportGenerator({
       const companyData = await db.getCompanyData();
       
       const warrantiesToSend = selectedWarranties.map((w) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { id: _, ...rest } = w;
         return rest;
       });
@@ -97,8 +98,9 @@ export default function ReportGenerator({
       if (pdfDataUri) {
         const link = document.createElement('a');
         const date = new Date().toISOString().split('T')[0];
+        const supplierName = supplierData?.nomeFantasia.replace(/\s+/g, '_') || 'relatorio';
         link.href = pdfDataUri;
-        link.download = `relatorio_garantias_${date}.pdf`;
+        link.download = `relatorio_garantias_${supplierName}_${date}.pdf`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -120,14 +122,20 @@ export default function ReportGenerator({
       setIsGenerating(false);
     }
   };
-
-  return (
-    <Card className="shadow-lg">
-      <CardHeader>
+  
+  const Wrapper = title ? Card : 'div';
+  const header = title ? (
+    <CardHeader>
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent>
+    </CardHeader>
+  ) : null;
+
+
+  return (
+    <Wrapper>
+      {header}
+      <CardContent className={!title ? 'p-0' : ''}>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
           {ALL_FIELDS.map(field => (
             <div key={field} className="flex items-center space-x-2">
@@ -159,6 +167,8 @@ export default function ReportGenerator({
             </p>
         )}
       </CardContent>
-    </Card>
+    </Wrapper>
   );
 }
+
+    

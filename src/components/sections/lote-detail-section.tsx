@@ -5,7 +5,7 @@ import type { Lote, Warranty, Supplier, WarrantyStatus } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '../ui/button';
-import { ArrowLeft, Package, Calendar, Building, FileText, MoreHorizontal, Pencil, Trash2, CheckSquare } from 'lucide-react';
+import { ArrowLeft, Package, Calendar, Building, FileText, MoreHorizontal, Pencil, Trash2, CheckSquare, FileDown } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { format, parseISO } from 'date-fns';
@@ -22,7 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import WarrantyForm from '../warranty-form';
 import LoteForm from '../lote-form';
 import { Checkbox } from '../ui/checkbox';
@@ -100,6 +100,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
   const [selectedWarrantyIds, setSelectedWarrantyIds] = useState<Set<number>>(new Set());
   const [nfRetornoValue, setNfRetornoValue] = useState('');
   const [nfSaidaValue, setNfSaidaValue] = useState('');
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const { toast } = useToast();
 
   const loadLoteDetails = useCallback(async () => {
@@ -413,9 +414,36 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
       </Card>
 
       <Card>
-        <CardHeader>
-            <CardTitle>Itens no Lote</CardTitle>
-            <CardDescription>Lista de todas as garantias incluídas neste lote. Use os checkboxes para atualizar as NFs em massa.</CardDescription>
+        <CardHeader className='flex flex-row justify-between items-center'>
+            <div>
+                <CardTitle>Itens no Lote</CardTitle>
+                <CardDescription>Lista de todas as garantias incluídas neste lote. Use os checkboxes para atualizar as NFs em massa.</CardDescription>
+            </div>
+            <Dialog open={isPdfModalOpen} onOpenChange={setIsPdfModalOpen}>
+                <DialogTrigger asChild>
+                    <Button>
+                        <FileDown className="mr-2 h-4 w-4" />
+                        Gerar Relatório do Lote
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className='max-w-3xl'>
+                    <DialogHeader>
+                        <DialogTitle>Gerar PDF para este Lote</DialogTitle>
+                         <DialogDescription>
+                            Selecione os campos que deseja incluir no relatório para o fornecedor.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className='py-4'>
+                        <ReportGenerator 
+                            selectedWarranties={warranties}
+                            title=""
+                            description=""
+                            supplierData={supplierData}
+                            defaultFields={LOTE_PDF_DEFAULT_FIELDS}
+                        />
+                    </div>
+                </DialogContent>
+            </Dialog>
         </CardHeader>
         <CardContent>
             <div className="grid md:grid-cols-2 gap-6 mb-6">
@@ -546,16 +574,6 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
         </CardContent>
       </Card>
       
-      <div className='pt-4'>
-        <ReportGenerator 
-            selectedWarranties={warranties}
-            title="Gerar PDF para este Lote"
-            description='Selecione os campos que deseja incluir no relatório para o fornecedor.'
-            supplierData={supplierData}
-            defaultFields={LOTE_PDF_DEFAULT_FIELDS}
-        />
-      </div>
-
       {/* Modal for editing warranty */}
       <Dialog open={isFormModalOpen} onOpenChange={setIsFormModalOpen}>
         <DialogContent className="max-w-4xl">
@@ -618,3 +636,5 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
     </div>
   );
 }
+
+    
