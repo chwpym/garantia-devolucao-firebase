@@ -39,7 +39,7 @@ export function ImportButton({ onDataImported }: ImportButtonProps) {
         if (typeof text !== 'string') {
           throw new Error('Formato de arquivo inválido.');
         }
-        const data = JSON.parse(text) as unknown;
+        const data = JSON.parse(text);
         if (!Array.isArray(data)) {
           throw new Error('O arquivo JSON deve conter um array de garantias.');
         }
@@ -69,8 +69,7 @@ export function ImportButton({ onDataImported }: ImportButtonProps) {
     try {
         await db.clearWarranties();
         for (const warranty of warrantiesToImport) {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { id: _, ...warrantyData } = warranty;
+            const { id, ...warrantyData } = warranty;
             await db.addWarranty(warrantyData);
         }
         onDataImported();
