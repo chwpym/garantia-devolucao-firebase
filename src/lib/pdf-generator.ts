@@ -18,6 +18,16 @@ interface GeneratePdfInput {
     companyData: CompanyData | null;
 }
 
+const formatCnpj = (cnpj: string | undefined): string => {
+    if (!cnpj) return '';
+    const cleaned = cnpj.replace(/\D/g, '');
+    if (cleaned.length !== 14) return cnpj;
+    return cleaned.replace(
+      /(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,
+      '$1.$2.$3/$4-$5'
+    );
+};
+
 export function generatePdf(input: GeneratePdfInput): string {
     const { selectedWarranties, selectedFields, companyData } = input;
     const doc = new jsPDF();
@@ -25,49 +35,60 @@ export function generatePdf(input: GeneratePdfInput): string {
     const margin = 14;
     let cursorY = 20;
 
-    // Header
-    // Company Name (left)
-    if (companyData?.nomeEmpresa) {
-        doc.setFontSize(14).setFont(undefined, 'bold');
-        doc.text(companyData.nomeEmpresa, margin, cursorY);
-        doc.setFont(undefined, 'normal');
-        cursorY += 6;
-    }
+    // --- CABEÇALHO ---
 
-    // Report Title (centered)
-    doc.setFontSize(16);
-    doc.text('Relatório de Garantias para Fornecedor', page_width / 2, cursorY, { align: 'center'});
-    cursorY -= 6; // Reset Y to align company info and date correctly
-
-    // Generation Date (right)
-    doc.setFontSize(10);
+    // Linha 1: Nome da Empresa (esquerda) e Data (direita)
+    doc.setFontSize(14).setFont(undefined, 'bold');
+    doc.text(companyData?.nomeEmpresa || 'Relatório de Garantias', margin, cursorY);
+    
+    doc.setFontSize(10).setFont(undefined, 'normal');
     const date = new Date().toLocaleDateString('pt-BR');
     doc.text(`Gerado em: ${date}`, page_width - margin, cursorY, { align: 'right'});
     cursorY += 8;
 
-    // Company Details (left)
+    // Linha 2: Informações da Empresa
     doc.setFontSize(9);
+    
+    if (companyData?.cnpj) {
+        doc.text(`CNPJ: ${formatCnpj(companyData.cnpj)}`, margin, cursorY);
+        cursorY += 5;
+    }
+
     if (companyData?.endereco) {
         let fullAddress = companyData.endereco;
         if (companyData.bairro) {
             fullAddress += `, ${companyData.bairro}`;
         }
         doc.text(fullAddress, margin, cursorY);
-        cursorY += 4;
+        cursorY += 5;
     }
     if (companyData?.cidade) {
         doc.text(companyData.cidade, margin, cursorY);
-        cursorY += 4;
-    }
-    if (companyData?.telefone) {
-        doc.text(`Tel: ${companyData.telefone}`, margin, cursorY);
-        cursorY += 4;
-    }
-    if (companyData?.email) {
-        doc.text(`Email: ${companyData.email}`, margin, cursorY);
+        cursorY += 5;
     }
     
-    // Define headers by mapping machine-readable field names to human-readable labels
+    let infoLine = '';
+    if (companyData?.telefone) {
+        infoLine += `Tel: ${companyData.telefone}`;
+    }
+    if (companyData?.email) {
+        infoLine += `${infoLine ? ' | ' : ''}Email: ${companyData.email}`;
+    }
+    if (infoLine) {
+        doc.text(infoLine, margin, cursorY);
+        cursorY += 5;
+    }
+
+
+    // Linha 3: Título do Relatório (Centralizado e com espaço)
+    cursorY += 10; // Espaço extra antes do título
+    doc.setFontSize(16).setFont(undefined, 'bold');
+    doc.text('Relatório de Garantias para Fornecedor', page_width / 2, cursorY, { align: 'center'});
+    cursorY += 10;
+
+
+    // --- TABELA ---
+    
     const FIELD_LABELS: Record<string, string> = {
         codigo: 'Código',
         descricao: 'Descrição',
@@ -105,11 +126,13 @@ export function generatePdf(input: GeneratePdfInput): string {
     });
 
     doc.autoTable({
-        startY: Math.max(cursorY, 45) + 5,
+        startY: cursorY,
         head: [tableHeaders],
         body: tableBody,
         theme: 'striped',
-        headStyles: { fillColor: [41, 128, 185] },
+        headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+        styles: { fontSize: 8 },
+        alternateRowStyles: { fillColor: [240, 240, 240] },
     });
     
     return doc.output('datauristring');
