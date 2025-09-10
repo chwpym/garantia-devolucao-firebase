@@ -15,7 +15,7 @@ interface MobileSidebarProps {
 
 const navItems = {
   dashboard: { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  reports: { id: 'reports', label: 'Relatórios', icon: FileText },
+  reports: { id: 'reports', label: 'Relatório de Garantias', icon: FileText },
   backup: { id: 'backup', label: 'Backup', icon: DatabaseBackup },
 };
 
@@ -34,6 +34,7 @@ export default function MobileSidebar({ activeView, onNavigate, isCollapsed, cla
     
     const isCadastroActive = cadastroNavItems.some(item => item.id === activeView);
     const isGarantiaActive = garantiaNavItems.some(item => item.id === activeView);
+    const isReportActive = activeView === 'reports';
 
     const renderNavItem = (item: { id: string; label: string; icon: React.ElementType }) => (
          <Button
@@ -56,7 +57,12 @@ export default function MobileSidebar({ activeView, onNavigate, isCollapsed, cla
             <nav className="flex flex-col gap-1 px-4">
                 {renderNavItem(navItems.dashboard)}
                 
-                <Accordion type="single" collapsible defaultValue={isGarantiaActive ? "garantias" : (isCadastroActive ? "cadastros" : undefined)} className="w-full">
+                <Accordion 
+                    type="single" 
+                    collapsible 
+                    defaultValue={isCadastroActive ? "cadastros" : isGarantiaActive ? "garantias" : isReportActive ? "reports" : undefined} 
+                    className="w-full"
+                >
                     <AccordionItem value="cadastros" className="border-b-0">
                         <AccordionTrigger 
                             className={cn(
@@ -117,9 +123,36 @@ export default function MobileSidebar({ activeView, onNavigate, isCollapsed, cla
                             </div>
                         </AccordionContent>
                     </AccordionItem>
+                     <AccordionItem value="reports" className="border-b-0">
+                        <AccordionTrigger 
+                            className={cn(
+                                "justify-start gap-3 text-base h-11 font-normal rounded-md hover:no-underline hover:bg-accent px-4 py-2",
+                                isCollapsed && "justify-center p-0",
+                                isReportActive && !isCollapsed ? "bg-accent" : ""
+                            )}
+                            title={isCollapsed ? "Relatórios" : undefined}
+                        >
+                             <div className="flex items-center gap-3">
+                                <FileText className="h-5 w-5 flex-shrink-0" />
+                                <span className={cn("truncate", isCollapsed && "hidden")}>Relatórios</span>
+                            </div>
+                        </AccordionTrigger>
+                        <AccordionContent className={cn("pb-1", isCollapsed && "hidden")}>
+                            <div className="flex flex-col gap-1 pl-4 pt-1">
+                                <Button
+                                    key={navItems.reports.id}
+                                    variant={activeView === navItems.reports.id ? 'secondary' : 'ghost'}
+                                    className={cn("justify-start gap-3 text-base h-11")}
+                                    onClick={() => onNavigate(navItems.reports.id)}
+                                >
+                                    <navItems.reports.icon className="h-5 w-5 flex-shrink-0" />
+                                    <span>{navItems.reports.label}</span>
+                                </Button>
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
                 </Accordion>
                 
-                {renderNavItem(navItems.reports)}
                 {renderNavItem(navItems.backup)}
             </nav>
         </div>
