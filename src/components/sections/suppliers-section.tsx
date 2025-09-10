@@ -36,14 +36,35 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, PlusCircle } from 'lucide-react';
 import SupplierForm from '../supplier-form';
+
+
+const formatCnpj = (value?: string) => {
+    if (!value) return '-';
+    const cleaned = value.replace(/\D/g, '');
+    if (cleaned.length === 14) { // CNPJ
+        return cleaned.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+    }
+    return value;
+};
+
 
 export default function SuppliersSection() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Supplier | null>(null);
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDbReady, setIsDbReady] = useState(false);
   const { toast } = useToast();
 
@@ -91,11 +112,13 @@ export default function SuppliersSection() {
 
   const handleSave = () => {
     setEditingSupplier(null);
+    setIsFormModalOpen(false);
   };
 
-  const handleClearForm = () => {
-    setEditingSupplier(null);
-  };
+  const handleEditClick = (supplier: Supplier) => {
+    setEditingSupplier(supplier);
+    setIsFormModalOpen(true);
+  }
 
   const handleDelete = async (id: number) => {
     try {
@@ -123,82 +146,100 @@ export default function SuppliersSection() {
   };
 
   return (
-    <div className='grid gap-8 md:grid-cols-3'>
-      <div className="md:col-span-1">
-        <Card className="shadow-lg sticky top-24">
-          <CardHeader>
-            <CardTitle>{editingSupplier ? 'Editar Fornecedor' : 'Novo Fornecedor'}</CardTitle>
-            <CardDescription>Preencha os dados do fornecedor abaixo.</CardDescription>
-          </CardHeader>
-          <SupplierForm 
-            onSave={handleSave} 
-            editingSupplier={editingSupplier} 
-            onClear={handleClearForm} 
-          />
-        </Card>
+    <div className='space-y-8'>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+              <h1 className="text-3xl font-bold tracking-tight">Fornecedores</h1>
+              <p className="text-lg text-muted-foreground">
+                  Gerencie seus fornecedores cadastrados.
+              </p>
+          </div>
+          <Dialog open={isFormModalOpen} onOpenChange={(isOpen) => {
+              setIsFormModalOpen(isOpen);
+              if (!isOpen) {
+                  setEditingSupplier(null);
+              }
+          }}>
+              <DialogTrigger asChild>
+                  <Button>
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Cadastrar Fornecedor
+                  </Button>
+              </DialogTrigger>
+              <DialogContent>
+                  <DialogHeader>
+                      <DialogTitle>{editingSupplier ? 'Editar Fornecedor' : 'Novo Fornecedor'}</DialogTitle>
+                      <DialogDescription>Preencha os dados do fornecedor abaixo.</DialogDescription>
+                  </DialogHeader>
+                    <SupplierForm 
+                      onSave={handleSave} 
+                      editingSupplier={editingSupplier} 
+                      onClear={() => setEditingSupplier(null)} 
+                      isModal={true}
+                    />
+              </DialogContent>
+          </Dialog>
       </div>
 
-      <div className="md:col-span-2">
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle>Fornecedores Cadastrados</CardTitle>
-            <CardDescription>Lista de todos os fornecedores.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="border rounded-md">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome Fantasia</TableHead>
-                    <TableHead>Razão Social</TableHead>
-                    <TableHead>CNPJ</TableHead>
-                    <TableHead>Cidade</TableHead>
-                    <TableHead className="w-[50px] text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {suppliers.length > 0 ? (
-                    suppliers.map(supplier => (
-                      <TableRow key={supplier.id}>
-                        <TableCell className="font-medium">{supplier.nomeFantasia}</TableCell>
-                        <TableCell>{supplier.razaoSocial}</TableCell>
-                        <TableCell>{supplier.cnpj}</TableCell>
-                        <TableCell>{supplier.cidade}</TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Abrir menu</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => setEditingSupplier(supplier)}>
-                                <Pencil className="mr-2 h-4 w-4" />
-                                Editar
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => setDeleteTarget(supplier)} className="text-destructive focus:text-destructive">
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Excluir
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={5} className="h-24 text-center">
-                        Nenhum fornecedor encontrado.
+      <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle>Fornecedores Cadastrados</CardTitle>
+          <CardDescription>Lista de todos os fornecedores.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="border rounded-md">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome Fantasia</TableHead>
+                  <TableHead>Razão Social</TableHead>
+                  <TableHead>CNPJ</TableHead>
+                  <TableHead>Cidade</TableHead>
+                  <TableHead className="w-[50px] text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {suppliers.length > 0 ? (
+                  suppliers.map(supplier => (
+                    <TableRow key={supplier.id}>
+                      <TableCell className="font-medium">{supplier.nomeFantasia}</TableCell>
+                      <TableCell>{supplier.razaoSocial}</TableCell>
+                      <TableCell>{formatCnpj(supplier.cnpj)}</TableCell>
+                      <TableCell>{supplier.cidade || '-'}</TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Abrir menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEditClick(supplier)}>
+                              <Pencil className="mr-2 h-4 w-4" />
+                              Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setDeleteTarget(supplier)} className="text-destructive focus:text-destructive">
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Excluir
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">
+                      Nenhum fornecedor encontrado.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>

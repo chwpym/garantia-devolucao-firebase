@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect } from 'react';
@@ -13,6 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { CardContent, CardFooter } from '@/components/ui/card';
+import { DialogFooter } from './ui/dialog';
 
 const formSchema = z.object({
   razaoSocial: z.string().min(2, { message: 'A razão social deve ter pelo menos 2 caracteres.' }),
@@ -27,6 +29,7 @@ interface SupplierFormProps {
   onSave: (newSupplier: Supplier) => void;
   editingSupplier?: Supplier | null;
   onClear?: () => void;
+  isModal?: boolean;
 }
 
 const defaultFormValues: SupplierFormValues = {
@@ -47,7 +50,7 @@ const formatCNPJ = (value: string) => {
         .replace(/(\d{4})(\d)/, '$1-$2');
 };
 
-export default function SupplierForm({ onSave, editingSupplier, onClear }: SupplierFormProps) {
+export default function SupplierForm({ onSave, editingSupplier, onClear, isModal = false }: SupplierFormProps) {
   const { toast } = useToast();
   const form = useForm<SupplierFormValues>({
     resolver: zodResolver(formSchema),
@@ -95,74 +98,83 @@ export default function SupplierForm({ onSave, editingSupplier, onClear }: Suppl
     }
   };
 
+  const FormContent = (
+      <div className="space-y-4 pt-4">
+        <FormField
+          name="nomeFantasia"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Nome Fantasia</FormLabel>
+              <FormControl>
+                <Input placeholder="Nome da Empresa" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          name="razaoSocial"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Razão Social</FormLabel>
+              <FormControl>
+                <Input placeholder="Razão Social Ltda." {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          name="cnpj"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>CNPJ</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="00.000.000/0000-00"
+                  {...field}
+                  onChange={(e) => field.onChange(formatCNPJ(e.target.value))}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          name="cidade"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Cidade</FormLabel>
+              <FormControl>
+                <Input placeholder="Cidade - UF" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+  )
+
+  const FooterComponent = isModal ? DialogFooter : CardFooter;
+  const footerProps = isModal ? { className: 'pt-6' } : { className: 'flex justify-end gap-2 pr-0' };
+
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSave)}>
-        <CardContent className="space-y-4 pt-4">
-          <FormField
-            name="nomeFantasia"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nome Fantasia</FormLabel>
-                <FormControl>
-                  <Input placeholder="Nome da Empresa" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            name="razaoSocial"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Razão Social</FormLabel>
-                <FormControl>
-                  <Input placeholder="Razão Social Ltda." {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            name="cnpj"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>CNPJ</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="00.000.000/0000-00"
-                    {...field}
-                    onChange={(e) => field.onChange(formatCNPJ(e.target.value))}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            name="cidade"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Cidade</FormLabel>
-                <FormControl>
-                  <Input placeholder="Cidade - UF" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </CardContent>
-        <CardFooter className="flex justify-end gap-2 pr-0">
+        {isModal ? FormContent : <CardContent>{FormContent}</CardContent>}
+        
+        <FooterComponent {...footerProps}>
           {onClear && <Button type="button" variant="outline" onClick={onClear}>Limpar</Button>}
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             {editingSupplier ? 'Atualizar' : 'Salvar'}
           </Button>
-        </CardFooter>
+        </FooterComponent>
       </form>
     </Form>
   );
