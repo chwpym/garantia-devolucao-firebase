@@ -13,10 +13,6 @@ import SuppliersSection from '@/components/sections/suppliers-section';
 import BackupSection from '@/components/sections/backup-section';
 import LoteDetailSection from '@/components/sections/lote-detail-section';
 import SettingsSection from '@/components/sections/settings-section';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { Menu } from 'lucide-react';
-import MobileSidebar from '@/components/mobile-sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 export default function Home() {
@@ -35,11 +31,6 @@ export default function Home() {
     setSelectedLoteId(null);
     setActiveView('lotes');
   }
-
-  const handleMobileNavClick = (view: string) => {
-    setActiveView(view);
-    setMobileMenuOpen(false);
-  };
 
   const renderContent = () => {
     switch (activeView) {
