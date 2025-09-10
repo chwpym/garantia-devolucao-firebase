@@ -14,6 +14,8 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'Warranty Wise',
   description: 'Sistema de Controle de Garantias Local',
+  manifest: '/manifest.json',
+  themeColor: '#ffffff',
 };
 
 export default function RootLayout({
