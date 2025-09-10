@@ -59,7 +59,7 @@ export default function RegisterSection() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-5xl mx-auto">
       <WarrantyForm
         key={editingWarranty?.id ?? 'new'}
         selectedWarranty={editingWarranty}
