@@ -39,10 +39,10 @@ export function generatePdf(input: GeneratePdfInput): string {
     // --- CABEÇALHO ---
 
     // Linha 1: Nome da Empresa (esquerda) e Data (direita)
-    doc.setFontSize(10).setFont(undefined, 'bold');
+    doc.setFontSize(10).setFont('helvetica', 'bold');
     doc.text(companyData?.nomeEmpresa || 'Relatório de Garantias', margin, cursorY);
     
-    doc.setFontSize(10).setFont(undefined, 'normal');
+    doc.setFontSize(10).setFont('helvetica', 'normal');
     const date = new Date().toLocaleDateString('pt-BR');
     doc.text(`Gerado em: ${date}`, page_width - margin, cursorY, { align: 'right'});
     cursorY += 6;
@@ -82,11 +82,11 @@ export function generatePdf(input: GeneratePdfInput): string {
     // --- DADOS DO FORNECEDOR (se houver) ---
     if (supplierData) {
         cursorY += 10;
-        doc.setFont(undefined, 'bold');
+        doc.setFont('helvetica', 'bold');
         doc.text('DESTINATÁRIO:', margin, cursorY);
         cursorY += 5;
 
-        doc.setFont(undefined, 'normal');
+        doc.setFont('helvetica', 'normal');
         doc.text(supplierData.nomeFantasia, margin, cursorY);
         if (supplierData.razaoSocial && supplierData.razaoSocial !== supplierData.nomeFantasia) {
             doc.text(`(${supplierData.razaoSocial})`, margin + doc.getTextWidth(supplierData.nomeFantasia) + 2, cursorY);
@@ -105,7 +105,7 @@ export function generatePdf(input: GeneratePdfInput): string {
 
     // Linha 3: Título do Relatório (Centralizado e com espaço)
     cursorY += 12; // Espaço extra antes do título
-    doc.setFontSize(16).setFont(undefined, 'bold');
+    doc.setFontSize(16).setFont('helvetica', 'bold');
     doc.text('Relatório de Garantias para Fornecedor', page_width / 2, cursorY, { align: 'center'});
     cursorY += 10;
 
