@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -9,11 +10,11 @@ import type { Person } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { CardContent, CardFooter } from '@/components/ui/card';
+import { DialogFooter } from '@/components/ui/dialog';
 
 const formSchema = z.object({
   nome: z.string().min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' }),
@@ -151,7 +152,7 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSave)}>
-        <CardContent className="space-y-4 pt-4">
+        <div className="space-y-4 px-1">
           <FormField
             name="nome"
             control={form.control}
@@ -291,14 +292,14 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
                     )}
                 />
             </div>
-        </CardContent>
-        <CardFooter className="flex justify-end gap-2 pr-0">
+        </div>
+        <DialogFooter className="pt-6">
           {onClear && <Button type="button" variant="outline" onClick={onClear}>Limpar</Button>}
           <Button type="submit" disabled={isSubmitting || isFetchingCep}>
             {isSubmitting || isFetchingCep ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            {editingPerson ? 'Atualizar' : 'Salvar'}
+            {editingPerson ? 'Atualizar Registro' : 'Salvar Registro'}
           </Button>
-        </CardFooter>
+        </DialogFooter>
       </form>
     </Form>
   );

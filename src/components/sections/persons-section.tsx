@@ -3,8 +3,10 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import type { Person } from '@/lib/types';
+import type { Person, CompanyData } from '@/lib/types';
 import * as db from '@/lib/db';
+import { generatePersonsPdf } from '@/lib/pdf-generator';
+
 import {
   Card,
   CardContent,
@@ -36,9 +38,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, PlusCircle, Download } from 'lucide-react';
 import PersonForm from '../person-form';
 
 const formatCpfCnpj = (value?: string) => {
@@ -58,6 +69,7 @@ export default function PersonsSection() {
   const [persons, setPersons] = useState<Person[]>([]);
   const [editingPerson, setEditingPerson] = useState<Person | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Person | null>(null);
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDbReady, setIsDbReady] = useState(false);
   const { toast } = useToast();
 
@@ -105,11 +117,13 @@ export default function PersonsSection() {
 
   const handleSave = () => {
     setEditingPerson(null);
+    setIsFormModalOpen(false);
   };
-
-  const handleClearForm = () => {
-    setEditingPerson(null);
-  };
+  
+  const handleEditClick = (person: Person) => {
+    setEditingPerson(person);
+    setIsFormModalOpen(true);
+  }
 
   const handleDelete = async (id: number) => {
     try {
@@ -136,6 +150,34 @@ export default function PersonsSection() {
     setDeleteTarget(null);
   };
   
+  const handleGenerateReport = async () => {
+    try {
+        const companyData = await db.getCompanyData();
+        const pdfDataUri = generatePersonsPdf({
+            persons,
+            companyData,
+        });
+        const link = document.createElement('a');
+        const date = new Date().toISOString().split('T')[0];
+        link.href = pdfDataUri;
+        link.download = `relatorio_clientes_${date}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast({
+          title: 'Sucesso',
+          description: 'Seu relatório de clientes foi gerado.',
+        });
+    } catch (error) {
+         console.error('Failed to generate PDF:', error);
+        toast({
+            title: 'Erro ao Gerar PDF',
+            description: 'Não foi possível gerar o relatório. Tente novamente.',
+            variant: 'destructive',
+        });
+    }
+  };
+
   const getTypeVariant = (type: Person['tipo']) => {
     switch (type) {
       case 'Cliente':
@@ -151,26 +193,52 @@ export default function PersonsSection() {
 
 
   return (
-    <div className='grid gap-8 lg:grid-cols-3'>
-      <div className="lg:col-span-1">
-        <Card className="shadow-lg sticky top-24">
-          <CardHeader>
-            <CardTitle>{editingPerson ? 'Editar Registro' : 'Novo Cliente/Mecânico'}</CardTitle>
-            <CardDescription>Preencha os dados abaixo.</CardDescription>
-          </CardHeader>
-          <PersonForm 
-            onSave={handleSave}
-            editingPerson={editingPerson}
-            onClear={handleClearForm}
-          />
-        </Card>
-      </div>
+    <div className='space-y-8'>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h1 className="text-3xl font-bold tracking-tight">Clientes e Mecânicos</h1>
+                <p className="text-lg text-muted-foreground">
+                    Gerencie seus clientes e mecânicos cadastrados.
+                </p>
+            </div>
+            <div className='flex gap-2'>
+                <Button variant="outline" onClick={handleGenerateReport} disabled={persons.length === 0}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Gerar Relatório
+                </Button>
+                <Dialog open={isFormModalOpen} onOpenChange={(isOpen) => {
+                    setIsFormModalOpen(isOpen);
+                    if (!isOpen) {
+                        setEditingPerson(null);
+                    }
+                }}>
+                    <DialogTrigger asChild>
+                        <Button>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Cadastrar Novo
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl">
+                        <DialogHeader>
+                            <DialogTitle>{editingPerson ? 'Editar Registro' : 'Novo Cliente/Mecânico'}</DialogTitle>
+                            <DialogDescription>Preencha os dados abaixo.</DialogDescription>
+                        </DialogHeader>
+                         <div className='py-4 max-h-[70vh] overflow-y-auto'>
+                             <PersonForm 
+                                onSave={handleSave}
+                                editingPerson={editingPerson}
+                                onClear={() => setEditingPerson(null)}
+                            />
+                        </div>
+                    </DialogContent>
+                </Dialog>
+            </div>
+        </div>
 
-      <div className="lg:col-span-2">
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle>Registros</CardTitle>
-            <CardDescription>Lista de todos os clientes e mecânicos cadastrados.</CardDescription>
+            <CardTitle>Registros Cadastrados</CardTitle>
+            <CardDescription>Lista de todos os clientes e mecânicos cadastrados no sistema.</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="border rounded-md">
@@ -203,7 +271,7 @@ export default function PersonsSection() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => setEditingPerson(person)}>
+                              <DropdownMenuItem onClick={() => handleEditClick(person)}>
                                 <Pencil className="mr-2 h-4 w-4" />
                                 Editar
                               </DropdownMenuItem>
@@ -228,7 +296,6 @@ export default function PersonsSection() {
             </div>
           </CardContent>
         </Card>
-      </div>
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>

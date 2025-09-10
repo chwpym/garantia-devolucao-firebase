@@ -1,9 +1,10 @@
+
 'use client';
 
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import type { UserOptions } from 'jspdf-autotable';
-import type { Warranty, CompanyData, Supplier } from '@/lib/types';
+import type { Warranty, CompanyData, Supplier, Person } from '@/lib/types';
 
 // Extend jsPDF with autoTable, which is a plugin
 declare module 'jspdf' {
@@ -19,24 +20,27 @@ interface GeneratePdfInput {
     supplierData?: Supplier | null;
 }
 
+interface GeneratePersonsPdfInput {
+    persons: Person[];
+    companyData: CompanyData | null;
+}
+
 const formatCnpj = (cnpj: string | undefined): string => {
     if (!cnpj) return '';
     const cleaned = cnpj.replace(/\D/g, '');
-    if (cleaned.length !== 14) return cnpj;
-    return cleaned.replace(
-      /(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,
-      '$1.$2.$3/$4-$5'
-    );
+    if (cleaned.length === 11) { // CPF
+        return cleaned.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    }
+    if (cleaned.length === 14) { // CNPJ
+        return cleaned.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+    }
+    return cnpj;
 };
 
-export function generatePdf(input: GeneratePdfInput): string {
-    const { selectedWarranties, selectedFields, companyData, supplierData } = input;
-    const doc = new jsPDF();
+const addHeader = (doc: jsPDF, companyData: CompanyData | null, title: string) => {
     const page_width = doc.internal.pageSize.getWidth();
     const margin = 14;
     let cursorY = 20;
-
-    // --- CABEÇALHO ---
 
     // Linha 1: Nome da Empresa (esquerda) e Data (direita)
     doc.setFontSize(10).setFont('helvetica', 'bold');
@@ -78,10 +82,27 @@ export function generatePdf(input: GeneratePdfInput): string {
     if (infoLine) {
         doc.text(infoLine, margin, cursorY);
     }
+
+    // Linha 3: Título do Relatório (Centralizado e com espaço)
+    cursorY += 12; // Espaço extra antes do título
+    doc.setFontSize(16).setFont('helvetica', 'bold');
+    doc.text(title, page_width / 2, cursorY, { align: 'center'});
+    cursorY += 10;
     
+    return cursorY;
+}
+
+
+export function generatePdf(input: GeneratePdfInput): string {
+    const { selectedWarranties, selectedFields, companyData, supplierData } = input;
+    const doc = new jsPDF();
+    const page_width = doc.internal.pageSize.getWidth();
+    const margin = 14;
+
+    let cursorY = addHeader(doc, companyData, 'Relatório de Garantias');
+
     // --- DADOS DO FORNECEDOR (se houver) ---
     if (supplierData) {
-        cursorY += 10;
         doc.setFont('helvetica', 'bold');
         doc.text('DESTINATÁRIO:', margin, cursorY);
         cursorY += 5;
@@ -100,14 +121,8 @@ export function generatePdf(input: GeneratePdfInput): string {
          if (supplierData.cidade) {
             doc.text(`Cidade: ${supplierData.cidade}`, margin, cursorY);
         }
+        cursorY += 6;
     }
-
-
-    // Linha 3: Título do Relatório (Centralizado e com espaço)
-    cursorY += 12; // Espaço extra antes do título
-    doc.setFontSize(16).setFont('helvetica', 'bold');
-    doc.text('Relatório de Garantias para Fornecedor', page_width / 2, cursorY, { align: 'center'});
-    cursorY += 10;
 
 
     // --- TABELA ---
@@ -158,5 +173,36 @@ export function generatePdf(input: GeneratePdfInput): string {
         alternateRowStyles: { fillColor: [240, 240, 240] },
     });
     
+    return doc.output('datauristring');
+}
+
+
+export function generatePersonsPdf(input: GeneratePersonsPdfInput): string {
+    const { persons, companyData } = input;
+    const doc = new jsPDF();
+    
+    const startY = addHeader(doc, companyData, 'Relatório de Clientes e Mecânicos');
+
+    const tableHeaders = ['Nome / Razão Social', 'CPF/CNPJ', 'Telefone', 'Email', 'Cidade', 'Tipo'];
+    
+    const tableBody = persons.map(person => [
+        person.nome || '-',
+        formatCnpj(person.cpfCnpj) || '-',
+        person.telefone || '-',
+        person.email || '-',
+        person.cidade || '-',
+        person.tipo || '-',
+    ]);
+
+    doc.autoTable({
+        startY: startY,
+        head: [tableHeaders],
+        body: tableBody,
+        theme: 'striped',
+        headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+        styles: { fontSize: 8 },
+        alternateRowStyles: { fillColor: [240, 240, 240] },
+    });
+
     return doc.output('datauristring');
 }
