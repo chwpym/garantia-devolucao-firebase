@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import type { Lote, Supplier, Warranty } from '@/lib/types';
+import type { Lote, Supplier } from '@/lib/types';
 import * as db from '@/lib/db';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, MoreHorizontal, Pencil, Trash2, Package, Calendar, Building, FileText } from 'lucide-react';
@@ -173,7 +173,7 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
                         {lote.fornecedor}
                    </CardDescription>
                 </div>
-                <DropdownMenu onOpenChange={(open) => { if (open) { event?.stopPropagation() } }}>
+                <DropdownMenu onOpenChange={(open) => { if (open) { event?.stopPropagation(); } }}>
                   <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                     <Button variant="ghost" className="h-8 w-8 p-0">
                       <span className="sr-only">Abrir menu</span>
@@ -181,11 +181,11 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={(e) => {e.stopPropagation(); handleEdit(lote)}}>
+                    <DropdownMenuItem onClick={(e) => {e.stopPropagation(); handleEdit(lote);}}>
                       <Pencil className="mr-2 h-4 w-4" />
                       Editar
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={(e) => {e.stopPropagation(); setDeleteTarget(lote)}} className="text-destructive focus:text-destructive">
+                    <DropdownMenuItem onClick={(e) => {e.stopPropagation(); setDeleteTarget(lote);}} className="text-destructive focus:text-destructive">
                       <Trash2 className="mr-2 h-4 w-4" />
                       Excluir
                     </DropdownMenuItem>
@@ -218,7 +218,7 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
             <Package className="mx-auto h-12 w-12 text-muted-foreground" />
             <h2 className="mt-4 text-xl font-semibold">Nenhum lote de garantia encontrado</h2>
             <p className="text-muted-foreground mt-2">
-              Clique em "Criar Novo Lote" para começar a agrupar suas garantias.
+              Clique em &quot;Criar Novo Lote&quot; para começar a agrupar suas garantias.
             </p>
          </div>
       )}

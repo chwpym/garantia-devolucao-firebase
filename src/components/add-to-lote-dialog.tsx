@@ -42,7 +42,7 @@ export default function AddToLoteDialog({ isOpen, onOpenChange, lotes, onConfirm
                 <DialogHeader>
                     <DialogTitle>Adicionar Garantias ao Lote</DialogTitle>
                     <DialogDescription>
-                        Você selecionou {selectedCount} garantia(s). Escolha um lote com status "Aberto" para adicioná-las.
+                        Você selecionou {selectedCount} garantia(s). Escolha um lote com status &quot;Aberto&quot; para adicioná-las.
                     </DialogDescription>
                 </DialogHeader>
                 

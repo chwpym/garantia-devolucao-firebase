@@ -175,7 +175,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
         {!isModal && (
             <CardHeader>
                 <CardTitle>{selectedWarranty ? 'Editar Garantia' : 'Cadastrar Garantia'}</CardTitle>
-                <CardDescription>Preencha os detalhes da garantia abaixo. Use "Enter" para pular para o próximo campo.</CardDescription>
+                <CardDescription>Preencha os detalhes da garantia abaixo. Use &quot;Enter&quot; para pular para o próximo campo.</CardDescription>
             </CardHeader>
         )}
         <Form {...form}>

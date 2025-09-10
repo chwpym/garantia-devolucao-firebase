@@ -142,7 +142,7 @@ export default function ReportSection() {
                       className="w-full pl-10"
                   />
               </div>
-               <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as any)}>
+               <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as WarrantyStatus | 'Todos')}>
                     <SelectTrigger className="w-full md:w-[180px]">
                         <SelectValue placeholder="Filtrar por status" />
                     </SelectTrigger>

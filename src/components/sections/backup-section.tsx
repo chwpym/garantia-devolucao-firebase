@@ -4,7 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import * as db from '@/lib/db';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Download, Upload } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { ImportButton } from '@/components/import-button';
 
 

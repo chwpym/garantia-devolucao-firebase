@@ -73,7 +73,7 @@ export default function ReportGenerator({ selectedWarranties }: ReportGeneratorP
     setIsGenerating(true);
     try {
       // Remove id before sending to the flow
-      const warrantiesToSend = selectedWarranties.map(({ id, ...rest }) => rest);
+      const warrantiesToSend = selectedWarranties.map(({ id: _, ...rest }) => rest);
 
       const result = await generateFilteredWarrantyReport({
         selectedWarranties: warrantiesToSend,

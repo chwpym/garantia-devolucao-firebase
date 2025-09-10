@@ -89,7 +89,7 @@ export default function SuppliersSection() {
   }, [loadSuppliers, toast, isDbReady]);
   
 
-  const handleSave = (savedSupplier: Supplier) => {
+  const handleSave = () => {
     setEditingSupplier(null);
   };
 

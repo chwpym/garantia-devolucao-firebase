@@ -12,13 +12,13 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
-import type { Warranty } from '@/lib/types';
+import type { UserOptions } from 'jspdf-autotable';
 
 
 // Extend jsPDF with autoTable, which is a plugin
 declare module 'jspdf' {
     interface jsPDF {
-      autoTable: (options: any) => jsPDF;
+      autoTable: (options: UserOptions) => jsPDF;
     }
 }
 
@@ -90,7 +90,9 @@ const generateFilteredWarrantyReportFlow = ai.defineFlow(
 
     const tableHeaders = selectedFields.map(field => field.replace(/([A-Z])/g, ' $1').toUpperCase());
     const tableBody = selectedWarranties.map(warranty => {
-        return selectedFields.map(field => warranty[field as keyof typeof warranty]?.toString() || '-');
+        // Use a type assertion to inform TypeScript about the structure
+        const warrantyRecord = warranty as Record<string, string | number | boolean | null | undefined>;
+        return selectedFields.map(field => warrantyRecord[field]?.toString() || '-');
     });
 
     doc.autoTable({

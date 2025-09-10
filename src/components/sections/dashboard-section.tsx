@@ -1,15 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import type { Warranty } from '@/lib/types';
+import { useEffect, useState, useCallback } from 'react';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Wrench, ShieldCheck, Hourglass, BarChart3, ShieldX, CheckCircle, Users, Building, DollarSign } from 'lucide-react';
+import { Wrench, ShieldCheck, Hourglass, BarChart3, ShieldX, Users, Building, DollarSign } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, Pie, PieChart, Cell } from 'recharts';
-import { format, subMonths, startOfMonth, parseISO } from 'date-fns';
+import { format, subMonths, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 
@@ -30,6 +29,12 @@ interface MonthlyData {
 interface RankingData {
     name: string;
     total: number;
+}
+
+interface StatusChartData {
+    name: string;
+    value: number;
+    fill: string;
 }
 
 const chartConfig = {
@@ -64,13 +69,13 @@ const COLORS = {
 export default function DashboardSection() {
   const [stats, setStats] = useState<DashboardStats>({ total: 0, totalDefeitos: 0, pendentes: 0, aprovadas: 0, recusadas: 0, pagas: 0 });
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
-  const [statusData, setStatusData] = useState<any[]>([]);
+  const [statusData, setStatusData] = useState<StatusChartData[]>([]);
   const [supplierRanking, setSupplierRanking] = useState<RankingData[]>([]);
   const [personRanking, setPersonRanking] = useState<RankingData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     setIsLoading(true);
     try {
       await db.initDB();
@@ -146,7 +151,7 @@ export default function DashboardSection() {
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [toast]);
 
   useEffect(() => {
     const handleDataChanged = () => {
@@ -159,7 +164,7 @@ export default function DashboardSection() {
     return () => {
         window.removeEventListener('datachanged', handleDataChanged);
     };
-  }, [toast]);
+  }, [loadStats]);
   
 
   return (

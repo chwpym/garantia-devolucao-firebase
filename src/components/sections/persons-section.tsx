@@ -91,7 +91,7 @@ export default function PersonsSection() {
   }, [loadPersons, toast, isDbReady]);
 
 
-  const handleSave = (savedPerson: Person) => {
+  const handleSave = () => {
     setEditingPerson(null);
   };
 

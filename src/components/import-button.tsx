@@ -39,21 +39,21 @@ export function ImportButton({ onDataImported }: ImportButtonProps) {
         if (typeof text !== 'string') {
           throw new Error('Formato de arquivo inválido.');
         }
-        const data = JSON.parse(text);
+        const data = JSON.parse(text) as unknown;
         if (!Array.isArray(data)) {
           throw new Error('O arquivo JSON deve conter um array de garantias.');
         }
 
         // Basic validation of imported data
-        const validWarranties = data.filter(item => typeof item === 'object' && item !== null && ('codigo' in item || 'descricao' in item));
+        const validWarranties = data.filter((item): item is Warranty => typeof item === 'object' && item !== null && ('codigo' in item || 'descricao' in item));
         
         setWarrantiesToImport(validWarranties);
         setShowConfirm(true);
         
-      } catch (error: any) {
+      } catch (error) {
         toast({
           title: 'Erro ao Ler Arquivo',
-          description: error.message || 'O arquivo selecionado não é um JSON válido.',
+          description: error instanceof Error ? error.message : 'O arquivo selecionado não é um JSON válido.',
           variant: 'destructive',
         });
       }
@@ -69,7 +69,7 @@ export function ImportButton({ onDataImported }: ImportButtonProps) {
     try {
         await db.clearWarranties();
         for (const warranty of warrantiesToImport) {
-            const { id, ...warrantyData } = warranty;
+            const { id: _, ...warrantyData } = warranty;
             await db.addWarranty(warrantyData);
         }
         onDataImported();
