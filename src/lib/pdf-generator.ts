@@ -3,7 +3,7 @@
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import type { UserOptions } from 'jspdf-autotable';
-import type { Warranty, CompanyData } from '@/lib/types';
+import type { Warranty, CompanyData, Supplier } from '@/lib/types';
 
 // Extend jsPDF with autoTable, which is a plugin
 declare module 'jspdf' {
@@ -16,6 +16,7 @@ interface GeneratePdfInput {
     selectedWarranties: Omit<Warranty, 'id'>[];
     selectedFields: string[];
     companyData: CompanyData | null;
+    supplierData?: Supplier | null;
 }
 
 const formatCnpj = (cnpj: string | undefined): string => {
@@ -29,7 +30,7 @@ const formatCnpj = (cnpj: string | undefined): string => {
 };
 
 export function generatePdf(input: GeneratePdfInput): string {
-    const { selectedWarranties, selectedFields, companyData } = input;
+    const { selectedWarranties, selectedFields, companyData, supplierData } = input;
     const doc = new jsPDF();
     const page_width = doc.internal.pageSize.getWidth();
     const margin = 14;
@@ -38,20 +39,20 @@ export function generatePdf(input: GeneratePdfInput): string {
     // --- CABEÇALHO ---
 
     // Linha 1: Nome da Empresa (esquerda) e Data (direita)
-    doc.setFontSize(12).setFont(undefined, 'bold');
+    doc.setFontSize(10).setFont(undefined, 'bold');
     doc.text(companyData?.nomeEmpresa || 'Relatório de Garantias', margin, cursorY);
     
     doc.setFontSize(10).setFont(undefined, 'normal');
     const date = new Date().toLocaleDateString('pt-BR');
     doc.text(`Gerado em: ${date}`, page_width - margin, cursorY, { align: 'right'});
-    cursorY += 8;
+    cursorY += 6;
 
     // Linha 2: Informações da Empresa
     doc.setFontSize(9);
     
     if (companyData?.cnpj) {
         doc.text(`CNPJ: ${formatCnpj(companyData.cnpj)}`, margin, cursorY);
-        cursorY += 5;
+        cursorY += 4;
     }
 
     if (companyData?.endereco) {
@@ -60,11 +61,11 @@ export function generatePdf(input: GeneratePdfInput): string {
             fullAddress += `, ${companyData.bairro}`;
         }
         doc.text(fullAddress, margin, cursorY);
-        cursorY += 5;
+        cursorY += 4;
     }
     if (companyData?.cidade) {
         doc.text(companyData.cidade, margin, cursorY);
-        cursorY += 5;
+        cursorY += 4;
     }
     
     let infoLine = '';
@@ -77,10 +78,33 @@ export function generatePdf(input: GeneratePdfInput): string {
     if (infoLine) {
         doc.text(infoLine, margin, cursorY);
     }
+    
+    // --- DADOS DO FORNECEDOR (se houver) ---
+    if (supplierData) {
+        cursorY += 10;
+        doc.setFont(undefined, 'bold');
+        doc.text('DESTINATÁRIO:', margin, cursorY);
+        cursorY += 5;
+
+        doc.setFont(undefined, 'normal');
+        doc.text(supplierData.nomeFantasia, margin, cursorY);
+        if (supplierData.razaoSocial && supplierData.razaoSocial !== supplierData.nomeFantasia) {
+            doc.text(`(${supplierData.razaoSocial})`, margin + doc.getTextWidth(supplierData.nomeFantasia) + 2, cursorY);
+        }
+        cursorY += 4;
+
+        if (supplierData.cnpj) {
+            doc.text(`CNPJ: ${formatCnpj(supplierData.cnpj)}`, margin, cursorY);
+            cursorY += 4;
+        }
+         if (supplierData.cidade) {
+            doc.text(`Cidade: ${supplierData.cidade}`, margin, cursorY);
+        }
+    }
 
 
     // Linha 3: Título do Relatório (Centralizado e com espaço)
-    cursorY += 15; // Espaço extra antes do título
+    cursorY += 12; // Espaço extra antes do título
     doc.setFontSize(16).setFont(undefined, 'bold');
     doc.text('Relatório de Garantias para Fornecedor', page_width / 2, cursorY, { align: 'center'});
     cursorY += 10;
