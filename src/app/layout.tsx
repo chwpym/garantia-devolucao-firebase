@@ -16,6 +16,10 @@ export const metadata: Metadata = {
   description: 'Sistema de Controle de Garantias Local',
   manifest: '/manifest.json',
   themeColor: '#ffffff',
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-icon.png',
+  },
 };
 
 export default function RootLayout({
@@ -25,6 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning className={inter.variable}>
+      <head />
       <body className="font-body antialiased">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {children}
