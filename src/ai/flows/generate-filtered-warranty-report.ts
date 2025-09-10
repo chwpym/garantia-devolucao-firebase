@@ -4,8 +4,8 @@
  * @fileOverview Generates a filtered warranty report in PDF format based on user selections.
  *
  * - generateFilteredWarrantyReport - A function that generates the filtered warranty report.
- * - GenerateFilteredWarrantyReportInput - The input type for the generateFilteredWarrantyReport function.
- * - GenerateFilteredWarrantyReportOutput - The return type for the generateFilteredWarrantyReport function.
+ * - GenerateFilteredWarrantyReportInput - The input type for the generateFilteredwarrantyReport function.
+ * - GenerateFilteredWarrantyReportOutput - The return type for the generateFilteredwarrantyReport function.
  */
 
 import { ai } from '@/ai/genkit';
@@ -13,8 +13,7 @@ import { z } from 'genkit';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import type { UserOptions } from 'jspdf-autotable';
-import { getCompanyData } from '@/lib/db';
-import type { Warranty } from '@/lib/types';
+import type { Warranty, CompanyData } from '@/lib/types';
 
 
 // Extend jsPDF with autoTable, which is a plugin
@@ -43,6 +42,17 @@ const WarrantyDataSchema = z.object({
   loteId: z.number().nullable().optional(),
 });
 
+const CompanyDataSchema = z.object({
+  nomeEmpresa: z.string().optional(),
+  cnpj: z.string().optional(),
+  cep: z.string().optional(),
+  endereco: z.string().optional(),
+  bairro: z.string().optional(),
+  cidade: z.string().optional(),
+  telefone: z.string().optional(),
+  email: z.string().email().optional(),
+}).nullable();
+
 
 const GenerateFilteredWarrantyReportInputSchema = z.object({
   selectedWarranties: z
@@ -51,6 +61,7 @@ const GenerateFilteredWarrantyReportInputSchema = z.object({
   selectedFields: z
     .array(z.string())
     .describe('Array of field names to include in the report.'),
+  companyData: CompanyDataSchema.describe('Company data for the report header.'),
 });
 
 export type GenerateFilteredWarrantyReportInput = z.infer<
@@ -80,9 +91,8 @@ const generateFilteredWarrantyReportFlow = ai.defineFlow(
     inputSchema: GenerateFilteredWarrantyReportInputSchema,
     outputSchema: GenerateFilteredWarrantyReportOutputSchema,
   },
-  async ({ selectedWarranties, selectedFields }) => {
+  async ({ selectedWarranties, selectedFields, companyData }) => {
     const doc = new jsPDF();
-    const companyData = await getCompanyData();
 
     // Header
     if (companyData?.nomeEmpresa) {

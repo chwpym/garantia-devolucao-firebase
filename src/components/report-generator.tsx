@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Loader2, FileDown } from 'lucide-react';
 import type { Warranty } from '@/lib/types';
+import * as db from '@/lib/db';
 
 const ALL_FIELDS: (keyof Omit<Warranty, 'id'>)[] = [
   'codigo', 'descricao', 'fornecedor', 'quantidade', 'defeito', 'requisicoes',
@@ -72,6 +73,9 @@ export default function ReportGenerator({ selectedWarranties }: ReportGeneratorP
 
     setIsGenerating(true);
     try {
+      // Fetch company data on the client before calling the flow
+      const companyData = await db.getCompanyData();
+      
       // Remove id before sending to the flow
       const warrantiesToSend = selectedWarranties.map((w) => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -82,6 +86,7 @@ export default function ReportGenerator({ selectedWarranties }: ReportGeneratorP
       const result = await generateFilteredWarrantyReport({
         selectedWarranties: warrantiesToSend,
         selectedFields,
+        companyData,
       });
       
       if (result.pdfDataUri) {
