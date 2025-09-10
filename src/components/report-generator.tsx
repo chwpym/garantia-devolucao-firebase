@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { generateFilteredWarrantyReport } from '@/ai/flows/generate-filtered-warranty-report';
+import { generatePdf } from '@/lib/pdf-generator';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,10 +14,10 @@ import * as db from '@/lib/db';
 const ALL_FIELDS: (keyof Omit<Warranty, 'id'>)[] = [
   'codigo', 'descricao', 'fornecedor', 'quantidade', 'defeito', 'requisicoes',
   'nfCompra', 'valorCompra', 'cliente', 'mecanico', 'notaFiscalSaida',
-  'notaFiscalRetorno', 'observacao', 'status', 'dataRegistro', 'loteId'
+  'notaFiscalRetorno', 'observacao', 'status', 'dataRegistro'
 ];
 
-const FIELD_LABELS: Record<keyof Omit<Warranty, 'id'>, string> = {
+const FIELD_LABELS: Record<keyof Omit<Warranty, 'id' | 'loteId'>, string> = {
     codigo: 'Código',
     descricao: 'Descrição',
     fornecedor: 'Fornecedor',
@@ -33,7 +33,6 @@ const FIELD_LABELS: Record<keyof Omit<Warranty, 'id'>, string> = {
     observacao: 'Observação',
     status: 'Status',
     dataRegistro: 'Data de Registro',
-    loteId: 'ID do Lote',
 };
 
 interface ReportGeneratorProps {
@@ -73,26 +72,23 @@ export default function ReportGenerator({ selectedWarranties }: ReportGeneratorP
 
     setIsGenerating(true);
     try {
-      // Fetch company data on the client before calling the flow
       const companyData = await db.getCompanyData();
       
-      // Remove id before sending to the flow
       const warrantiesToSend = selectedWarranties.map((w) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { id: _, ...rest } = w;
         return rest;
       });
 
-      const result = await generateFilteredWarrantyReport({
+      const pdfDataUri = generatePdf({
         selectedWarranties: warrantiesToSend,
         selectedFields,
         companyData,
       });
       
-      if (result.pdfDataUri) {
+      if (pdfDataUri) {
         const link = document.createElement('a');
         const date = new Date().toISOString().split('T')[0];
-        link.href = result.pdfDataUri;
+        link.href = pdfDataUri;
         link.download = `relatorio_garantias_${date}.pdf`;
         document.body.appendChild(link);
         link.click();
