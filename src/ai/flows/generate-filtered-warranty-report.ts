@@ -33,10 +33,12 @@ const WarrantyDataSchema = z.object({
   valorCompra: z.string().optional(),
   cliente: z.string().optional(),
   mecanico: z.string().optional(),
+  notaFiscalSaida: z.string().optional(),
   notaFiscalRetorno: z.string().optional(),
   observacao: z.string().optional(),
   dataRegistro: z.string().optional(),
   status: z.enum(['Em análise', 'Aprovada', 'Recusada', 'Paga']).optional(),
+  loteId: z.number().nullable().optional(),
 });
 
 
@@ -88,7 +90,7 @@ const generateFilteredWarrantyReportFlow = ai.defineFlow(
 
     const tableHeaders = selectedFields.map(field => field.replace(/([A-Z])/g, ' $1').toUpperCase());
     const tableBody = selectedWarranties.map(warranty => {
-        return selectedFields.map(field => warranty[field as keyof Warranty]?.toString() || '-');
+        return selectedFields.map(field => warranty[field as keyof typeof warranty]?.toString() || '-');
     });
 
     doc.autoTable({

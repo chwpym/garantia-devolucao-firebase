@@ -173,7 +173,7 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
                         {lote.fornecedor}
                    </CardDescription>
                 </div>
-                <DropdownMenu onOpenChange={(e) => e.stopPropagation()}>
+                <DropdownMenu onOpenChange={(open) => { if (open) { event?.stopPropagation() } }}>
                   <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                     <Button variant="ghost" className="h-8 w-8 p-0">
                       <span className="sr-only">Abrir menu</span>

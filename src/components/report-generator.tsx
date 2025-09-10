@@ -12,7 +12,7 @@ import type { Warranty } from '@/lib/types';
 
 const ALL_FIELDS: (keyof Omit<Warranty, 'id'>)[] = [
   'codigo', 'descricao', 'fornecedor', 'quantidade', 'defeito', 'requisicoes',
-  'nfCompra', 'valorCompra', 'cliente', 'mecanico',
+  'nfCompra', 'valorCompra', 'cliente', 'mecanico', 'notaFiscalSaida',
   'notaFiscalRetorno', 'observacao', 'status', 'dataRegistro'
 ];
 
@@ -27,10 +27,12 @@ const FIELD_LABELS: Record<keyof Omit<Warranty, 'id'>, string> = {
     valorCompra: 'Valor Compra',
     cliente: 'Cliente',
     mecanico: 'Mecânico',
+    notaFiscalSaida: 'NF Saída',
     notaFiscalRetorno: 'NF Retorno',
     observacao: 'Observação',
     status: 'Status',
-    dataRegistro: 'Data de Registro'
+    dataRegistro: 'Data de Registro',
+    loteId: 'ID do Lote',
 };
 
 interface ReportGeneratorProps {

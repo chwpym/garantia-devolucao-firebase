@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from './ui/textarea';
 
-const loteStatuses: LoteStatus[] = ['Aberto', 'Enviado', 'Aprovado Parcialmente', 'Aprovado Totalmente', 'Recusado'];
+const loteStatuses: [LoteStatus, ...LoteStatus[]] = ['Aberto', 'Enviado', 'Aprovado Parcialmente', 'Aprovado Totalmente', 'Recusado'];
 
 const formSchema = z.object({
   nome: z.string().min(2, { message: 'O nome do lote deve ter pelo menos 2 caracteres.' }),
@@ -64,7 +64,6 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
         const newLote: Omit<Lote, 'id'> = {
           ...data,
           dataCriacao: new Date().toISOString(),
-          status: 'Aberto',
         };
         await db.addLote(newLote);
         toast({ title: 'Sucesso', description: 'Lote criado com sucesso.' });
