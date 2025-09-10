@@ -69,10 +69,12 @@ export function ImportButton({ onDataImported }: ImportButtonProps) {
     try {
         await db.clearWarranties();
         for (const warranty of warrantiesToImport) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { id: _, ...warrantyData } = warranty;
             await db.addWarranty(warrantyData);
         }
         onDataImported();
+        window.dispatchEvent(new CustomEvent('datachanged'));
     } catch (error) {
         console.error('Failed to import data:', error);
         toast({

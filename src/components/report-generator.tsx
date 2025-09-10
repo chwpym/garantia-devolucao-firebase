@@ -13,7 +13,7 @@ import type { Warranty } from '@/lib/types';
 const ALL_FIELDS: (keyof Omit<Warranty, 'id'>)[] = [
   'codigo', 'descricao', 'fornecedor', 'quantidade', 'defeito', 'requisicoes',
   'nfCompra', 'valorCompra', 'cliente', 'mecanico', 'notaFiscalSaida',
-  'notaFiscalRetorno', 'observacao', 'status', 'dataRegistro'
+  'notaFiscalRetorno', 'observacao', 'status', 'dataRegistro', 'loteId'
 ];
 
 const FIELD_LABELS: Record<keyof Omit<Warranty, 'id'>, string> = {
