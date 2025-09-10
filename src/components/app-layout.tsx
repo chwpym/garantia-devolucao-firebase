@@ -3,34 +3,29 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/icons';
-import { LayoutDashboard, FileText, Search, PlusSquare, ChevronLeft, ChevronRight, DatabaseBackup, Users, Building, Package, Settings } from 'lucide-react';
+import { LayoutDashboard, FileText, Search, PlusSquare, ChevronLeft, ChevronRight, DatabaseBackup, Users, Building, Package, Settings, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from './theme-toggle';
+import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
+import MobileSidebar from './mobile-sidebar';
 
 
 interface AppLayoutProps {
   children: React.ReactNode;
   activeView: string;
   setActiveView: (view: string) => void;
+  isMobileMenuOpen: boolean;
+  setMobileMenuOpen: (isOpen: boolean) => void;
 }
 
-export default function AppLayout({ children, activeView, setActiveView }: AppLayoutProps) {
+export default function AppLayout({ children, activeView, setActiveView, isMobileMenuOpen, setMobileMenuOpen }: AppLayoutProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  const mainNavItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'register', label: 'Cadastro de Garantia', icon: PlusSquare },
-    { id: 'query', label: 'Consulta de Garantias', icon: Search },
-    { id: 'lotes', label: 'Lotes de Garantia', icon: Package },
-    { id: 'reports', label: 'Relatórios', icon: FileText },
-    { id: 'persons', label: 'Clientes/Mecânicos', icon: Users },
-    { id: 'suppliers', label: 'Fornecedores', icon: Building },
-    { id: 'backup', label: 'Backup', icon: DatabaseBackup },
-  ];
+  const handleMobileNavClick = (view: string) => {
+    setActiveView(view);
+    setMobileMenuOpen(false);
+  };
   
-  const settingsNavItem = { id: 'settings', label: 'Configurações', icon: Settings };
-
-
   return (
     <div className="flex min-h-screen w-full bg-muted/40">
       <aside className={cn(
@@ -49,39 +44,26 @@ export default function AppLayout({ children, activeView, setActiveView }: AppLa
             Warranty Wise
           </h1>
         </div>
-        <div className="flex-1 overflow-auto py-2">
-            <nav className="flex flex-col gap-1 px-4">
-            {mainNavItems.map(item => (
-                <Button
-                key={item.id}
-                variant={activeView === item.id ? 'secondary' : 'ghost'}
-                className={cn(
-                    "justify-start gap-3 text-base h-11",
-                    isSidebarCollapsed && "justify-center"
-                )}
-                onClick={() => setActiveView(item.id)}
-                title={isSidebarCollapsed ? item.label : undefined}
-                >
-                <item.icon className="h-5 w-5 flex-shrink-0" />
-                <span className={cn("truncate", isSidebarCollapsed && "hidden")}>{item.label}</span>
-                </Button>
-            ))}
-            </nav>
-        </div>
+        <MobileSidebar 
+          activeView={activeView} 
+          onNavigate={setActiveView}
+          isCollapsed={isSidebarCollapsed}
+          className="flex-1 overflow-auto py-2 hidden md:block"
+        />
          <div className="mt-auto p-4 border-t">
             <nav>
                  <Button
-                    key={settingsNavItem.id}
-                    variant={activeView === settingsNavItem.id ? 'secondary' : 'ghost'}
+                    key="settings"
+                    variant={activeView === "settings" ? 'secondary' : 'ghost'}
                     className={cn(
                         "justify-start gap-3 text-base h-11 w-full",
                         isSidebarCollapsed && "justify-center"
                     )}
-                    onClick={() => setActiveView(settingsNavItem.id)}
-                    title={isSidebarCollapsed ? settingsNavItem.label : undefined}
+                    onClick={() => setActiveView("settings")}
+                    title={isSidebarCollapsed ? "Configurações" : undefined}
                     >
-                    <settingsNavItem.icon className="h-5 w-5 flex-shrink-0" />
-                    <span className={cn("truncate", isSidebarCollapsed && "hidden")}>{settingsNavItem.label}</span>
+                    <Settings className="h-5 w-5 flex-shrink-0" />
+                    <span className={cn("truncate", isSidebarCollapsed && "hidden")}>Configurações</span>
                 </Button>
             </nav>
         </div>
@@ -93,13 +75,46 @@ export default function AppLayout({ children, activeView, setActiveView }: AppLa
                     {isSidebarCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
                 </Button>
                 
-                <div className="md:hidden flex items-center gap-3">
-                    <Logo className="h-8 w-8 text-primary-foreground fill-primary" />
-                    <h1 className="text-xl font-bold font-headline text-foreground">
+                 <Sheet open={isMobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                    <SheetTrigger asChild>
+                        <Button variant="ghost" size="icon" className="md:hidden">
+                            <Menu className="h-6 w-6" />
+                             <span className="sr-only">Abrir menu</span>
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="w-[280px] p-0">
+                         <div className="flex items-center gap-3 h-16 border-b px-6">
+                          <Logo className="h-8 w-8 text-primary-foreground fill-primary flex-shrink-0" />
+                          <h1 className="text-xl font-bold font-headline text-foreground whitespace-nowrap">
+                            Warranty Wise
+                          </h1>
+                        </div>
+                        <MobileSidebar 
+                          activeView={activeView} 
+                          onNavigate={handleMobileNavClick}
+                          className="flex-1 overflow-auto py-2"
+                        />
+                         <div className="mt-auto p-4 border-t">
+                            <nav>
+                                <Button
+                                    key="settings"
+                                    variant={activeView === 'settings' ? 'secondary' : 'ghost'}
+                                    className="justify-start gap-3 text-base h-11 w-full"
+                                    onClick={() => handleMobileNavClick('settings')}
+                                    >
+                                    <Settings className="h-5 w-5 flex-shrink-0" />
+                                    <span>Configurações</span>
+                                </Button>
+                            </nav>
+                        </div>
+                    </SheetContent>
+                </Sheet>
+                
+                <div className="hidden md:flex items-center gap-3">
+                    <h1 className={cn("text-xl font-bold font-headline text-foreground", !isSidebarCollapsed && 'md:hidden')}>
                         Warranty Wise
                     </h1>
                 </div>
-                {/* Mobile menu could be added here */}
             </div>
             <ThemeToggle />
         </header>

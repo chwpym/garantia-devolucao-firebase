@@ -13,10 +13,18 @@ import SuppliersSection from '@/components/sections/suppliers-section';
 import BackupSection from '@/components/sections/backup-section';
 import LoteDetailSection from '@/components/sections/lote-detail-section';
 import SettingsSection from '@/components/sections/settings-section';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { Menu } from 'lucide-react';
+import MobileSidebar from '@/components/mobile-sidebar';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export default function Home() {
   const [activeView, setActiveView] = useState('dashboard');
   const [selectedLoteId, setSelectedLoteId] = useState<number | null>(null);
+  const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const isMobile = useIsMobile();
+
 
   const handleNavigateToLote = (loteId: number) => {
     setSelectedLoteId(loteId);
@@ -27,6 +35,11 @@ export default function Home() {
     setSelectedLoteId(null);
     setActiveView('lotes');
   }
+
+  const handleMobileNavClick = (view: string) => {
+    setActiveView(view);
+    setMobileMenuOpen(false);
+  };
 
   const renderContent = () => {
     switch (activeView) {
@@ -54,10 +67,18 @@ export default function Home() {
         return <DashboardSection />;
     }
   };
+  
+  if (isMobile === undefined) return null;
+
 
   return (
-    <AppLayout activeView={activeView} setActiveView={setActiveView}>
-      {renderContent()}
-    </AppLayout>
+      <AppLayout 
+        activeView={activeView} 
+        setActiveView={setActiveView} 
+        isMobileMenuOpen={isMobileMenuOpen}
+        setMobileMenuOpen={setMobileMenuOpen}
+      >
+        {renderContent()}
+      </AppLayout>
   );
 }
