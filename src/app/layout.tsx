@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Inter } from 'next/font/google';
@@ -16,7 +16,6 @@ export const metadata: Metadata = {
   title: 'Warranty Wise',
   description: 'Sistema de Controle de Garantias Local',
   manifest: '/manifest.json',
-  themeColor: '#ffffff',
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },
@@ -26,6 +25,10 @@ export const metadata: Metadata = {
     apple: '/apple-icon.png',
   },
 };
+
+export const viewport: Viewport = {
+  themeColor: '#ffffff',
+}
 
 export default function RootLayout({
   children,
