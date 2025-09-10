@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import ReportGenerator from '@/components/report-generator';
 import type { Warranty, WarrantyStatus } from '@/lib/types';
 import * as db from '@/lib/db';
@@ -27,23 +27,24 @@ export default function ReportSection() {
   });
   const { toast } = useToast();
 
-  useEffect(() => {
-    async function loadWarranties() {
-      try {
-        await db.initDB();
-        const allWarranties = await db.getAllWarranties();
-        setWarranties(allWarranties.sort((a, b) => (b.id ?? 0) - (a.id ?? 0)));
-      } catch (error) {
-        console.error('Failed to load warranties:', error);
-        toast({
-          title: 'Erro ao Carregar',
-          description: 'Não foi possível carregar as garantias.',
-          variant: 'destructive',
-        });
-      }
+  const loadWarranties = useCallback(async () => {
+    try {
+      await db.initDB();
+      const allWarranties = await db.getAllWarranties();
+      setWarranties(allWarranties.sort((a, b) => (b.id ?? 0) - (a.id ?? 0)));
+    } catch (error) {
+      console.error('Failed to load warranties:', error);
+      toast({
+        title: 'Erro ao Carregar',
+        description: 'Não foi possível carregar as garantias.',
+        variant: 'destructive',
+      });
     }
-    loadWarranties();
   }, [toast]);
+  
+  useEffect(() => {
+    loadWarranties();
+  }, [loadWarranties]);
   
   const filteredWarranties = useMemo(() => {
     const lowercasedTerm = searchTerm.toLowerCase();
