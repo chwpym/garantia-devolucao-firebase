@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Settings, Menu } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Settings, Menu, DatabaseBackup } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from './theme-toggle';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
@@ -57,7 +57,20 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
           className="flex-1 overflow-auto py-2 hidden md:block"
         />
          <div className="mt-auto p-4 border-t">
-            <nav>
+            <nav className='flex flex-col gap-1'>
+                 <Button
+                    key="backup"
+                    variant={activeView === "backup" ? 'secondary' : 'ghost'}
+                    className={cn(
+                        "justify-start gap-3 text-base h-11 w-full",
+                        isSidebarCollapsed && "justify-center"
+                    )}
+                    onClick={() => setActiveView("backup")}
+                    title={isSidebarCollapsed ? "Backup" : undefined}
+                    >
+                    <DatabaseBackup className="h-5 w-5 flex-shrink-0" />
+                    <span className={cn("truncate", isSidebarCollapsed && "hidden")}>Backup</span>
+                </Button>
                  <Button
                     key="settings"
                     variant={activeView === "settings" ? 'secondary' : 'ghost'}
@@ -88,7 +101,7 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
                              <span className="sr-only">Abrir menu</span>
                         </Button>
                     </SheetTrigger>
-                    <SheetContent side="left" className="w-[280px] p-0">
+                    <SheetContent side="left" className="w-[280px] p-0 flex flex-col">
                          <div className="flex items-center gap-3 h-16 border-b px-6">
                            <Image 
                             src="/logo-1440x1440.jpg"
@@ -107,7 +120,16 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
                           className="flex-1 overflow-auto py-2"
                         />
                          <div className="mt-auto p-4 border-t">
-                            <nav>
+                            <nav className='flex flex-col gap-1'>
+                                 <Button
+                                    key="backup"
+                                    variant={activeView === 'backup' ? 'secondary' : 'ghost'}
+                                    className="justify-start gap-3 text-base h-11 w-full"
+                                    onClick={() => handleMobileNavClick('backup')}
+                                    >
+                                    <DatabaseBackup className="h-5 w-5 flex-shrink-0" />
+                                    <span>Backup</span>
+                                </Button>
                                 <Button
                                     key="settings"
                                     variant={activeView === 'settings' ? 'secondary' : 'ghost'}

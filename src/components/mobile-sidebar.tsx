@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, FileText, Search, PlusSquare, DatabaseBackup, Users, Building, Package, FolderKanban, Wrench } from 'lucide-react';
+import { LayoutDashboard, FileText, Search, PlusSquare, Users, Building, Package, FolderKanban, Wrench } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 
 
@@ -16,7 +16,6 @@ interface MobileSidebarProps {
 const navItems = {
   dashboard: { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   reports: { id: 'reports', label: 'Relatório de Garantias', icon: FileText },
-  backup: { id: 'backup', label: 'Backup', icon: DatabaseBackup },
 };
 
 const garantiaNavItems = [
@@ -152,8 +151,6 @@ export default function MobileSidebar({ activeView, onNavigate, isCollapsed, cla
                         </AccordionContent>
                     </AccordionItem>
                 </Accordion>
-                
-                {renderNavItem(navItems.backup)}
             </nav>
         </div>
     )
