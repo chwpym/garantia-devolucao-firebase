@@ -14,6 +14,7 @@ import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import type { UserOptions } from 'jspdf-autotable';
 import { getCompanyData } from '@/lib/db';
+import type { Warranty } from '@/lib/types';
 
 
 // Extend jsPDF with autoTable, which is a plugin
@@ -92,7 +93,11 @@ const generateFilteredWarrantyReportFlow = ai.defineFlow(
     doc.setFontSize(9);
     let headerY = 25;
     if (companyData?.endereco) {
-        doc.text(companyData.endereco, 14, headerY);
+        let fullAddress = companyData.endereco;
+        if(companyData.bairro) {
+            fullAddress += `, ${companyData.bairro}`
+        }
+        doc.text(fullAddress, 14, headerY);
         headerY += 4;
     }
      if (companyData?.cidade) {
@@ -120,7 +125,10 @@ const generateFilteredWarrantyReportFlow = ai.defineFlow(
     const tableBody = selectedWarranties.map(warranty => {
         // Use a type assertion to inform TypeScript about the structure
         const warrantyRecord = warranty as Record<string, string | number | boolean | null | undefined>;
-        return selectedFields.map(field => warrantyRecord[field]?.toString() || '-');
+        return selectedFields.map(field => {
+            const key = field as keyof Omit<Warranty, 'id'>;
+            return warrantyRecord[key]?.toString() || '-';
+        });
     });
 
     doc.autoTable({

@@ -19,6 +19,7 @@ const formSchema = z.object({
     cnpj: z.string().optional(),
     cep: z.string().optional(),
     endereco: z.string().optional(),
+    bairro: z.string().optional(),
     cidade: z.string().optional(),
     telefone: z.string().optional(),
     email: z.string().email({ message: "Por favor, insira um email válido." }).optional(),
@@ -31,6 +32,7 @@ const defaultFormValues: CompanyFormValues = {
     cnpj: '',
     cep: '',
     endereco: '',
+    bairro: '',
     cidade: '',
     telefone: '',
     email: ''
@@ -95,7 +97,8 @@ export default function SettingsSection() {
                 throw new Error('CEP não encontrado');
             }
 
-            form.setValue('endereco', `${data.logradouro}, ${data.bairro}`);
+            form.setValue('endereco', data.logradouro);
+            form.setValue('bairro', data.bairro);
             form.setValue('cidade', `${data.localidade} - ${data.uf}`);
             toast({ title: "Sucesso", description: "Endereço preenchido automaticamente." });
         } catch (error) {
@@ -201,24 +204,37 @@ export default function SettingsSection() {
                                     control={form.control}
                                     render={({ field }) => (
                                     <FormItem className="md:col-span-2">
-                                        <FormLabel>Endereço</FormLabel>
-                                        <FormControl><Input placeholder="Rua Exemplo, 123 - Bairro" {...field} /></FormControl>
+                                        <FormLabel>Endereço (Rua, Av, etc)</FormLabel>
+                                        <FormControl><Input placeholder="Rua Exemplo, 123" {...field} /></FormControl>
                                         <FormMessage />
                                     </FormItem>
                                     )}
                                 />
                             </div>
-                            <FormField
-                                name="cidade"
-                                control={form.control}
-                                render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Cidade/UF</FormLabel>
-                                    <FormControl><Input placeholder="São Paulo - SP" {...field} /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                                )}
-                            />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <FormField
+                                    name="bairro"
+                                    control={form.control}
+                                    render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Bairro</FormLabel>
+                                        <FormControl><Input placeholder="Centro" {...field} /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    name="cidade"
+                                    control={form.control}
+                                    render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Cidade/UF</FormLabel>
+                                        <FormControl><Input placeholder="São Paulo - SP" {...field} /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                    )}
+                                />
+                            </div>
                             <FormField
                                 name="telefone"
                                 control={form.control}

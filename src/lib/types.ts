@@ -61,6 +61,7 @@ export interface CompanyData {
     cnpj?: string;
     cep?: string;
     endereco?: string;
+    bairro?: string;
     cidade?: string;
     telefone?: string;
     email?: string;
