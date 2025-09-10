@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Logo } from '@/components/icons';
 import { LayoutDashboard, FileText, Search, PlusSquare, ChevronLeft, ChevronRight, DatabaseBackup, Users, Building, Package, Settings, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from './theme-toggle';
@@ -36,7 +36,13 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
             "flex items-center gap-3 h-16 border-b px-6",
             isSidebarCollapsed && "justify-center px-0"
         )}>
-          <Logo className="h-8 w-8 text-primary-foreground fill-primary flex-shrink-0" />
+          <Image 
+            src="/logo-1440x1440.jpg"
+            alt="Warranty Wise Logo"
+            width={32}
+            height={32}
+            className="rounded-md flex-shrink-0"
+          />
           <h1 className={cn(
             "text-xl font-bold font-headline text-foreground whitespace-nowrap transition-opacity duration-200",
             isSidebarCollapsed && "opacity-0 w-0"
@@ -84,7 +90,13 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
                     </SheetTrigger>
                     <SheetContent side="left" className="w-[280px] p-0">
                          <div className="flex items-center gap-3 h-16 border-b px-6">
-                          <Logo className="h-8 w-8 text-primary-foreground fill-primary flex-shrink-0" />
+                           <Image 
+                            src="/logo-1440x1440.jpg"
+                            alt="Warranty Wise Logo"
+                            width={32}
+                            height={32}
+                            className="rounded-md flex-shrink-0"
+                          />
                           <h1 className="text-xl font-bold font-headline text-foreground whitespace-nowrap">
                             Warranty Wise
                           </h1>
