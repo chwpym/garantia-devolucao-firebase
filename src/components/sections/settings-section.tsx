@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 const formSchema = z.object({
     nomeEmpresa: z.string().min(2, { message: "O nome da empresa é obrigatório." }).optional(),
     cnpj: z.string().optional(),
+    cep: z.string().optional(),
     endereco: z.string().optional(),
     cidade: z.string().optional(),
     telefone: z.string().optional(),
@@ -28,14 +29,30 @@ type CompanyFormValues = z.infer<typeof formSchema>;
 const defaultFormValues: CompanyFormValues = {
     nomeEmpresa: '',
     cnpj: '',
+    cep: '',
     endereco: '',
     cidade: '',
     telefone: '',
     email: ''
 };
 
+const formatCNPJ = (value: string) => {
+    if (!value) return '';
+    const cnpj = value.replace(/[^\d]/g, '');
+    if (cnpj.length <= 11) {
+        return cnpj
+        .replace(/(\d{2})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1/$2');
+    }
+    return cnpj
+        .slice(0, 14)
+        .replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+};
+
 export default function SettingsSection() {
     const { toast } = useToast();
+    const [isFetchingCep, setIsFetchingCep] = useState(false);
     const form = useForm<CompanyFormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: defaultFormValues,
@@ -48,7 +65,10 @@ export default function SettingsSection() {
                 await db.initDB();
                 const data = await db.getCompanyData();
                 if (data) {
-                    form.reset(data);
+                    form.reset({
+                        ...data,
+                        cnpj: data.cnpj ? formatCNPJ(data.cnpj) : '',
+                    });
                 }
             } catch (error) {
                 toast({
@@ -60,10 +80,41 @@ export default function SettingsSection() {
         }
         loadCompanyData();
     }, [form, toast]);
+    
+    const handleCepBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
+        const cep = e.target.value.replace(/\D/g, '');
+        if (cep.length !== 8) return;
+
+        setIsFetchingCep(true);
+        try {
+            const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+            if (!response.ok) throw new Error('CEP não encontrado');
+            
+            const data = await response.json();
+            if (data.erro) {
+                throw new Error('CEP não encontrado');
+            }
+
+            form.setValue('endereco', `${data.logradouro}, ${data.bairro}`);
+            form.setValue('cidade', `${data.localidade} - ${data.uf}`);
+            toast({ title: "Sucesso", description: "Endereço preenchido automaticamente." });
+        } catch (error) {
+            toast({
+                title: "Erro ao Buscar CEP",
+                description: error instanceof Error ? error.message : "Não foi possível buscar o endereço.",
+                variant: "destructive"
+            });
+        } finally {
+            setIsFetchingCep(false);
+        }
+    };
 
     const handleSave = async (data: CompanyFormValues) => {
         try {
-            await db.updateCompanyData(data);
+            await db.updateCompanyData({
+                ...data,
+                cnpj: data.cnpj?.replace(/[^\d]/g, '')
+            });
             toast({
                 title: "Sucesso!",
                 description: "Os dados da empresa foram salvos com sucesso.",
@@ -108,28 +159,55 @@ export default function SettingsSection() {
                                 </FormItem>
                                 )}
                             />
-                            <FormField
+                             <FormField
                                 name="cnpj"
                                 control={form.control}
                                 render={({ field }) => (
-                                <FormItem>
+                                    <FormItem>
                                     <FormLabel>CNPJ</FormLabel>
-                                    <FormControl><Input placeholder="00.000.000/0001-00" {...field} /></FormControl>
+                                    <FormControl>
+                                        <Input
+                                        placeholder="00.000.000/0001-00"
+                                        {...field}
+                                        onChange={(e) => {
+                                            field.onChange(formatCNPJ(e.target.value));
+                                        }}
+                                        />
+                                    </FormControl>
                                     <FormMessage />
-                                </FormItem>
+                                    </FormItem>
                                 )}
-                            />
-                            <FormField
-                                name="endereco"
-                                control={form.control}
-                                render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Endereço</FormLabel>
-                                    <FormControl><Input placeholder="Rua Exemplo, 123 - Bairro" {...field} /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                                )}
-                            />
+                                />
+
+                            <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+                                 <FormField
+                                    name="cep"
+                                    control={form.control}
+                                    render={({ field }) => (
+                                    <FormItem className="md:col-span-1">
+                                        <FormLabel>CEP</FormLabel>
+                                        <FormControl>
+                                            <div className="relative">
+                                                <Input placeholder="00000-000" {...field} onBlur={handleCepBlur} />
+                                                {isFetchingCep && <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin" />}
+                                            </div>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    name="endereco"
+                                    control={form.control}
+                                    render={({ field }) => (
+                                    <FormItem className="md:col-span-2">
+                                        <FormLabel>Endereço</FormLabel>
+                                        <FormControl><Input placeholder="Rua Exemplo, 123 - Bairro" {...field} /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                    )}
+                                />
+                            </div>
                             <FormField
                                 name="cidade"
                                 control={form.control}
@@ -165,7 +243,7 @@ export default function SettingsSection() {
                             />
                         </CardContent>
                         <CardFooter>
-                            <Button type="submit" disabled={isSubmitting}>
+                            <Button type="submit" disabled={isSubmitting || isFetchingCep}>
                                 {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                                 Salvar Alterações
                             </Button>
