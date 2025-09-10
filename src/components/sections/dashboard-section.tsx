@@ -66,7 +66,7 @@ export default function DashboardSection() {
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [statusData, setStatusData] = useState<any[]>([]);
   const [supplierRanking, setSupplierRanking] = useState<RankingData[]>([]);
-  const [personRanking, setPersonRanking] useState<RankingData[]>([]);
+  const [personRanking, setPersonRanking] = useState<RankingData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
