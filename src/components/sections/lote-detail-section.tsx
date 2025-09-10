@@ -29,6 +29,7 @@ import { Checkbox } from '../ui/checkbox';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Separator } from '../ui/separator';
+import { Label } from '../ui/label';
 
 interface LoteDetailSectionProps {
   loteId: number;
