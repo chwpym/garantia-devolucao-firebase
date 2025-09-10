@@ -140,7 +140,7 @@ export function generatePdf(input: GeneratePdfInput): string {
             if (key === 'dataRegistro' && typeof value === 'string') {
                 try {
                     return new Date(value).toLocaleDateString('pt-BR');
-                } catch(e) {
+                } catch {
                     return value;
                 }
             }
