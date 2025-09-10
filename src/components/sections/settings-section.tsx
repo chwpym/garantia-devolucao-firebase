@@ -100,10 +100,10 @@ export default function SettingsSection() {
             form.setValue('bairro', data.bairro);
             form.setValue('cidade', `${data.localidade} - ${data.uf}`);
             toast({ title: "Sucesso", description: "Endereço preenchido automaticamente." });
-        } catch (error) {
+        } catch (err) {
             toast({
                 title: "Erro ao Buscar CEP",
-                description: error instanceof Error ? error.message : "Não foi possível buscar o endereço.",
+                description: err instanceof Error ? err.message : "Não foi possível buscar o endereço.",
                 variant: "destructive"
             });
         } finally {
