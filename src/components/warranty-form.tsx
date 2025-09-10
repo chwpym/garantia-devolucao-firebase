@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import SupplierForm from './supplier-form';
 import PersonForm from './person-form';
+import { Combobox } from './ui/combobox';
 
 
 const formSchema = z.object({
@@ -167,6 +168,10 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
     const clients = persons.filter(p => p.type === 'Cliente' || p.type === 'Ambos');
     const mechanics = persons.filter(p => p.type === 'Mecânico' || p.type === 'Ambos');
 
+    const supplierOptions = suppliers.map(s => ({ value: s.nomeFantasia, label: s.nomeFantasia }));
+    const clientOptions = clients.map(c => ({ value: c.name, label: c.name }));
+    const mechanicOptions = mechanics.map(m => ({ value: m.name, label: m.name }));
+
     const FormWrapper = isModal ? 'div' : Card;
     const formWrapperProps = isModal ? {} : { className: "w-full shadow-lg" };
 
@@ -197,19 +202,18 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                         control={form.control}
                         name="fornecedor"
                         render={({ field }) => (
-                            <FormItem className="md:col-span-2">
+                            <FormItem className="md:col-span-2 flex flex-col">
                                 <FormLabel>Fornecedor</FormLabel>
                                 <div className="flex items-center gap-2">
-                                    <Select onValueChange={field.onChange} value={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Selecione um fornecedor" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {suppliers.map(s => <SelectItem key={s.id} value={s.nomeFantasia}>{s.nomeFantasia}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
+                                     <Combobox
+                                        options={supplierOptions}
+                                        value={field.value ?? ''}
+                                        onChange={field.onChange}
+                                        placeholder="Selecione um fornecedor"
+                                        searchPlaceholder="Buscar fornecedor..."
+                                        notFoundMessage="Nenhum fornecedor encontrado."
+                                        className="w-full"
+                                    />
                                     <Dialog open={isSupplierModalOpen} onOpenChange={setSupplierModalOpen}>
                                         <DialogTrigger asChild>
                                             <Button variant="outline" size="icon" className="flex-shrink-0">
@@ -243,19 +247,18 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                         control={form.control}
                         name="cliente"
                         render={({ field }) => (
-                             <FormItem className="md:col-span-2">
+                             <FormItem className="md:col-span-2 flex flex-col">
                                 <FormLabel>Cliente</FormLabel>
                                 <div className="flex items-center gap-2">
-                                    <Select onValueChange={field.onChange} value={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Selecione um cliente" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {clients.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
+                                     <Combobox
+                                        options={clientOptions}
+                                        value={field.value ?? ''}
+                                        onChange={field.onChange}
+                                        placeholder="Selecione um cliente"
+                                        searchPlaceholder="Buscar cliente..."
+                                        notFoundMessage="Nenhum cliente encontrado."
+                                        className="w-full"
+                                    />
                                      <Dialog open={isPersonModalOpen} onOpenChange={setPersonModalOpen}>
                                         <DialogTrigger asChild>
                                             <Button variant="outline" size="icon" className="flex-shrink-0">
@@ -278,19 +281,18 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                         control={form.control}
                         name="mecanico"
                         render={({ field }) => (
-                            <FormItem className="md:col-span-2">
+                            <FormItem className="md:col-span-2 flex flex-col">
                                 <FormLabel>Mecânico</FormLabel>
                                 <div className="flex items-center gap-2">
-                                    <Select onValueChange={field.onChange} value={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Selecione um mecânico" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {mechanics.map(m => <SelectItem key={m.id} value={m.name}>{m.name}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
+                                    <Combobox
+                                        options={mechanicOptions}
+                                        value={field.value ?? ''}
+                                        onChange={field.onChange}
+                                        placeholder="Selecione um mecânico"
+                                        searchPlaceholder="Buscar mecânico..."
+                                        notFoundMessage="Nenhum mecânico encontrado."
+                                        className="w-full"
+                                    />
                                     <Dialog open={isPersonModalOpen} onOpenChange={setPersonModalOpen}>
                                         <DialogTrigger asChild>
                                             <Button variant="outline" size="icon" className="flex-shrink-0">
