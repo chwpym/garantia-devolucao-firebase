@@ -12,6 +12,7 @@ import PersonsSection from '@/components/sections/persons-section';
 import SuppliersSection from '@/components/sections/suppliers-section';
 import BackupSection from '@/components/sections/backup-section';
 import LoteDetailSection from '@/components/sections/lote-detail-section';
+import SettingsSection from '@/components/sections/settings-section';
 
 export default function Home() {
   const [activeView, setActiveView] = useState('dashboard');
@@ -47,6 +48,8 @@ export default function Home() {
         return <SuppliersSection />;
       case 'backup':
         return <BackupSection />;
+      case 'settings':
+        return <SettingsSection />;
       default:
         return <DashboardSection />;
     }

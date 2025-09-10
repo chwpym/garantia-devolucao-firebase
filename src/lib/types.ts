@@ -54,3 +54,13 @@ export interface LoteItem {
     loteId: number;
     warrantyId: number;
 }
+
+export interface CompanyData {
+    id?: number;
+    nomeEmpresa?: string;
+    cnpj?: string;
+    endereco?: string;
+    cidade?: string;
+    telefone?: string;
+    email?: string;
+}

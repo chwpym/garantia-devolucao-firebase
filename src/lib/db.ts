@@ -1,15 +1,16 @@
 'use client';
 
-import type { Warranty, Person, Supplier, Lote, LoteItem } from './types';
+import type { Warranty, Person, Supplier, Lote, LoteItem, CompanyData } from './types';
 
 const DB_NAME = 'GarantiasDB';
-const DB_VERSION = 3; // Incremented version
+const DB_VERSION = 4; // Incremented version
 
 const GARANTIAS_STORE_NAME = 'garantias';
 const PERSONS_STORE_NAME = 'persons';
 const SUPPLIERS_STORE_NAME = 'suppliers';
 const LOTES_STORE_NAME = 'lotes';
 const LOTE_ITEMS_STORE_NAME = 'lote_items';
+const COMPANY_DATA_STORE_NAME = 'company_data';
 
 
 let dbPromise: Promise<IDBDatabase> | null = null;
@@ -55,6 +56,9 @@ const getDB = (): Promise<IDBDatabase> => {
         if (!dbInstance.objectStoreNames.contains(LOTE_ITEMS_STORE_NAME)) {
             const loteItemsStore = dbInstance.createObjectStore(LOTE_ITEMS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
             loteItemsStore.createIndex('loteId', 'loteId', { unique: false });
+        }
+        if (!dbInstance.objectStoreNames.contains(COMPANY_DATA_STORE_NAME)) {
+          dbInstance.createObjectStore(COMPANY_DATA_STORE_NAME, { keyPath: 'id' });
         }
       };
 
@@ -401,4 +405,35 @@ export const deleteLoteItem = (id: number): Promise<void> => {
       reject(err);
     }
   });
+};
+
+
+// --- Company Data Functions ---
+
+export const getCompanyData = (): Promise<CompanyData | null> => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const store = await getStore(COMPANY_DATA_STORE_NAME, 'readonly');
+            // We use a fixed ID of 1 for the single company record
+            const request = store.get(1);
+            request.onsuccess = () => resolve(request.result as CompanyData || null);
+            request.onerror = () => reject(request.error);
+        } catch (err) {
+            reject(err);
+        }
+    });
+};
+
+export const updateCompanyData = (companyData: Omit<CompanyData, 'id'>): Promise<number> => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const store = await getStore(COMPANY_DATA_STORE_NAME, 'readwrite');
+            // We use a fixed ID of 1 to always update the same record
+            const request = store.put({ ...companyData, id: 1 });
+            request.onsuccess = () => resolve(request.result as number);
+            request.onerror = () => reject(request.error);
+        } catch (err) {
+            reject(err);
+        }
+    });
 };

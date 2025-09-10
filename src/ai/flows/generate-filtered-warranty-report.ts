@@ -13,6 +13,7 @@ import { z } from 'genkit';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import type { UserOptions } from 'jspdf-autotable';
+import { getCompanyData } from '@/lib/db';
 
 
 // Extend jsPDF with autoTable, which is a plugin
@@ -80,13 +81,40 @@ const generateFilteredWarrantyReportFlow = ai.defineFlow(
   },
   async ({ selectedWarranties, selectedFields }) => {
     const doc = new jsPDF();
+    const companyData = await getCompanyData();
+
+    // Header
+    if (companyData?.nomeEmpresa) {
+        doc.setFontSize(16);
+        doc.text(companyData.nomeEmpresa, 14, 20);
+    }
     
+    doc.setFontSize(9);
+    let headerY = 25;
+    if (companyData?.endereco) {
+        doc.text(companyData.endereco, 14, headerY);
+        headerY += 4;
+    }
+     if (companyData?.cidade) {
+        doc.text(companyData.cidade, 14, headerY);
+        headerY += 4;
+    }
+    if (companyData?.telefone) {
+        doc.text(`Tel: ${companyData.telefone}`, 14, headerY);
+        headerY += 4;
+    }
+    if (companyData?.email) {
+        doc.text(`Email: ${companyData.email}`, 14, headerY);
+    }
+    
+    // Report Title
     doc.setFontSize(18);
-    doc.text('Relatório de Garantias para Fornecedor', 14, 22);
-    doc.setFontSize(11);
-    doc.setTextColor(100);
+    doc.text('Relatório de Garantias para Fornecedor', doc.internal.pageSize.getWidth() / 2, 22, { align: 'center'});
+    
+    // Generation Date
+    doc.setFontSize(10);
     const date = new Date().toLocaleDateString('pt-BR');
-    doc.text(`Gerado em: ${date}`, 14, 28);
+    doc.text(`Gerado em: ${date}`, doc.internal.pageSize.getWidth() - 14, 28, { align: 'right'});
 
     const tableHeaders = selectedFields.map(field => field.replace(/([A-Z])/g, ' $1').toUpperCase());
     const tableBody = selectedWarranties.map(warranty => {
@@ -96,7 +124,7 @@ const generateFilteredWarrantyReportFlow = ai.defineFlow(
     });
 
     doc.autoTable({
-        startY: 35,
+        startY: headerY + 10 > 35 ? headerY + 10 : 35,
         head: [tableHeaders],
         body: tableBody,
         theme: 'striped',
