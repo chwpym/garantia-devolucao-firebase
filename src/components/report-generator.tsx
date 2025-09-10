@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Loader2, FileDown } from 'lucide-react';
-import type { Warranty } from '@/lib/types';
+import type { Warranty, Supplier } from '@/lib/types';
 import * as db from '@/lib/db';
 
 const ALL_FIELDS: (keyof Omit<Warranty, 'id'>)[] = [
@@ -37,12 +37,20 @@ const FIELD_LABELS: Record<keyof Omit<Warranty, 'id' | 'loteId'>, string> = {
 
 interface ReportGeneratorProps {
   selectedWarranties: Warranty[];
+  title?: string;
+  description?: string;
+  supplierData?: Supplier | null;
+  defaultFields?: string[];
 }
 
-export default function ReportGenerator({ selectedWarranties }: ReportGeneratorProps) {
-  const [selectedFields, setSelectedFields] = useState<string[]>([
-    'codigo', 'descricao', 'quantidade', 'defeito', 'cliente', 'status', 'fornecedor'
-  ]);
+export default function ReportGenerator({ 
+    selectedWarranties, 
+    title = "Gerador de Relatório para Fornecedor",
+    description = "Selecione os campos a serem incluídos no relatório em PDF.",
+    supplierData,
+    defaultFields = ['codigo', 'descricao', 'quantidade', 'defeito', 'cliente', 'status', 'fornecedor']
+}: ReportGeneratorProps) {
+  const [selectedFields, setSelectedFields] = useState<string[]>(defaultFields);
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
@@ -83,6 +91,7 @@ export default function ReportGenerator({ selectedWarranties }: ReportGeneratorP
         selectedWarranties: warrantiesToSend,
         selectedFields,
         companyData,
+        supplierData,
       });
       
       if (pdfDataUri) {
@@ -115,8 +124,8 @@ export default function ReportGenerator({ selectedWarranties }: ReportGeneratorP
   return (
     <Card className="shadow-lg">
       <CardHeader>
-        <CardTitle>Gerador de Relatório para Fornecedor</CardTitle>
-        <CardDescription>Selecione os campos a serem incluídos no relatório em PDF.</CardDescription>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
@@ -142,11 +151,11 @@ export default function ReportGenerator({ selectedWarranties }: ReportGeneratorP
           ) : (
             <FileDown className="mr-2 h-4 w-4" />
           )}
-          Gerar PDF para Fornecedor
+          Gerar PDF
         </Button>
         {(selectedWarranties.length === 0 || selectedFields.length === 0) && (
             <p className="text-sm text-muted-foreground mt-2">
-                {selectedWarranties.length === 0 ? "Selecione pelo menos uma garantia na tabela para gerar o relatório." : "Selecione pelo menos um campo para incluir no relatório."}
+                {selectedWarranties.length === 0 ? "Nenhuma garantia disponível para gerar o relatório." : "Selecione pelo menos um campo para incluir no relatório."}
             </p>
         )}
       </CardContent>

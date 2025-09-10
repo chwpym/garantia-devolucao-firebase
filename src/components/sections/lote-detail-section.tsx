@@ -5,7 +5,7 @@ import type { Lote, Warranty, Supplier, WarrantyStatus } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '../ui/button';
-import { ArrowLeft, Package, Calendar, Building, FileText, MoreHorizontal, Pencil, Trash2, CheckSquare, FileDown } from 'lucide-react';
+import { ArrowLeft, Package, Calendar, Building, FileText, MoreHorizontal, Pencil, Trash2, CheckSquare } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { format, parseISO } from 'date-fns';
@@ -30,7 +30,7 @@ import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Separator } from '../ui/separator';
 import { Label } from '../ui/label';
-import { generatePdf } from '@/lib/pdf-generator';
+import ReportGenerator from '../report-generator';
 
 interface LoteDetailSectionProps {
   loteId: number;
@@ -39,8 +39,7 @@ interface LoteDetailSectionProps {
 
 const warrantyStatuses: WarrantyStatus[] = ['Em análise', 'Aprovada', 'Recusada', 'Paga'];
 
-// Default fields to be included in the Lote PDF report.
-const LOTE_PDF_FIELDS = [
+const LOTE_PDF_DEFAULT_FIELDS = [
   'codigo', 'descricao', 'quantidade', 'defeito', 'cliente', 'observacao'
 ];
 
@@ -92,6 +91,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
   const [lote, setLote] = useState<Lote | null>(null);
   const [warranties, setWarranties] = useState<Warranty[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [supplierData, setSupplierData] = useState<Supplier | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [editingWarranty, setEditingWarranty] = useState<Warranty | null>(null);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -118,6 +118,12 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
       setLote(currentLote);
       setWarranties(associatedWarranties);
       setSuppliers(allSuppliers);
+
+      if (currentLote) {
+        const currentSupplier = allSuppliers.find(s => s.nomeFantasia === currentLote.fornecedor) || null;
+        setSupplierData(currentSupplier);
+      }
+
     } catch (error) {
       console.error('Failed to load lote details:', error);
       toast({
@@ -330,52 +336,6 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
     }
   }
 
-  const handleGeneratePdfForLote = async () => {
-    if (!lote || warranties.length === 0) {
-        toast({
-            title: 'Impossível gerar PDF',
-            description: 'Este lote não contém itens para gerar um relatório.',
-            variant: 'destructive'
-        });
-        return;
-    }
-
-    try {
-        const [companyData, allSuppliers] = await Promise.all([
-            db.getCompanyData(),
-            db.getAllSuppliers()
-        ]);
-        const supplierData = allSuppliers.find(s => s.nomeFantasia === lote.fornecedor) || null;
-
-        const pdfDataUri = generatePdf({
-            selectedWarranties: warranties,
-            selectedFields: LOTE_PDF_FIELDS,
-            companyData,
-            supplierData,
-        });
-
-        const link = document.createElement('a');
-        const date = new Date().toISOString().split('T')[0];
-        link.href = pdfDataUri;
-        link.download = `lote_${lote.nome.replace(/\s+/g, '_')}_${date}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast({
-            title: 'Sucesso',
-            description: 'Seu relatório para o lote foi gerado.',
-        });
-
-    } catch (error) {
-        console.error('Failed to generate Lote PDF:', error);
-        toast({
-            title: 'Erro ao Gerar PDF',
-            description: 'Não foi possível gerar o relatório para este lote.',
-            variant: 'destructive',
-        });
-    }
-  };
-
   const isAllSelected = warranties.length > 0 && selectedWarrantyIds.size === warranties.length;
 
   if (isLoading) {
@@ -412,8 +372,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                 <h1 className="text-3xl font-bold tracking-tight">Detalhes do Lote: {lote.nome}</h1>
             </div>
             <div className='flex gap-2'>
-                <Button onClick={handleEditLoteClick}><Pencil className="mr-2 h-4 w-4"/> Editar Lote</Button>
-                <Button variant="outline" onClick={handleGeneratePdfForLote}><FileDown className="mr-2 h-4 w-4"/> Gerar PDF</Button>
+                <Button onClick={handleEditLoteClick}><Pencil className="mr-2 h-4 w-4"/> Editar Informações do Lote</Button>
             </div>
       </div>
 
@@ -587,6 +546,16 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
         </CardContent>
       </Card>
       
+      <div className='pt-4'>
+        <ReportGenerator 
+            selectedWarranties={warranties}
+            title="Gerar PDF para este Lote"
+            description='Selecione os campos que deseja incluir no relatório para o fornecedor.'
+            supplierData={supplierData}
+            defaultFields={LOTE_PDF_DEFAULT_FIELDS}
+        />
+      </div>
+
       {/* Modal for editing warranty */}
       <Dialog open={isFormModalOpen} onOpenChange={setIsFormModalOpen}>
         <DialogContent className="max-w-4xl">
@@ -649,5 +618,3 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
     </div>
   );
 }
-
-    
