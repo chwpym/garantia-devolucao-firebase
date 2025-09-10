@@ -74,7 +74,8 @@ export default function ReportGenerator({ selectedWarranties }: ReportGeneratorP
     try {
       // Remove id before sending to the flow
       const warrantiesToSend = selectedWarranties.map((w) => {
-        const { id, ...rest } = w;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { id: _, ...rest } = w;
         return rest;
       });
 

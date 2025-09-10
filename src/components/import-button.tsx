@@ -45,7 +45,7 @@ export function ImportButton({ onDataImported }: ImportButtonProps) {
         }
 
         // Basic validation of imported data
-        const validWarranties = data.filter((item): item is Warranty => typeof item === 'object' && item !== null && ('codigo' in item || 'descricao' in item));
+        const validWarranties = data.filter((item: unknown): item is Warranty => typeof item === 'object' && item !== null && ('codigo' in item || 'descricao' in item));
         
         setWarrantiesToImport(validWarranties);
         setShowConfirm(true);
@@ -69,7 +69,8 @@ export function ImportButton({ onDataImported }: ImportButtonProps) {
     try {
         await db.clearWarranties();
         for (const warranty of warrantiesToImport) {
-            const { id, ...warrantyData } = warranty;
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { id: _, ...warrantyData } = warranty;
             await db.addWarranty(warrantyData);
         }
         onDataImported();
