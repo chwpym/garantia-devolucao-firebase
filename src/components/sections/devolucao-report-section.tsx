@@ -300,56 +300,62 @@ export default function DevolucaoReportSection() {
           <CardDescription>Selecione um cliente e o período para gerar um relatório detalhado.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-            <div className="md:col-span-2">
-                <Label>Selecionar Cliente</Label>
-                <Combobox
-                    options={clientOptions}
-                    value={clientReportFilters.client}
-                    onChange={(value) => setClientReportFilters(prev => ({...prev, client: value}))}
-                    placeholder='Selecione um cliente...'
-                    searchPlaceholder='Buscar cliente...'
-                    notFoundMessage='Nenhum cliente encontrado.'
-                />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+            {/* Left Column */}
+            <div className='space-y-4'>
+                 <div>
+                    <Label>Selecionar Cliente</Label>
+                    <Combobox
+                        options={clientOptions}
+                        value={clientReportFilters.client}
+                        onChange={(value) => setClientReportFilters(prev => ({...prev, client: value}))}
+                        placeholder='Selecione um cliente...'
+                        searchPlaceholder='Buscar cliente...'
+                        notFoundMessage='Nenhum cliente encontrado.'
+                        className='w-full'
+                    />
+                </div>
+                 <Button onClick={handleGenerateClientReport} className='w-full sm:w-auto'>
+                    <User className='mr-2 h-4 w-4' />
+                    Gerar Relatório do Cliente
+                </Button>
             </div>
-             <div>
-                <Label>Mês</Label>
-                <Select 
-                    value={clientReportFilters.month} 
-                    onValueChange={(value) => setClientReportFilters(prev => ({...prev, month: value}))}
-                >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                        {months.map(m => (
-                            <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
-             <div>
-                <Label>Ano</Label>
-                <Select 
-                    value={clientReportFilters.year} 
-                    onValueChange={(value) => setClientReportFilters(prev => ({...prev, year: value}))}
-                >
-                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                        {yearOptions.map(y => (
-                            <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+            {/* Right Column */}
+            <div className='grid grid-cols-2 gap-4'>
+                <div>
+                    <Label>Mês</Label>
+                    <Select 
+                        value={clientReportFilters.month} 
+                        onValueChange={(value) => setClientReportFilters(prev => ({...prev, month: value}))}
+                    >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                            {months.map(m => (
+                                <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div>
+                    <Label>Ano</Label>
+                    <Select 
+                        value={clientReportFilters.year} 
+                        onValueChange={(value) => setClientReportFilters(prev => ({...prev, year: value}))}
+                    >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                            {yearOptions.map(y => (
+                                <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
             </div>
           </div>
         </CardContent>
-        <CardFooter className='flex-col items-start gap-4'>
-            <Button onClick={handleGenerateClientReport}>
-                <User className='mr-2 h-4 w-4' />
-                Gerar Relatório do Cliente
-            </Button>
-            
-            {clientReportData && (
-                 <div className='w-full space-y-4 pt-4 border-t animate-in fade-in-50'>
+        {clientReportData && (
+             <CardFooter className='flex-col items-start gap-4 pt-6 mt-6 border-t'>
+                 <div className='w-full space-y-4 animate-in fade-in-50'>
                      <div className='flex justify-between items-center'>
                         <h3 className='font-semibold'>Resultados para {clientReportFilters.client}</h3>
                         <Button variant='outline' onClick={handleExportClientReportPdf} disabled={clientReportData.length === 0}>
@@ -363,8 +369,8 @@ export default function DevolucaoReportSection() {
                         <p className='font-bold'>{clientReportData.length} devoluções encontradas.</p>
                       </div>
                  </div>
-            )}
-        </CardFooter>
+            </CardFooter>
+        )}
       </Card>
 
 
@@ -529,4 +535,3 @@ export default function DevolucaoReportSection() {
     </div>
   );
 }
-
