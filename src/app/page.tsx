@@ -20,6 +20,7 @@ import DevolucaoQuerySection from '@/components/sections/devolucao-query-section
 export default function Home() {
   const [activeView, setActiveView] = useState('dashboard');
   const [selectedLoteId, setSelectedLoteId] = useState<number | null>(null);
+  const [editingDevolucaoId, setEditingDevolucaoId] = useState<number | null>(null);
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
 
@@ -33,6 +34,17 @@ export default function Home() {
     setSelectedLoteId(null);
     setActiveView('lotes');
   }
+
+  const handleEditDevolucao = (devolucaoId: number) => {
+    setEditingDevolucaoId(devolucaoId);
+    setActiveView('devolucao-register');
+  }
+  
+  const handleDevolucaoSaved = () => {
+    setEditingDevolucaoId(null);
+    setActiveView('devolucao-query');
+  }
+
 
   const renderContent = () => {
     switch (activeView) {
@@ -57,9 +69,9 @@ export default function Home() {
       case 'settings':
         return <SettingsSection />;
       case 'devolucao-register':
-        return <DevolucaoRegisterSection />;
+        return <DevolucaoRegisterSection editingId={editingDevolucaoId} onSave={handleDevolucaoSaved} />;
       case 'devolucao-query':
-        return <DevolucaoQuerySection />;
+        return <DevolucaoQuerySection onEdit={handleEditDevolucao} />;
       default:
         return <DashboardSection />;
     }

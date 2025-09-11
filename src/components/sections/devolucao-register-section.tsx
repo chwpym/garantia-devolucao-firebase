@@ -17,8 +17,10 @@ import { Combobox } from '../ui/combobox';
 import { DatePicker } from '../ui/date-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '../ui/textarea';
+import { parseISO } from 'date-fns';
 
 const itemDevolucaoSchema = z.object({
+  id: z.number().optional(),
   codigoPeca: z.string().min(1, 'Código é obrigatório'),
   descricaoPeca: z.string().min(1, 'Descrição é obrigatória'),
   quantidade: z.coerce.number().min(1, 'Quantidade deve ser no mínimo 1'),
@@ -37,7 +39,12 @@ const devolucaoSchema = z.object({
 
 type DevolucaoFormValues = z.infer<typeof devolucaoSchema>;
 
-export default function DevolucaoRegisterSection() {
+interface DevolucaoRegisterSectionProps {
+    editingId: number | null;
+    onSave: () => void;
+}
+
+export default function DevolucaoRegisterSection({ editingId, onSave }: DevolucaoRegisterSectionProps) {
   const [isDbReady, setIsDbReady] = useState(false);
   const [persons, setPersons] = useState<Person[]>([]);
   const { toast } = useToast();
@@ -54,7 +61,7 @@ export default function DevolucaoRegisterSection() {
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, replace } = useFieldArray({
     control: form.control,
     name: 'itens',
   });
@@ -63,66 +70,119 @@ export default function DevolucaoRegisterSection() {
     const allPersons = await db.getAllPersons();
     setPersons(allPersons.sort((a, b) => a.nome.localeCompare(b.nome)));
   }
+  
+  const loadEditingData = async (id: number) => {
+    const data = await db.getDevolucaoById(id);
+    if(data) {
+        form.reset({
+            ...data,
+            dataVenda: data.dataVenda ? parseISO(data.dataVenda) : new Date(),
+            dataDevolucao: data.dataDevolucao ? parseISO(data.dataDevolucao) : new Date(),
+        });
+        if (data.itens) {
+            replace(data.itens.map(item => ({...item, id: item.id || undefined})));
+        }
+    } else {
+        toast({
+            title: 'Erro',
+            description: 'Não foi possível encontrar a devolução para edição.',
+            variant: 'destructive',
+        });
+        onSave(); // Volta para a lista
+    }
+  };
+
 
   useEffect(() => {
-    async function initializeDB() {
+    async function initialize() {
       try {
         await db.initDB();
         setIsDbReady(true);
         await loadDropdownData();
+        if (editingId) {
+            await loadEditingData(editingId);
+        }
       } catch (error) {
-        console.error('Failed to initialize database:', error);
+        console.error('Failed to initialize:', error);
         toast({
           title: 'Erro de Banco de Dados',
-          description: 'Não foi possível carregar o banco de dados local.',
+          description: 'Não foi possível carregar os dados necessários.',
           variant: 'destructive',
         });
       }
     }
-    initializeDB();
+    initialize();
 
     const handleDataChanged = () => loadDropdownData();
     window.addEventListener('datachanged', handleDataChanged);
     return () => window.removeEventListener('datachanged', handleDataChanged);
-  }, [toast]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingId, toast]);
   
   const onSubmit = async (data: DevolucaoFormValues) => {
     try {
-        const devolucaoData: Omit<Devolucao, 'id'> = {
-            cliente: data.cliente,
-            mecanico: data.mecanico,
-            requisicaoVenda: data.requisicaoVenda,
-            acaoRequisicao: data.acaoRequisicao,
-            dataVenda: data.dataVenda.toISOString(),
-            dataDevolucao: data.dataDevolucao.toISOString(),
-            status: 'Recebido', // Default status
-            observacaoGeral: data.observacaoGeral
-        };
-        const itensData = data.itens.map(item => ({
-            codigoPeca: item.codigoPeca,
-            descricaoPeca: item.descricaoPeca,
-            quantidade: item.quantidade,
-        }));
+        if (editingId) {
+            const devolucaoData: Devolucao = {
+                id: editingId,
+                cliente: data.cliente,
+                mecanico: data.mecanico,
+                requisicaoVenda: data.requisicaoVenda,
+                acaoRequisicao: data.acaoRequisicao,
+                dataVenda: data.dataVenda.toISOString(),
+                dataDevolucao: data.dataDevolucao.toISOString(),
+                status: 'Recebido', // You might want to preserve the status
+                observacaoGeral: data.observacaoGeral
+            };
+            const itensData = data.itens.map(item => ({
+                id: item.id,
+                codigoPeca: item.codigoPeca,
+                descricaoPeca: item.descricaoPeca,
+                quantidade: item.quantidade,
+            }));
+            await db.updateDevolucao(devolucaoData, itensData);
+             toast({
+                title: 'Sucesso!',
+                description: 'Devolução atualizada com sucesso.'
+            });
+
+        } else {
+            const devolucaoData: Omit<Devolucao, 'id'> = {
+                cliente: data.cliente,
+                mecanico: data.mecanico,
+                requisicaoVenda: data.requisicaoVenda,
+                acaoRequisicao: data.acaoRequisicao,
+                dataVenda: data.dataVenda.toISOString(),
+                dataDevolucao: data.dataDevolucao.toISOString(),
+                status: 'Recebido', // Default status for new
+                observacaoGeral: data.observacaoGeral
+            };
+            const itensData = data.itens.map(item => ({
+                codigoPeca: item.codigoPeca,
+                descricaoPeca: item.descricaoPeca,
+                quantidade: item.quantidade,
+            }));
+            await db.addDevolucao(devolucaoData, itensData);
+            toast({
+                title: 'Sucesso!',
+                description: 'Devolução registrada com sucesso.'
+            });
+        }
         
-        await db.addDevolucao(devolucaoData, itensData);
-        
-        toast({
-            title: 'Sucesso!',
-            description: 'Devolução registrada com sucesso.'
-        });
-        form.reset();
-        form.setValue('itens', [{ codigoPeca: '', descricaoPeca: '', quantidade: 1 }]);
-        window.dispatchEvent(new CustomEvent('datachanged'));
+        onSave(); // Navigate back to the query list
 
     } catch (error) {
         console.error('Failed to save devolution:', error);
         toast({
             title: 'Erro ao Salvar',
-            description: 'Não foi possível registrar a devolução.',
+            description: 'Não foi possível salvar a devolução.',
             variant: 'destructive'
         });
     }
   };
+  
+  const handleCancel = () => {
+    onSave(); // Simply navigates back without saving
+  }
 
   const clients = persons.filter(p => p.tipo === 'Cliente' || p.tipo === 'Ambos');
   const mechanics = persons.filter(p => p.tipo === 'Mecânico' || p.tipo === 'Ambos');
@@ -137,9 +197,9 @@ export default function DevolucaoRegisterSection() {
     <div className="max-w-4xl mx-auto">
       <Card>
         <CardHeader>
-            <CardTitle>Cadastro de Devolução</CardTitle>
+            <CardTitle>{editingId ? 'Editar Devolução' : 'Cadastro de Devolução'}</CardTitle>
             <CardDescription>
-                Registre uma nova devolução com um ou mais itens.
+                {editingId ? 'Altere os dados da devolução abaixo.' : 'Registre uma nova devolução com um ou mais itens.'}
             </CardDescription>
         </CardHeader>
         <Form {...form}>
@@ -304,9 +364,9 @@ export default function DevolucaoRegisterSection() {
                     
                 </CardContent>
                 <CardFooter className="flex justify-end gap-2">
-                     <Button type="button" variant="outline" onClick={() => form.reset()}>Limpar</Button>
+                     <Button type="button" variant="outline" onClick={handleCancel}>Cancelar</Button>
                      <Button type="submit" disabled={form.formState.isSubmitting}>
-                        {form.formState.isSubmitting ? "Salvando..." : "Salvar Devolução"}
+                        {form.formState.isSubmitting ? "Salvando..." : (editingId ? 'Atualizar Devolução' : 'Salvar Devolução')}
                      </Button>
                 </CardFooter>
             </form>

@@ -486,6 +486,58 @@ export const addDevolucao = async (devolucao: Omit<Devolucao, 'id'>, itens: Omit
   });
 };
 
+export const updateDevolucao = async (devolucao: Devolucao, itens: (Omit<ItemDevolucao, 'devolucaoId'>)[]): Promise<void> => {
+    const db = await getDB();
+    const transaction = db.transaction([DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME], 'readwrite');
+    const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
+    const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
+
+    return new Promise((resolve, reject) => {
+        // 1. Update the main Devolucao object
+        const devRequest = devolucoesStore.put(devolucao);
+        devRequest.onerror = () => reject(devRequest.error);
+
+        devRequest.onsuccess = () => {
+            const devolucaoId = devolucao.id!;
+            // 2. Clear existing items for this devolucao
+            const itemIndex = itensStore.index('devolucaoId');
+            const clearRequest = itemIndex.openCursor(IDBKeyRange.only(devolucaoId));
+            
+            clearRequest.onerror = () => reject(clearRequest.error);
+            clearRequest.onsuccess = (event) => {
+                const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
+                if (cursor) {
+                    cursor.delete();
+                    cursor.continue();
+                } else {
+                    // 3. Add the new/updated items
+                    if (itens.length === 0) {
+                        resolve();
+                        return;
+                    }
+                    let itemsAdded = 0;
+                    itens.forEach(item => {
+                         const itemToAdd: Omit<ItemDevolucao, 'id'> = {
+                            ...item,
+                            devolucaoId,
+                        };
+                        const itemRequest = itensStore.add(itemToAdd);
+                        itemRequest.onerror = () => reject(itemRequest.error);
+                        itemRequest.onsuccess = () => {
+                            itemsAdded++;
+                            if (itemsAdded === itens.length) {
+                                resolve();
+                            }
+                        };
+                    });
+                }
+            }
+        };
+        transaction.onabort = () => reject(transaction.error);
+    });
+};
+
+
 export const getAllDevolucoes = async (): Promise<(Devolucao & { itens: ItemDevolucao[] })[]> => {
     const db = await getDB();
     const transaction = db.transaction([DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME], 'readonly');
@@ -520,5 +572,65 @@ export const getAllDevolucoes = async (): Promise<(Devolucao & { itens: ItemDevo
                 };
             });
         };
+    });
+};
+
+export const getDevolucaoById = async (id: number): Promise<(Devolucao & { itens: ItemDevolucao[] }) | null> => {
+     const db = await getDB();
+    const transaction = db.transaction([DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME], 'readonly');
+    const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
+    const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
+    const itensIndex = itensStore.index('devolucaoId');
+
+    return new Promise((resolve, reject) => {
+        const devRequest = devolucoesStore.get(id);
+        devRequest.onerror = () => reject(devRequest.error);
+        devRequest.onsuccess = () => {
+            const devolucao = devRequest.result as Devolucao;
+            if (!devolucao) {
+                resolve(null);
+                return;
+            }
+
+            const itensRequest = itensIndex.getAll(id);
+            itensRequest.onerror = () => reject(itensRequest.error);
+            itensRequest.onsuccess = () => {
+                resolve({ ...devolucao, itens: itensRequest.result });
+            };
+        };
+    });
+};
+
+
+export const deleteDevolucao = async (id: number): Promise<void> => {
+    const db = await getDB();
+    const transaction = db.transaction([DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME], 'readwrite');
+    const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
+    const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
+
+    return new Promise((resolve, reject) => {
+        // 1. Delete the main Devolucao object
+        const devRequest = devolucoesStore.delete(id);
+        devRequest.onerror = () => reject(devRequest.error);
+
+        devRequest.onsuccess = () => {
+            // 2. Delete associated items
+            const itemIndex = itensStore.index('devolucaoId');
+            const clearRequest = itemIndex.openCursor(IDBKeyRange.only(id));
+            
+            clearRequest.onerror = () => reject(clearRequest.error);
+            clearRequest.onsuccess = (event) => {
+                const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
+                if (cursor) {
+                    cursor.delete();
+                    cursor.continue();
+                } else {
+                    // When all items are deleted, resolve
+                    resolve();
+                }
+            };
+        };
+
+        transaction.onabort = () => reject(transaction.error);
     });
 };
