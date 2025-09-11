@@ -30,7 +30,6 @@ import LoteForm from '../lote-form';
 import { Checkbox } from '../ui/checkbox';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
-import { Separator } from '../ui/separator';
 import { Label } from '../ui/label';
 import ReportGenerator from '../report-generator';
 import {

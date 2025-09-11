@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Wrench, ShieldCheck, Hourglass, BarChart3, ShieldX, Users, Building, DollarSign, Undo, Package, PieChart } from 'lucide-react';
+import { Wrench, ShieldCheck, Hourglass, BarChart3, ShieldX, Users, Building, DollarSign, Undo, Package } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, Pie, PieChart as RechartsPieChart, Cell } from 'recharts';
@@ -43,7 +43,6 @@ interface StatusChartData {
     fill: string;
 }
 
-type DevolucaoComItens = Devolucao & { itens: ItemDevolucao[] };
 type DevolucaoFlat = Omit<Devolucao, 'id' | 'itens'> & Partial<ItemDevolucao> & { id: number; itemId?: number };
 
 // Tipos para Devoluções
@@ -165,9 +164,12 @@ export default function DashboardSection({ setActiveView }: DashboardSectionProp
       // --- Cálculo de Devoluções ---
         const flatItems = allDevolucoes.flatMap(d => d.itens.map(i => ({...i, dev: d})));
 
-        const sortedDevolucoes = allDevolucoes.sort((a, b) => parseISO(b.dataDevolucao).getTime() - parseISO(a.dataDevolucao).getTime());
+        const sortedDevolucoes = allDevolucoes.sort((a, b) => {
+            if (!b.dataDevolucao || !a.dataDevolucao) return 0;
+            return parseISO(b.dataDevolucao).getTime() - parseISO(a.dataDevolucao).getTime()
+        });
         const recentFlatDevolucoes = sortedDevolucoes.flatMap(devolucao => {
-            if (!devolucao.itens || devolucao.itens.length === 0) {
+            if (!devolucao.itens || devolucoes.length === 0) {
                 return [{ ...devolucao, id: devolucao.id! }];
             }
             return devolucao.itens.map(item => ({
@@ -466,7 +468,7 @@ export default function DashboardSection({ setActiveView }: DashboardSectionProp
                                     {recentDevolucoes.length > 0 ? (
                                         recentDevolucoes.map(item => (
                                             <TableRow key={`${item.id}-${item.itemId || 'no-item'}`}>
-                                                <TableCell>{format(parseISO(item.dataDevolucao), 'dd/MM/yyyy')}</TableCell>
+                                                <TableCell>{item.dataDevolucao ? format(parseISO(item.dataDevolucao), 'dd/MM/yyyy') : '-'}</TableCell>
                                                 <TableCell className="font-medium">{item.cliente}</TableCell>
                                                 <TableCell>
                                                     <div className='font-medium'>{item.codigoPeca}</div>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -168,7 +167,9 @@ export default function DevolucaoReportSection() {
         mecanicoStats[dev.mecanico].ocorrencias++;
         mecanicoStats[dev.mecanico].clientes.add(dev.cliente);
         dev.itens.forEach(item => {
-            mecanicoStats[dev.mecanico].qtdTotal += item.quantidade;
+            if (dev.mecanico) { // Check again to satisfy typescript
+                mecanicoStats[dev.mecanico].qtdTotal += item.quantidade;
+            }
         });
     });
     const porMecanico = Object.values(mecanicoStats)
@@ -227,7 +228,9 @@ export default function DevolucaoReportSection() {
     }
 
     const filtered = allDevolucoes.filter(dev => {
-      const devDate = parseISO(dev.dataDevolucao);
+      const devDate = dev.dataDevolucao ? parseISO(dev.dataDevolucao) : null;
+      if (!devDate) return false;
+
       return (
         dev.cliente === client &&
         (devDate.getMonth() + 1).toString() === month &&
@@ -394,7 +397,7 @@ export default function DevolucaoReportSection() {
                             {clientReportData.length > 0 ? (
                                 clientReportData.flatMap(d => d.itens.map(i => ({...i, dev: d}))).map((item, index) => (
                                 <TableRow key={`${item.dev.id}-${item.id}-${index}`}>
-                                    <TableCell>{format(parseISO(item.dev.dataDevolucao), 'dd/MM/yyyy')}</TableCell>
+                                    <TableCell>{item.dev.dataDevolucao ? format(parseISO(item.dev.dataDevolucao), 'dd/MM/yyyy') : '-'}</TableCell>
                                     <TableCell>{item.dev.requisicaoVenda}</TableCell>
                                     <TableCell className="font-medium">{item.codigoPeca}</TableCell>
                                     <TableCell>{item.descricaoPeca}</TableCell>

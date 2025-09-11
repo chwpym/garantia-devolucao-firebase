@@ -20,7 +20,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Input } from '../ui/input';
 import { DatePickerWithRange } from '../ui/date-range-picker';
 
-type DevolucaoComItens = Devolucao & { itens: ItemDevolucao[] };
 type DevolucaoFlat = Omit<Devolucao, 'itens' | 'id'> & Partial<ItemDevolucao> & { id: number, itemId?: number };
 
 interface DevolucaoQuerySectionProps {
@@ -42,7 +41,7 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
       const data = await db.getAllDevolucoes();
       
       const flatData = data.flatMap(devolucao => {
-        if (!devolucao.itens || devolucao.itens.length === 0) {
+        if (!devolucao.itens || devolucoes.length === 0) {
             return [{
                 ...devolucao,
                 id: devolucao.id!,
@@ -56,7 +55,7 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
         }));
       });
 
-      setDevolucoes(flatData.sort((a,b) => parseISO(b.dataDevolucao).getTime() - parseISO(a.dataDevolucao).getTime()));
+      setDevolucoes(flatData.sort((a,b) => (b.dataDevolucao && a.dataDevolucao) ? (parseISO(b.dataDevolucao).getTime() - parseISO(a.dataDevolucao).getTime()) : 0));
       
     } catch (error) {
       console.error('Failed to load devolutions:', error);
@@ -180,7 +179,7 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
       `"${item.status || ''}"`
     ]);
 
-    let csvContent = "data:text/csv;charset=utf-8," 
+    const csvContent = "data:text/csv;charset=utf-8," 
         + headers.join(",") + "\n" 
         + rows.map(e => e.join(",")).join("\n");
         
@@ -263,7 +262,7 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
                         {filteredDevolucoes.length > 0 ? (
                             filteredDevolucoes.map(item => (
                                 <TableRow key={`${item.id}-${item.itemId || 'no-item'}`}>
-                                    <TableCell>{format(parseISO(item.dataDevolucao), 'dd/MM/yyyy')}</TableCell>
+                                    <TableCell>{item.dataDevolucao ? format(parseISO(item.dataDevolucao), 'dd/MM/yyyy') : '-'}</TableCell>
                                     <TableCell>{item.cliente}</TableCell>
                                     <TableCell>{item.requisicaoVenda}</TableCell>
                                     <TableCell className="font-medium">{item.codigoPeca || '-'}</TableCell>

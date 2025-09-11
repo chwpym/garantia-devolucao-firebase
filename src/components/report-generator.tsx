@@ -11,7 +11,7 @@ import { Loader2, FileDown } from 'lucide-react';
 import type { Warranty, Supplier } from '@/lib/types';
 import * as db from '@/lib/db';
 
-const ALL_FIELDS: (keyof Omit<Warranty, 'id'>)[] = [
+const ALL_FIELDS: (keyof Omit<Warranty, 'id' | 'photos'>)[] = [
   'codigo', 'descricao', 'fornecedor', 'quantidade', 'defeito', 'requisicaoVenda', 'requisicoesGarantia',
   'nfCompra', 'valorCompra', 'cliente', 'mecanico', 'notaFiscalSaida',
   'notaFiscalRetorno', 'observacao', 'status', 'dataRegistro'
@@ -171,5 +171,3 @@ export default function ReportGenerator({
     </Wrapper>
   );
 }
-
-    

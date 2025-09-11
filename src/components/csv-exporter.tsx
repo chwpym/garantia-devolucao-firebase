@@ -8,12 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { FileDown, Loader2 } from 'lucide-react';
-import type { Warranty, Person, Supplier, Devolucao, ItemDevolucao } from '@/lib/types';
+import type { Devolucao, ItemDevolucao } from '@/lib/types';
 import { format } from 'date-fns';
 
 type DataType = 'warranties' | 'devolutions' | 'persons' | 'suppliers';
-
-type DevolucaoFlat = Omit<Devolucao, 'id' | 'itens'> & Partial<ItemDevolucao> & { id: number; itemId?: number };
 
 const FIELD_CONFIG: Record<DataType, Record<string, string>> = {
   warranties: {
@@ -23,7 +21,8 @@ const FIELD_CONFIG: Record<DataType, Record<string, string>> = {
     fornecedor: 'Fornecedor',
     quantidade: 'Quantidade',
     defeito: 'Defeito',
-    requisicoes: 'Requisições',
+    requisicaoVenda: 'Req. Venda',
+    requisicoesGarantia: 'Req. Garantia',
     nfCompra: 'NF Compra',
     valorCompra: 'Valor Compra',
     cliente: 'Cliente',
@@ -109,7 +108,7 @@ export default function CsvExporter() {
       case 'devolutions':
         const devolucoes = await db.getAllDevolucoes();
         return devolucoes.flatMap(devolucao => {
-            if (!devolucao.itens || devolucao.itens.length === 0) {
+            if (!devolucao.itens || devolucoes.length === 0) {
                 return [{ ...devolucao, id: devolucao.id! }];
             }
             return devolucao.itens.map(item => ({
@@ -121,7 +120,7 @@ export default function CsvExporter() {
     }
   }, [dataType]);
   
-  const formatValueForCsv = (value: any): string => {
+  const formatValueForCsv = (value: unknown): string => {
     if (value === null || value === undefined) {
         return '';
     }
@@ -156,9 +155,9 @@ export default function CsvExporter() {
       
       const rows = data.map(item => {
         return selectedFields.map(fieldKey => {
-            const value = (item as any)[fieldKey];
+            const value = (item as Record<string, unknown>)[fieldKey];
             if ((fieldKey === 'dataRegistro' || fieldKey === 'dataVenda' || fieldKey === 'dataDevolucao') && value) {
-                return format(new Date(value), 'dd/MM/yyyy HH:mm');
+                return format(new Date(value as string | number), 'dd/MM/yyyy HH:mm');
             }
             return formatValueForCsv(value);
         }).join(',');

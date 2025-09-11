@@ -12,7 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Trash2 } from 'lucide-react';
-import type { Person, Devolucao, ItemDevolucao } from '@/lib/types';
+import type { Person, Devolucao } from '@/lib/types';
 import { Combobox } from '../ui/combobox';
 import { DatePicker } from '../ui/date-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -121,9 +121,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
   
   const onSubmit = async (data: DevolucaoFormValues) => {
     try {
-        if (editingId) {
-            const devolucaoData: Devolucao = {
-                id: editingId,
+        const devolucaoBaseData = {
                 cliente: data.cliente,
                 mecanico: data.mecanico,
                 requisicaoVenda: data.requisicaoVenda,
@@ -132,6 +130,12 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                 dataDevolucao: data.dataDevolucao.toISOString(),
                 status: 'Recebido', // You might want to preserve the status
                 observacaoGeral: data.observacaoGeral
+            };
+
+        if (editingId) {
+            const devolucaoData: Devolucao = {
+                ...devolucaoBaseData,
+                id: editingId,
             };
             const itensData = data.itens.map(item => ({
                 id: item.id,
@@ -147,14 +151,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
 
         } else {
             const devolucaoData: Omit<Devolucao, 'id'> = {
-                cliente: data.cliente,
-                mecanico: data.mecanico,
-                requisicaoVenda: data.requisicaoVenda,
-                acaoRequisicao: data.acaoRequisicao,
-                dataVenda: data.dataVenda.toISOString(),
-                dataDevolucao: data.dataDevolucao.toISOString(),
-                status: 'Recebido', // Default status for new
-                observacaoGeral: data.observacaoGeral
+               ...devolucaoBaseData
             };
             const itensData = data.itens.map(item => ({
                 codigoPeca: item.codigoPeca,

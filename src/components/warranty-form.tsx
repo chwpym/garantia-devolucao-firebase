@@ -232,7 +232,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
     const clientOptions = clients.map(c => ({ value: c.nome, label: c.nome }));
     const mechanicOptions = mechanics.map(m => ({ value: m.nome, label: m.nome }));
 
-    const formContent = (
+    const innerFormContent = (
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} onKeyDown={handleKeyDown} ref={formRef}>
             <CardContent className="space-y-6 pt-6">
@@ -475,8 +475,8 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                 <div className="space-y-4">
                     <h3 className="text-lg font-medium text-foreground">Observações</h3>
                     <FormField name="observacao" control={form.control} render={({ field }) => (
-                            <FormItem><FormControl><Textarea rows={2} placeholder="Adicione qualquer observação relevante aqui..." {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
+                        <FormItem><FormControl><Textarea rows={2} placeholder="Adicione qualquer observação relevante aqui..." {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
                 </div>
 
             </CardContent>
@@ -492,7 +492,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
     );
 
     if (isModal) {
-      return <div>{formContent}</div>;
+      return <div>{innerFormContent}</div>;
     }
 
     return (
@@ -501,9 +501,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
               <CardTitle>{selectedWarranty ? 'Editar Garantia' : 'Cadastrar Garantia'}</CardTitle>
               <CardDescription>Preencha os detalhes da garantia abaixo. Use &quot;Enter&quot; para pular para o próximo campo.</CardDescription>
           </CardHeader>
-          {formContent}
+          {innerFormContent}
       </Card>
     );
 }
-
-    

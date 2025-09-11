@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import * as db from '@/lib/db';
-import type { Warranty, Devolucao, Lote, Person, Supplier, CompanyData } from '@/lib/types';
+import type { Warranty, Devolucao, Lote, Person, Supplier, CompanyData, ItemDevolucao } from '@/lib/types';
 import { Loader2, Upload } from 'lucide-react';
 import {
   AlertDialog,
@@ -23,7 +23,7 @@ interface FullBackupData {
   persons?: Person[];
   suppliers?: Supplier[];
   lotes?: Lote[];
-  devolucoes?: (Devolucao & { itens: any[] })[];
+  devolucoes?: (Omit<Devolucao, 'id'> & { id?: number; itens: (Omit<ItemDevolucao, 'id' | 'devolucaoId'>)[] })[];
   companyData?: CompanyData;
 }
 
@@ -62,8 +62,8 @@ export function ImportButton({ onDataImported }: ImportButtonProps) {
         )) {
             // Check for old format (just an array of warranties) for backward compatibility
             const oldFormatData = JSON.parse(text);
-            if (Array.isArray(oldFormatData) && oldFormatData.every(item => 'codigo' in item || 'descricao' in item)) {
-                 setDataToImport({ warranties: oldFormatData });
+            if (Array.isArray(oldFormatData) && oldFormatData.every((item: unknown) => typeof item === 'object' && item !== null && ('codigo' in item || 'descricao' in item))) {
+                 setDataToImport({ warranties: oldFormatData as Warranty[] });
                  setShowConfirm(true);
                  return;
             }
@@ -105,36 +105,36 @@ export function ImportButton({ onDataImported }: ImportButtonProps) {
         // Import new data
         if (dataToImport.warranties) {
             for (const warranty of dataToImport.warranties) {
-                const { id: _, ...warrantyData } = warranty;
+                const { id, ...warrantyData } = warranty;
                 await db.addWarranty(warrantyData);
             }
         }
         if (dataToImport.persons) {
             for (const person of dataToImport.persons) {
-                const { id: _, ...personData } = person;
+                const { id, ...personData } = person;
                 await db.addPerson(personData);
             }
         }
         if (dataToImport.suppliers) {
             for (const supplier of dataToImport.suppliers) {
-                const { id: _, ...supplierData } = supplier;
+                const { id, ...supplierData } = supplier;
                 await db.addSupplier(supplierData);
             }
         }
         if (dataToImport.lotes) {
             for (const lote of dataToImport.lotes) {
-                const { id: _, ...loteData } = lote;
+                const { id, ...loteData } = lote;
                 await db.addLote(loteData);
             }
         }
         if (dataToImport.devolucoes) {
             for (const devolucao of dataToImport.devolucoes) {
-                const { id: _, itens, ...devolucaoData } = devolucao;
+                const { id, itens, ...devolucaoData } = devolucao;
                 await db.addDevolucao(devolucaoData, itens || []);
             }
         }
         if (dataToImport.companyData) {
-            const { id: _, ...companyData } = dataToImport.companyData;
+            const { id, ...companyData } = dataToImport.companyData;
             await db.updateCompanyData(companyData);
         }
 
