@@ -14,6 +14,7 @@ import BackupSection from '@/components/sections/backup-section';
 import LoteDetailSection from '@/components/sections/lote-detail-section';
 import SettingsSection from '@/components/sections/settings-section';
 import { useIsMobile } from '@/hooks/use-mobile';
+import DevolucaoRegisterSection from '@/components/sections/devolucao-register-section';
 
 export default function Home() {
   const [activeView, setActiveView] = useState('dashboard');
@@ -54,6 +55,8 @@ export default function Home() {
         return <BackupSection />;
       case 'settings':
         return <SettingsSection />;
+      case 'devolucao-register':
+        return <DevolucaoRegisterSection />;
       default:
         return <DashboardSection />;
     }

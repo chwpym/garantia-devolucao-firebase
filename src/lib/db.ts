@@ -1,9 +1,9 @@
 'use client';
 
-import type { Warranty, Person, Supplier, Lote, LoteItem, CompanyData } from './types';
+import type { Warranty, Person, Supplier, Lote, LoteItem, CompanyData, Devolucao, ItemDevolucao } from './types';
 
 const DB_NAME = 'GarantiasDB';
-const DB_VERSION = 4; // Incremented version
+const DB_VERSION = 5; // Incremented version
 
 const GARANTIAS_STORE_NAME = 'garantias';
 const PERSONS_STORE_NAME = 'persons';
@@ -11,6 +11,8 @@ const SUPPLIERS_STORE_NAME = 'suppliers';
 const LOTES_STORE_NAME = 'lotes';
 const LOTE_ITEMS_STORE_NAME = 'lote_items';
 const COMPANY_DATA_STORE_NAME = 'company_data';
+const DEVOLUCOES_STORE_NAME = 'devolucoes';
+const ITENS_DEVOLUCAO_STORE_NAME = 'itens_devolucao';
 
 
 let dbPromise: Promise<IDBDatabase> | null = null;
@@ -59,6 +61,13 @@ const getDB = (): Promise<IDBDatabase> => {
         }
         if (!dbInstance.objectStoreNames.contains(COMPANY_DATA_STORE_NAME)) {
           dbInstance.createObjectStore(COMPANY_DATA_STORE_NAME, { keyPath: 'id' });
+        }
+        if (!dbInstance.objectStoreNames.contains(DEVOLUCOES_STORE_NAME)) {
+            dbInstance.createObjectStore(DEVOLUCOES_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+        }
+        if (!dbInstance.objectStoreNames.contains(ITENS_DEVOLUCAO_STORE_NAME)) {
+            const itensDevolucaoStore = dbInstance.createObjectStore(ITENS_DEVOLUCAO_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+            itensDevolucaoStore.createIndex('devolucaoId', 'devolucaoId', { unique: false });
         }
       };
 
@@ -436,4 +445,43 @@ export const updateCompanyData = (companyData: Omit<CompanyData, 'id'>): Promise
             reject(err);
         }
     });
+};
+
+
+// --- Devolução Functions ---
+
+export const addDevolucao = async (devolucao: Omit<Devolucao, 'id'>, itens: Omit<ItemDevolucao, 'id' | 'devolucaoId'>[]): Promise<number> => {
+  const db = await getDB();
+  const transaction = db.transaction([DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME], 'readwrite');
+  const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
+  const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
+
+  return new Promise((resolve, reject) => {
+    const request = devolucoesStore.add(devolucao);
+    
+    request.onerror = () => reject(request.error);
+
+    request.onsuccess = () => {
+      const devolucaoId = request.result as number;
+      let itemsAdded = 0;
+
+      if (itens.length === 0) {
+        resolve(devolucaoId);
+        return;
+      }
+
+      itens.forEach(item => {
+        const itemRequest = itensStore.add({ ...item, devolucaoId });
+        itemRequest.onerror = () => reject(itemRequest.error);
+        itemRequest.onsuccess = () => {
+          itemsAdded++;
+          if (itemsAdded === itens.length) {
+            resolve(devolucaoId);
+          }
+        };
+      });
+    };
+    
+    transaction.onabort = () => reject(transaction.error);
+  });
 };

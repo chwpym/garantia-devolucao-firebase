@@ -74,3 +74,29 @@ export interface CompanyData {
     telefone?: string;
     email?: string;
 }
+
+// --- Novas Estruturas para Devolução ---
+
+export type ReturnAction = 'Troca' | 'Reembolso' | 'Reparo' | 'Descarte' | 'Análise';
+export type ReturnStatus = 'Aguardando Peças' | 'Recebido' | 'Finalizada' | 'Cancelada';
+
+export interface Devolucao {
+    id?: number;
+    cliente: string;
+    mecanico?: string;
+    requisicaoVenda: string;
+    dataVenda?: string;
+    dataDevolucao: string;
+    status: ReturnStatus;
+    observacaoGeral?: string;
+}
+
+export interface ItemDevolucao {
+    id?: number;
+    devolucaoId: number;
+    codigoPeca: string;
+    descricaoPeca: string;
+    quantidade: number;
+    acao: ReturnAction;
+    observacao?: string;
+}
