@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import * as db from '@/lib/db';
-import type { Warranty } from '@/lib/types';
+import type { Warranty, Devolucao, Lote, Person, Supplier, CompanyData } from '@/lib/types';
 import { Loader2, Upload } from 'lucide-react';
 import {
   AlertDialog,
@@ -17,6 +17,17 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
+
+interface FullBackupData {
+  warranties?: Warranty[];
+  persons?: Person[];
+  suppliers?: Supplier[];
+  lotes?: Lote[];
+  devolucoes?: (Devolucao & { itens: any[] })[];
+  companyData?: CompanyData;
+}
+
+
 interface ImportButtonProps {
   onDataImported: () => void;
 }
@@ -25,7 +36,7 @@ export function ImportButton({ onDataImported }: ImportButtonProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [warrantiesToImport, setWarrantiesToImport] = useState<Warranty[]>([]);
+  const [dataToImport, setDataToImport] = useState<FullBackupData | null>(null);
   const { toast } = useToast();
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,15 +50,27 @@ export function ImportButton({ onDataImported }: ImportButtonProps) {
         if (typeof text !== 'string') {
           throw new Error('Formato de arquivo inválido.');
         }
-        const data = JSON.parse(text);
-        if (!Array.isArray(data)) {
-          throw new Error('O arquivo JSON deve conter um array de garantias.');
-        }
+        const data: FullBackupData = JSON.parse(text);
 
-        // Basic validation of imported data
-        const validWarranties = data.filter((item: unknown): item is Warranty => typeof item === 'object' && item !== null && ('codigo' in item || 'descricao' in item));
+        if (!data || (
+          !Array.isArray(data.warranties) &&
+          !Array.isArray(data.persons) &&
+          !Array.isArray(data.suppliers) &&
+          !Array.isArray(data.lotes) &&
+          !Array.isArray(data.devolucoes) &&
+          !data.companyData
+        )) {
+            // Check for old format (just an array of warranties) for backward compatibility
+            const oldFormatData = JSON.parse(text);
+            if (Array.isArray(oldFormatData) && oldFormatData.every(item => 'codigo' in item || 'descricao' in item)) {
+                 setDataToImport({ warranties: oldFormatData });
+                 setShowConfirm(true);
+                 return;
+            }
+            throw new Error('O arquivo de backup não parece ter um formato válido.');
+        }
         
-        setWarrantiesToImport(validWarranties);
+        setDataToImport(data);
         setShowConfirm(true);
         
       } catch (error) {
@@ -64,15 +87,57 @@ export function ImportButton({ onDataImported }: ImportButtonProps) {
   };
 
   const handleImportConfirm = async () => {
+    if (!dataToImport) return;
     setShowConfirm(false);
     setIsLoading(true);
+
     try {
-        await db.clearWarranties();
-        for (const warranty of warrantiesToImport) {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { id: _, ...warrantyData } = warranty;
-            await db.addWarranty(warrantyData);
+        // Clear all existing data
+        await Promise.all([
+            db.clearWarranties(),
+            db.clearPersons(),
+            db.clearSuppliers(),
+            db.clearLotes(),
+            db.clearDevolucoes(),
+            db.clearCompanyData(),
+        ]);
+
+        // Import new data
+        if (dataToImport.warranties) {
+            for (const warranty of dataToImport.warranties) {
+                const { id: _, ...warrantyData } = warranty;
+                await db.addWarranty(warrantyData);
+            }
         }
+        if (dataToImport.persons) {
+            for (const person of dataToImport.persons) {
+                const { id: _, ...personData } = person;
+                await db.addPerson(personData);
+            }
+        }
+        if (dataToImport.suppliers) {
+            for (const supplier of dataToImport.suppliers) {
+                const { id: _, ...supplierData } = supplier;
+                await db.addSupplier(supplierData);
+            }
+        }
+        if (dataToImport.lotes) {
+            for (const lote of dataToImport.lotes) {
+                const { id: _, ...loteData } = lote;
+                await db.addLote(loteData);
+            }
+        }
+        if (dataToImport.devolucoes) {
+            for (const devolucao of dataToImport.devolucoes) {
+                const { id: _, itens, ...devolucaoData } = devolucao;
+                await db.addDevolucao(devolucaoData, itens || []);
+            }
+        }
+        if (dataToImport.companyData) {
+            const { id: _, ...companyData } = dataToImport.companyData;
+            await db.updateCompanyData(companyData);
+        }
+
         onDataImported();
         window.dispatchEvent(new CustomEvent('datachanged'));
     } catch (error) {
@@ -86,6 +151,19 @@ export function ImportButton({ onDataImported }: ImportButtonProps) {
         setIsLoading(false);
     }
   };
+
+  const getImportSummary = () => {
+    if (!dataToImport) return "Nenhum registro a ser importado."
+    const counts = [
+        dataToImport.warranties?.length || 0,
+        dataToImport.persons?.length || 0,
+        dataToImport.suppliers?.length || 0,
+        dataToImport.lotes?.length || 0,
+        dataToImport.devolucoes?.length || 0,
+    ];
+    const totalRecords = counts.reduce((acc, count) => acc + count, 0);
+    return `Você está prestes a importar um total de ${totalRecords} registros em várias categorias. Deseja continuar?`
+  }
 
   return (
     <>
@@ -106,22 +184,23 @@ export function ImportButton({ onDataImported }: ImportButtonProps) {
         ) : (
           <Upload className="mr-2 h-4 w-4" />
         )}
-        Importar de JSON
+        Restaurar de um Backup
       </Button>
 
       <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar Importação de Dados?</AlertDialogTitle>
+            <AlertDialogTitle>Confirmar Restauração de Backup?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação <span className="font-bold text-destructive">substituirá todos os dados existentes</span> com o conteúdo do arquivo selecionado.
-              Você está prestes a importar <span className="font-bold">{warrantiesToImport.length}</span> registros. Deseja continuar?
+              Esta ação <span className="font-bold text-destructive">substituirá todos os dados existentes no sistema</span> com o conteúdo do arquivo de backup selecionado.
+              <br/><br/>
+              {getImportSummary()}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleImportConfirm}>
-              Sim, substituir e importar
+              Sim, substituir e restaurar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

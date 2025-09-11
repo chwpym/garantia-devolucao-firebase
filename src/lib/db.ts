@@ -99,6 +99,20 @@ const getStore = async (storeName: string, mode: IDBTransactionMode) => {
   return transaction.objectStore(storeName);
 };
 
+// Generic clear function
+const clearStore = (storeName: string): Promise<void> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(storeName, 'readwrite');
+      const request = store.clear();
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
 // --- Warranty Functions ---
 
 export const addWarranty = (warranty: Omit<Warranty, 'id'>): Promise<number> => {
@@ -166,18 +180,7 @@ export const deleteWarranty = (id: number): Promise<void> => {
   });
 };
 
-export const clearWarranties = (): Promise<void> => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const store = await getStore(GARANTIAS_STORE_NAME, 'readwrite');
-      const request = store.clear();
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-    } catch (err) {
-      reject(err);
-    }
-  });
-};
+export const clearWarranties = (): Promise<void> => clearStore(GARANTIAS_STORE_NAME);
 
 
 // --- Person (Client/Mechanic) Functions ---
@@ -234,6 +237,8 @@ export const deletePerson = (id: number): Promise<void> => {
   });
 };
 
+export const clearPersons = (): Promise<void> => clearStore(PERSONS_STORE_NAME);
+
 
 // --- Supplier Functions ---
 
@@ -288,6 +293,8 @@ export const deleteSupplier = (id: number): Promise<void> => {
     }
   });
 };
+
+export const clearSuppliers = (): Promise<void> => clearStore(SUPPLIERS_STORE_NAME);
 
 // --- Lote Functions ---
 export const addLote = (lote: Omit<Lote, 'id'>): Promise<number> => {
@@ -374,6 +381,8 @@ export const deleteLote = async (id: number): Promise<void> => {
   });
 };
 
+export const clearLotes = (): Promise<void> => clearStore(LOTES_STORE_NAME);
+
 
 // --- LoteItem Functions ---
 export const addLoteItem = (loteItem: Omit<LoteItem, 'id'>): Promise<number> => {
@@ -446,6 +455,8 @@ export const updateCompanyData = (companyData: Omit<CompanyData, 'id'>): Promise
         }
     });
 };
+
+export const clearCompanyData = (): Promise<void> => clearStore(COMPANY_DATA_STORE_NAME);
 
 
 // --- Devolução Functions ---
@@ -629,6 +640,33 @@ export const deleteDevolucao = async (id: number): Promise<void> => {
                     resolve();
                 }
             };
+        };
+
+        transaction.onabort = () => reject(transaction.error);
+    });
+};
+
+export const clearDevolucoes = async (): Promise<void> => {
+    const db = await getDB();
+    const transaction = db.transaction([DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME], 'readwrite');
+    const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
+    const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
+
+    return new Promise((resolve, reject) => {
+        const req1 = devolucoesStore.clear();
+        let success1 = false;
+        req1.onerror = () => reject(req1.error);
+        req1.onsuccess = () => {
+            success1 = true;
+            if (success2) resolve();
+        };
+
+        const req2 = itensStore.clear();
+        let success2 = false;
+        req2.onerror = () => reject(req2.error);
+        req2.onsuccess = () => {
+            success2 = true;
+            if (success1) resolve();
         };
 
         transaction.onabort = () => reject(transaction.error);
