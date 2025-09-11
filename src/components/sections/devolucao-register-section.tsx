@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
@@ -22,7 +22,6 @@ const itemDevolucaoSchema = z.object({
   codigoPeca: z.string().min(1, 'Código é obrigatório'),
   descricaoPeca: z.string().min(1, 'Descrição é obrigatória'),
   quantidade: z.coerce.number().min(1, 'Quantidade deve ser no mínimo 1'),
-  acao: z.enum(['Troca', 'Reembolso', 'Reparo', 'Descarte', 'Análise'], { required_error: 'Selecione uma ação' }),
 });
 
 const devolucaoSchema = z.object({
@@ -51,7 +50,7 @@ export default function DevolucaoRegisterSection() {
       requisicaoVenda: '',
       dataDevolucao: new Date(),
       observacaoGeral: '',
-      itens: [{ codigoPeca: '', descricaoPeca: '', quantidade: 1, acao: 'Troca' }],
+      itens: [{ codigoPeca: '', descricaoPeca: '', quantidade: 1 }],
     },
   });
 
@@ -103,7 +102,6 @@ export default function DevolucaoRegisterSection() {
             codigoPeca: item.codigoPeca,
             descricaoPeca: item.descricaoPeca,
             quantidade: item.quantidade,
-            acao: item.acao,
         }));
         
         await db.addDevolucao(devolucaoData, itensData);
@@ -113,7 +111,7 @@ export default function DevolucaoRegisterSection() {
             description: 'Devolução registrada com sucesso.'
         });
         form.reset();
-        form.setValue('itens', [{ codigoPeca: '', descricaoPeca: '', quantidade: 1, acao: 'Troca' }]);
+        form.setValue('itens', [{ codigoPeca: '', descricaoPeca: '', quantidade: 1 }]);
         window.dispatchEvent(new CustomEvent('datachanged'));
 
     } catch (error) {
@@ -152,7 +150,7 @@ export default function DevolucaoRegisterSection() {
                     <div className='space-y-4'>
                         <div className="flex justify-between items-center">
                             <h3 className="text-lg font-medium text-foreground">Peças Devolvidas</h3>
-                             <Button type="button" size="sm" onClick={() => append({ codigoPeca: '', descricaoPeca: '', quantidade: 1, acao: 'Troca' })}>
+                             <Button type="button" size="sm" onClick={() => append({ codigoPeca: '', descricaoPeca: '', quantidade: 1 })}>
                                 <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Peça
                             </Button>
                         </div>
@@ -178,14 +176,14 @@ export default function DevolucaoRegisterSection() {
                                             name={`itens.${index}.codigoPeca`}
                                             control={form.control}
                                             render={({ field }) => (
-                                            <FormItem className="md:col-span-2"><FormLabel>Código <span className='text-destructive'>*</span></FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                            <FormItem className="md:col-span-3"><FormLabel>Código <span className='text-destructive'>*</span></FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                                             )}
                                         />
                                         <FormField
                                             name={`itens.${index}.descricaoPeca`}
                                             control={form.control}
                                             render={({ field }) => (
-                                            <FormItem className="md:col-span-5"><FormLabel>Descrição <span className='text-destructive'>*</span></FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                            <FormItem className="md:col-span-7"><FormLabel>Descrição <span className='text-destructive'>*</span></FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                                             )}
                                         />
                                         <FormField
@@ -193,26 +191,6 @@ export default function DevolucaoRegisterSection() {
                                             control={form.control}
                                             render={({ field }) => (
                                             <FormItem className="md:col-span-2"><FormLabel>Qtd. <span className='text-destructive'>*</span></FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-                                            )}
-                                        />
-                                        <Controller
-                                            name={`itens.${index}.acao`}
-                                            control={form.control}
-                                            render={({ field }) => (
-                                                <FormItem className="md:col-span-3">
-                                                    <FormLabel>Ação <span className='text-destructive'>*</span></FormLabel>
-                                                    <Select onValueChange={field.onChange} value={field.value}>
-                                                        <FormControl><SelectTrigger><SelectValue placeholder="Ação..." /></SelectTrigger></FormControl>
-                                                        <SelectContent>
-                                                            <SelectItem value="Troca">Troca</SelectItem>
-                                                            <SelectItem value="Reembolso">Reembolso</SelectItem>
-                                                            <SelectItem value="Reparo">Reparo</SelectItem>
-                                                            <SelectItem value="Descarte">Descarte</SelectItem>
-                                                            <SelectItem value="Análise">Análise</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
                                             )}
                                         />
                                     </div>
