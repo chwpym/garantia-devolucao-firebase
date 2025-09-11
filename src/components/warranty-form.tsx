@@ -30,7 +30,8 @@ const formSchema = z.object({
   fornecedor: z.string().optional(),
   quantidade: z.coerce.number().min(0).optional(),
   defeito: z.string().optional(),
-  requisicoes: z.string().optional(),
+  requisicaoVenda: z.string().optional(),
+  requisicoesGarantia: z.string().optional(),
   nfCompra: z.string().optional(),
   valorCompra: z.string().optional(),
   cliente: z.string().optional(),
@@ -58,7 +59,8 @@ const defaultValues: WarrantyFormValues = {
   fornecedor: '',
   quantidade: 1,
   defeito: '',
-  requisicoes: '',
+  requisicaoVenda: '',
+  requisicoesGarantia: '',
   nfCompra: '',
   valorCompra: '',
   cliente: '',
@@ -336,7 +338,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                                                 <Image 
                                                     src={photo} 
                                                     alt={`Preview ${index + 1}`} 
-                                                    layout="fill"
+                                                    fill={true}
                                                     objectFit="cover"
                                                 />
                                                 <Button
@@ -438,14 +440,17 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                             </FormItem>
                         )}
                         />
+                    <FormField name="requisicaoVenda" control={form.control} render={({ field }) => (
+                        <FormItem><FormLabel>Requisição Venda</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                     <FormField name="requisicoesGarantia" control={form.control} render={({ field }) => (
+                        <FormItem className="md:col-span-3"><FormLabel>Requisições Garantia</FormLabel><FormControl><Textarea rows={1} placeholder="Separe múltiplas requisições por vírgula" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
                     <FormField name="nfCompra" control={form.control} render={({ field }) => (
                     <FormItem><FormLabel>NF Compra</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField name="valorCompra" control={form.control} render={({ field }) => (
                         <FormItem><FormLabel>Valor Compra</FormLabel><FormControl><Input placeholder="R$ 0,00" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                     <FormField name="requisicoes" control={form.control} render={({ field }) => (
-                        <FormItem className="md:col-span-2"><FormLabel>Requisições</FormLabel><FormControl><Textarea rows={1} placeholder="Separe múltiplas requisições por vírgula" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField name="notaFiscalSaida" control={form.control} render={({ field }) => (
                         <FormItem><FormLabel>Nota Fiscal de Saída</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>

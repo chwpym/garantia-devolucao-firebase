@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { jsPDF } from 'jspdf';
@@ -142,7 +140,8 @@ export function generatePdf(input: GeneratePdfInput): string {
         fornecedor: 'Fornecedor',
         quantidade: 'Qtd.',
         defeito: 'Defeito',
-        requisicoes: 'Requisições',
+        requisicaoVenda: 'Req. Venda',
+        requisicoesGarantia: 'Req. Garantia',
         nfCompra: 'NF Compra',
         valorCompra: 'Valor Compra',
         cliente: 'Cliente',
@@ -217,20 +216,23 @@ export function generatePersonsPdf(input: GeneratePersonsPdfInput): string {
 }
 
 export function generateDevolucoesPdf(input: GenerateDevolucoesPdfInput): string {
-    const { devolucoes, companyData, title = 'Relatório de Devoluções' } = input;
+    const { devolucoes, companyData, title: customTitle } = input;
     const doc = new jsPDF();
+    
+    const isClientReport = customTitle?.includes('Relatório de Devoluções -');
+    const title = customTitle || 'Relatório de Devoluções';
 
     const startY = addHeader(doc, companyData, title);
     
-    const isClientReport = title.includes('Relatório de Devoluções -');
+    const baseHeaders = ['Data Dev.', 'Cliente', 'Requisição', 'Código Peça', 'Descrição Peça', 'Qtd.', 'Ação Req.', 'Status'];
 
     const tableHeaders = isClientReport
       ? ['Data Dev.', 'Requisição', 'Código Peça', 'Descrição Peça', 'Qtd.']
-      : ['Data Dev.', 'Cliente', 'Requisição', 'Código Peça', 'Descrição Peça', 'Qtd.', 'Ação Req.', 'Status'];
+      : baseHeaders;
 
 
     const tableBody = devolucoes.map(item => {
-        const row = [
+        const fullRow = [
             item.dataDevolucao ? format(parseISO(item.dataDevolucao), 'dd/MM/yyyy') : '-',
             item.cliente || '-',
             item.requisicaoVenda || '-',
@@ -242,11 +244,11 @@ export function generateDevolucoesPdf(input: GenerateDevolucoesPdfInput): string
         ];
 
         if (isClientReport) {
-            // Remove 'Cliente', 'Ação Req.', 'Status'
-            return [row[0], row[2], row[3], row[4], row[5]];
+            // Reorder to match headers: 'Data Dev.', 'Requisição', 'Código Peça', 'Descrição Peça', 'Qtd.'
+            return [fullRow[0], fullRow[2], fullRow[3], fullRow[4], fullRow[5]];
         }
 
-        return row;
+        return fullRow;
     });
 
     doc.autoTable({

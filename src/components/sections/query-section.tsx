@@ -166,7 +166,8 @@ export default function QuerySection() {
         warranty.cliente?.toLowerCase().includes(lowercasedTerm) ||
         warranty.defeito?.toLowerCase().includes(lowercasedTerm) ||
         warranty.status?.toLowerCase().includes(lowercasedTerm) ||
-        warranty.requisicoes?.toLowerCase().includes(lowercasedTerm) ||
+        warranty.requisicaoVenda?.toLowerCase().includes(lowercasedTerm) ||
+        warranty.requisicoesGarantia?.toLowerCase().includes(lowercasedTerm) ||
         warranty.notaFiscalRetorno?.toLowerCase().includes(lowercasedTerm)
       );
     });
