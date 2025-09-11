@@ -309,7 +309,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                         render={({ field }) => (
                             <FormItem>
                                 <FormControl>
-                                    <>
+                                    <div>
                                         <input
                                             type="file"
                                             ref={fileInputRef}
@@ -326,7 +326,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                                             <Upload className="mr-2 h-4 w-4" />
                                             Carregar Fotos
                                         </Button>
-                                    </>
+                                    </div>
                                 </FormControl>
                                 <FormMessage />
                                 {photos && photos.length > 0 && (
