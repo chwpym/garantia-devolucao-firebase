@@ -147,6 +147,80 @@ export default function DevolucaoRegisterSection() {
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
                 <CardContent className='space-y-8'>
+                    
+                    {/* Items */}
+                    <div className='space-y-4'>
+                        <div className="flex justify-between items-center">
+                            <h3 className="text-lg font-medium text-foreground">Peças Devolvidas</h3>
+                             <Button type="button" size="sm" onClick={() => append({ codigoPeca: '', descricaoPeca: '', quantidade: 1, acao: 'Troca' })}>
+                                <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Peça
+                            </Button>
+                        </div>
+                         {form.formState.errors.itens?.message && <p className='text-sm font-medium text-destructive'>{form.formState.errors.itens.message}</p>}
+                        
+                        <div className="space-y-4">
+                            {fields.map((item, index) => (
+                                <div key={item.id} className="border p-4 rounded-lg relative space-y-4">
+                                     <h4 className="font-semibold text-primary">Peça #{index + 1}</h4>
+                                     {fields.length > 1 && (
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="absolute top-2 right-2 text-destructive hover:text-destructive"
+                                            onClick={() => remove(index)}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    )}
+                                    <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                                        <FormField
+                                            name={`itens.${index}.codigoPeca`}
+                                            control={form.control}
+                                            render={({ field }) => (
+                                            <FormItem className="md:col-span-2"><FormLabel>Código <span className='text-destructive'>*</span></FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            name={`itens.${index}.descricaoPeca`}
+                                            control={form.control}
+                                            render={({ field }) => (
+                                            <FormItem className="md:col-span-5"><FormLabel>Descrição <span className='text-destructive'>*</span></FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            name={`itens.${index}.quantidade`}
+                                            control={form.control}
+                                            render={({ field }) => (
+                                            <FormItem className="md:col-span-2"><FormLabel>Qtd. <span className='text-destructive'>*</span></FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                                            )}
+                                        />
+                                        <Controller
+                                            name={`itens.${index}.acao`}
+                                            control={form.control}
+                                            render={({ field }) => (
+                                                <FormItem className="md:col-span-3">
+                                                    <FormLabel>Ação <span className='text-destructive'>*</span></FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value}>
+                                                        <FormControl><SelectTrigger><SelectValue placeholder="Ação..." /></SelectTrigger></FormControl>
+                                                        <SelectContent>
+                                                            <SelectItem value="Troca">Troca</SelectItem>
+                                                            <SelectItem value="Reembolso">Reembolso</SelectItem>
+                                                            <SelectItem value="Reparo">Reparo</SelectItem>
+                                                            <SelectItem value="Descarte">Descarte</SelectItem>
+                                                            <SelectItem value="Análise">Análise</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
                     {/* General Info */}
                     <div className='grid md:grid-cols-2 gap-4'>
                         <FormField
@@ -250,78 +324,6 @@ export default function DevolucaoRegisterSection() {
                         )}
                     />
                     
-                    {/* Items */}
-                    <div className='space-y-4'>
-                        <div className="flex justify-between items-center">
-                            <h3 className="text-lg font-medium text-foreground">Peças Devolvidas</h3>
-                             <Button type="button" size="sm" onClick={() => append({ codigoPeca: '', descricaoPeca: '', quantidade: 1, acao: 'Troca' })}>
-                                <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Peça
-                            </Button>
-                        </div>
-                         {form.formState.errors.itens?.message && <p className='text-sm font-medium text-destructive'>{form.formState.errors.itens.message}</p>}
-                        
-                        <div className="space-y-4">
-                            {fields.map((item, index) => (
-                                <div key={item.id} className="border p-4 rounded-lg relative space-y-4">
-                                     <h4 className="font-semibold text-primary">Peça #{index + 1}</h4>
-                                     {fields.length > 1 && (
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            className="absolute top-2 right-2 text-destructive hover:text-destructive"
-                                            onClick={() => remove(index)}
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    )}
-                                    <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                                        <FormField
-                                            name={`itens.${index}.codigoPeca`}
-                                            control={form.control}
-                                            render={({ field }) => (
-                                            <FormItem className="md:col-span-2"><FormLabel>Código <span className='text-destructive'>*</span></FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            name={`itens.${index}.descricaoPeca`}
-                                            control={form.control}
-                                            render={({ field }) => (
-                                            <FormItem className="md:col-span-5"><FormLabel>Descrição <span className='text-destructive'>*</span></FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            name={`itens.${index}.quantidade`}
-                                            control={form.control}
-                                            render={({ field }) => (
-                                            <FormItem className="md:col-span-2"><FormLabel>Qtd. <span className='text-destructive'>*</span></FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-                                            )}
-                                        />
-                                        <Controller
-                                            name={`itens.${index}.acao`}
-                                            control={form.control}
-                                            render={({ field }) => (
-                                                <FormItem className="md:col-span-3">
-                                                    <FormLabel>Ação <span className='text-destructive'>*</span></FormLabel>
-                                                    <Select onValueChange={field.onChange} value={field.value}>
-                                                        <FormControl><SelectTrigger><SelectValue placeholder="Ação..." /></SelectTrigger></FormControl>
-                                                        <SelectContent>
-                                                            <SelectItem value="Troca">Troca</SelectItem>
-                                                            <SelectItem value="Reembolso">Reembolso</SelectItem>
-                                                            <SelectItem value="Reparo">Reparo</SelectItem>
-                                                            <SelectItem value="Descarte">Descarte</SelectItem>
-                                                            <SelectItem value="Análise">Análise</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
                 </CardContent>
                 <CardFooter className="flex justify-end gap-2">
                      <Button type="button" variant="outline" onClick={() => form.reset()}>Limpar</Button>
