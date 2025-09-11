@@ -79,12 +79,14 @@ export interface CompanyData {
 
 export type ReturnAction = 'Troca' | 'Reembolso' | 'Reparo' | 'Descarte' | 'Análise';
 export type ReturnStatus = 'Aguardando Peças' | 'Recebido' | 'Finalizada' | 'Cancelada';
+export type RequisitionAction = 'Alterada' | 'Excluída';
 
 export interface Devolucao {
     id?: number;
     cliente: string;
     mecanico?: string;
     requisicaoVenda: string;
+    acaoRequisicao: RequisitionAction;
     dataVenda?: string;
     dataDevolucao: string;
     status: ReturnStatus;
