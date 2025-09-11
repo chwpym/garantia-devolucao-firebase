@@ -15,7 +15,6 @@ interface MobileSidebarProps {
 
 const navItems = {
   dashboard: { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  reports: { id: 'reports', label: 'Relatório de Garantias', icon: FileText },
 };
 
 const garantiaNavItems = [
@@ -34,12 +33,17 @@ const cadastroNavItems = [
     { id: 'suppliers', label: 'Fornecedores', icon: Building },
 ];
 
+const reportNavItems = [
+    { id: 'reports', label: 'Relatório de Garantias', icon: FileText },
+    { id: 'devolucao-reports', label: 'Relatório de Devoluções', icon: FileText },
+]
+
 export default function MobileSidebar({ activeView, onNavigate, isCollapsed, className }: MobileSidebarProps) {
     
     const isCadastroActive = cadastroNavItems.some(item => item.id === activeView);
     const isGarantiaActive = garantiaNavItems.some(item => item.id === activeView);
     const isDevolucaoActive = devolucaoNavItems.some(item => item.id === activeView);
-    const isReportActive = activeView === 'reports';
+    const isReportActive = reportNavItems.some(item => item.id === activeView);
 
     const renderNavItem = (item: { id: string; label: string; icon: React.ElementType }) => (
          <Button
@@ -174,15 +178,17 @@ export default function MobileSidebar({ activeView, onNavigate, isCollapsed, cla
                         </AccordionTrigger>
                         <AccordionContent className={cn("pb-1", isCollapsed && "hidden")}>
                             <div className="flex flex-col gap-1 pl-4 pt-1">
-                                <Button
-                                    key={navItems.reports.id}
-                                    variant={activeView === navItems.reports.id ? 'secondary' : 'ghost'}
-                                    className={cn("justify-start gap-3 text-base h-11")}
-                                    onClick={() => onNavigate(navItems.reports.id)}
-                                >
-                                    <navItems.reports.icon className="h-5 w-5 flex-shrink-0" />
-                                    <span>{navItems.reports.label}</span>
-                                </Button>
+                                {reportNavItems.map(item => (
+                                    <Button
+                                        key={item.id}
+                                        variant={activeView === item.id ? 'secondary' : 'ghost'}
+                                        className={cn("justify-start gap-3 text-base h-11")}
+                                        onClick={() => onNavigate(item.id)}
+                                    >
+                                        <item.icon className="h-5 w-5 flex-shrink-0" />
+                                        <span>{item.label}</span>
+                                    </Button>
+                                ))}
                             </div>
                         </AccordionContent>
                     </AccordionItem>
