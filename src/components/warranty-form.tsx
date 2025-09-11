@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, PlusCircle } from 'lucide-react';
+import { Loader2, PlusCircle, Upload, X as XIcon, Image as ImageIcon } from 'lucide-react';
+import Image from 'next/image';
+
 
 import type { Warranty, Person, Supplier } from '@/lib/types';
 import * as db from '@/lib/db';
@@ -19,6 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import SupplierForm from './supplier-form';
 import PersonForm from './person-form';
 import { Combobox } from './ui/combobox';
+import { useToast } from '@/hooks/use-toast';
 
 
 const formSchema = z.object({
@@ -37,6 +40,7 @@ const formSchema = z.object({
   observacao: z.string().optional(),
   status: z.enum(['Em análise', 'Aprovada', 'Recusada', 'Paga']).optional(),
   loteId: z.number().nullable().optional(),
+  photos: z.array(z.string()).optional(),
 });
 
 type WarrantyFormValues = z.infer<typeof formSchema>;
@@ -64,15 +68,21 @@ const defaultValues: WarrantyFormValues = {
   observacao: '',
   status: 'Em análise',
   loteId: null,
+  photos: [],
 };
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModal = false }: WarrantyFormProps) {
     const formRef = useRef<HTMLFormElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [persons, setPersons] = useState<Person[]>([]);
     const [suppliers, setSuppliers] = useState<Supplier[]>([]);
 
     const [isSupplierModalOpen, setSupplierModalOpen] = useState(false);
     const [isPersonModalOpen, setPersonModalOpen] = useState(false);
+    
+    const { toast } = useToast();
 
 
     const form = useForm<WarrantyFormValues>({
@@ -81,8 +91,13 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
             ...selectedWarranty,
             quantidade: selectedWarranty.quantidade ?? 1,
             status: selectedWarranty.status ?? 'Em análise',
+            photos: selectedWarranty.photos ?? [],
         } : defaultValues,
     });
+    
+    const { watch, setValue } = form;
+    const photos = watch('photos', []);
+
 
     const { isSubmitting } = form.formState;
 
@@ -106,14 +121,16 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
         ...selectedWarranty,
         quantidade: selectedWarranty.quantidade ?? 1,
         status: selectedWarranty.status ?? 'Em análise',
+        photos: selectedWarranty.photos ?? [],
         } : defaultValues);
     }, [selectedWarranty, form]);
 
     const handleSubmit = async (values: WarrantyFormValues) => {
         const dataToSave: Omit<Warranty, 'id'> = {
-        ...values,
-        quantidade: values.quantidade ?? 1,
-        status: values.status ?? 'Em análise',
+            ...values,
+            quantidade: values.quantidade ?? 1,
+            status: values.status ?? 'Em análise',
+            photos: values.photos ?? [],
         };
 
         if (!selectedWarranty?.id) {
@@ -163,6 +180,50 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
         if (newPerson.tipo === 'Mecânico' || newPerson.tipo === 'Ambos') {
              form.setValue('mecanico', newPerson.nome);
         }
+    };
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const files = event.target.files;
+        if (!files) return;
+
+        const currentPhotos = form.getValues('photos') || [];
+        const newPhotos: string[] = [...currentPhotos];
+        
+        const filePromises = Array.from(files).map(file => {
+            return new Promise<string>((resolve, reject) => {
+                if (file.size > MAX_FILE_SIZE) {
+                    return reject(new Error(`O arquivo ${file.name} é muito grande (maior que 5MB).`));
+                }
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    resolve(e.target?.result as string);
+                };
+                reader.onerror = (error) => {
+                    reject(error);
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+        
+        Promise.all(filePromises)
+            .then(base64Files => {
+                setValue('photos', [...newPhotos, ...base64Files], { shouldValidate: true });
+            })
+            .catch(error => {
+                toast({
+                    title: 'Erro ao carregar imagem',
+                    description: error.message,
+                    variant: 'destructive',
+                });
+            });
+    };
+
+    const removePhoto = (index: number) => {
+        const currentPhotos = form.getValues('photos') || [];
+        const newPhotos = [...currentPhotos];
+        newPhotos.splice(index, 1);
+        setValue('photos', newPhotos, { shouldValidate: true });
     };
 
     const clients = persons.filter(p => p.tipo === 'Cliente' || p.tipo === 'Ambos');
@@ -237,6 +298,72 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                     )} />
                 </div>
                 </div>
+
+                <Separator />
+
+                 <div className="space-y-4">
+                    <h3 className="text-lg font-medium text-foreground">Fotos da Garantia</h3>
+                    <FormField
+                        control={form.control}
+                        name="photos"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormControl>
+                                    <>
+                                        <input
+                                            type="file"
+                                            ref={fileInputRef}
+                                            multiple
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={handleFileChange}
+                                        />
+                                        <Button 
+                                            type="button" 
+                                            variant="outline"
+                                            onClick={() => fileInputRef.current?.click()}
+                                        >
+                                            <Upload className="mr-2 h-4 w-4" />
+                                            Carregar Fotos
+                                        </Button>
+                                    </>
+                                </FormControl>
+                                <FormMessage />
+                                {photos && photos.length > 0 && (
+                                    <div className="flex flex-wrap gap-4 mt-4">
+                                        {photos.map((photo, index) => (
+                                            <div key={index} className="relative w-32 h-32 rounded-md overflow-hidden border">
+                                                <Image 
+                                                    src={photo} 
+                                                    alt={`Preview ${index + 1}`} 
+                                                    layout="fill"
+                                                    objectFit="cover"
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    variant="destructive"
+                                                    size="icon"
+                                                    className="absolute top-1 right-1 h-6 w-6"
+                                                    onClick={() => removePhoto(index)}
+                                                >
+                                                    <XIcon className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                {photos && photos.length === 0 && (
+                                    <div className="flex flex-col items-center justify-center text-center p-6 border-2 border-dashed rounded-lg text-muted-foreground">
+                                        <ImageIcon className="h-8 w-8 mb-2" />
+                                        <p>Nenhuma foto anexada.</p>
+                                        <p className="text-xs">Anexe fotos do produto, defeito ou nota fiscal.</p>
+                                    </div>
+                                )}
+                            </FormItem>
+                        )}
+                    />
+                </div>
+
 
                 <Separator />
 

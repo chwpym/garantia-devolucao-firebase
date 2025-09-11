@@ -20,6 +20,7 @@ export interface Warranty {
   dataRegistro?: string;
   status?: WarrantyStatus;
   loteId?: number | null;
+  photos?: string[];
 }
 
 export type PersonType = 'Cliente' | 'Mecânico' | 'Ambos';
