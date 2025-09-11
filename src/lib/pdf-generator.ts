@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { jsPDF } from 'jspdf';
@@ -53,7 +54,7 @@ const addHeader = (doc: jsPDF, companyData: CompanyData | null, title: string) =
 
     // Linha 1: Nome da Empresa (esquerda) e Data (direita)
     doc.setFontSize(10).setFont('helvetica', 'bold');
-    doc.text(companyData?.nomeEmpresa || 'Relatório de Garantias', margin, cursorY);
+    doc.text(companyData?.nomeEmpresa || 'Relatório', margin, cursorY);
     
     doc.setFontSize(10).setFont('helvetica', 'normal');
     const date = new Date().toLocaleDateString('pt-BR');
@@ -220,19 +221,33 @@ export function generateDevolucoesPdf(input: GenerateDevolucoesPdfInput): string
     const doc = new jsPDF();
 
     const startY = addHeader(doc, companyData, title);
+    
+    const isClientReport = title.includes('Relatório de Devoluções -');
 
-    const tableHeaders = ['Data Dev.', 'Cliente', 'Requisição', 'Código Peça', 'Descrição Peça', 'Qtd.', 'Ação Req.', 'Status'];
+    const tableHeaders = isClientReport
+      ? ['Data Dev.', 'Requisição', 'Código Peça', 'Descrição Peça', 'Qtd.']
+      : ['Data Dev.', 'Cliente', 'Requisição', 'Código Peça', 'Descrição Peça', 'Qtd.', 'Ação Req.', 'Status'];
 
-    const tableBody = devolucoes.map(item => [
-        item.dataDevolucao ? format(parseISO(item.dataDevolucao), 'dd/MM/yyyy') : '-',
-        item.cliente || '-',
-        item.requisicaoVenda || '-',
-        item.codigoPeca || '-',
-        item.descricaoPeca || '-',
-        item.quantidade?.toString() || '-',
-        item.acaoRequisicao || '-',
-        item.status || '-',
-    ]);
+
+    const tableBody = devolucoes.map(item => {
+        const row = [
+            item.dataDevolucao ? format(parseISO(item.dataDevolucao), 'dd/MM/yyyy') : '-',
+            item.cliente || '-',
+            item.requisicaoVenda || '-',
+            item.codigoPeca || '-',
+            item.descricaoPeca || '-',
+            item.quantidade?.toString() || '-',
+            item.acaoRequisicao || '-',
+            item.status || '-',
+        ];
+
+        if (isClientReport) {
+            // Remove 'Cliente', 'Ação Req.', 'Status'
+            return [row[0], row[2], row[3], row[4], row[5]];
+        }
+
+        return row;
+    });
 
     doc.autoTable({
         startY: startY,
