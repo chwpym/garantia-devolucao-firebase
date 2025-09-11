@@ -4,15 +4,19 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { Devolucao, ItemDevolucao } from '@/lib/types';
 import * as db from '@/lib/db';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, addDays } from 'date-fns';
+import { DateRange } from 'react-day-picker';
+
 
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, Search } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Input } from '../ui/input';
+import { DatePickerWithRange } from '../ui/date-range-picker';
 
 type DevolucaoComItens = Devolucao & { itens: ItemDevolucao[] };
 type DevolucaoFlat = Omit<DevolucaoComItens, 'itens'> & ItemDevolucao;
@@ -20,6 +24,8 @@ type DevolucaoFlat = Omit<DevolucaoComItens, 'itens'> & ItemDevolucao;
 export default function DevolucaoQuerySection() {
   const [devolucoes, setDevolucoes] = useState<DevolucaoFlat[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const { toast } = useToast();
 
   const loadData = useCallback(async () => {
@@ -56,6 +62,35 @@ export default function DevolucaoQuerySection() {
     window.addEventListener('datachanged', loadData);
     return () => window.removeEventListener('datachanged', loadData);
   }, [loadData]);
+  
+  const filteredDevolucoes = useMemo(() => {
+    const lowercasedTerm = searchTerm.toLowerCase();
+    
+    return devolucoes.filter(item => {
+      // Date filter
+      const { from, to } = dateRange || {};
+      if (from && item.dataDevolucao) {
+        if (parseISO(item.dataDevolucao) < from) return false;
+      }
+      if (to && item.dataDevolucao) {
+        const toDate = addDays(to, 1);
+        if (parseISO(item.dataDevolucao) >= toDate) return false;
+      }
+      
+      // Search term filter
+      if (!lowercasedTerm) {
+        return true;
+      }
+      return (
+        item.cliente?.toLowerCase().includes(lowercasedTerm) ||
+        item.mecanico?.toLowerCase().includes(lowercasedTerm) ||
+        item.requisicaoVenda?.toLowerCase().includes(lowercasedTerm) ||
+        item.codigoPeca?.toLowerCase().includes(lowercasedTerm) ||
+        item.descricaoPeca?.toLowerCase().includes(lowercasedTerm) ||
+        item.status?.toLowerCase().includes(lowercasedTerm)
+      );
+    });
+  }, [searchTerm, devolucoes, dateRange]);
 
 
   if (isLoading) {
@@ -80,10 +115,22 @@ export default function DevolucaoQuerySection() {
             <CardHeader>
                 <CardTitle>Devoluções Registradas</CardTitle>
                 <CardDescription>
-                   Cada linha representa um item dentro de uma devolução.
+                   Cada linha representa um item dentro de uma devolução. Use os filtros para refinar sua busca.
                 </CardDescription>
             </CardHeader>
             <CardContent>
+                <div className="flex flex-col md:flex-row gap-4 mb-4">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Buscar por cliente, peça, requisição, etc..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-10"
+                        />
+                    </div>
+                    <DatePickerWithRange date={dateRange} setDate={setDateRange} />
+                </div>
                 <div className="border rounded-md">
                 <Table>
                     <TableHeader>
@@ -94,14 +141,14 @@ export default function DevolucaoQuerySection() {
                             <TableHead>Código Peça</TableHead>
                             <TableHead>Descrição Peça</TableHead>
                             <TableHead>Qtd.</TableHead>
-                             <TableHead>Ação Req.</TableHead>
+                            <TableHead>Ação Req.</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead className="w-[50px] text-right">Ações</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {devolucoes.length > 0 ? (
-                            devolucoes.map(item => (
+                        {filteredDevolucoes.length > 0 ? (
+                            filteredDevolucoes.map(item => (
                                 <TableRow key={`${item.id}-${item.itemId}`}>
                                     <TableCell>{format(parseISO(item.dataDevolucao), 'dd/MM/yyyy')}</TableCell>
                                     <TableCell>{item.cliente}</TableCell>
@@ -142,7 +189,7 @@ export default function DevolucaoQuerySection() {
                         ) : (
                             <TableRow>
                                 <TableCell colSpan={9} className="h-24 text-center">
-                                    Nenhuma devolução encontrada.
+                                    Nenhuma devolução encontrada para os filtros selecionados.
                                 </TableCell>
                             </TableRow>
                         )}

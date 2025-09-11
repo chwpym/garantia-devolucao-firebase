@@ -1,3 +1,5 @@
+'use client';
+
 export type WarrantyStatus = 'Em análise' | 'Aprovada' | 'Recusada' | 'Paga';
 
 export interface Warranty {
@@ -77,7 +79,7 @@ export interface CompanyData {
 
 // --- Novas Estruturas para Devolução ---
 
-export type ReturnStatus = 'Aguardando Peças' | 'Recebido' | 'Finalizada' | 'Cancelada';
+export type ReturnStatus = 'Recebido' | 'Aguardando Peças' | 'Finalizada' | 'Cancelada';
 export type RequisitionAction = 'Alterada' | 'Excluída';
 
 export interface Devolucao {
@@ -98,5 +100,4 @@ export interface ItemDevolucao {
     codigoPeca: string;
     descricaoPeca: string;
     quantidade: number;
-    observacao?: string;
 }
