@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -9,7 +10,7 @@ import { ptBR } from 'date-fns/locale';
 import { DateRange } from 'react-day-picker';
 
 import { Skeleton } from '@/components/ui/skeleton';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Undo, Wrench, Users, UserCog, BarChart3, PieChart, User, FileDown } from 'lucide-react';
@@ -18,6 +19,7 @@ import { Badge } from '../ui/badge';
 import { Combobox } from '../ui/combobox';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { generateDevolucoesPdf } from '@/lib/pdf-generator';
+import { Label } from '../ui/label';
 
 
 type DevolucaoComItens = Devolucao & { itens: ItemDevolucao[] };
@@ -527,3 +529,4 @@ export default function DevolucaoReportSection() {
     </div>
   );
 }
+
