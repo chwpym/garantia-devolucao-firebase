@@ -50,7 +50,7 @@ export default function Home() {
   const renderContent = () => {
     switch (activeView) {
       case 'dashboard':
-        return <DashboardSection />;
+        return <DashboardSection setActiveView={setActiveView} />;
       case 'register':
         return <RegisterSection />;
       case 'query':
@@ -76,7 +76,7 @@ export default function Home() {
       case 'devolucao-reports':
         return <DevolucaoReportSection />;
       default:
-        return <DashboardSection />;
+        return <DashboardSection setActiveView={setActiveView} />;
     }
   };
   

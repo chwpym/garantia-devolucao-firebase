@@ -8,11 +8,14 @@ import { Wrench, ShieldCheck, Hourglass, BarChart3, ShieldX, Users, Building, Do
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, Pie, PieChart as RechartsPieChart, Cell } from 'recharts';
-import { format, subMonths, parseISO } from 'date-fns';
+import { format, parseISO, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Devolucao, ItemDevolucao } from '@/lib/types';
-
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
+import { ArrowRight } from 'lucide-react';
 
 // Tipos para Garantias
 interface DashboardStats {
@@ -41,6 +44,7 @@ interface StatusChartData {
 }
 
 type DevolucaoComItens = Devolucao & { itens: ItemDevolucao[] };
+type DevolucaoFlat = Omit<Devolucao, 'id' | 'itens'> & Partial<ItemDevolucao> & { id: number; itemId?: number };
 
 // Tipos para Devoluções
 interface DevolucaoStats {
@@ -48,8 +52,10 @@ interface DevolucaoStats {
     totalPecas: number;
     clientesUnicos: number;
     mecanicosUnicos: number;
-    porPeca: RankingData[];
-    porCliente: RankingData[];
+}
+
+interface DashboardSectionProps {
+    setActiveView: (view: string) => void;
 }
 
 
@@ -82,7 +88,7 @@ const COLORS = {
     'Paga': 'hsl(var(--primary))',
 };
 
-export default function DashboardSection() {
+export default function DashboardSection({ setActiveView }: DashboardSectionProps) {
   // Estado para Garantias
   const [stats, setStats] = useState<DashboardStats>({ total: 0, totalDefeitos: 0, pendentes: 0, aprovadas: 0, recusadas: 0, pagas: 0 });
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
@@ -92,6 +98,7 @@ export default function DashboardSection() {
 
   // Estado para Devoluções
   const [devolucaoStats, setDevolucaoStats] = useState<DevolucaoStats | null>(null);
+  const [recentDevolucoes, setRecentDevolucoes] = useState<DevolucaoFlat[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
@@ -157,32 +164,23 @@ export default function DashboardSection() {
 
       // --- Cálculo de Devoluções ---
         const flatItems = allDevolucoes.flatMap(d => d.itens.map(i => ({...i, dev: d})));
-        const pecaStats: Record<string, { name: string; total: number }> = {};
-        flatItems.forEach(item => {
-            const key = item.codigoPeca;
-            if (!pecaStats[key]) {
-                pecaStats[key] = { name: `${item.codigoPeca} - ${item.descricaoPeca}`, total: 0 };
-            }
-            pecaStats[key].total += item.quantidade;
-        });
-        const porPeca = Object.values(pecaStats).sort((a,b) => b.total - a.total).slice(0, 5);
 
-        const clienteStats: Record<string, { name: string; total: number; }> = {};
-        allDevolucoes.forEach(dev => {
-            if (!clienteStats[dev.cliente]) {
-                clienteStats[dev.cliente] = { name: dev.cliente, total: 0 };
+        const sortedDevolucoes = allDevolucoes.sort((a, b) => parseISO(b.dataDevolucao).getTime() - parseISO(a.dataDevolucao).getTime());
+        const recentFlatDevolucoes = sortedDevolucoes.flatMap(devolucao => {
+            if (!devolucao.itens || devolucao.itens.length === 0) {
+                return [{ ...devolucao, id: devolucao.id! }];
             }
-            clienteStats[dev.cliente].total++;
-        });
-        const porCliente = Object.values(clienteStats).sort((a,b) => b.total - a.total).slice(0, 5);
+            return devolucao.itens.map(item => ({
+                ...devolucao, ...item, id: devolucao.id!, itemId: item.id!,
+            }));
+        }).slice(0, 5);
+        setRecentDevolucoes(recentFlatDevolucoes);
         
         setDevolucaoStats({
             totalDevolucoes: allDevolucoes.length,
             totalPecas: flatItems.reduce((acc, item) => acc + item.quantidade, 0),
             clientesUnicos: new Set(allDevolucoes.map(d => d.cliente)).size,
             mecanicosUnicos: new Set(allDevolucoes.map(d => d.mecanico).filter(Boolean)).size,
-            porPeca,
-            porCliente
         });
 
 
@@ -441,50 +439,55 @@ export default function DashboardSection() {
                         </CardContent>
                     </Card>
                 </div>
-                 <div className="grid gap-6 md:grid-cols-2 mt-6">
-                    <Card className="shadow-lg">
-                        <CardHeader>
-                            <div className='flex items-center gap-2'>
-                                <Wrench className="h-5 w-5 text-muted-foreground"/>
-                                <CardTitle>Top 5 Peças Devolvidas</CardTitle>
-                            </div>
-                            <CardDescription>Peças com maior quantidade em devoluções.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {isLoading ? <Skeleton className="h-48 w-full" /> : (
-                                <div className='space-y-4'>
-                                    {devolucaoStats && devolucaoStats.porPeca.length > 0 ? devolucaoStats.porPeca.map(item => (
-                                        <div key={item.name} className='flex items-center justify-between'>
-                                            <span className='text-sm text-muted-foreground truncate' title={item.name}>{item.name}</span>
-                                            <span className='font-bold'>{item.total}</span>
-                                        </div>
-                                    )) : <p className='text-sm text-muted-foreground text-center py-8'>Nenhum dado de peças para exibir.</p>}
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                    <Card className="shadow-lg">
-                        <CardHeader>
-                            <div className='flex items-center gap-2'>
-                                <Users className="h-5 w-5 text-muted-foreground"/>
-                                <CardTitle>Top 5 Clientes com Devoluções</CardTitle>
-                            </div>
-                            <CardDescription>Clientes com maior número de registros de devolução.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {isLoading ? <Skeleton className="h-48 w-full" /> : (
-                                <div className='space-y-4'>
-                                    {devolucaoStats && devolucaoStats.porCliente.length > 0 ? devolucaoStats.porCliente.map(item => (
-                                        <div key={item.name} className='flex items-center justify-between'>
-                                            <span className='text-sm text-muted-foreground'>{item.name}</span>
-                                            <span className='font-bold'>{item.total}</span>
-                                        </div>
-                                    )) : <p className='text-sm text-muted-foreground text-center py-8'>Nenhum dado de cliente para exibir.</p>}
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                </div>
+                <Card className="mt-6 shadow-lg">
+                    <CardHeader className="flex flex-row justify-between items-center">
+                        <div className="space-y-1">
+                            <CardTitle>Devoluções Recentes</CardTitle>
+                            <CardDescription>As 5 devoluções mais recentes registradas no sistema.</CardDescription>
+                        </div>
+                        <Button variant="outline" size="sm" onClick={() => setActiveView('devolucao-query')}>
+                            Ver Todas
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                    </CardHeader>
+                    <CardContent>
+                        {isLoading ? <Skeleton className='h-48 w-full' /> : (
+                             <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Data</TableHead>
+                                        <TableHead>Cliente</TableHead>
+                                        <TableHead>Peça</TableHead>
+                                        <TableHead className='text-center'>Quantidade</TableHead>
+                                        <TableHead>Requisição</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {recentDevolucoes.length > 0 ? (
+                                        recentDevolucoes.map(item => (
+                                            <TableRow key={`${item.id}-${item.itemId || 'no-item'}`}>
+                                                <TableCell>{format(parseISO(item.dataDevolucao), 'dd/MM/yyyy')}</TableCell>
+                                                <TableCell className="font-medium">{item.cliente}</TableCell>
+                                                <TableCell>
+                                                    <div className='font-medium'>{item.codigoPeca}</div>
+                                                    <div className='text-xs text-muted-foreground'>{item.descricaoPeca}</div>
+                                                </TableCell>
+                                                <TableCell className='text-center'>
+                                                    <Badge variant="secondary">{item.quantidade}</Badge>
+                                                </TableCell>
+                                                <TableCell>{item.requisicaoVenda}</TableCell>
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={5} className="h-24 text-center">Nenhuma devolução registrada ainda.</TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        )}
+                    </CardContent>
+                </Card>
             </TabsContent>
         </Tabs>
     </div>
