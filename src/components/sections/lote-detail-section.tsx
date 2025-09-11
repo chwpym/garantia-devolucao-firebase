@@ -5,10 +5,12 @@ import type { Lote, Warranty, Supplier, WarrantyStatus } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '../ui/button';
-import { ArrowLeft, Package, Calendar, Building, FileText, MoreHorizontal, Pencil, Trash2, CheckSquare, FileDown } from 'lucide-react';
+import { ArrowLeft, Package, Calendar, Building, FileText, MoreHorizontal, Pencil, Trash2, CheckSquare, FileDown, Camera, Image as ImageIcon } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { format, parseISO } from 'date-fns';
+import Image from 'next/image';
+
 import { Skeleton } from '../ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuPortal, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -31,6 +33,14 @@ import { Textarea } from '../ui/textarea';
 import { Separator } from '../ui/separator';
 import { Label } from '../ui/label';
 import ReportGenerator from '../report-generator';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel"
+
 
 interface LoteDetailSectionProps {
   loteId: number;
@@ -101,6 +111,8 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
   const [nfRetornoValue, setNfRetornoValue] = useState('');
   const [nfSaidaValue, setNfSaidaValue] = useState('');
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
+  const [galleryPhotos, setGalleryPhotos] = useState<string[]>([]);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const { toast } = useToast();
 
   const loadLoteDetails = useCallback(async () => {
@@ -161,6 +173,11 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
   const handleRemoveClick = (warranty: Warranty) => {
     setWarrantyToRemove(warranty);
   };
+  
+  const handleOpenGallery = (photos: string[]) => {
+    setGalleryPhotos(photos);
+    setIsGalleryOpen(true);
+  }
 
   const handleConfirmRemove = async () => {
     if (!warrantyToRemove) return;
@@ -298,6 +315,39 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
         });
     }
   };
+  
+  const handleBulkStatusChange = async (status: WarrantyStatus) => {
+    if (selectedWarrantyIds.size === 0) {
+        toast({
+            title: 'Nenhuma garantia selecionada',
+            description: 'Selecione as garantias na tabela para alterar o status.',
+            variant: 'destructive'
+        });
+        return;
+    }
+
+    try {
+        const warrantiesToUpdate = warranties.filter(w => selectedWarrantyIds.has(w.id!));
+        for (const warranty of warrantiesToUpdate) {
+            const updatedWarranty = { ...warranty, status };
+            await db.updateWarranty(updatedWarranty);
+        }
+        toast({
+            title: 'Status Alterado em Massa!',
+            description: `${selectedWarrantyIds.size} garantias foram atualizadas para "${status}".`
+        });
+        setSelectedWarrantyIds(new Set());
+        window.dispatchEvent(new CustomEvent('datachanged'));
+    } catch (error) {
+        console.error(`Failed to apply bulk status change:`, error);
+        toast({
+            title: 'Erro',
+            description: 'Não foi possível alterar o status das garantias selecionadas.',
+            variant: 'destructive'
+        });
+    }
+};
+
 
   const handleStatusChange = async (warranty: Warranty, status: WarrantyStatus) => {
     try {
@@ -417,7 +467,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
         <CardHeader className='flex flex-row justify-between items-center'>
             <div>
                 <CardTitle>Itens no Lote</CardTitle>
-                <CardDescription>Lista de todas as garantias incluídas neste lote. Use os checkboxes para atualizar as NFs em massa.</CardDescription>
+                <CardDescription>Lista de todas as garantias incluídas neste lote. Use os checkboxes para atualizar em massa.</CardDescription>
             </div>
             <Dialog open={isPdfModalOpen} onOpenChange={setIsPdfModalOpen}>
                 <DialogTrigger asChild>
@@ -446,7 +496,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
             </Dialog>
         </CardHeader>
         <CardContent>
-            <div className="grid md:grid-cols-2 gap-6 mb-6">
+            <div className="grid md:grid-cols-2 gap-6 mb-4">
                 <div className='p-4 border rounded-lg space-y-2'>
                      <Label htmlFor="nf-saida">NF de Saída (Envio)</Label>
                     <div className="flex flex-col sm:flex-row gap-2">
@@ -476,7 +526,25 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                     </div>
                  </div>
             </div>
-            <Separator className="mb-4"/>
+            
+            <div className="mb-4 flex items-center gap-2">
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline" disabled={selectedWarrantyIds.size === 0}>
+                            <CheckSquare className="mr-2 h-4 w-4" />
+                            Alterar Status em Massa {selectedWarrantyIds.size > 0 ? `(${selectedWarrantyIds.size})` : ''}
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                        {warrantyStatuses.map(status => (
+                            <DropdownMenuItem key={status} onSelect={() => handleBulkStatusChange(status)}>
+                                Marcar como {status}
+                            </DropdownMenuItem>
+                        ))}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
+            
              <div className="border rounded-md">
               <Table>
                 <TableHeader>
@@ -488,6 +556,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                             aria-label="Selecionar todos"
                         />
                     </TableHead>
+                    <TableHead className="w-16">Fotos</TableHead>
                     <TableHead>Código</TableHead>
                     <TableHead>Descrição</TableHead>
                     <TableHead>Defeito</TableHead>
@@ -508,6 +577,15 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                                 onCheckedChange={() => handleRowSelect(warranty.id!)}
                                 aria-label={`Selecionar garantia ${warranty.codigo}`}
                             />
+                        </TableCell>
+                        <TableCell>
+                             {warranty.photos && warranty.photos.length > 0 ? (
+                                <Button variant="ghost" size="icon" onClick={() => handleOpenGallery(warranty.photos!)}>
+                                    <Camera className="h-5 w-5" />
+                                </Button>
+                            ) : (
+                                <span className="flex justify-center text-muted-foreground">-</span>
+                            )}
                         </TableCell>
                         <TableCell className="font-medium">{warranty.codigo || '-'}</TableCell>
                         <TableCell>{warranty.descricao || '-'}</TableCell>
@@ -563,7 +641,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={9} className="h-24 text-center">
+                      <TableCell colSpan={10} className="h-24 text-center">
                         Nenhuma garantia adicionada a este lote ainda.
                       </TableCell>
                     </TableRow>
@@ -632,9 +710,41 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      
+       {/* Photo Gallery Modal */}
+        <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
+            <DialogContent className="max-w-3xl">
+                <DialogHeader>
+                    <DialogTitle>Galeria de Fotos</DialogTitle>
+                    <DialogDescription>Fotos anexadas à garantia.</DialogDescription>
+                </DialogHeader>
+                 {galleryPhotos.length > 0 ? (
+                    <Carousel className="w-full">
+                        <CarouselContent>
+                            {galleryPhotos.map((photo, index) => (
+                                <CarouselItem key={index}>
+                                    <div className="p-1">
+                                        <Card>
+                                            <CardContent className="flex aspect-video items-center justify-center p-0 overflow-hidden rounded-lg">
+                                                <Image src={photo} alt={`Foto ${index + 1}`} width={800} height={600} style={{ objectFit: 'contain', width: '100%', height: '100%' }} />
+                                            </CardContent>
+                                        </Card>
+                                    </div>
+                                </CarouselItem>
+                            ))}
+                        </CarouselContent>
+                        <CarouselPrevious />
+                        <CarouselNext />
+                    </Carousel>
+                 ) : (
+                    <div className="flex flex-col items-center justify-center text-center p-10 border-2 border-dashed rounded-lg text-muted-foreground">
+                        <ImageIcon className="h-10 w-10 mb-2" />
+                        <p>Nenhuma foto encontrada para esta garantia.</p>
+                    </div>
+                 )}
+            </DialogContent>
+        </Dialog>
 
     </div>
   );
 }
-
-    
