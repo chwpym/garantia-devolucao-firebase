@@ -13,7 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Undo, Wrench, Users, UserCog, BarChart3, PieChart, User, FileDown } from 'lucide-react';
+import { Undo, Wrench, Users, UserCog, BarChart3, PieChart, User, FileDown, X } from 'lucide-react';
 import { DatePickerWithRange } from '../ui/date-range-picker';
 import { Badge } from '../ui/badge';
 import { Combobox } from '../ui/combobox';
@@ -48,6 +48,12 @@ const months = [
     { value: "10", label: "Outubro" }, { value: "11", label: "Novembro" }, { value: "12", label: "Dezembro" },
 ];
 
+const initialClientFilters = {
+    client: '',
+    month: (new Date().getMonth() + 1).toString(),
+    year: new Date().getFullYear().toString()
+};
+
 export default function DevolucaoReportSection() {
   const [allDevolucoes, setAllDevolucoes] = useState<DevolucaoComItens[]>([]);
   const [allPersons, setAllPersons] = useState<Person[]>([]);
@@ -58,11 +64,7 @@ export default function DevolucaoReportSection() {
   });
   const [reportData, setReportData] = useState<ReportData | null>(null);
 
-  const [clientReportFilters, setClientReportFilters] = useState<ClientReportFilters>({
-    client: '',
-    month: (new Date().getMonth() + 1).toString(),
-    year: new Date().getFullYear().toString()
-  });
+  const [clientReportFilters, setClientReportFilters] = useState<ClientReportFilters>(initialClientFilters);
   const [clientReportData, setClientReportData] = useState<DevolucaoComItens[] | null>(null);
 
   const { toast } = useToast();
@@ -283,6 +285,11 @@ export default function DevolucaoReportSection() {
     }
   };
 
+  const handleClearClientReport = () => {
+    setClientReportFilters(initialClientFilters);
+    setClientReportData(null);
+  };
+
 
 
   return (
@@ -315,10 +322,16 @@ export default function DevolucaoReportSection() {
                         className='w-full'
                     />
                 </div>
-                 <Button onClick={handleGenerateClientReport} className='w-full sm:w-auto'>
-                    <User className='mr-2 h-4 w-4' />
-                    Gerar Relatório do Cliente
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                    <Button onClick={handleGenerateClientReport} className='w-full sm:w-auto'>
+                        <User className='mr-2 h-4 w-4' />
+                        Gerar Relatório do Cliente
+                    </Button>
+                     <Button onClick={handleClearClientReport} variant="outline" className='w-full sm:w-auto'>
+                        <X className='mr-2 h-4 w-4' />
+                        Limpar
+                    </Button>
+                </div>
             </div>
             {/* Right Column */}
             <div className='grid grid-cols-2 gap-4'>
@@ -363,10 +376,37 @@ export default function DevolucaoReportSection() {
                             Exportar para PDF
                         </Button>
                      </div>
-                     {/* Placeholder for client report table */}
-                      <div className="border rounded-md p-6 text-center text-muted-foreground">
-                        <p>Relatório do cliente aparecerá aqui.</p>
-                        <p className='font-bold'>{clientReportData.length} devoluções encontradas.</p>
+                      <div className="border rounded-md">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Data Dev.</TableHead>
+                              <TableHead>Requisição</TableHead>
+                              <TableHead>Código Peça</TableHead>
+                              <TableHead>Descrição Peça</TableHead>
+                              <TableHead>Qtd.</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {clientReportData.length > 0 ? (
+                                clientReportData.flatMap(d => d.itens.map(i => ({...i, dev: d}))).map((item, index) => (
+                                <TableRow key={`${item.dev.id}-${item.id}-${index}`}>
+                                    <TableCell>{format(parseISO(item.dev.dataDevolucao), 'dd/MM/yyyy')}</TableCell>
+                                    <TableCell>{item.dev.requisicaoVenda}</TableCell>
+                                    <TableCell className="font-medium">{item.codigoPeca}</TableCell>
+                                    <TableCell>{item.descricaoPeca}</TableCell>
+                                    <TableCell>{item.quantidade}</TableCell>
+                                </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                <TableCell colSpan={5} className="h-24 text-center">
+                                    Nenhuma devolução encontrada para este cliente no período.
+                                </TableCell>
+                                </TableRow>
+                            )}
+                            </TableBody>
+                        </Table>
                       </div>
                  </div>
             </CardFooter>
@@ -535,3 +575,5 @@ export default function DevolucaoReportSection() {
     </div>
   );
 }
+
+    
