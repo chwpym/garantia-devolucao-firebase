@@ -19,7 +19,175 @@ import { Input } from '../ui/input';
 import { DatePickerWithRange } from '../ui/date-range-picker';
 
 type DevolucaoComItens = Devolucao & { itens: ItemDevolucao[] };
-type DevolucaoFlat = Omit<DevolucaoComItens, 'itens'> & ItemDevolucao;
+type DevolucaoFlat = Omit<Devolucao, 'itens' | 'id'> & ItemDevolucao & { id: number, itemId: number };
+
+const mockData: DevolucaoFlat[] = [
+    {
+        id: 1152,
+        itemId: 1,
+        codigoPeca: "18940",
+        descricaoPeca: "MANGUEIRA TUBO BOMBA AGUA JAHU 219450",
+        quantidade: 1,
+        cliente: "RETIFICA CANAA",
+        mecanico: "RETIFICA CANAA",
+        requisicaoVenda: "120295",
+        acaoRequisicao: "Alterada", // Changed from "Devolução"
+        dataVenda: "2025-09-08T00:00:00.000Z",
+        dataDevolucao: "2025-09-11T00:00:00.000Z",
+        status: "Recebido",
+        observacaoGeral: "mesmo estado",
+    },
+    {
+        id: 1153,
+        itemId: 1,
+        codigoPeca: "20990",
+        descricaoPeca: "FILTRO OLEO MAHLE OC66",
+        quantidade: 1,
+        cliente: "GOMES ESCAPAMENTO",
+        mecanico: "GOMES ESCAPAMENTO",
+        requisicaoVenda: "120378",
+        acaoRequisicao: "Alterada", // Changed from "Devolução"
+        dataVenda: "2025-09-09T00:00:00.000Z",
+        dataDevolucao: "2025-09-11T00:00:00.00Z",
+        status: "Recebido",
+        observacaoGeral: "",
+    },
+    {
+        id: 1154,
+        itemId: 1,
+        codigoPeca: "21463",
+        descricaoPeca: "SENSOR TEMPERATURA AGUA NTK CTN2A001",
+        quantidade: 1,
+        cliente: "AUTO PADRAO CENTRO AUTOMOTIVO",
+        mecanico: "AUTO PADRAO CENTRO AUTOMOTIVO",
+        requisicaoVenda: "120320",
+        acaoRequisicao: "Alterada", // Changed from "Devolução"
+        dataVenda: "2025-09-08T00:00:00.000Z",
+        dataDevolucao: "2025-09-11T00:00:00.000Z",
+        status: "Recebido",
+        observacaoGeral: "PARECE QUE FOI USADO PARA TESTAR",
+    },
+    {
+        id: 1155,
+        itemId: 1,
+        codigoPeca: "21276",
+        descricaoPeca: "ROLAMENTO RODA DIANTEIRA SCHADEK 50001",
+        quantidade: 1,
+        cliente: "LEONARDO VEICULOS",
+        mecanico: "FER CAR (NO)",
+        requisicaoVenda: "120401",
+        acaoRequisicao: "Alterada", // Changed from "Devolução"
+        dataVenda: "2025-09-10T00:00:00.000Z",
+        dataDevolucao: "2025-09-11T00:00:00.000Z",
+        status: "Recebido",
+        observacaoGeral: "MESMO ESTADO",
+    },
+    {
+        id: 1156,
+        itemId: 1,
+        codigoPeca: "4095",
+        descricaoPeca: "RESERVATORIO RADIADOR GONEL G1254",
+        quantidade: 1,
+        cliente: "CHEVROCAR AUTO MECANICA",
+        mecanico: "CHEVROCAR AUTO MECANICA",
+        requisicaoVenda: "120393",
+        acaoRequisicao: "Alterada", // Changed from "Devolução"
+        dataVenda: "2025-09-09T00:00:00.000Z",
+        dataDevolucao: "2025-09-11T00:00:00.000Z",
+        status: "Recebido",
+        observacaoGeral: "MESMO ESTADO",
+    },
+    {
+        id: 1157,
+        itemId: 1,
+        codigoPeca: "15650",
+        descricaoPeca: "CUBO RODA DIANTEIRA HIPPER FREIOS HFCD01",
+        quantidade: 1,
+        cliente: "LEONARDO VEICULOS",
+        mecanico: "FER CAR (NO)",
+        requisicaoVenda: "120401",
+        acaoRequisicao: "Alterada", // Changed from "Devolução"
+        dataVenda: "2025-09-10T00:00:00.000Z",
+        dataDevolucao: "2025-09-11T00:00:00.000Z",
+        status: "Recebido",
+        observacaoGeral: "MESMO ESTADO",
+    },
+    {
+        id: 1158,
+        itemId: 1,
+        codigoPeca: "20249",
+        descricaoPeca: "CABO EMBREAGEM EFRARI FNM089A",
+        quantidade: 1,
+        cliente: "WELLINGTON LUIZ CARDOSO FORTE- ME ( GRANDY )",
+        mecanico: "WELLINGTON LUIZ CARDOSO FORTE- ME ( GRANDY )",
+        requisicaoVenda: "120284",
+        acaoRequisicao: "Alterada", // Changed from "Devolução"
+        dataVenda: "2025-09-08T00:00:00.000Z",
+        dataDevolucao: "2025-09-11T00:00:00.000Z",
+        status: "Recebido",
+        observacaoGeral: "embalagem aberta",
+    },
+    {
+        id: 1159,
+        itemId: 1,
+        codigoPeca: "19702",
+        descricaoPeca: "ARTICULAÇAO AXIAL BORTEC BA8363",
+        quantidade: 1,
+        cliente: "GS AUTO MECANICA",
+        mecanico: "GS AUTO MECANICA",
+        requisicaoVenda: "120348",
+        acaoRequisicao: "Alterada", // Changed from "Devolução"
+        dataVenda: "2025-09-09T00:00:00.000Z",
+        dataDevolucao: "2025-09-11T00:00:00.000Z",
+        status: "Recebido",
+        observacaoGeral: "estava trocado dentro da embalagem, estava com peça automix AX11103H,rosca grossa",
+    },
+    {
+        id: 1160,
+        itemId: 1,
+        codigoPeca: "9388",
+        descricaoPeca: "VELA IGNIÇAO NGK BP5HS",
+        quantidade: 1,
+        cliente: "GS AUTO MECANICA",
+        mecanico: "GS AUTO MECANICA",
+        requisicaoVenda: "120167",
+        acaoRequisicao: "Alterada", // Changed from "Devolução"
+        dataVenda: "2025-09-04T00:00:00.000Z",
+        dataDevolucao: "2025-09-11T00:00:00.000Z",
+        status: "Recebido",
+        observacaoGeral: "novo",
+    },
+    {
+        id: 1161,
+        itemId: 1,
+        codigoPeca: "22248",
+        descricaoPeca: "CORREIA POLI V GATES 6PK1375",
+        quantidade: 1,
+        cliente: "GS AUTO MECANICA",
+        mecanico: "GS AUTO MECANICA",
+        requisicaoVenda: "120382",
+        acaoRequisicao: "Excluída",
+        dataVenda: "2025-09-09T00:00:00.000Z",
+        dataDevolucao: "2025-09-11T00:00:00.000Z",
+        status: "Recebido",
+        observacaoGeral: "novo",
+    },
+    {
+        id: 1162,
+        itemId: 1,
+        codigoPeca: "1406",
+        descricaoPeca: "PIVO SUSPENSAO LD / LE NAKATA N6058",
+        quantidade: 1,
+        cliente: "GS AUTO MECANICA",
+        mecanico: "GS AUTO MECANICA",
+        requisicaoVenda: "120386",
+        acaoRequisicao: "Excluída",
+        dataVenda: "2025-09-09T00:00:00.000Z",
+        dataDevolucao: "2025-09-11T00:00:00.000Z",
+        status: "Recebido",
+        observacaoGeral: "novo",
+    }
+];
 
 export default function DevolucaoQuerySection() {
   const [devolucoes, setDevolucoes] = useState<DevolucaoFlat[]>([]);
@@ -32,19 +200,22 @@ export default function DevolucaoQuerySection() {
     setIsLoading(true);
     try {
       await db.initDB();
-      const data = await db.getAllDevolucoes();
+      // const data = await db.getAllDevolucoes();
+      const data: DevolucaoComItens[] = []; // Desativado para usar mock
       
       // Flatten the data: one row per item
       const flatData = data.flatMap(devolucao => 
         devolucao.itens.map(item => ({
             ...devolucao,
             ...item,
-            id: devolucao.id, // Parent ID for the main record
-            itemId: item.id, // Child ID for the item
+            id: devolucao.id!, // Parent ID for the main record
+            itemId: item.id!, // Child ID for the item
         }))
       );
+
+      // Usando mockData em vez de dados do DB
+      setDevolucoes(mockData.sort((a,b) => parseISO(b.dataDevolucao).getTime() - parseISO(a.dataDevolucao).getTime()));
       
-      setDevolucoes(flatData.sort((a,b) => parseISO(b.dataDevolucao).getTime() - parseISO(a.dataDevolucao).getTime()));
     } catch (error) {
       console.error('Failed to load devolutions:', error);
       toast({
@@ -59,8 +230,8 @@ export default function DevolucaoQuerySection() {
 
   useEffect(() => {
     loadData();
-    window.addEventListener('datachanged', loadData);
-    return () => window.removeEventListener('datachanged', loadData);
+    // window.addEventListener('datachanged', loadData);
+    // return () => window.removeEventListener('datachanged', loadData);
   }, [loadData]);
   
   const filteredDevolucoes = useMemo(() => {
@@ -201,3 +372,5 @@ export default function DevolucaoQuerySection() {
     </div>
   );
 }
+
+    
