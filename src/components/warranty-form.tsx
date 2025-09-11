@@ -232,10 +232,10 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
     const clientOptions = clients.map(c => ({ value: c.nome, label: c.nome }));
     const mechanicOptions = mechanics.map(m => ({ value: m.nome, label: m.nome }));
 
-    const formFields = (
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} onKeyDown={handleKeyDown} ref={formRef}>
-                <CardContent className="space-y-6 pt-6">
+    const formContent = (
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSubmit)} onKeyDown={handleKeyDown} ref={formRef}>
+            <CardContent className="space-y-6 pt-6">
                 <div className="space-y-4">
                     <h3 className="text-lg font-medium text-foreground">Informações do Produto e Defeito</h3>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -429,20 +429,20 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                         <FormField name="requisicaoVenda" control={form.control} render={({ field }) => (
                             <FormItem><FormLabel>Requisição Venda</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
-                            <FormField name="requisicoesGarantia" control={form.control} render={({ field }) => (
+                        <FormField name="requisicoesGarantia" control={form.control} render={({ field }) => (
                             <FormItem className="md:col-span-3"><FormLabel>Requisições Garantia</FormLabel><FormControl><Textarea rows={1} placeholder="Separe múltiplas requisições por vírgula" {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField name="nfCompra" control={form.control} render={({ field }) => (
                         <FormItem><FormLabel>NF Compra</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField name="valorCompra" control={form.control} render={({ field }) => (
-                            <FormItem><FormLabel>Valor Compra</FormLabel><FormControl><Input placeholder="R$ 0,00" {...field} /></FormControl><FormMessage /></FormMessage>
+                            <FormItem><FormLabel>Valor Compra</FormLabel><FormControl><Input placeholder="R$ 0,00" {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField name="notaFiscalSaida" control={form.control} render={({ field }) => (
                             <FormItem><FormLabel>Nota Fiscal de Saída</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField name="notaFiscalRetorno" control={form.control} render={({ field }) => (
-                            <FormItem><FormLabel>Nota Fiscal de Retorno</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormMessage>
+                            <FormItem><FormLabel>Nota Fiscal de Retorno</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                         )} />
                         <FormField
                             control={form.control}
@@ -479,33 +479,31 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                         )} />
                 </div>
 
-                </CardContent>
-                <CardFooter className="flex justify-end gap-2">
+            </CardContent>
+            <CardFooter className="flex justify-end gap-2">
                 <Button type="button" variant="outline" onClick={handleClear}>Limpar</Button>
                 <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                     {selectedWarranty ? 'Atualizar' : 'Salvar'}
                 </Button>
-                </CardFooter>
-            </form>
-        </Form>
+            </CardFooter>
+        </form>
+    </Form>
     );
 
     if (isModal) {
-      return (
-        <div>
-            {formFields}
-        </div>
-      );
+      return <div>{formContent}</div>;
     }
 
     return (
-        <Card className="w-full shadow-lg">
-            <CardHeader>
-                <CardTitle>{selectedWarranty ? 'Editar Garantia' : 'Cadastrar Garantia'}</CardTitle>
-                <CardDescription>Preencha os detalhes da garantia abaixo. Use &quot;Enter&quot; para pular para o próximo campo.</CardDescription>
-            </CardHeader>
-            {formFields}
-        </Card>
+      <Card className="w-full shadow-lg">
+          <CardHeader>
+              <CardTitle>{selectedWarranty ? 'Editar Garantia' : 'Cadastrar Garantia'}</CardTitle>
+              <CardDescription>Preencha os detalhes da garantia abaixo. Use &quot;Enter&quot; para pular para o próximo campo.</CardDescription>
+          </CardHeader>
+          {formContent}
+      </Card>
     );
 }
+
+    
