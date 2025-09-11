@@ -4,7 +4,9 @@
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import type { UserOptions } from 'jspdf-autotable';
-import type { Warranty, CompanyData, Supplier, Person } from '@/lib/types';
+import type { Warranty, CompanyData, Supplier, Person, Devolucao, ItemDevolucao } from '@/lib/types';
+import { format, parseISO } from 'date-fns';
+
 
 // Extend jsPDF with autoTable, which is a plugin
 declare module 'jspdf' {
@@ -24,6 +26,12 @@ interface GeneratePersonsPdfInput {
     persons: Person[];
     companyData: CompanyData | null;
 }
+
+interface GenerateDevolucoesPdfInput {
+    devolucoes: (Omit<Devolucao, 'id' | 'itens'> & Partial<ItemDevolucao> & { id: number; itemId?: number })[];
+    companyData: CompanyData | null;
+}
+
 
 const formatCnpj = (cnpj: string | undefined): string => {
     if (!cnpj) return '';
@@ -191,6 +199,38 @@ export function generatePersonsPdf(input: GeneratePersonsPdfInput): string {
         person.email || '-',
         person.cidade || '-',
         person.tipo || '-',
+    ]);
+
+    doc.autoTable({
+        startY: startY,
+        head: [tableHeaders],
+        body: tableBody,
+        theme: 'striped',
+        headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+        styles: { fontSize: 8 },
+        alternateRowStyles: { fillColor: [240, 240, 240] },
+    });
+
+    return doc.output('datauristring');
+}
+
+export function generateDevolucoesPdf(input: GenerateDevolucoesPdfInput): string {
+    const { devolucoes, companyData } = input;
+    const doc = new jsPDF();
+
+    const startY = addHeader(doc, companyData, 'Relatório de Devoluções');
+
+    const tableHeaders = ['Data Dev.', 'Cliente', 'Requisição', 'Código Peça', 'Descrição Peça', 'Qtd.', 'Ação Req.', 'Status'];
+
+    const tableBody = devolucoes.map(item => [
+        item.dataDevolucao ? format(parseISO(item.dataDevolucao), 'dd/MM/yyyy') : '-',
+        item.cliente || '-',
+        item.requisicaoVenda || '-',
+        item.codigoPeca || '-',
+        item.descricaoPeca || '-',
+        item.quantidade?.toString() || '-',
+        item.acaoRequisicao || '-',
+        item.status || '-',
     ]);
 
     doc.autoTable({

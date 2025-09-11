@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { Devolucao, ItemDevolucao } from '@/lib/types';
 import * as db from '@/lib/db';
+import { generateDevolucoesPdf } from '@/lib/pdf-generator';
 import { format, parseISO, addDays } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 
@@ -12,7 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Pencil, Trash2, Search } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, Search, FileDown } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
@@ -130,6 +131,70 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
     }
   };
 
+  const handleExportPdf = async () => {
+    if (filteredDevolucoes.length === 0) {
+        toast({ title: 'Aviso', description: 'Não há dados para exportar.'});
+        return;
+    }
+    try {
+        const companyData = await db.getCompanyData();
+        const pdfDataUri = generateDevolucoesPdf({
+            devolucoes: filteredDevolucoes,
+            companyData,
+        });
+        const link = document.createElement('a');
+        const date = new Date().toISOString().split('T')[0];
+        link.href = pdfDataUri;
+        link.download = `relatorio_devolucoes_${date}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast({
+          title: 'Sucesso',
+          description: 'Seu relatório de devoluções foi gerado.',
+        });
+    } catch (error) {
+        console.error('Failed to generate PDF:', error);
+        toast({
+            title: 'Erro ao Gerar PDF',
+            description: 'Não foi possível gerar o relatório. Tente novamente.',
+            variant: 'destructive',
+        });
+    }
+  };
+
+  const handleExportCsv = () => {
+    if (filteredDevolucoes.length === 0) {
+        toast({ title: 'Aviso', description: 'Não há dados para exportar.'});
+        return;
+    }
+    const headers = ['Data Dev.', 'Cliente', 'Requisição', 'Código Peça', 'Descrição Peça', 'Qtd.', 'Ação Req.', 'Status'];
+    const rows = filteredDevolucoes.map(item => [
+      item.dataDevolucao ? format(parseISO(item.dataDevolucao), 'dd/MM/yyyy') : '',
+      `"${item.cliente || ''}"`,
+      `"${item.requisicaoVenda || ''}"`,
+      `"${item.codigoPeca || ''}"`,
+      `"${item.descricaoPeca || ''}"`,
+      item.quantidade || 0,
+      `"${item.acaoRequisicao || ''}"`,
+      `"${item.status || ''}"`
+    ]);
+
+    let csvContent = "data:text/csv;charset=utf-8," 
+        + headers.join(",") + "\n" 
+        + rows.map(e => e.join(",")).join("\n");
+        
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    const date = new Date().toISOString().split('T')[0];
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `devolucoes_${date}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast({ title: 'Sucesso', description: 'Arquivo CSV gerado.' });
+  };
+
 
   if (isLoading) {
     return (
@@ -168,6 +233,16 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
                         />
                     </div>
                     <DatePickerWithRange date={dateRange} setDate={setDateRange} />
+                </div>
+                <div className="flex gap-2 mb-4">
+                    <Button onClick={handleExportPdf} variant="outline" disabled={filteredDevolucoes.length === 0}>
+                        <FileDown className="mr-2 h-4 w-4" />
+                        Exportar para PDF
+                    </Button>
+                     <Button onClick={handleExportCsv} variant="outline" disabled={filteredDevolucoes.length === 0}>
+                        <FileDown className="mr-2 h-4 w-4" />
+                        Exportar para CSV
+                    </Button>
                 </div>
                 <div className="border rounded-md">
                 <Table>
