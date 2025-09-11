@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
@@ -214,7 +215,6 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                 });
             });
         
-        // Reset file input to allow re-uploading the same file
         if(event.target) event.target.value = '';
     };
 
@@ -232,73 +232,73 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
     const clientOptions = clients.map(c => ({ value: c.nome, label: c.nome }));
     const mechanicOptions = mechanics.map(m => ({ value: m.nome, label: m.nome }));
 
-    const formContent = (
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} onKeyDown={handleKeyDown} ref={formRef}>
-          <CardContent className="space-y-6 pt-6">
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium text-foreground">Informações do Produto e Defeito</h3>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <FormField name="codigo" control={form.control} render={({ field }) => (
-                      <FormItem><FormLabel>Código</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
-                  <FormField name="descricao" control={form.control} render={({ field }) => (
-                      <FormItem className="md:col-span-2"><FormLabel>Descrição</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
-                  <FormField name="quantidade" control={form.control} render={({ field }) => (
-                  <FormItem><FormLabel>Quantidade</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
-                  <FormField
-                      control={form.control}
-                      name="fornecedor"
-                      render={({ field }) => (
-                          <FormItem className="md:col-span-2 flex flex-col">
-                              <FormLabel>Fornecedor</FormLabel>
-                              <div className="flex items-center gap-2">
-                                    <Combobox
-                                      options={supplierOptions}
-                                      value={field.value ?? ''}
-                                      onChange={field.onChange}
-                                      placeholder="Selecione um fornecedor"
-                                      searchPlaceholder="Buscar fornecedor..."
-                                      notFoundMessage="Nenhum fornecedor encontrado."
-                                      className="w-full"
-                                  />
-                                  <Dialog open={isSupplierModalOpen} onOpenChange={setSupplierModalOpen}>
-                                      <DialogTrigger asChild>
-                                          <Button variant="outline" size="icon" className="flex-shrink-0">
-                                              <PlusCircle className="h-4 w-4" />
-                                          </Button>
-                                      </DialogTrigger>
-                                      <DialogContent>
-                                          <DialogHeader>
-                                              <DialogTitle>Cadastrar Novo Fornecedor</DialogTitle>
-                                          </DialogHeader>
-                                          <SupplierForm onSave={handleSupplierSaved} isModal />
-                                      </DialogContent>
-                                  </Dialog>
-                              </div>
-                              <FormMessage />
-                          </FormItem>
-                      )}
-                      />
-                    <FormField name="defeito" control={form.control} render={({ field }) => (
-                      <FormItem className="md:col-span-2"><FormLabel>Defeito Apresentado</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
-              </div>
-            </div>
+    const formFields = (
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)} onKeyDown={handleKeyDown} ref={formRef}>
+                <CardContent className="space-y-6 pt-6">
+                <div className="space-y-4">
+                    <h3 className="text-lg font-medium text-foreground">Informações do Produto e Defeito</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <FormField name="codigo" control={form.control} render={({ field }) => (
+                            <FormItem><FormLabel>Código</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField name="descricao" control={form.control} render={({ field }) => (
+                            <FormItem className="md:col-span-2"><FormLabel>Descrição</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField name="quantidade" control={form.control} render={({ field }) => (
+                        <FormItem><FormLabel>Quantidade</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField
+                            control={form.control}
+                            name="fornecedor"
+                            render={({ field }) => (
+                                <FormItem className="md:col-span-2 flex flex-col">
+                                    <FormLabel>Fornecedor</FormLabel>
+                                    <div className="flex items-center gap-2">
+                                            <Combobox
+                                            options={supplierOptions}
+                                            value={field.value ?? ''}
+                                            onChange={field.onChange}
+                                            placeholder="Selecione um fornecedor"
+                                            searchPlaceholder="Buscar fornecedor..."
+                                            notFoundMessage="Nenhum fornecedor encontrado."
+                                            className="w-full"
+                                        />
+                                        <Dialog open={isSupplierModalOpen} onOpenChange={setSupplierModalOpen}>
+                                            <DialogTrigger asChild>
+                                                <Button variant="outline" size="icon" className="flex-shrink-0">
+                                                    <PlusCircle className="h-4 w-4" />
+                                                </Button>
+                                            </DialogTrigger>
+                                            <DialogContent>
+                                                <DialogHeader>
+                                                    <DialogTitle>Cadastrar Novo Fornecedor</DialogTitle>
+                                                </DialogHeader>
+                                                <SupplierForm onSave={handleSupplierSaved} isModal />
+                                            </DialogContent>
+                                        </Dialog>
+                                    </div>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                            <FormField name="defeito" control={form.control} render={({ field }) => (
+                            <FormItem className="md:col-span-2"><FormLabel>Defeito Apresentado</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                    </div>
+                </div>
 
-            <Separator />
+                <Separator />
 
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium text-foreground">Fotos da Garantia</h3>
-                <FormField
-                    control={form.control}
-                    name="photos"
-                    render={() => (
-                        <FormItem>
-                            <FormControl>
-                                <div>
+                <div className="space-y-4">
+                    <h3 className="text-lg font-medium text-foreground">Fotos da Garantia</h3>
+                    <FormField
+                        control={form.control}
+                        name="photos"
+                        render={() => (
+                            <FormItem>
+                                <FormControl>
+                                  <div>
                                     <input
                                         type="file"
                                         ref={fileInputRef}
@@ -315,185 +315,188 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                                         <Upload className="mr-2 h-4 w-4" />
                                         Carregar Fotos
                                     </Button>
-                                </div>
-                            </FormControl>
-                            <FormMessage />
-                            {photos && photos.length > 0 && (
-                                <div className="flex flex-wrap gap-4 mt-4">
-                                    {photos.map((photo, index) => (
-                                        <div key={index} className="relative w-32 h-32 rounded-md overflow-hidden border">
-                                            <Image 
-                                                src={photo} 
-                                                alt={`Preview ${index + 1}`} 
-                                                fill={true}
-                                                style={{ objectFit: 'cover' }}
-                                            />
-                                            <Button
-                                                type="button"
-                                                variant="destructive"
-                                                size="icon"
-                                                className="absolute top-1 right-1 h-6 w-6"
-                                                onClick={() => removePhoto(index)}
-                                            >
-                                                <XIcon className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    ))}
-                                </div>
+                                  </div>
+                                </FormControl>
+                                <FormMessage />
+                                {photos && photos.length > 0 && (
+                                    <div className="flex flex-wrap gap-4 mt-4">
+                                        {photos.map((photo, index) => (
+                                            <div key={index} className="relative w-32 h-32 rounded-md overflow-hidden border">
+                                                <Image 
+                                                    src={photo} 
+                                                    alt={`Preview ${index + 1}`} 
+                                                    fill={true}
+                                                    style={{ objectFit: 'cover' }}
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    variant="destructive"
+                                                    size="icon"
+                                                    className="absolute top-1 right-1 h-6 w-6"
+                                                    onClick={() => removePhoto(index)}
+                                                >
+                                                    <XIcon className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                {photos && photos.length === 0 && (
+                                    <div className="flex flex-col items-center justify-center text-center p-6 border-2 border-dashed rounded-lg text-muted-foreground">
+                                        <ImageIcon className="h-8 w-8 mb-2" />
+                                        <p>Nenhuma foto anexada.</p>
+                                        <p className="text-xs">Anexe fotos do produto, defeito ou nota fiscal.</p>
+                                    </div>
+                                )}
+                            </FormItem>
+                        )}
+                    />
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                    <h3 className="text-lg font-medium text-foreground">Dados Fiscais e de Venda</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <FormField
+                            control={form.control}
+                            name="cliente"
+                            render={({ field }) => (
+                                    <FormItem className="md:col-span-2 flex flex-col">
+                                    <FormLabel>Cliente</FormLabel>
+                                    <div className="flex items-center gap-2">
+                                            <Combobox
+                                            options={clientOptions}
+                                            value={field.value ?? ''}
+                                            onChange={field.onChange}
+                                            placeholder="Selecione um cliente"
+                                            searchPlaceholder="Buscar cliente..."
+                                            notFoundMessage="Nenhum cliente encontrado."
+                                            className="w-full"
+                                        />
+                                            <Dialog open={isPersonModalOpen} onOpenChange={setPersonModalOpen}>
+                                            <DialogTrigger asChild>
+                                                <Button variant="outline" size="icon" className="flex-shrink-0">
+                                                    <PlusCircle className="h-4 w-4" />
+                                                </Button>
+                                            </DialogTrigger>
+                                            <DialogContent className="max-w-2xl">
+                                                <DialogHeader>
+                                                    <DialogTitle>Cadastrar Novo Cliente/Mecânico</DialogTitle>
+                                                </DialogHeader>
+                                                <PersonForm onSave={handlePersonSaved} onClear={() => {}} />
+                                            </DialogContent>
+                                        </Dialog>
+                                    </div>
+                                    <FormMessage />
+                                </FormItem>
                             )}
-                            {photos && photos.length === 0 && (
-                                <div className="flex flex-col items-center justify-center text-center p-6 border-2 border-dashed rounded-lg text-muted-foreground">
-                                    <ImageIcon className="h-8 w-8 mb-2" />
-                                    <p>Nenhuma foto anexada.</p>
-                                    <p className="text-xs">Anexe fotos do produto, defeito ou nota fiscal.</p>
-                                </div>
+                            />
+                        <FormField
+                            control={form.control}
+                            name="mecanico"
+                            render={({ field }) => (
+                                <FormItem className="md:col-span-2 flex flex-col">
+                                    <FormLabel>Mecânico</FormLabel>
+                                    <div className="flex items-center gap-2">
+                                        <Combobox
+                                            options={mechanicOptions}
+                                            value={field.value ?? ''}
+                                            onChange={field.onChange}
+                                            placeholder="Selecione um mecânico"
+                                            searchPlaceholder="Buscar mecânico..."
+                                            notFoundMessage="Nenhum mecânico encontrado."
+                                            className="w-full"
+                                        />
+                                        <Dialog open={isPersonModalOpen} onOpenChange={setPersonModalOpen}>
+                                            <DialogTrigger asChild>
+                                                <Button variant="outline" size="icon" className="flex-shrink-0">
+                                                    <PlusCircle className="h-4 w-4" />
+                                                </Button>
+                                            </DialogTrigger>
+                                            <DialogContent className="max-w-2xl">
+                                                    <DialogHeader>
+                                                    <DialogTitle>Cadastrar Novo Cliente/Mecânico</DialogTitle>
+                                                    </DialogHeader>
+                                                    <PersonForm onSave={handlePersonSaved} onClear={() => {}} />
+                                            </DialogContent>
+                                        </Dialog>
+                                    </div>
+                                    <FormMessage />
+                                </FormItem>
                             )}
-                        </FormItem>
-                    )}
-                />
-            </div>
+                            />
+                        <FormField name="requisicaoVenda" control={form.control} render={({ field }) => (
+                            <FormItem><FormLabel>Requisição Venda</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                            <FormField name="requisicoesGarantia" control={form.control} render={({ field }) => (
+                            <FormItem className="md:col-span-3"><FormLabel>Requisições Garantia</FormLabel><FormControl><Textarea rows={1} placeholder="Separe múltiplas requisições por vírgula" {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField name="nfCompra" control={form.control} render={({ field }) => (
+                        <FormItem><FormLabel>NF Compra</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField name="valorCompra" control={form.control} render={({ field }) => (
+                            <FormItem><FormLabel>Valor Compra</FormLabel><FormControl><Input placeholder="R$ 0,00" {...field} /></FormControl><FormMessage /></FormMessage>
+                        )} />
+                        <FormField name="notaFiscalSaida" control={form.control} render={({ field }) => (
+                            <FormItem><FormLabel>Nota Fiscal de Saída</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField name="notaFiscalRetorno" control={form.control} render={({ field }) => (
+                            <FormItem><FormLabel>Nota Fiscal de Retorno</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormMessage>
+                        )} />
+                        <FormField
+                            control={form.control}
+                            name="status"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Status</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value}>
+                                        <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecione um status" />
+                                        </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="Em análise">Em análise</SelectItem>
+                                            <SelectItem value="Aprovada">Aprovada</SelectItem>
+                                            <SelectItem value="Recusada">Recusada</SelectItem>
+                                            <SelectItem value="Paga">Paga</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                    </div>
+                </div>
+                
+                <Separator />
 
+                <div className="space-y-4">
+                    <h3 className="text-lg font-medium text-foreground">Observações</h3>
+                    <FormField name="observacao" control={form.control} render={({ field }) => (
+                            <FormItem><FormControl><Textarea rows={2} placeholder="Adicione qualquer observação relevante aqui..." {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                </div>
 
-            <Separator />
-
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium text-foreground">Dados Fiscais e de Venda</h3>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <FormField
-                      control={form.control}
-                      name="cliente"
-                      render={({ field }) => (
-                            <FormItem className="md:col-span-2 flex flex-col">
-                              <FormLabel>Cliente</FormLabel>
-                              <div className="flex items-center gap-2">
-                                    <Combobox
-                                      options={clientOptions}
-                                      value={field.value ?? ''}
-                                      onChange={field.onChange}
-                                      placeholder="Selecione um cliente"
-                                      searchPlaceholder="Buscar cliente..."
-                                      notFoundMessage="Nenhum cliente encontrado."
-                                      className="w-full"
-                                  />
-                                    <Dialog open={isPersonModalOpen} onOpenChange={setPersonModalOpen}>
-                                      <DialogTrigger asChild>
-                                          <Button variant="outline" size="icon" className="flex-shrink-0">
-                                              <PlusCircle className="h-4 w-4" />
-                                          </Button>
-                                      </DialogTrigger>
-                                      <DialogContent className="max-w-2xl">
-                                          <DialogHeader>
-                                              <DialogTitle>Cadastrar Novo Cliente/Mecânico</DialogTitle>
-                                          </DialogHeader>
-                                          <PersonForm onSave={handlePersonSaved} onClear={() => {}} />
-                                      </DialogContent>
-                                  </Dialog>
-                              </div>
-                              <FormMessage />
-                          </FormItem>
-                      )}
-                      />
-                  <FormField
-                      control={form.control}
-                      name="mecanico"
-                      render={({ field }) => (
-                          <FormItem className="md:col-span-2 flex flex-col">
-                              <FormLabel>Mecânico</FormLabel>
-                              <div className="flex items-center gap-2">
-                                  <Combobox
-                                      options={mechanicOptions}
-                                      value={field.value ?? ''}
-                                      onChange={field.onChange}
-                                      placeholder="Selecione um mecânico"
-                                      searchPlaceholder="Buscar mecânico..."
-                                      notFoundMessage="Nenhum mecânico encontrado."
-                                      className="w-full"
-                                  />
-                                  <Dialog open={isPersonModalOpen} onOpenChange={setPersonModalOpen}>
-                                      <DialogTrigger asChild>
-                                          <Button variant="outline" size="icon" className="flex-shrink-0">
-                                              <PlusCircle className="h-4 w-4" />
-                                          </Button>
-                                      </DialogTrigger>
-                                      <DialogContent className="max-w-2xl">
-                                            <DialogHeader>
-                                              <DialogTitle>Cadastrar Novo Cliente/Mecânico</DialogTitle>
-                                            </DialogHeader>
-                                            <PersonForm onSave={handlePersonSaved} onClear={() => {}} />
-                                      </DialogContent>
-                                  </Dialog>
-                              </div>
-                              <FormMessage />
-                          </FormItem>
-                      )}
-                      />
-                  <FormField name="requisicaoVenda" control={form.control} render={({ field }) => (
-                      <FormItem><FormLabel>Requisição Venda</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
-                    <FormField name="requisicoesGarantia" control={form.control} render={({ field }) => (
-                      <FormItem className="md:col-span-3"><FormLabel>Requisições Garantia</FormLabel><FormControl><Textarea rows={1} placeholder="Separe múltiplas requisições por vírgula" {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
-                  <FormField name="nfCompra" control={form.control} render={({ field }) => (
-                  <FormItem><FormLabel>NF Compra</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
-                  <FormField name="valorCompra" control={form.control} render={({ field }) => (
-                      <FormItem><FormLabel>Valor Compra</FormLabel><FormControl><Input placeholder="R$ 0,00" {...field} /></FormControl><FormMessage /></FormMessage>
-                  )} />
-                  <FormField name="notaFiscalSaida" control={form.control} render={({ field }) => (
-                      <FormItem><FormLabel>Nota Fiscal de Saída</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
-                  <FormField name="notaFiscalRetorno" control={form.control} render={({ field }) => (
-                      <FormItem><FormLabel>Nota Fiscal de Retorno</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormMessage>
-                  )} />
-                  <FormField
-                      control={form.control}
-                      name="status"
-                      render={({ field }) => (
-                          <FormItem>
-                              <FormLabel>Status</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
-                                  <FormControl>
-                                  <SelectTrigger>
-                                      <SelectValue placeholder="Selecione um status" />
-                                  </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                      <SelectItem value="Em análise">Em análise</SelectItem>
-                                      <SelectItem value="Aprovada">Aprovada</SelectItem>
-                                      <SelectItem value="Recusada">Recusada</SelectItem>
-                                      <SelectItem value="Paga">Paga</SelectItem>
-                                  </SelectContent>
-                              </Select>
-                              <FormMessage />
-                          </FormItem>
-                      )}
-                      />
-              </div>
-            </div>
-            
-            <Separator />
-
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium text-foreground">Observações</h3>
-              <FormField name="observacao" control={form.control} render={({ field }) => (
-                      <FormItem><FormControl><Textarea rows={2} placeholder="Adicione qualquer observação relevante aqui..." {...field} /></FormControl><FormMessage /></FormItem>
-                  )} />
-            </div>
-
-          </CardContent>
-          <CardFooter className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={handleClear}>Limpar</Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              {selectedWarranty ? 'Atualizar' : 'Salvar'}
-            </Button>
-          </CardFooter>
-        </form>
-      </Form>
+                </CardContent>
+                <CardFooter className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={handleClear}>Limpar</Button>
+                <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    {selectedWarranty ? 'Atualizar' : 'Salvar'}
+                </Button>
+                </CardFooter>
+            </form>
+        </Form>
     );
 
     if (isModal) {
-      return formContent;
+      return (
+        <div>
+            {formFields}
+        </div>
+      );
     }
 
     return (
@@ -502,7 +505,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                 <CardTitle>{selectedWarranty ? 'Editar Garantia' : 'Cadastrar Garantia'}</CardTitle>
                 <CardDescription>Preencha os detalhes da garantia abaixo. Use &quot;Enter&quot; para pular para o próximo campo.</CardDescription>
             </CardHeader>
-            {formContent}
+            {formFields}
         </Card>
     );
 }
