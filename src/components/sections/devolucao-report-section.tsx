@@ -6,7 +6,6 @@ import { useToast } from '@/hooks/use-toast';
 import type { Devolucao, ItemDevolucao, Person } from '@/lib/types';
 import * as db from '@/lib/db';
 import { format, parseISO, addDays, startOfMonth, endOfMonth } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { DateRange } from 'react-day-picker';
 
 import { Skeleton } from '@/components/ui/skeleton';
@@ -17,7 +16,7 @@ import { Undo, Wrench, Users, UserCog, BarChart3, PieChart, User, FileDown, X } 
 import { DatePickerWithRange } from '../ui/date-range-picker';
 import { Badge } from '../ui/badge';
 import { Combobox } from '../ui/combobox';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { generateDevolucoesPdf } from '@/lib/pdf-generator';
 import { Label } from '../ui/label';
 
@@ -265,10 +264,10 @@ export default function DevolucaoReportSection() {
         title: `Relatório de Devoluções - ${clientReportFilters.client}`
       });
 
-      const link = document.createElement('a');
       const monthLabel = months.find(m => m.value === clientReportFilters.month)?.label;
+      const link = document.createElement('a');
       link.href = pdfDataUri;
-      link.download = `relatorio_${clientReportFilters.client}_${monthLabel}_${clientReportFilters.year}.pdf`;
+      link.download = `relatorio_${clientReportFilters.client.replace(/\s+/g, '_')}_${monthLabel}_${clientReportFilters.year}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -310,11 +309,11 @@ export default function DevolucaoReportSection() {
        <Card>
         <CardHeader>
           <CardTitle>Relatório Mensal por Cliente</CardTitle>
-          <CardDescription>Selecione um cliente e o período para gerar um relatório detalhado.</CardDescription>
+          <CardDescription>Selecione um cliente e o período para gerar um relatório detalhado para conferência.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-            <div className='space-y-4'>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
+            <div className='lg:col-span-2 space-y-4'>
                  <div>
                     <Label>Selecionar Cliente</Label>
                     <Combobox
@@ -420,8 +419,8 @@ export default function DevolucaoReportSection() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Relatórios Gerais</CardTitle>
-          <CardDescription>Selecione o período para gerar os relatórios de resumo.</CardDescription>
+          <CardTitle>Relatórios Gerais de Devolução</CardTitle>
+          <CardDescription>Selecione o período para gerar os relatórios de resumo e análises gerais.</CardDescription>
         </CardHeader>
         <CardContent className='flex flex-col md:flex-row gap-4 items-center'>
             <DatePickerWithRange date={dateRange} setDate={setDateRange} />
@@ -488,8 +487,8 @@ export default function DevolucaoReportSection() {
             <div className="grid gap-6 md:grid-cols-2">
                 <Card>
                     <CardHeader>
-                        <CardTitle className='flex items-center gap-2'><Wrench className='h-5 w-5' /> Relatório por Peças</CardTitle>
-                        <CardDescription>Peças mais devolvidas no período.</CardDescription>
+                        <CardTitle className='flex items-center gap-2'><Wrench className='h-5 w-5' /> Ranking de Peças Devolvidas</CardTitle>
+                        <CardDescription>As peças mais devolvidas no período selecionado.</CardDescription>
                     </CardHeader>
                     <CardContent>
                          <Table>
@@ -504,8 +503,8 @@ export default function DevolucaoReportSection() {
                 </Card>
                 <Card>
                     <CardHeader>
-                        <CardTitle className='flex items-center gap-2'><Users className='h-5 w-5' /> Relatório por Clientes</CardTitle>
-                        <CardDescription>Clientes com mais devoluções no período.</CardDescription>
+                        <CardTitle className='flex items-center gap-2'><Users className='h-5 w-5' /> Ranking de Clientes</CardTitle>
+                        <CardDescription>Os clientes com mais devoluções no período.</CardDescription>
                     </CardHeader>
                     <CardContent>
                          <Table>
@@ -520,8 +519,8 @@ export default function DevolucaoReportSection() {
                 </Card>
                 <Card>
                     <CardHeader>
-                        <CardTitle className='flex items-center gap-2'><UserCog className='h-5 w-5' /> Relatório por Mecânicos</CardTitle>
-                        <CardDescription>Mecânicos com mais devoluções no período.</CardDescription>
+                        <CardTitle className='flex items-center gap-2'><UserCog className='h-5 w-5' /> Ranking de Mecânicos</CardTitle>
+                        <CardDescription>Os mecânicos com mais devoluções no período.</CardDescription>
                     </CardHeader>
                     <CardContent>
                          <Table>
@@ -565,7 +564,7 @@ export default function DevolucaoReportSection() {
             <BarChart3 className="mx-auto h-12 w-12 text-muted-foreground" />
             <h2 className="mt-4 text-xl font-semibold">Gere um Relatório</h2>
             <p className="text-muted-foreground mt-2">
-              Clique em &quot;Gerar Relatórios&quot; para visualizar as análises do período selecionado.
+              Clique em &quot;Gerar Relatórios Gerais&quot; para visualizar as análises do período selecionado.
             </p>
          </div>
       )}
@@ -583,5 +582,3 @@ export default function DevolucaoReportSection() {
     </div>
   );
 }
-
-    
