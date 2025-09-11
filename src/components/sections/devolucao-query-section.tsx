@@ -41,7 +41,7 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
       const data = await db.getAllDevolucoes();
       
       const flatData = data.flatMap(devolucao => {
-        if (!devolucao.itens || devolucoes.length === 0) {
+        if (!devolucao.itens || data.length === 0) {
             return [{
                 ...devolucao,
                 id: devolucao.id!,

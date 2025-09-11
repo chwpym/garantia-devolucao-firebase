@@ -12,7 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Trash2 } from 'lucide-react';
-import type { Person, Devolucao } from '@/lib/types';
+import type { Person, Devolucao, ReturnStatus } from '@/lib/types';
 import { Combobox } from '../ui/combobox';
 import { DatePicker } from '../ui/date-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -121,6 +121,9 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
   
   const onSubmit = async (data: DevolucaoFormValues) => {
     try {
+        const currentDevolucao = editingId ? await db.getDevolucaoById(editingId) : null;
+        const currentStatus: ReturnStatus = currentDevolucao?.status || 'Recebido';
+
         const devolucaoBaseData = {
                 cliente: data.cliente,
                 mecanico: data.mecanico,
@@ -128,7 +131,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                 acaoRequisicao: data.acaoRequisicao,
                 dataVenda: data.dataVenda.toISOString(),
                 dataDevolucao: data.dataDevolucao.toISOString(),
-                status: 'Recebido', // You might want to preserve the status
+                status: currentStatus,
                 observacaoGeral: data.observacaoGeral
             };
 

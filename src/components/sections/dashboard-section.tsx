@@ -169,7 +169,7 @@ export default function DashboardSection({ setActiveView }: DashboardSectionProp
             return parseISO(b.dataDevolucao).getTime() - parseISO(a.dataDevolucao).getTime()
         });
         const recentFlatDevolucoes = sortedDevolucoes.flatMap(devolucao => {
-            if (!devolucao.itens || devolucoes.length === 0) {
+            if (!devolucao.itens || allDevolucoes.length === 0) {
                 return [{ ...devolucao, id: devolucao.id! }];
             }
             return devolucao.itens.map(item => ({

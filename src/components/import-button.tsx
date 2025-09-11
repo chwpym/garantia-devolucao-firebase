@@ -52,6 +52,13 @@ export function ImportButton({ onDataImported }: ImportButtonProps) {
         }
         const data: FullBackupData = JSON.parse(text);
 
+        // Check for old format (just an array of warranties) for backward compatibility
+        if (Array.isArray(data) && data.every((item: unknown) => typeof item === 'object' && item !== null && ('codigo' in item || 'descricao' in item))) {
+            setDataToImport({ warranties: data as Warranty[] });
+            setShowConfirm(true);
+            return;
+        }
+
         if (!data || (
           !Array.isArray(data.warranties) &&
           !Array.isArray(data.persons) &&
@@ -60,13 +67,6 @@ export function ImportButton({ onDataImported }: ImportButtonProps) {
           !Array.isArray(data.devolucoes) &&
           !data.companyData
         )) {
-            // Check for old format (just an array of warranties) for backward compatibility
-            const oldFormatData = JSON.parse(text);
-            if (Array.isArray(oldFormatData) && oldFormatData.every((item: unknown) => typeof item === 'object' && item !== null && ('codigo' in item || 'descricao' in item))) {
-                 setDataToImport({ warranties: oldFormatData as Warranty[] });
-                 setShowConfirm(true);
-                 return;
-            }
             throw new Error('O arquivo de backup não parece ter um formato válido.');
         }
         
@@ -104,37 +104,32 @@ export function ImportButton({ onDataImported }: ImportButtonProps) {
 
         // Import new data
         if (dataToImport.warranties) {
-            for (const warranty of dataToImport.warranties) {
-                const { id, ...warrantyData } = warranty;
+            for (const {['id']: _, ...warrantyData} of dataToImport.warranties) {
                 await db.addWarranty(warrantyData);
             }
         }
         if (dataToImport.persons) {
-            for (const person of dataToImport.persons) {
-                const { id, ...personData } = person;
+            for (const {['id']: _, ...personData} of dataToImport.persons) {
                 await db.addPerson(personData);
             }
         }
         if (dataToImport.suppliers) {
-            for (const supplier of dataToImport.suppliers) {
-                const { id, ...supplierData } = supplier;
+            for (const {['id']: _, ...supplierData} of dataToImport.suppliers) {
                 await db.addSupplier(supplierData);
             }
         }
         if (dataToImport.lotes) {
-            for (const lote of dataToImport.lotes) {
-                const { id, ...loteData } = lote;
+            for (const {['id']: _, ...loteData} of dataToImport.lotes) {
                 await db.addLote(loteData);
             }
         }
         if (dataToImport.devolucoes) {
-            for (const devolucao of dataToImport.devolucoes) {
-                const { id, itens, ...devolucaoData } = devolucao;
+            for (const {['id']: _, itens, ...devolucaoData} of dataToImport.devolucoes) {
                 await db.addDevolucao(devolucaoData, itens || []);
             }
         }
         if (dataToImport.companyData) {
-            const { id, ...companyData } = dataToImport.companyData;
+            const {['id']: _, ...companyData} = dataToImport.companyData;
             await db.updateCompanyData(companyData);
         }
 

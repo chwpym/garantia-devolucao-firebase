@@ -100,21 +100,22 @@ export default function CsvExporter() {
   const fetchData = useCallback(async () => {
     switch (dataType) {
       case 'warranties':
-        return await db.getAllWarranties();
+        return db.getAllWarranties();
       case 'persons':
-        return await db.getAllPersons();
+        return db.getAllPersons();
       case 'suppliers':
-        return await db.getAllSuppliers();
-      case 'devolutions':
-        const devolucoes = await db.getAllDevolucoes();
+        return db.getAllSuppliers();
+      case 'devolutions': {
+        const devolucoes: Devolucao[] = await db.getAllDevolucoes();
         return devolucoes.flatMap(devolucao => {
             if (!devolucao.itens || devolucoes.length === 0) {
                 return [{ ...devolucao, id: devolucao.id! }];
             }
-            return devolucao.itens.map(item => ({
+            return devolucao.itens.map((item: ItemDevolucao) => ({
                 ...devolucao, ...item, id: devolucao.id!, itemId: item.id!,
             }));
         });
+      }
       default:
         return [];
     }
