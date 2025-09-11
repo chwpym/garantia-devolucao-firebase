@@ -54,7 +54,7 @@ export default function Home() {
       case 'register':
         return <RegisterSection />;
       case 'query':
-        return <QuerySection />;
+        return <QuerySection setActiveView={setActiveView} />;
       case 'lotes':
         return <LotesSection onNavigateToLote={handleNavigateToLote} />;
       case 'loteDetail':

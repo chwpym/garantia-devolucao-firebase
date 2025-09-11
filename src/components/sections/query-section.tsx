@@ -24,7 +24,12 @@ import { Button } from '../ui/button';
 import AddToLoteDialog from '../add-to-lote-dialog';
 
 
-export default function QuerySection() {
+interface QuerySectionProps {
+  setActiveView: (view: string) => void;
+}
+
+
+export default function QuerySection({ setActiveView }: QuerySectionProps) {
   const [warranties, setWarranties] = useState<Warranty[]>([]);
   const [editingWarranty, setEditingWarranty] = useState<Warranty | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -199,6 +204,11 @@ export default function QuerySection() {
         setIsLoteDialogOpen(false);
     }
   }
+  
+  const handleGoToLotes = () => {
+    setIsLoteDialogOpen(false);
+    setActiveView('lotes');
+  };
 
   if (!isDbReady) {
     return (
@@ -266,6 +276,7 @@ export default function QuerySection() {
             lotes={openLotes}
             onConfirm={handleAddToLote}
             selectedCount={selectedIds.size}
+            onGoToLotes={handleGoToLotes}
         />
     </div>
   );

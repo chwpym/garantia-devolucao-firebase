@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import type { Lote } from "@/lib/types";
+import { PlusCircle } from "lucide-react";
 
 interface AddToLoteDialogProps {
     isOpen: boolean;
@@ -25,9 +26,10 @@ interface AddToLoteDialogProps {
     lotes: Lote[];
     onConfirm: (loteId: number) => void;
     selectedCount: number;
+    onGoToLotes: () => void;
 }
 
-export default function AddToLoteDialog({ isOpen, onOpenChange, lotes, onConfirm, selectedCount }: AddToLoteDialogProps) {
+export default function AddToLoteDialog({ isOpen, onOpenChange, lotes, onConfirm, selectedCount, onGoToLotes }: AddToLoteDialogProps) {
     const [selectedLote, setSelectedLote] = useState<string>("");
 
     const handleConfirm = () => {
@@ -65,9 +67,15 @@ export default function AddToLoteDialog({ isOpen, onOpenChange, lotes, onConfirm
                     </Select>
                 </div>
 
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-                    <Button onClick={handleConfirm} disabled={!selectedLote}>Confirmar e Adicionar</Button>
+                <DialogFooter className="sm:justify-between">
+                    <Button variant="secondary" onClick={onGoToLotes}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Criar Novo Lote
+                    </Button>
+                    <div className="flex gap-2">
+                        <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+                        <Button onClick={handleConfirm} disabled={!selectedLote}>Confirmar e Adicionar</Button>
+                    </div>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
