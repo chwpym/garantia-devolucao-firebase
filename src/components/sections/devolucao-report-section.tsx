@@ -54,14 +54,16 @@ const initialClientFilters = {
     year: new Date().getFullYear().toString()
 };
 
+const initialDateRange: DateRange = {
+    from: startOfMonth(new Date()),
+    to: endOfMonth(new Date()),
+};
+
 export default function DevolucaoReportSection() {
   const [allDevolucoes, setAllDevolucoes] = useState<DevolucaoComItens[]>([]);
   const [allPersons, setAllPersons] = useState<Person[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: startOfMonth(new Date()),
-    to: endOfMonth(new Date()),
-  });
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(initialDateRange);
   const [reportData, setReportData] = useState<ReportData | null>(null);
 
   const [clientReportFilters, setClientReportFilters] = useState<ClientReportFilters>(initialClientFilters);
@@ -246,7 +248,6 @@ export default function DevolucaoReportSection() {
       return;
     }
     
-    // Flatten the data for the PDF generator
     const flatData = clientReportData.flatMap(devolucao => 
         devolucao.itens.map(item => ({
             ...devolucao,
@@ -289,6 +290,11 @@ export default function DevolucaoReportSection() {
     setClientReportFilters(initialClientFilters);
     setClientReportData(null);
   };
+  
+  const handleClearGeneralReport = () => {
+    setDateRange(initialDateRange);
+    setReportData(null);
+  }
 
 
 
@@ -308,7 +314,6 @@ export default function DevolucaoReportSection() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-            {/* Left Column */}
             <div className='space-y-4'>
                  <div>
                     <Label>Selecionar Cliente</Label>
@@ -333,7 +338,6 @@ export default function DevolucaoReportSection() {
                     </Button>
                 </div>
             </div>
-            {/* Right Column */}
             <div className='grid grid-cols-2 gap-4'>
                 <div>
                     <Label>Mês</Label>
@@ -424,6 +428,10 @@ export default function DevolucaoReportSection() {
             <Button onClick={generateReports} disabled={isLoading}>
                 <BarChart3 className='mr-2 h-4 w-4' />
                 Gerar Relatórios Gerais
+            </Button>
+            <Button onClick={handleClearGeneralReport} variant="outline" disabled={isLoading}>
+                <X className='mr-2 h-4 w-4' />
+                Limpar
             </Button>
         </CardContent>
       </Card>
