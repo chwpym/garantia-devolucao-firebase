@@ -5,15 +5,20 @@ import { useToast } from '@/hooks/use-toast';
 import type { Devolucao, ItemDevolucao, Person } from '@/lib/types';
 import * as db from '@/lib/db';
 import { format, parseISO, addDays, startOfMonth, endOfMonth } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { DateRange } from 'react-day-picker';
 
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Undo, Wrench, Users, UserCog, BarChart3, PieChart, User } from 'lucide-react';
+import { Undo, Wrench, Users, UserCog, BarChart3, PieChart, User, FileDown } from 'lucide-react';
 import { DatePickerWithRange } from '../ui/date-range-picker';
 import { Badge } from '../ui/badge';
+import { Combobox } from '../ui/combobox';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { generateDevolucoesPdf } from '@/lib/pdf-generator';
+
 
 type DevolucaoComItens = Devolucao & { itens: ItemDevolucao[] };
 
@@ -28,22 +33,48 @@ interface ReportData {
   porAcao: { acao: string; qtdTotal: number; ocorrencias: number }[];
 }
 
+interface ClientReportFilters {
+    client: string;
+    month: string;
+    year: string;
+}
+
+const months = [
+    { value: "1", label: "Janeiro" }, { value: "2", label: "Fevereiro" }, { value: "3", label: "Março" },
+    { value: "4", label: "Abril" }, { value: "5", label: "Maio" }, { value: "6", label: "Junho" },
+    { value: "7", label: "Julho" }, { value: "8", label: "Agosto" }, { value: "9", label: "Setembro" },
+    { value: "10", label: "Outubro" }, { value: "11", label: "Novembro" }, { value: "12", label: "Dezembro" },
+];
+
 export default function DevolucaoReportSection() {
   const [allDevolucoes, setAllDevolucoes] = useState<DevolucaoComItens[]>([]);
+  const [allPersons, setAllPersons] = useState<Person[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date()),
   });
   const [reportData, setReportData] = useState<ReportData | null>(null);
+
+  const [clientReportFilters, setClientReportFilters] = useState<ClientReportFilters>({
+    client: '',
+    month: (new Date().getMonth() + 1).toString(),
+    year: new Date().getFullYear().toString()
+  });
+  const [clientReportData, setClientReportData] = useState<DevolucaoComItens[] | null>(null);
+
   const { toast } = useToast();
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
       await db.initDB();
-      const devolucoes = await db.getAllDevolucoes();
+      const [devolucoes, persons] = await Promise.all([
+          db.getAllDevolucoes(),
+          db.getAllPersons(),
+      ]);
       setAllDevolucoes(devolucoes);
+      setAllPersons(persons);
     } catch (error) {
       console.error('Failed to load data:', error);
       toast({
@@ -163,6 +194,95 @@ export default function DevolucaoReportSection() {
   }, [filteredDevolucoes, toast]);
 
 
+  const clientOptions = useMemo(() => {
+    return allPersons
+      .filter(p => p.tipo === 'Cliente' || p.tipo === 'Ambos')
+      .map(c => ({ value: c.nome, label: c.nome }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [allPersons]);
+
+  const yearOptions = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const years = new Set<number>();
+    years.add(currentYear);
+    years.add(currentYear + 1);
+    allDevolucoes.forEach(dev => {
+      if (dev.dataDevolucao) {
+        years.add(parseISO(dev.dataDevolucao).getFullYear());
+      }
+    });
+    return Array.from(years).sort((a, b) => b - a);
+  }, [allDevolucoes]);
+
+  const handleGenerateClientReport = () => {
+    const { client, month, year } = clientReportFilters;
+    if (!client) {
+      toast({ title: 'Aviso', description: 'Por favor, selecione um cliente.' });
+      return;
+    }
+
+    const filtered = allDevolucoes.filter(dev => {
+      const devDate = parseISO(dev.dataDevolucao);
+      return (
+        dev.cliente === client &&
+        (devDate.getMonth() + 1).toString() === month &&
+        devDate.getFullYear().toString() === year
+      );
+    });
+
+    setClientReportData(filtered);
+    if(filtered.length === 0) {
+        toast({ title: 'Nenhum resultado', description: 'Nenhuma devolução encontrada para este cliente no período selecionado.'})
+    }
+  };
+  
+    const handleExportClientReportPdf = async () => {
+    if (!clientReportData || clientReportData.length === 0) {
+      toast({ title: 'Aviso', description: 'Não há dados para exportar.' });
+      return;
+    }
+    
+    // Flatten the data for the PDF generator
+    const flatData = clientReportData.flatMap(devolucao => 
+        devolucao.itens.map(item => ({
+            ...devolucao,
+            ...item,
+            id: devolucao.id!,
+            itemId: item.id!,
+        }))
+    );
+
+    try {
+      const companyData = await db.getCompanyData();
+      const pdfDataUri = generateDevolucoesPdf({
+        devolucoes: flatData,
+        companyData,
+        title: `Relatório de Devoluções - ${clientReportFilters.client}`
+      });
+
+      const link = document.createElement('a');
+      const monthLabel = months.find(m => m.value === clientReportFilters.month)?.label;
+      link.href = pdfDataUri;
+      link.download = `relatorio_${clientReportFilters.client}_${monthLabel}_${clientReportFilters.year}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast({
+        title: 'Sucesso',
+        description: 'Relatório do cliente gerado com sucesso.',
+      });
+    } catch (error) {
+      console.error('Failed to generate PDF:', error);
+      toast({
+        title: 'Erro ao Gerar PDF',
+        description: 'Não foi possível gerar o relatório. Tente novamente.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+
+
   return (
     <div className="space-y-8">
       <div>
@@ -172,16 +292,90 @@ export default function DevolucaoReportSection() {
         </p>
       </div>
 
+       <Card>
+        <CardHeader>
+          <CardTitle>Relatório Mensal por Cliente</CardTitle>
+          <CardDescription>Selecione um cliente e o período para gerar um relatório detalhado.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            <div className="md:col-span-2">
+                <Label>Selecionar Cliente</Label>
+                <Combobox
+                    options={clientOptions}
+                    value={clientReportFilters.client}
+                    onChange={(value) => setClientReportFilters(prev => ({...prev, client: value}))}
+                    placeholder='Selecione um cliente...'
+                    searchPlaceholder='Buscar cliente...'
+                    notFoundMessage='Nenhum cliente encontrado.'
+                />
+            </div>
+             <div>
+                <Label>Mês</Label>
+                <Select 
+                    value={clientReportFilters.month} 
+                    onValueChange={(value) => setClientReportFilters(prev => ({...prev, month: value}))}
+                >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                        {months.map(m => (
+                            <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+             <div>
+                <Label>Ano</Label>
+                <Select 
+                    value={clientReportFilters.year} 
+                    onValueChange={(value) => setClientReportFilters(prev => ({...prev, year: value}))}
+                >
+                     <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                        {yearOptions.map(y => (
+                            <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+          </div>
+        </CardContent>
+        <CardFooter className='flex-col items-start gap-4'>
+            <Button onClick={handleGenerateClientReport}>
+                <User className='mr-2 h-4 w-4' />
+                Gerar Relatório do Cliente
+            </Button>
+            
+            {clientReportData && (
+                 <div className='w-full space-y-4 pt-4 border-t animate-in fade-in-50'>
+                     <div className='flex justify-between items-center'>
+                        <h3 className='font-semibold'>Resultados para {clientReportFilters.client}</h3>
+                        <Button variant='outline' onClick={handleExportClientReportPdf} disabled={clientReportData.length === 0}>
+                            <FileDown className='mr-2 h-4 w-4' />
+                            Exportar para PDF
+                        </Button>
+                     </div>
+                     {/* Placeholder for client report table */}
+                      <div className="border rounded-md p-6 text-center text-muted-foreground">
+                        <p>Relatório do cliente aparecerá aqui.</p>
+                        <p className='font-bold'>{clientReportData.length} devoluções encontradas.</p>
+                      </div>
+                 </div>
+            )}
+        </CardFooter>
+      </Card>
+
+
       <Card>
         <CardHeader>
-          <CardTitle>Filtros do Relatório</CardTitle>
-          <CardDescription>Selecione o período para gerar os relatórios de devolução.</CardDescription>
+          <CardTitle>Relatórios Gerais</CardTitle>
+          <CardDescription>Selecione o período para gerar os relatórios de resumo.</CardDescription>
         </CardHeader>
         <CardContent className='flex flex-col md:flex-row gap-4 items-center'>
             <DatePickerWithRange date={dateRange} setDate={setDateRange} />
             <Button onClick={generateReports} disabled={isLoading}>
                 <BarChart3 className='mr-2 h-4 w-4' />
-                Gerar Relatórios
+                Gerar Relatórios Gerais
             </Button>
         </CardContent>
       </Card>

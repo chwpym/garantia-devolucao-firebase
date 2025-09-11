@@ -30,6 +30,7 @@ interface GeneratePersonsPdfInput {
 interface GenerateDevolucoesPdfInput {
     devolucoes: (Omit<Devolucao, 'id' | 'itens'> & Partial<ItemDevolucao> & { id: number; itemId?: number })[];
     companyData: CompanyData | null;
+    title?: string;
 }
 
 
@@ -215,10 +216,10 @@ export function generatePersonsPdf(input: GeneratePersonsPdfInput): string {
 }
 
 export function generateDevolucoesPdf(input: GenerateDevolucoesPdfInput): string {
-    const { devolucoes, companyData } = input;
+    const { devolucoes, companyData, title = 'Relatório de Devoluções' } = input;
     const doc = new jsPDF();
 
-    const startY = addHeader(doc, companyData, 'Relatório de Devoluções');
+    const startY = addHeader(doc, companyData, title);
 
     const tableHeaders = ['Data Dev.', 'Cliente', 'Requisição', 'Código Peça', 'Descrição Peça', 'Qtd.', 'Ação Req.', 'Status'];
 
