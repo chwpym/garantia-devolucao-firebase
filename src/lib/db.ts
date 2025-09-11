@@ -485,3 +485,40 @@ export const addDevolucao = async (devolucao: Omit<Devolucao, 'id'>, itens: Omit
     transaction.onabort = () => reject(transaction.error);
   });
 };
+
+export const getAllDevolucoes = async (): Promise<(Devolucao & { itens: ItemDevolucao[] })[]> => {
+    const db = await getDB();
+    const transaction = db.transaction([DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME], 'readonly');
+    const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
+    const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
+    const itensIndex = itensStore.index('devolucaoId');
+
+    return new Promise((resolve, reject) => {
+        const devolucoesRequest = devolucoesStore.getAll();
+        
+        devolucoesRequest.onerror = () => reject(devolucoesRequest.error);
+
+        devolucoesRequest.onsuccess = () => {
+            const devolucoes = devolucoesRequest.result as Devolucao[];
+            const result: (Devolucao & { itens: ItemDevolucao[] })[] = [];
+            let processedCount = 0;
+
+            if (devolucoes.length === 0) {
+                resolve([]);
+                return;
+            }
+
+            devolucoes.forEach(devolucao => {
+                const itensRequest = itensIndex.getAll(devolucao.id);
+                itensRequest.onerror = () => reject(itensRequest.error);
+                itensRequest.onsuccess = () => {
+                    result.push({ ...devolucao, itens: itensRequest.result });
+                    processedCount++;
+                    if (processedCount === devolucoes.length) {
+                        resolve(result);
+                    }
+                };
+            });
+        };
+    });
+};

@@ -26,6 +26,7 @@ const garantiaNavItems = [
 
 const devolucaoNavItems = [
     { id: 'devolucao-register', label: 'Cadastro de Devolução', icon: PlusSquare },
+    { id: 'devolucao-query', label: 'Consulta de Devoluções', icon: Search },
 ];
 
 const cadastroNavItems = [
