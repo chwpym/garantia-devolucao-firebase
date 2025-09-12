@@ -152,7 +152,7 @@ export default function CostAnalysisCalculator() {
             prevItems.map(item => {
                 if (item.id === id) {
                     const factor = parseFloat(value) || 1;
-                    const convertedUnitCost = factor > 0 ? item.finalUnitCost / factor : item.finalUnitCost;
+                    const convertedUnitCost = factor > 0 ? item.finalUnitCost / factor : 0;
                     return { ...item, conversionFactor: value, convertedUnitCost };
                 }
                 return item;
@@ -352,3 +352,4 @@ export default function CostAnalysisCalculator() {
         </div>
     );
 }
+    
