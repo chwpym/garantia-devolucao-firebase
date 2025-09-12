@@ -5,8 +5,8 @@ import { useToast } from '@/hooks/use-toast';
 import type { Lote, Supplier } from '@/lib/types';
 import * as db from '@/lib/db';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MoreHorizontal, Pencil, Trash2, Package, Calendar, Building, FileText } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { MoreHorizontal, Pencil, Trash2, Package, Calendar, Building, FileText } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import LoteForm from '../lote-form';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import {
