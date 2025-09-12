@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Calculator, ShoppingCart, Percent, Plus, FileScan, Tag, DivideCircle, Files, Microscope, ArrowLeft } from 'lucide-react';
 import AveragePriceCalculator from '@/components/calculators/average-price-calculator';
 import BatchPricingCalculator from '@/components/calculators/batch-pricing-calculator';
+import CalculateSaleCalculator from '@/components/calculators/calculate-sale-calculator';
 
 
 const calculators = [
@@ -28,7 +29,7 @@ const calculators = [
     icon: Tag,
     title: 'Calcular Venda',
     description: 'Calcule o preço de venda a partir do custo e margem.',
-    component: null,
+    component: CalculateSaleCalculator,
   },
   {
     id: 'unit-cost',
