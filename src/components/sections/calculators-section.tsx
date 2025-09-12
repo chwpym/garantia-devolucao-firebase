@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button';
 import { Calculator, ShoppingCart, Percent, Plus, FileScan, Tag, DivideCircle, Files, Microscope, ArrowLeft } from 'lucide-react';
 import AveragePriceCalculator from '@/components/calculators/average-price-calculator';
+import BatchPricingCalculator from '@/components/calculators/batch-pricing-calculator';
 
 
 const calculators = [
@@ -20,7 +21,7 @@ const calculators = [
     icon: ShoppingCart,
     title: 'Precificação em Lote',
     description: 'Defina preços de venda para múltiplos produtos em lote.',
-    component: null,
+    component: BatchPricingCalculator,
   },
   {
     id: 'calculate-sale',
