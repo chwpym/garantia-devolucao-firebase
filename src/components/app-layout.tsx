@@ -157,7 +157,7 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
                     <Wrench className="mr-2 h-4 w-4" />
                     Nova Garantia
                 </Button>
-                 <Button variant="secondary" size="sm" onClick={() => setActiveView('devolucao-register')}>
+                 <Button variant="accent-blue" size="sm" onClick={() => setActiveView('devolucao-register')}>
                     <Undo2 className="mr-2 h-4 w-4" />
                     Nova Devolução
                 </Button>
