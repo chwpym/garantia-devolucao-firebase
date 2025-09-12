@@ -8,6 +8,7 @@ import AveragePriceCalculator from '@/components/calculators/average-price-calcu
 import BatchPricingCalculator from '@/components/calculators/batch-pricing-calculator';
 import CalculateSaleCalculator from '@/components/calculators/calculate-sale-calculator';
 import UnitCostCalculator from '../calculators/unit-cost-calculator';
+import CalculatePercentCalculator from '../calculators/calculate-percent-calculator';
 
 
 const calculators = [
@@ -44,7 +45,7 @@ const calculators = [
     icon: Percent,
     title: 'Calcular Porcentagem',
     description: 'Encontre o valor de uma porcentagem de um número.',
-    component: null,
+    component: CalculatePercentCalculator,
   },
   {
     id: 'sum-percent',
