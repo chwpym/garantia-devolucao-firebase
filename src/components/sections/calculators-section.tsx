@@ -12,6 +12,7 @@ import CalculatePercentCalculator from '../calculators/calculate-percent-calcula
 import SumPercentCalculator from '../calculators/sum-percent-calculator';
 import CostAnalysisCalculator from '../calculators/cost-analysis-calculator';
 import AdvancedCostAnalysisCalculator from '../calculators/advanced-cost-analysis-calculator';
+import NfeComparator from '../calculators/nfe-comparator';
 
 
 const calculators = [
@@ -76,7 +77,7 @@ const calculators = [
     icon: Files,
     title: 'Comparador de NF-e',
     description: 'Compare produtos entre múltiplos arquivos XML de NF-e.',
-    component: null,
+    component: NfeComparator,
   },
 ];
 
@@ -143,3 +144,4 @@ export default function CalculatorsSection() {
         </div>
     </div>
   );
+}
