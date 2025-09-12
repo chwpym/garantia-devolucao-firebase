@@ -10,6 +10,7 @@ import CalculateSaleCalculator from '@/components/calculators/calculate-sale-cal
 import UnitCostCalculator from '../calculators/unit-cost-calculator';
 import CalculatePercentCalculator from '../calculators/calculate-percent-calculator';
 import SumPercentCalculator from '../calculators/sum-percent-calculator';
+import CostAnalysisCalculator from '../calculators/cost-analysis-calculator';
 
 
 const calculators = [
@@ -60,7 +61,7 @@ const calculators = [
     icon: FileScan,
     title: 'Análise de Custo por NF-e',
     description: 'Importe uma NF-e para calcular o custo real dos produtos.',
-    component: null,
+    component: CostAnalysisCalculator,
   },
     {
     id: 'advanced-cost-analysis',
