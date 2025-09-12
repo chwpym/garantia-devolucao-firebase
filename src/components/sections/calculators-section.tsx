@@ -9,6 +9,7 @@ import BatchPricingCalculator from '@/components/calculators/batch-pricing-calcu
 import CalculateSaleCalculator from '@/components/calculators/calculate-sale-calculator';
 import UnitCostCalculator from '../calculators/unit-cost-calculator';
 import CalculatePercentCalculator from '../calculators/calculate-percent-calculator';
+import SumPercentCalculator from '../calculators/sum-percent-calculator';
 
 
 const calculators = [
@@ -52,7 +53,7 @@ const calculators = [
     icon: Plus,
     title: 'Somar com Porcentagem',
     description: 'Adicione uma porcentagem a um valor inicial.',
-    component: null,
+    component: SumPercentCalculator,
   },
   {
     id: 'cost-analysis',
