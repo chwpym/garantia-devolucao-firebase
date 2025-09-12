@@ -31,6 +31,8 @@ import { Badge } from '@/components/ui/badge';
 
 interface LotesSectionProps {
     onNavigateToLote: (loteId: number) => void;
+    isNewLoteModalOpen?: boolean;
+    setIsNewLoteModalOpen?: (isOpen: boolean) => void;
 }
 
 interface LoteWithItemCount extends Lote {
@@ -38,7 +40,7 @@ interface LoteWithItemCount extends Lote {
 }
 
 
-export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
+export default function LotesSection({ onNavigateToLote, isNewLoteModalOpen = false, setIsNewLoteModalOpen }: LotesSectionProps) {
   const [lotes, setLotes] = useState<LoteWithItemCount[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -71,6 +73,13 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
       });
     }
   }, [toast]);
+  
+  useEffect(() => {
+    if(isNewLoteModalOpen && setIsNewLoteModalOpen) {
+      handleOpenModal();
+      setIsNewLoteModalOpen(false);
+    }
+  }, [isNewLoteModalOpen, setIsNewLoteModalOpen]);
 
   useEffect(() => {
     loadData();
@@ -134,27 +143,6 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
             Agrupe, envie e gerencie suas garantias para fornecedores.
           </p>
         </div>
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-            <DialogTrigger asChild>
-                <Button onClick={handleOpenModal}>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Criar Novo Lote
-                </Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>{editingLote ? 'Editar Lote' : 'Criar Novo Lote de Garantia'}</DialogTitle>
-                    <DialogDescription>
-                        Dê um nome ao lote e selecione o fornecedor para agrupar as garantias.
-                    </DialogDescription>
-                </DialogHeader>
-                <LoteForm
-                    onSave={handleSave}
-                    editingLote={editingLote}
-                    suppliers={suppliers}
-                />
-            </DialogContent>
-        </Dialog>
       </div>
       
       {lotes.length > 0 ? (
@@ -218,10 +206,27 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
             <Package className="mx-auto h-12 w-12 text-muted-foreground" />
             <h2 className="mt-4 text-xl font-semibold">Nenhum lote de garantia encontrado</h2>
             <p className="text-muted-foreground mt-2">
-              Clique em &quot;Criar Novo Lote&quot; para começar a agrupar suas garantias.
+              Clique em &quot;Novo Lote&quot; no menu superior para começar a agrupar suas garantias.
             </p>
          </div>
       )}
+      
+       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>{editingLote ? 'Editar Lote' : 'Criar Novo Lote de Garantia'}</DialogTitle>
+                    <DialogDescription>
+                        Dê um nome ao lote e selecione o fornecedor para agrupar as garantias.
+                    </DialogDescription>
+                </DialogHeader>
+                <LoteForm
+                    onSave={handleSave}
+                    editingLote={editingLote}
+                    suppliers={suppliers}
+                />
+            </DialogContent>
+        </Dialog>
+
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent onClick={(e) => e.stopPropagation()}>

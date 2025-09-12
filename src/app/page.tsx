@@ -23,6 +23,7 @@ export default function Home() {
   const [selectedLoteId, setSelectedLoteId] = useState<number | null>(null);
   const [editingDevolucaoId, setEditingDevolucaoId] = useState<number | null>(null);
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isNewLoteModalOpen, setIsNewLoteModalOpen] = useState(false);
   const isMobile = useIsMobile();
 
 
@@ -56,7 +57,7 @@ export default function Home() {
       case 'query':
         return <QuerySection setActiveView={setActiveView} />;
       case 'lotes':
-        return <LotesSection onNavigateToLote={handleNavigateToLote} />;
+        return <LotesSection onNavigateToLote={handleNavigateToLote} isNewLoteModalOpen={isNewLoteModalOpen} setIsNewLoteModalOpen={setIsNewLoteModalOpen} />;
       case 'loteDetail':
         return <LoteDetailSection loteId={selectedLoteId!} onBack={handleBackToList} />;
       case 'reports':
@@ -89,6 +90,10 @@ export default function Home() {
         setActiveView={setActiveView} 
         isMobileMenuOpen={isMobileMenuOpen}
         setMobileMenuOpen={setMobileMenuOpen}
+        onNewLoteClick={() => {
+            setActiveView('lotes');
+            setIsNewLoteModalOpen(true);
+        }}
       >
         {renderContent()}
       </AppLayout>
