@@ -39,7 +39,7 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
         )}>
           <Image 
             src="/logo-1440x1440.jpg"
-            alt="Warranty Wise Logo"
+            alt="Synergia OS Logo"
             width={32}
             height={32}
             className="rounded-md flex-shrink-0"
@@ -48,7 +48,7 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
             "text-xl font-bold font-headline text-foreground whitespace-nowrap transition-opacity duration-200",
             isSidebarCollapsed && "opacity-0 w-0"
           )}>
-            Warranty Wise
+            Synergia OS
           </h1>
         </div>
         <div className="flex flex-col flex-1 overflow-auto">
@@ -108,13 +108,13 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
                          <div className="flex items-center gap-3 h-16 border-b px-6">
                            <Image 
                             src="/logo-1440x1440.jpg"
-                            alt="Warranty Wise Logo"
+                            alt="Synergia OS Logo"
                             width={32}
                             height={32}
                             className="rounded-md flex-shrink-0"
                           />
                           <h1 className="text-xl font-bold font-headline text-foreground whitespace-nowrap">
-                            Warranty Wise
+                            Synergia OS
                           </h1>
                         </div>
                         <MobileSidebar 
@@ -149,7 +149,7 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
                 
                 <div className="hidden md:flex items-center gap-3">
                     <h1 className={cn("text-xl font-bold font-headline text-foreground", !isSidebarCollapsed && 'md:hidden')}>
-                        Warranty Wise
+                        Synergia OS
                     </h1>
                 </div>
             </div>

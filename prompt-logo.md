@@ -1,21 +1,22 @@
-# Prompt para Geração de Logotipo e Ícones - Warranty Wise
+# Prompt para Geração de Logotipo e Ícones - Synergia OS
 
 ## Conceito Principal
 
-Crie um logotipo para "Warranty Wise", um aplicativo de software (PWA) projetado para gerenciar garantias de produtos de forma eficiente. O logotipo deve transmitir **confiança, organização, proteção e inteligência**.
+Crie um logotipo para "Synergia OS", um aplicativo de software (PWA) que funciona como um sistema operacional de gestão, unindo diversas ferramentas (garantias, devoluções, etc.) em uma única plataforma. O logotipo deve transmitir **sinergia, organização, eficiência e inteligência**.
 
 ## Estilo Visual
 
 *   **Estilo:** Moderno, limpo, minimalista e profissional (estilo "flat design 2.0" ou "corporate memphis").
-*   **Formas:** Use formas geométricas suaves, com cantos arredondados. Evite detalhes excessivamente complexos.
+*   **Formas:** Use formas geométricas que se conectam ou se sobrepõem, com cantos arredondados. Evite detalhes excessivamente complexos.
 *   **Vetor:** O design deve ser um ícone vetorial claro, adequado para uso como logotipo de aplicativo, favicon e dentro da interface do software.
 
 ## Paleta de Cores
 
 Use a seguinte paleta de cores, inspirada no design do aplicativo:
 
-*   **Cor Primária (Lavanda Suave):** `#D0BFFF` - Para o elemento principal do ícone.
-*   **Cor de Destaque (Azul Contido):** `#A0B4E0` - Para elementos secundários ou acentos.
+*   **Cor Primária (Roxo-Azulado):** `hsl(258, 84%, 68%)`
+*   **Cor de Destaque (Azul Contido):** `hsl(221, 83%, 60%)`
+*   **Cor de Destaque 2 (Verde):** `hsl(142, 71%, 45%)`
 *   **Fundo (Opcional):** Cinza claro (`#F0F0F5`) ou branco.
 *   **Texto (Opcional):** Um cinza-azulado escuro, como `hsl(224, 71.4%, 4.1%)`.
 
@@ -23,29 +24,30 @@ Use a seguinte paleta de cores, inspirada no design do aplicativo:
 
 Combine **dois** dos seguintes conceitos de forma criativa:
 
-1.  **Proteção:**
-    *   Um **escudo** (abstrato, moderno, não medieval). Esta é a metáfora mais forte e direta para "garantia".
-    *   Uma forma de **selo** ou **carimbo** de aprovação.
+1.  **Sinergia / Conexão:**
+    *   **Formas entrelaçadas** (círculos, quadrados) que se unem para formar um novo todo.
+    *   Um **nó** ou elo estilizado.
+    *   Pontos conectados por linhas, formando uma constelação ou rede.
 
-2.  **Inteligência / "Wise":**
+2.  **Sistema Operacional / Hub Central:**
+    *   Um hexágono ou um círculo central do qual outras formas emanam.
+    *   Uma forma de "núcleo" ou "core".
+    *   Engrenagens que trabalham juntas.
+
+3.  **Organização / Eficiência:**
+    *   Formas de **documentos** ou **camadas** empilhadas de forma organizada.
     *   Uma **marca de verificação (check mark)** integrada ao design.
-    *   Um cérebro estilizado ou uma lâmpada, mas de forma muito sutil.
-    *   A cabeça de uma coruja (símbolo de sabedoria), simplificada ao máximo.
-
-3.  **Organização / Processo:**
-    *   Formas de **documentos** ou **listas** empilhadas.
-    *   Engrenagens ou ferramentas estilizadas, representando a parte mecânica e de conserto.
 
 ## Exemplos de Combinações para o Prompt:
 
-*   **Exemplo 1 (Recomendado):** "Crie um logotipo vetorial minimalista combinando um **escudo moderno** com uma **marca de verificação (check mark)** no centro. O escudo deve ter cantos arredondados. Use a cor primária lavanda (`#D0BFFF`) para o escudo e branco ou um azul suave (`#A0B4E0`) para a marca de verificação."
-*   **Exemplo 2:** "Desenvolva o logotipo de um aplicativo que une a forma de um **documento estilizado** com um **escudo** sobreposto. O design deve ser limpo e profissional, usando as cores `#D0BFFF` e `#A0B4E0`."
-*   **Exemplo 3:** "Um logotipo que representa sabedoria e proteção: a silhueta minimalista de uma **coruja** cujos olhos são formados por duas marcas de verificação. Use um design de linha contínua na cor azul (`#A0B4E0`)."
+*   **Exemplo 1 (Recomendado):** "Crie um logotipo vetorial minimalista com três formas geométricas (um círculo, um quadrado e um triângulo) que se sobrepõem e se unem no centro, representando sinergia. Use as cores `#D0BFFF` (lavanda), `#A0B4E0` (azul) e uma terceira cor suave para as formas. O design deve parecer um núcleo coeso."
+*   **Exemplo 2:** "Desenvolva o logotipo de um aplicativo que une a forma de um **hexágono estilizado** (representando um hub) com **setas** apontando para dentro e para fora, simbolizando a entrada e saída de informações. Use a cor primária `hsl(258, 84%, 68%)` para o hexágono."
+*   **Exemplo 3:** "Um logotipo abstrato que combina o conceito de **engrenagens interligadas** com uma forma de **cérebro estilizado**, para representar a inteligência e a cooperação do sistema 'Synergia OS'. Use um design de linha contínua na cor azul `hsl(221, 83%, 60%)`."
 
 ## Tipografia (se for incluir o nome)
 
-*   **Fonte:** Use uma fonte sans-serif limpa e amigável, como "PT Sans", "Inter" ou "Lato".
-*   **Layout:** O nome "Warranty Wise" deve aparecer ao lado ou abaixo do ícone, em uma cor escura e legível (`hsl(224, 71.4%, 4.1%)`). "Warranty" pode ter um peso de fonte normal e "Wise" em negrito para dar ênfase.
+*   **Fonte:** Use uma fonte sans-serif limpa e amigável, como "Inter" ou "Lato".
+*   **Layout:** O nome "Synergia OS" deve aparecer ao lado ou abaixo do ícone, em uma cor escura e legível (`hsl(224, 71.4%, 4.1%)`). "Synergia" pode ter um peso de fonte normal e "OS" em negrito para dar ênfase.
 
 ## Geração de Ícones para PWA (Progressive Web App)
 

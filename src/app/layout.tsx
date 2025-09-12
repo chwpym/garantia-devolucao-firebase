@@ -13,8 +13,8 @@ const inter = Inter({
 
 
 export const metadata: Metadata = {
-  title: 'Warranty Wise',
-  description: 'Sistema de Controle de Garantias Local',
+  title: 'Synergia OS',
+  description: 'Sistema de Gestão Integrada',
   manifest: '/manifest.json',
   icons: {
     icon: [

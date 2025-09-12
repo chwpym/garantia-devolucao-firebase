@@ -1,6 +1,6 @@
-# Warranty Wise - Sistema de Controle de Garantias e Devoluções
+# Synergia OS - Sistema de Gestão Integrada
 
-Um sistema web completo e moderno para gerenciamento de garantias de produtos e devoluções de peças, desenvolvido como um Progressive Web App (PWA) com funcionalidades offline e capacidade de instalação nativa no seu dispositivo.
+Um sistema web completo e moderno para gerenciamento de garantias de produtos, devoluções de peças e outras ferramentas, desenvolvido como um Progressive Web App (PWA) com funcionalidades offline e capacidade de instalação nativa no seu dispositivo.
 
 ## 🚀 Funcionalidades Principais
 
@@ -26,7 +26,7 @@ Um sistema web completo e moderno para gerenciamento de garantias de produtos e 
 
 ### 📱 Progressive Web App (PWA)
 - **Funciona Offline**: Todos os dados são armazenados localmente no seu navegador usando IndexedDB, permitindo o uso sem conexão à internet.
-- **Instalação Nativa**: Instale o "Warranty Wise" como um aplicativo no seu computador ou celular para acesso rápido.
+- **Instalação Nativa**: Instale o "Synergia OS" como um aplicativo no seu computador ou celular para acesso rápido.
 - **Interface Responsiva**: O design se adapta perfeitamente a desktops, tablets e celulares.
 
 ## 📋 Requisitos do Sistema
@@ -44,7 +44,7 @@ O sistema foi projetado para funcionar diretamente no navegador, sem a necessida
 
 ### Como Instalar o PWA
 -   **No Computador (Chrome/Edge):**
-    1.  Abra o site do Warranty Wise.
+    1.  Abra o site do Synergia OS.
     2.  Clique no ícone de instalação (geralmente um monitor com uma seta para baixo) na barra de endereço.
     3.  Confirme a instalação.
 
