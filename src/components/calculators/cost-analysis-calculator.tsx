@@ -79,8 +79,6 @@ export default function CostAnalysisCalculator() {
                 const totalSeguro = parseFloat(total.vSeg) || 0;
                 const totalDesconto = parseFloat(total.vDesc) || 0;
                 const totalOutras = parseFloat(total.vOutro) || 0;
-                const totalST = parseFloat(total.vST) || 0;
-                const totalIPI = parseFloat(total.vIPI) || 0;
 
 
                 const newItems: AnalyzedItem[] = dets.map((det: any, index: number) => {
@@ -94,7 +92,7 @@ export default function CostAnalysisCalculator() {
                     const itemWeight = totalProdValue > 0 ? itemTotalCost / totalProdValue : 0;
                     
                     const ipiValor = parseFloat(imposto?.IPI?.IPITrib?.vIPI) || 0;
-                    const stValor = parseFloat(imposto?.ICMS?.ICMSST?.vICMSST) || (totalST * itemWeight) || 0;
+                    const stValor = parseFloat(imposto?.ICMS?.ICMSST?.vICMSST) || 0;
                     
                     const freteRateado = parseFloat(prod.vFrete) || (totalFrete * itemWeight) || 0;
                     const seguroRateado = parseFloat(prod.vSeg) || (totalSeguro * itemWeight) || 0;
@@ -229,7 +227,7 @@ export default function CostAnalysisCalculator() {
             headStyles: { fillColor: [63, 81, 181] },
             footStyles: { fillColor: [224, 224, 224], textColor: [0,0,0], fontStyle: 'bold' },
             didDrawPage: (data) => {
-                const pageCount = doc.internal.getNumberOfPages();
+                const pageCount = (doc as any).internal.getNumberOfPages ? (doc as any).internal.getNumberOfPages() : (doc as any).getNumberOfPages();
                 doc.setFontSize(8);
                 const pageText = `Página ${data.pageNumber} de ${pageCount}`;
                 doc.text(pageText, data.settings.margin.left, doc.internal.pageSize.height - 10);
