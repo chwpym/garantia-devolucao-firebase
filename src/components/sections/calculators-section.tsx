@@ -7,6 +7,7 @@ import { Calculator, ShoppingCart, Percent, Plus, FileScan, Tag, DivideCircle, F
 import AveragePriceCalculator from '@/components/calculators/average-price-calculator';
 import BatchPricingCalculator from '@/components/calculators/batch-pricing-calculator';
 import CalculateSaleCalculator from '@/components/calculators/calculate-sale-calculator';
+import UnitCostCalculator from '../calculators/unit-cost-calculator';
 
 
 const calculators = [
@@ -36,7 +37,7 @@ const calculators = [
     icon: DivideCircle,
     title: 'Custo Unitário',
     description: 'Encontre o custo por item a partir do total e quantidade.',
-    component: null,
+    component: UnitCostCalculator,
   },
   {
     id: 'calculate-percent',
