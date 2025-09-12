@@ -17,6 +17,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import DevolucaoRegisterSection from '@/components/sections/devolucao-register-section';
 import DevolucaoQuerySection from '@/components/sections/devolucao-query-section';
 import DevolucaoReportSection from '@/components/sections/devolucao-report-section';
+import CalculatorsSection from '@/components/sections/calculators-section';
 
 export default function Home() {
   const [activeView, setActiveView] = useState('dashboard');
@@ -76,6 +77,8 @@ export default function Home() {
         return <DevolucaoQuerySection onEdit={handleEditDevolucao} />;
       case 'devolucao-reports':
         return <DevolucaoReportSection />;
+      case 'calculators':
+        return <CalculatorsSection />;
       default:
         return <DashboardSection setActiveView={setActiveView} />;
     }

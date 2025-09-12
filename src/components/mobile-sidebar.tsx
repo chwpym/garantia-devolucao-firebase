@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, FileText, Search, PlusSquare, Users, Building, Package, FolderKanban, Wrench, Undo2 } from 'lucide-react';
+import { LayoutDashboard, FileText, Search, PlusSquare, Users, Building, Package, FolderKanban, Wrench, Undo2, Calculator } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 
 
@@ -36,7 +36,11 @@ const cadastroNavItems = [
 const reportNavItems = [
     { id: 'reports', label: 'Relatório de Garantias', icon: FileText },
     { id: 'devolucao-reports', label: 'Relatório de Devoluções', icon: FileText },
-]
+];
+
+const toolsNavItems = [
+    { id: 'calculators', label: 'Calculadoras', icon: Calculator },
+];
 
 export default function MobileSidebar({ activeView, onNavigate, isCollapsed, className }: MobileSidebarProps) {
     
@@ -44,6 +48,7 @@ export default function MobileSidebar({ activeView, onNavigate, isCollapsed, cla
     const isGarantiaActive = garantiaNavItems.some(item => item.id === activeView);
     const isDevolucaoActive = devolucaoNavItems.some(item => item.id === activeView);
     const isReportActive = reportNavItems.some(item => item.id === activeView);
+    const isToolsActive = toolsNavItems.some(item => item.id === activeView);
 
     const renderNavItem = (item: { id: string; label: string; icon: React.ElementType }) => (
          <Button
@@ -69,7 +74,7 @@ export default function MobileSidebar({ activeView, onNavigate, isCollapsed, cla
                 <Accordion 
                     type="single" 
                     collapsible 
-                    defaultValue={isCadastroActive ? "cadastros" : isGarantiaActive ? "garantias" : isDevolucaoActive ? "devolucoes" : isReportActive ? "reports" : undefined} 
+                    defaultValue={isCadastroActive ? "cadastros" : isGarantiaActive ? "garantias" : isDevolucaoActive ? "devolucoes" : isReportActive ? "reports" : isToolsActive ? "tools" : undefined} 
                     className="w-full"
                 >
                     <AccordionItem value="cadastros" className="border-b-0">
@@ -179,6 +184,36 @@ export default function MobileSidebar({ activeView, onNavigate, isCollapsed, cla
                         <AccordionContent className={cn("pb-1", isCollapsed && "hidden")}>
                             <div className="flex flex-col gap-1 pl-4 pt-1">
                                 {reportNavItems.map(item => (
+                                    <Button
+                                        key={item.id}
+                                        variant={activeView === item.id ? 'secondary' : 'ghost'}
+                                        className={cn("justify-start gap-3 text-base h-11")}
+                                        onClick={() => onNavigate(item.id)}
+                                    >
+                                        <item.icon className="h-5 w-5 flex-shrink-0" />
+                                        <span>{item.label}</span>
+                                    </Button>
+                                ))}
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="tools" className="border-b-0">
+                        <AccordionTrigger 
+                            className={cn(
+                                "justify-start gap-3 text-base h-11 font-normal rounded-md hover:no-underline hover:bg-accent px-4 py-2",
+                                isCollapsed && "justify-center p-0",
+                                isToolsActive && !isCollapsed ? "bg-accent" : ""
+                            )}
+                            title={isCollapsed ? "Ferramentas" : undefined}
+                        >
+                             <div className="flex items-center gap-3">
+                                <Calculator className="h-5 w-5 flex-shrink-0" />
+                                <span className={cn("truncate", isCollapsed && "hidden")}>Ferramentas</span>
+                            </div>
+                        </AccordionTrigger>
+                        <AccordionContent className={cn("pb-1", isCollapsed && "hidden")}>
+                            <div className="flex flex-col gap-1 pl-4 pt-1">
+                                {toolsNavItems.map(item => (
                                     <Button
                                         key={item.id}
                                         variant={activeView === item.id ? 'secondary' : 'ghost'}
