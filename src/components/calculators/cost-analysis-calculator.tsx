@@ -151,8 +151,7 @@ export default function CostAnalysisCalculator() {
         setItems(prevItems =>
             prevItems.map(item => {
                 if (item.id === id) {
-                    const newFactor = value === '' ? '0' : value;
-                    const factor = parseFloat(newFactor) || 1;
+                    const factor = parseFloat(value) || 1;
                     const convertedUnitCost = factor > 0 ? item.finalUnitCost / factor : 0;
                     return { ...item, conversionFactor: value, convertedUnitCost };
                 }
