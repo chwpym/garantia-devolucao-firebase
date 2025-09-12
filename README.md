@@ -1,6 +1,6 @@
 # Synergia OS - Sistema de Gestão Integrada
 
-Um sistema web completo e moderno para gerenciamento de garantias de produtos, devoluções de peças e outras ferramentas, desenvolvido como um Progressive Web App (PWA) com funcionalidades offline e capacidade de instalação nativa no seu dispositivo.
+Um sistema web completo e moderno para gerenciamento de garantias, devoluções de peças e outras ferramentas, desenvolvido como um Progressive Web App (PWA) com funcionalidades offline e capacidade de instalação nativa.
 
 ## 🚀 Funcionalidades Principais
 
@@ -66,7 +66,7 @@ O sistema foi projetado para funcionar diretamente no navegador, sem a necessida
 - Em **Configurações**, preencha os dados da sua empresa para que apareçam nos relatórios em PDF.
 
 ### 2. Registrando uma Garantia
-- Vá para **Garantias → Cadastro de Garantia**.
+- Vá para **Garantias → Cadastro de Garantia** (ou use o atalho "Nova Garantia").
 - Preencha as informações do produto, defeito, e selecione o cliente, mecânico e fornecedor.
 - Anexe fotos, se necessário. As imagens são armazenadas localmente.
 - Clique em "Salvar".
@@ -77,7 +77,7 @@ O sistema foi projetado para funcionar diretamente no navegador, sem a necessida
 - Ao clicar em um lote, você pode gerenciar os itens, aplicar NFs de saída/retorno em massa e alterar o status das garantias.
 
 ### 4. Registrando uma Devolução
-- Vá para **Devoluções → Cadastro de Devolução**.
+- Vá para **Devoluções → Cadastro de Devolução** (ou use o atalho "Nova Devolução").
 - Adicione uma ou mais peças, preenchendo código, descrição e quantidade.
 - Preencha as informações gerais, como cliente e requisição de venda.
 - Clique em "Salvar Devolução".

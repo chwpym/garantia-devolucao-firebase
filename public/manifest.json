@@ -1,11 +1,11 @@
 {
-  "name": "Warranty Wise",
-  "short_name": "WarrantyWise",
-  "description": "Sistema de Controle de Garantias Local",
+  "name": "Synergia OS",
+  "short_name": "SynergiaOS",
+  "description": "Sistema de Gestão Integrada",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "theme_color": "#8B5CF6",
   "icons": [
     {
       "src": "/icon-192x192.png",
