@@ -11,6 +11,7 @@ import UnitCostCalculator from '../calculators/unit-cost-calculator';
 import CalculatePercentCalculator from '../calculators/calculate-percent-calculator';
 import SumPercentCalculator from '../calculators/sum-percent-calculator';
 import CostAnalysisCalculator from '../calculators/cost-analysis-calculator';
+import AdvancedCostAnalysisCalculator from '../calculators/advanced-cost-analysis-calculator';
 
 
 const calculators = [
@@ -68,7 +69,7 @@ const calculators = [
     icon: Microscope,
     title: 'Análise de Custo Avançada',
     description: 'Análise detalhada de NF-e com PIS/COFINS e mais.',
-    component: null,
+    component: AdvancedCostAnalysisCalculator,
   },
   {
     id: 'compare-nfe',
@@ -142,4 +143,3 @@ export default function CalculatorsSection() {
         </div>
     </div>
   );
-}
