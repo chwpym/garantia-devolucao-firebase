@@ -28,9 +28,9 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
   };
   
   return (
-    <div className="flex min-h-screen w-full bg-muted/40">
+    <div className="flex h-screen w-full bg-muted/40">
       <aside className={cn(
-        "flex-col border-r bg-background hidden md:flex transition-all duration-300 ease-in-out",
+        "flex flex-col border-r bg-background hidden md:flex transition-all duration-300 ease-in-out",
         isSidebarCollapsed ? "w-20" : "w-72"
       )}>
         <div className={cn(
@@ -51,41 +51,43 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
             Warranty Wise
           </h1>
         </div>
-        <MobileSidebar 
-          activeView={activeView} 
-          onNavigate={setActiveView}
-          isCollapsed={isSidebarCollapsed}
-          className="flex-1 overflow-auto py-2 hidden md:block"
-        />
-         <div className="mt-auto p-4 border-t">
-            <nav className='flex flex-col gap-1'>
-                 <Button
-                    key="backup"
-                    variant={activeView === "backup" ? 'secondary' : 'ghost'}
-                    className={cn(
-                        "justify-start gap-3 text-base h-11 w-full",
-                        isSidebarCollapsed && "justify-center"
-                    )}
-                    onClick={() => setActiveView("backup")}
-                    title={isSidebarCollapsed ? "Backup" : undefined}
-                    >
-                    <DatabaseBackup className="h-5 w-5 flex-shrink-0" />
-                    <span className={cn("truncate", isSidebarCollapsed && "hidden")}>Backup</span>
-                </Button>
-                 <Button
-                    key="settings"
-                    variant={activeView === "settings" ? 'secondary' : 'ghost'}
-                    className={cn(
-                        "justify-start gap-3 text-base h-11 w-full",
-                        isSidebarCollapsed && "justify-center"
-                    )}
-                    onClick={() => setActiveView("settings")}
-                    title={isSidebarCollapsed ? "Configurações" : undefined}
-                    >
-                    <Settings className="h-5 w-5 flex-shrink-0" />
-                    <span className={cn("truncate", isSidebarCollapsed && "hidden")}>Configurações</span>
-                </Button>
-            </nav>
+        <div className="flex flex-col flex-1 overflow-auto">
+            <MobileSidebar 
+              activeView={activeView} 
+              onNavigate={setActiveView}
+              isCollapsed={isSidebarCollapsed}
+              className="flex-1 overflow-auto py-2 hidden md:block"
+            />
+            <div className="mt-auto p-4 border-t">
+                <nav className='flex flex-col gap-1'>
+                    <Button
+                        key="backup"
+                        variant={activeView === "backup" ? 'secondary' : 'ghost'}
+                        className={cn(
+                            "justify-start gap-3 text-base h-11 w-full",
+                            isSidebarCollapsed && "justify-center"
+                        )}
+                        onClick={() => setActiveView("backup")}
+                        title={isSidebarCollapsed ? "Backup" : undefined}
+                        >
+                        <DatabaseBackup className="h-5 w-5 flex-shrink-0" />
+                        <span className={cn("truncate", isSidebarCollapsed && "hidden")}>Backup</span>
+                    </Button>
+                    <Button
+                        key="settings"
+                        variant={activeView === "settings" ? 'secondary' : 'ghost'}
+                        className={cn(
+                            "justify-start gap-3 text-base h-11 w-full",
+                            isSidebarCollapsed && "justify-center"
+                        )}
+                        onClick={() => setActiveView("settings")}
+                        title={isSidebarCollapsed ? "Configurações" : undefined}
+                        >
+                        <Settings className="h-5 w-5 flex-shrink-0" />
+                        <span className={cn("truncate", isSidebarCollapsed && "hidden")}>Configurações</span>
+                    </Button>
+                </nav>
+            </div>
         </div>
       </aside>
       <div className="flex flex-1 flex-col">
