@@ -106,7 +106,7 @@ export default function CsvExporter() {
       case 'suppliers':
         return db.getAllSuppliers();
       case 'devolutions': {
-        const devolucoes: Devolucao[] = await db.getAllDevolucoes();
+        const devolucoes: (Devolucao & { itens: ItemDevolucao[] })[] = await db.getAllDevolucoes();
         return devolucoes.flatMap(devolucao => {
             if (!devolucao.itens || devolucoes.length === 0) {
                 return [{ ...devolucao, id: devolucao.id! }];
