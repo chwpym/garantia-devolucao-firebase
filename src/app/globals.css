@@ -4,47 +4,77 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 240 10% 98.5%;
     --foreground: 224 71.4% 4.1%;
-    --card: 0 0% 100%;
+
+    --card: 240 10% 98.5%;
     --card-foreground: 224 71.4% 4.1%;
+ 
     --popover: 0 0% 100%;
     --popover-foreground: 224 71.4% 4.1%;
-    --primary: 221 83.2% 53.3%;
+ 
+    --primary: 258 84% 68%;
     --primary-foreground: 210 20% 98%;
-    --secondary: 220 14.3% 95.9%;
+ 
+    --secondary: 240 5% 90%;
     --secondary-foreground: 220.9 39.3% 11%;
-    --muted: 220 14.3% 95.9%;
+ 
+    --muted: 240 5% 94%;
     --muted-foreground: 220 8.9% 46.1%;
-    --accent: 220 14.3% 95.9%;
-    --accent-foreground: 220.9 39.3% 11%;
+ 
+    --accent: 252 75% 96%;
+    --accent-foreground: 258 84% 50%;
+ 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 20% 98%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 224 71.4% 4.1%;
+
+    --border: 240 5% 88%;
+    --input: 240 5% 88%;
+    --ring: 258 84% 60%;
+ 
     --radius: 0.5rem;
+
+    --chart-1: 258 84% 68%;
+    --chart-2: 32 95% 62%;
+    --chart-3: 160 84% 39%;
+    --chart-4: 204 80% 51%;
+    --chart-5: 0 84% 60%;
   }
+ 
   .dark {
     --background: 224 71.4% 4.1%;
     --foreground: 210 20% 98%;
+ 
     --card: 224 71.4% 4.1%;
     --card-foreground: 210 20% 98%;
+ 
     --popover: 224 71.4% 4.1%;
     --popover-foreground: 210 20% 98%;
-    --primary: 217.2 91.2% 59.8%;
+ 
+    --primary: 258 84% 75%;
     --primary-foreground: 210 20% 98%;
+ 
     --secondary: 215 27.9% 16.9%;
     --secondary-foreground: 210 20% 98%;
+ 
     --muted: 215 27.9% 16.9%;
     --muted-foreground: 217.9 10.6% 64.9%;
+ 
     --accent: 215 27.9% 16.9%;
     --accent-foreground: 210 20% 98%;
+ 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 20% 98%;
+ 
     --border: 215 27.9% 16.9%;
     --input: 215 27.9% 16.9%;
-    --ring: 217.2 91.2% 59.8%;
+    --ring: 258 84% 75%;
+
+    --chart-1: 258 84% 75%;
+    --chart-2: 32 95% 72%;
+    --chart-3: 160 84% 49%;
+    --chart-4: 204 80% 61%;
+    --chart-5: 0 84% 70%;
   }
 }
 

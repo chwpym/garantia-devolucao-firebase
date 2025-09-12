@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Settings, Menu, DatabaseBackup, PlusCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Settings, Menu, DatabaseBackup, Wrench, Undo2, Package } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from './theme-toggle';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
@@ -153,16 +153,16 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
             </div>
 
              <div className="flex-1 flex items-center justify-center gap-2">
-                <Button variant="secondary" size="sm" onClick={() => setActiveView('register')}>
-                    <PlusCircle className="mr-2 h-4 w-4" />
+                <Button size="sm" onClick={() => setActiveView('register')}>
+                    <Wrench className="mr-2 h-4 w-4" />
                     Nova Garantia
                 </Button>
                  <Button variant="secondary" size="sm" onClick={() => setActiveView('devolucao-register')}>
-                    <PlusCircle className="mr-2 h-4 w-4" />
+                    <Undo2 className="mr-2 h-4 w-4" />
                     Nova Devolução
                 </Button>
                 <Button variant="secondary" size="sm" onClick={onNewLoteClick}>
-                    <PlusCircle className="mr-2 h-4 w-4" />
+                    <Package className="mr-2 h-4 w-4" />
                     Novo Lote
                 </Button>
             </div>
