@@ -104,32 +104,32 @@ export function ImportButton({ onDataImported }: ImportButtonProps) {
 
         // Import new data
         if (dataToImport.warranties) {
-            for (const {['id']: _, ...warrantyData} of dataToImport.warranties) {
+            for (const { ...warrantyData } of dataToImport.warranties) {
                 await db.addWarranty(warrantyData);
             }
         }
         if (dataToImport.persons) {
-            for (const {['id']: _, ...personData} of dataToImport.persons) {
+            for (const { ...personData } of dataToImport.persons) {
                 await db.addPerson(personData);
             }
         }
         if (dataToImport.suppliers) {
-            for (const {['id']: _, ...supplierData} of dataToImport.suppliers) {
+            for (const { ...supplierData } of dataToImport.suppliers) {
                 await db.addSupplier(supplierData);
             }
         }
         if (dataToImport.lotes) {
-            for (const {['id']: _, ...loteData} of dataToImport.lotes) {
+            for (const { ...loteData } of dataToImport.lotes) {
                 await db.addLote(loteData);
             }
         }
         if (dataToImport.devolucoes) {
-            for (const {['id']: _, itens, ...devolucaoData} of dataToImport.devolucoes) {
+            for (const { itens, ...devolucaoData } of dataToImport.devolucoes) {
                 await db.addDevolucao(devolucaoData, itens || []);
             }
         }
         if (dataToImport.companyData) {
-            const {['id']: _, ...companyData} = dataToImport.companyData;
+            const { ...companyData } = dataToImport.companyData;
             await db.updateCompanyData(companyData);
         }
 
