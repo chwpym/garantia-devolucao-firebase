@@ -151,7 +151,8 @@ export default function CostAnalysisCalculator() {
         setItems(prevItems =>
             prevItems.map(item => {
                 if (item.id === id) {
-                    const factor = parseFloat(value) || 1;
+                    const newFactor = value === '' ? '0' : value;
+                    const factor = parseFloat(newFactor) || 1;
                     const convertedUnitCost = factor > 0 ? item.finalUnitCost / factor : 0;
                     return { ...item, conversionFactor: value, convertedUnitCost };
                 }
@@ -315,7 +316,7 @@ export default function CostAnalysisCalculator() {
                                             value={item.conversionFactor}
                                             onChange={(e) => handleConversionFactorChange(item.id, e.target.value)}
                                             placeholder="1"
-                                            min="1"
+                                            min="0"
                                         />
                                     </TableCell>
                                     <TableCell className="text-right">{formatCurrency(item.unitCost)}</TableCell>
