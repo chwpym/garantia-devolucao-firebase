@@ -53,6 +53,14 @@ export default {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))',
         },
+        'accent-blue': {
+          DEFAULT: 'hsl(var(--accent-blue))',
+          foreground: 'hsl(var(--accent-blue-foreground))',
+        },
+        'accent-green': {
+          DEFAULT: 'hsl(var(--accent-green))',
+          foreground: 'hsl(var(--accent-green-foreground))',
+        },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',

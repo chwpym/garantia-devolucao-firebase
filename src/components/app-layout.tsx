@@ -161,7 +161,7 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
                     <Undo2 className="mr-2 h-4 w-4" />
                     Nova Devolução
                 </Button>
-                <Button variant="secondary" size="sm" onClick={onNewLoteClick}>
+                <Button variant="accent-green" size="sm" onClick={onNewLoteClick}>
                     <Package className="mr-2 h-4 w-4" />
                     Novo Lote
                 </Button>
