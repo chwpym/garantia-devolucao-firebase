@@ -409,7 +409,8 @@ export default function AdvancedCostAnalysisCalculator() {
                                     <TableCell className="text-right">{formatNumber(item.quantity)}</TableCell>
                                     <TableCell>
                                         <Input
-                                            type="number"
+                                            type="text"
+                                            inputMode="decimal"
                                             className="h-8 text-right"
                                             value={item.conversionFactor}
                                             onChange={(e) => handleConversionFactorChange(item.id, e.target.value)}
