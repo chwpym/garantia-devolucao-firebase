@@ -72,10 +72,12 @@ export default function RegisterSection({ editingId, mode, onSave, onClear }: Re
   }, [toast]);
   
   useEffect(() => {
-    if (isDbReady) {
+    if (isDbReady && editingId) {
       loadWarranty();
+    } else if (!editingId) {
+        setWarrantyToLoad(null);
     }
-  }, [isDbReady, loadWarranty]);
+  }, [isDbReady, editingId, loadWarranty]);
 
 
   const handleSave = async (data: Omit<Warranty, 'id'>, id?: number) => {
