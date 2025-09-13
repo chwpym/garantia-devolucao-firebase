@@ -16,6 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { ArrowRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 // Tipos para Garantias
 interface DashboardStats {
@@ -225,8 +226,8 @@ export default function DashboardSection({ setActiveView }: DashboardSectionProp
 
         <Tabs defaultValue="garantias" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="garantias">Garantias</TabsTrigger>
-                <TabsTrigger value="devolucoes">Devoluções</TabsTrigger>
+                <TabsTrigger value="garantias" className={cn("border-2 border-transparent data-[state=active]:border-primary")}>Garantias</TabsTrigger>
+                <TabsTrigger value="devolucoes" className={cn("border-2 border-transparent data-[state=active]:border-[hsl(var(--accent-blue))]")}>Devoluções</TabsTrigger>
             </TabsList>
             <TabsContent value="garantias" className="mt-6">
                  <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
