@@ -113,7 +113,7 @@ export default function RegisterSection({ editingId, mode, onSave, onClear }: Re
   return (
     <div className="max-w-5xl mx-auto">
       <WarrantyForm
-        key={warrantyToLoad?.id ?? editingId ?? 'new'}
+        key={editingId ? `${editingId}-${mode}`: 'new'}
         selectedWarranty={warrantyToLoad}
         onSave={handleSave}
         onClear={onClear}
