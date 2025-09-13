@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo, useRef } from "react";
@@ -40,6 +41,21 @@ interface NfeProductDetail {
     imposto: Record<string, any>;
 }
 
+interface InfNFe {
+    ide: { nNF: string };
+    emit: { xNome: string; CNPJ: string };
+    det: NfeProductDetail[] | NfeProductDetail;
+    total: {
+        ICMSTot: {
+            vProd: string;
+            vFrete: string;
+            vSeg: string;
+            vDesc: string;
+            vOutro: string;
+        }
+    }
+}
+
 export default function CostAnalysisCalculator() {
     const [items, setItems] = useState<AnalyzedItem[]>([]);
     const [fileName, setFileName] = useState<string | null>(null);
@@ -59,7 +75,7 @@ export default function CostAnalysisCalculator() {
                 const parser = new XMLParser({ ignoreAttributes: false, parseAttributeValue: true });
                 const jsonObj = parser.parse(xmlData);
                 
-                const infNFe = jsonObj?.nfeProc?.NFe?.infNFe || jsonObj?.NFe?.infNFe;
+                const infNFe: InfNFe = jsonObj?.nfeProc?.NFe?.infNFe || jsonObj?.NFe?.infNFe;
                 if (!infNFe) {
                     throw new Error("Estrutura do XML da NF-e inválida: <infNFe> não encontrado.");
                 }
@@ -86,7 +102,7 @@ export default function CostAnalysisCalculator() {
                 const totalOutras = parseFloat(total.vOutro) || 0;
 
 
-                const newItems: AnalyzedItem[] = dets.map((det, index: number) => {
+                const newItems: AnalyzedItem[] = dets.map((det: NfeProductDetail, index: number) => {
                     const prod = det.prod;
                     const imposto = det.imposto;
 
@@ -232,7 +248,7 @@ export default function CostAnalysisCalculator() {
             showFoot: 'lastPage',
             headStyles: { fillColor: [63, 81, 181] },
             footStyles: { fillColor: [224, 224, 224], textColor: [0,0,0], fontStyle: 'bold' },
-            didDrawPage: (data: { pageNumber: number; settings: { margin: { left: number; right: number } } }) => {
+            didDrawPage: (data) => {
                 const pageCount = doc.getNumberOfPages ? doc.getNumberOfPages() : (doc as any).internal.getNumberOfPages();
                 doc.setFontSize(8);
                 const pageText = `Página ${data.pageNumber} de ${pageCount}`;
@@ -359,4 +375,6 @@ export default function CostAnalysisCalculator() {
         </div>
     );
 }
+    
+
     
