@@ -19,7 +19,7 @@ Um sistema web completo e moderno para gerenciamento de garantias, devoluções 
     - **Mensal por Cliente**: Gere um extrato detalhado de devoluções por cliente, ideal para conferência financeira.
 
 ### 🗃️ Cadastros e Configurações
-- **Gestão Centralizada**: Mantenha um cadastro único para Clientes, Mecânicos e Fornecedores.
+- **Gestão Centralizada com Busca**: Mantenha um cadastro único para Clientes, Mecânicos e Fornecedores, com uma busca inteligente que permite encontrar registros por nome, CPF/CNPJ ou telefone.
 - **Backup e Restauração (JSON)**: Exporte e importe todos os dados do sistema com um único arquivo JSON.
 - **Exportação Avançada (CSV)**: Crie exportações personalizadas de qualquer módulo, escolhendo exatamente quais campos incluir.
 - **Dados da Empresa**: Personalize os cabeçalhos dos relatórios em PDF com as informações da sua empresa.
@@ -62,6 +62,7 @@ O sistema foi projetado para funcionar diretamente no navegador, sem a necessida
 
 ### 1. Primeiros Passos: Cadastros
 - Acesse a seção **Cadastros** no menu lateral.
+- Antes de criar um novo registro, use o campo de **busca** para verificar se o cliente ou fornecedor já existe.
 - Cadastre seus **Clientes/Mecânicos** e **Fornecedores**. Estes dados serão usados nos menus de seleção ao registrar garantias e devoluções.
 - Em **Configurações**, preencha os dados da sua empresa para que apareçam nos relatórios em PDF.
 
