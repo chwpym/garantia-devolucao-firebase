@@ -72,17 +72,18 @@ export default function RegisterSection({ editingId, mode, onSave, onClear }: Re
   }, [toast]);
   
   useEffect(() => {
-    if (isDbReady && editingId) {
-      loadWarranty();
-    } else if (!editingId) {
-        setWarrantyToLoad(null);
+    if (isDbReady) {
+        if (editingId) {
+            loadWarranty();
+        } else {
+            setWarrantyToLoad(null);
+        }
     }
   }, [isDbReady, editingId, loadWarranty]);
 
 
   const handleSave = async (data: Warranty) => {
     try {
-      // If the mode is clone, we must not pass the id.
       const isCloning = mode === 'clone';
       
       if (data.id && !isCloning) {
@@ -105,7 +106,7 @@ export default function RegisterSection({ editingId, mode, onSave, onClear }: Re
     }
   };
 
-  if (!isDbReady || isLoadingData) {
+  if (!isDbReady || (editingId && isLoadingData)) {
     return <Skeleton className="h-[700px] w-full" />;
   }
 

@@ -122,15 +122,6 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
         return () => window.removeEventListener('datachanged', handleDataChanged);
     }, []);
 
-    useEffect(() => {
-        form.reset(selectedWarranty ? {
-        ...selectedWarranty,
-        quantidade: selectedWarranty.quantidade ?? 1,
-        status: selectedWarranty.status ?? 'Em análise',
-        photos: selectedWarranty.photos ?? [],
-        } : defaultValues);
-    }, [selectedWarranty, form]);
-
     const handleSubmit = async (values: WarrantyFormValues) => {
         const dataToSave: Warranty = {
             ...values,
