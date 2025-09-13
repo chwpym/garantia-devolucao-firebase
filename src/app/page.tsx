@@ -19,10 +19,16 @@ import DevolucaoQuerySection from '@/components/sections/devolucao-query-section
 import DevolucaoReportSection from '@/components/sections/devolucao-report-section';
 import CalculatorsSection from '@/components/sections/calculators-section';
 
+export type RegisterMode = 'edit' | 'clone';
+
 export default function Home() {
   const [activeView, setActiveView] = useState('dashboard');
   const [selectedLoteId, setSelectedLoteId] = useState<number | null>(null);
+  
   const [editingDevolucaoId, setEditingDevolucaoId] = useState<number | null>(null);
+  const [editingWarrantyId, setEditingWarrantyId] = useState<number | null>(null);
+  const [registerMode, setRegisterMode] = useState<RegisterMode>('edit');
+  
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isNewLoteModalOpen, setIsNewLoteModalOpen] = useState(false);
   const isMobile = useIsMobile();
@@ -48,15 +54,52 @@ export default function Home() {
     setActiveView('devolucao-query');
   }
 
+  const handleEditWarranty = (warrantyId: number) => {
+    setEditingWarrantyId(warrantyId);
+    setRegisterMode('edit');
+    setActiveView('register');
+  }
+
+  const handleCloneWarranty = (warrantyId: number) => {
+    setEditingWarrantyId(warrantyId);
+    setRegisterMode('clone');
+    setActiveView('register');
+  }
+  
+  const handleWarrantySave = () => {
+    setEditingWarrantyId(null);
+    setActiveView('query');
+  }
+  
+  const handleViewChange = (view: string) => {
+    // Reset editing states when changing views
+    if (view !== 'register') {
+      setEditingWarrantyId(null);
+    }
+    if (view !== 'devolucao-register') {
+      setEditingDevolucaoId(null);
+    }
+    setActiveView(view);
+  }
+
 
   const renderContent = () => {
     switch (activeView) {
       case 'dashboard':
-        return <DashboardSection setActiveView={setActiveView} />;
+        return <DashboardSection setActiveView={handleViewChange} />;
       case 'register':
-        return <RegisterSection />;
+        return <RegisterSection 
+                    editingId={editingWarrantyId} 
+                    mode={registerMode} 
+                    onSave={handleWarrantySave} 
+                    onClear={() => setEditingWarrantyId(null)}
+                />;
       case 'query':
-        return <QuerySection setActiveView={setActiveView} />;
+        return <QuerySection 
+                    setActiveView={handleViewChange} 
+                    onEdit={handleEditWarranty} 
+                    onClone={handleCloneWarranty}
+                />;
       case 'lotes':
         return <LotesSection onNavigateToLote={handleNavigateToLote} isNewLoteModalOpen={isNewLoteModalOpen} setIsNewLoteModalOpen={setIsNewLoteModalOpen} />;
       case 'loteDetail':
@@ -80,7 +123,7 @@ export default function Home() {
       case 'calculators':
         return <CalculatorsSection />;
       default:
-        return <DashboardSection setActiveView={setActiveView} />;
+        return <DashboardSection setActiveView={handleViewChange} />;
     }
   };
   
@@ -90,11 +133,11 @@ export default function Home() {
   return (
       <AppLayout 
         activeView={activeView} 
-        setActiveView={setActiveView} 
+        setActiveView={handleViewChange} 
         isMobileMenuOpen={isMobileMenuOpen}
         setMobileMenuOpen={setMobileMenuOpen}
         onNewLoteClick={() => {
-            setActiveView('lotes');
+            handleViewChange('lotes');
             setIsNewLoteModalOpen(true);
         }}
       >

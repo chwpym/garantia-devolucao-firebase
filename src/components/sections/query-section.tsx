@@ -19,19 +19,19 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { DatePickerWithRange } from '@/components/ui/date-range-picker';
-import WarrantyForm from '../warranty-form';
 import { Button } from '../ui/button';
 import AddToLoteDialog from '../add-to-lote-dialog';
 
 
 interface QuerySectionProps {
   setActiveView: (view: string) => void;
+  onEdit: (warrantyId: number) => void;
+  onClone: (warrantyId: number) => void;
 }
 
 
-export default function QuerySection({ setActiveView }: QuerySectionProps) {
+export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySectionProps) {
   const [warranties, setWarranties] = useState<Warranty[]>([]);
-  const [editingWarranty, setEditingWarranty] = useState<Warranty | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [openLotes, setOpenLotes] = useState<Lote[]>([]);
   const [isLoteDialogOpen, setIsLoteDialogOpen] = useState(false);
@@ -97,36 +97,6 @@ export default function QuerySection({ setActiveView }: QuerySectionProps) {
         window.removeEventListener('datachanged', refreshData);
     }
   }, [loadData, toast, isDbReady, refreshData]);
-
-  const handleEdit = (warranty: Warranty) => {
-    setEditingWarranty(warranty);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-  
-  const handleSave = async (data: Omit<Warranty, 'id'>, id?: number) => {
-    try {
-      if (id) {
-        await db.updateWarranty({ ...data, id });
-        toast({ title: 'Sucesso', description: 'Garantia atualizada com sucesso.' });
-      } else {
-        await db.addWarranty(data);
-        toast({ title: 'Sucesso', description: 'Garantia salva com sucesso.' });
-      }
-      setEditingWarranty(null); // Clear editing state
-      refreshData(); // Refresh data
-    } catch (error)      {
-      console.error('Failed to save warranty:', error);
-      toast({
-        title: 'Erro ao Salvar',
-        description: 'Não foi possível salvar a garantia.',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleClearForm = () => {
-    setEditingWarranty(null);
-  };
 
   const handleDelete = async (id: number) => {
     try {
@@ -221,16 +191,6 @@ export default function QuerySection({ setActiveView }: QuerySectionProps) {
 
   return (
     <div className='space-y-8'>
-        {editingWarranty && (
-            <div className="mb-8">
-                 <WarrantyForm
-                    key={editingWarranty?.id ?? 'edit'}
-                    selectedWarranty={editingWarranty}
-                    onSave={handleSave}
-                    onClear={handleClearForm}
-                />
-            </div>
-        )}
         <Card className="shadow-lg">
         <CardHeader>
             <CardTitle>Garantias Registradas</CardTitle>
@@ -264,7 +224,8 @@ export default function QuerySection({ setActiveView }: QuerySectionProps) {
               warranties={filteredWarranties}
               selectedIds={selectedIds}
               onSelectionChange={setSelectedIds}
-              onEdit={handleEdit}
+              onEdit={onEdit}
+              onClone={onClone}
               onDelete={handleDelete}
             />
         </CardContent>

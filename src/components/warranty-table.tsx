@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, Copy } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from './ui/checkbox';
 
@@ -16,10 +16,11 @@ interface WarrantyTableProps {
   selectedIds: Set<number>;
   onSelectionChange: (ids: Set<number>) => void;
   onEdit: (warranty: Warranty) => void;
+  onClone: (warranty: Warranty) => void;
   onDelete: (id: number) => Promise<void>;
 }
 
-export default function WarrantyTable({ warranties, selectedIds, onSelectionChange, onEdit, onDelete }: WarrantyTableProps) {
+export default function WarrantyTable({ warranties, selectedIds, onSelectionChange, onEdit, onClone, onDelete }: WarrantyTableProps) {
   const [deleteTarget, setDeleteTarget] = useState<Warranty | null>(null);
 
   const handleDeleteClick = () => {
@@ -124,6 +125,10 @@ export default function WarrantyTable({ warranties, selectedIds, onSelectionChan
                           <DropdownMenuItem onClick={() => onEdit(warranty)}>
                             <Pencil className="mr-2 h-4 w-4" />
                             Editar
+                          </DropdownMenuItem>
+                           <DropdownMenuItem onClick={() => onClone(warranty)}>
+                            <Copy className="mr-2 h-4 w-4" />
+                            Clonar
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => setDeleteTarget(warranty)} className="text-destructive focus:text-destructive">
                             <Trash2 className="mr-2 h-4 w-4" />

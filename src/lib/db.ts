@@ -141,6 +141,20 @@ export const getAllWarranties = (): Promise<Warranty[]> => {
   });
 };
 
+export const getWarrantyById = (id: number): Promise<Warranty | undefined> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(GARANTIAS_STORE_NAME, 'readonly');
+      const request = store.get(id);
+      request.onsuccess = () => resolve(request.result as Warranty | undefined);
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+
 export const getWarrantiesByIds = (ids: number[]): Promise<Warranty[]> => {
     return new Promise(async (resolve, reject) => {
       try {
