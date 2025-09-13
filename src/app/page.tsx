@@ -18,6 +18,7 @@ import DevolucaoRegisterSection from '@/components/sections/devolucao-register-s
 import DevolucaoQuerySection from '@/components/sections/devolucao-query-section';
 import DevolucaoReportSection from '@/components/sections/devolucao-report-section';
 import CalculatorsSection from '@/components/sections/calculators-section';
+import type { Warranty } from '@/lib/types';
 
 export type RegisterMode = 'edit' | 'clone';
 
@@ -54,14 +55,14 @@ export default function Home() {
     setActiveView('devolucao-query');
   }
 
-  const handleEditWarranty = (warrantyId: number) => {
-    setEditingWarrantyId(warrantyId);
+  const handleEditWarranty = (warranty: Warranty) => {
+    setEditingWarrantyId(warranty.id!);
     setRegisterMode('edit');
     setActiveView('register');
   }
 
-  const handleCloneWarranty = (warrantyId: number) => {
-    setEditingWarrantyId(warrantyId);
+  const handleCloneWarranty = (warranty: Warranty) => {
+    setEditingWarrantyId(warranty.id!);
     setRegisterMode('clone');
     setActiveView('register');
   }
