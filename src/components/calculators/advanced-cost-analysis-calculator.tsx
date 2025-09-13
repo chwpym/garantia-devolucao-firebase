@@ -48,7 +48,7 @@ interface NfeInfo {
 
 interface NfeProductDetail {
     prod: Record<string, string>;
-    imposto: Record<string, any>;
+    imposto: Record<string, Record<string, Record<string, string>>>;
 }
 
 interface InfNFe {
@@ -68,6 +68,12 @@ interface InfNFe {
     }
 }
 
+interface NFeData {
+    nfeProc?: { NFe: { infNFe: InfNFe } };
+    NFe?: { infNFe: InfNFe };
+}
+
+
 export default function AdvancedCostAnalysisCalculator() {
     const [items, setItems] = useState<AnalyzedItem[]>([]);
     const [fileName, setFileName] = useState<string | null>(null);
@@ -86,9 +92,9 @@ export default function AdvancedCostAnalysisCalculator() {
             try {
                 const xmlData = e.target?.result as string;
                 const parser = new XMLParser({ ignoreAttributes: false, parseAttributeValue: true });
-                const jsonObj = parser.parse(xmlData);
+                const jsonObj = parser.parse(xmlData) as NFeData;
                 
-                const infNFe: InfNFe = jsonObj?.nfeProc?.NFe?.infNFe || jsonObj?.NFe?.infNFe;
+                const infNFe: InfNFe | undefined = jsonObj?.nfeProc?.NFe?.infNFe || jsonObj?.NFe?.infNFe;
                 if (!infNFe) {
                     throw new Error("Estrutura do XML da NF-e inválida: <infNFe> não encontrado.");
                 }
@@ -478,5 +484,7 @@ export default function AdvancedCostAnalysisCalculator() {
         </div>
     );
 }
+
+    
 
     
