@@ -25,8 +25,8 @@ import AddToLoteDialog from '../add-to-lote-dialog';
 
 interface QuerySectionProps {
   setActiveView: (view: string) => void;
-  onEdit: (warrantyId: number) => void;
-  onClone: (warrantyId: number) => void;
+  onEdit: (warranty: Warranty) => void;
+  onClone: (warranty: Warranty) => void;
 }
 
 
@@ -242,3 +242,4 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
     </div>
   );
 }
+    

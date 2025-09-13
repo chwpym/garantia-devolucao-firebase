@@ -345,7 +345,7 @@ export default function NfeComparator() {
                                                    <div className="flex justify-between mt-1">
                                                         <span>NF-e: {occ.nfeNumber}</span>
                                                         <span>Qtde: {formatNumber(occ.quantity)}</span>
-                                                        <span>Custo: {formatCurrency(occ.unitCost, 4)}</span>
+                                                        <span>Custo: {formatCurrency(occ.unitCost)}</span>
                                                    </div>
                                                 </div>
                                             ))}
@@ -455,7 +455,7 @@ export default function NfeComparator() {
                                                         <TableCell className="font-mono text-xs">{prod.code}</TableCell>
                                                         <TableCell>{prod.description}</TableCell>
                                                         <TableCell className="text-right">{formatNumber(prod.quantity)}</TableCell>
-                                                        <TableCell className="text-right">{formatCurrency(prod.unitCost, 4)}</TableCell>
+                                                        <TableCell className="text-right">{formatCurrency(prod.unitCost)}</TableCell>
                                                     </TableRow>
                                                 ))}
                                             </TableBody>
@@ -474,3 +474,4 @@ export default function NfeComparator() {
         </div>
     );
 }
+    

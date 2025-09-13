@@ -133,8 +133,7 @@ export default function CalculatorsSection() {
                 <CardContent className="flex-grow flex items-end">
                 <Button 
                     className="w-full" 
-                    disabled={!calc.component}
-                    onClick={() => calc.component && setActiveCalculatorId(calc.id)}
+                    onClick={() => setActiveCalculatorId(calc.id)}
                 >
                     Acessar
                 </Button>
@@ -145,3 +144,4 @@ export default function CalculatorsSection() {
     </div>
   );
 }
+    
