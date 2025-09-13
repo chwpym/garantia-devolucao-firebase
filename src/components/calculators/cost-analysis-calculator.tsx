@@ -3,7 +3,8 @@
 
 import { useState, useMemo, useRef } from "react";
 import jsPDF from "jspdf";
-import autoTable, { HookData } from "jspdf-autotable";
+import autoTable from "jspdf-autotable";
+import type { UserOptions } from "jspdf-autotable";
 import { XMLParser } from "fast-xml-parser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -255,7 +256,7 @@ export default function CostAnalysisCalculator() {
             showFoot: 'lastPage',
             headStyles: { fillColor: [63, 81, 181] },
             footStyles: { fillColor: [224, 224, 224], textColor: [0,0,0], fontStyle: 'bold' },
-            didDrawPage: (data: HookData) => {
+            didDrawPage: (data: NonNullable<UserOptions['didDrawPage']>['arguments'][0]) => {
                 const pageCount = doc.internal.pages.length;
                 doc.setFontSize(8);
                 const pageText = `Página ${data.pageNumber} de ${pageCount}`;
