@@ -143,6 +143,10 @@ export const getAllWarranties = (): Promise<Warranty[]> => {
 
 export const getWarrantyById = (id: number): Promise<Warranty | undefined> => {
   return new Promise(async (resolve, reject) => {
+    if (typeof id !== 'number' || id <= 0) {
+      // Return undefined directly if the ID is not valid, preventing the DB error
+      return resolve(undefined);
+    }
     try {
       const store = await getStore(GARANTIAS_STORE_NAME, 'readonly');
       const request = store.get(id);

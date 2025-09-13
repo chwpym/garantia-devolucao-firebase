@@ -80,16 +80,19 @@ export default function RegisterSection({ editingId, mode, onSave, onClear }: Re
   }, [isDbReady, editingId, loadWarranty]);
 
 
-  const handleSave = async (data: Omit<Warranty, 'id'>, id?: number) => {
+  const handleSave = async (data: Warranty) => {
     try {
-      const idToUpdate = mode === 'edit' ? id : undefined;
+      // If the mode is clone, we must not pass the id.
+      const isCloning = mode === 'clone';
       
-      if (idToUpdate) {
-        await db.updateWarranty({ ...data, id: idToUpdate });
+      if (data.id && !isCloning) {
+        await db.updateWarranty(data);
         toast({ title: 'Sucesso', description: 'Garantia atualizada com sucesso.' });
       } else {
-        await db.addWarranty(data);
-        toast({ title: 'Sucesso', description: `Garantia ${mode === 'clone' ? 'clonada' : 'salva'} com sucesso.` });
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { id, ...dataWithoutId } = data;
+        await db.addWarranty(dataWithoutId);
+        toast({ title: 'Sucesso', description: `Garantia ${isCloning ? 'clonada' : 'salva'} com sucesso.` });
       }
       onSave(); // Navigates back
     } catch (error) {
@@ -113,6 +116,7 @@ export default function RegisterSection({ editingId, mode, onSave, onClear }: Re
         selectedWarranty={warrantyToLoad}
         onSave={handleSave}
         onClear={onClear}
+        isClone={mode === 'clone'}
       />
     </div>
   );

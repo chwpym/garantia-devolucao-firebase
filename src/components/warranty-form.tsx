@@ -26,6 +26,7 @@ import { useToast } from '@/hooks/use-toast';
 
 
 const formSchema = z.object({
+  id: z.number().optional(),
   codigo: z.string().optional(),
   descricao: z.string().optional(),
   fornecedor: z.string().optional(),
@@ -43,15 +44,17 @@ const formSchema = z.object({
   status: z.enum(['Em análise', 'Aprovada', 'Recusada', 'Paga']).optional(),
   loteId: z.number().nullable().optional(),
   photos: z.array(z.string()).optional(),
+  dataRegistro: z.string().optional(),
 });
 
 type WarrantyFormValues = z.infer<typeof formSchema>;
 
 interface WarrantyFormProps {
   selectedWarranty: Warranty | null;
-  onSave: (data: Omit<Warranty, 'id'>, id?: number) => Promise<void>;
+  onSave: (data: Warranty) => Promise<void>;
   onClear: () => void;
   isModal?: boolean;
+  isClone?: boolean;
 }
 
 const defaultValues: WarrantyFormValues = {
@@ -76,7 +79,7 @@ const defaultValues: WarrantyFormValues = {
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
-export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModal = false }: WarrantyFormProps) {
+export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModal = false, isClone = false }: WarrantyFormProps) {
     const formRef = useRef<HTMLFormElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [persons, setPersons] = useState<Person[]>([]);
@@ -129,16 +132,17 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
     }, [selectedWarranty, form]);
 
     const handleSubmit = async (values: WarrantyFormValues) => {
-        const dataToSave: Omit<Warranty, 'id'> = {
+        const dataToSave: Warranty = {
             ...values,
+            id: isClone ? undefined : selectedWarranty?.id,
             quantidade: values.quantidade ?? 1,
             status: values.status ?? 'Em análise',
             photos: values.photos ?? [],
-            dataRegistro: selectedWarranty?.dataRegistro || new Date().toISOString(),
+            dataRegistro: selectedWarranty?.dataRegistro && !isClone ? selectedWarranty.dataRegistro : new Date().toISOString(),
         };
 
-        await onSave(dataToSave, selectedWarranty?.id);
-        if (!isModal) {
+        await onSave(dataToSave);
+        if (!isModal && !selectedWarranty) {
             form.reset(defaultValues);
         }
     };
@@ -484,7 +488,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                 <Button type="button" variant="outline" onClick={handleClear}>Limpar</Button>
                 <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    {selectedWarranty ? 'Atualizar' : 'Salvar'}
+                    {selectedWarranty && !isClone ? 'Atualizar' : 'Salvar'}
                 </Button>
             </CardFooter>
         </form>
@@ -498,7 +502,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
     return (
       <Card className="w-full shadow-lg">
           <CardHeader>
-              <CardTitle>{selectedWarranty ? 'Editar Garantia' : 'Cadastrar Garantia'}</CardTitle>
+              <CardTitle>{selectedWarranty ? (isClone ? 'Clonar Garantia' : 'Editar Garantia') : 'Cadastrar Garantia'}</CardTitle>
               <CardDescription>Preencha os detalhes da garantia abaixo. Use &quot;Enter&quot; para pular para o próximo campo.</CardDescription>
           </CardHeader>
           {innerFormContent}
