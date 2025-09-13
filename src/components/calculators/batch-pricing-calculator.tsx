@@ -26,6 +26,10 @@ interface BatchPriceItem {
     margin: string;
     price: string;
 }
+
+interface NfeProductDetail {
+    prod: Record<string, string>;
+}
   
 export default function BatchPricingCalculator() {
     const [items, setItems] = useState<BatchPriceItem[]>([
@@ -143,9 +147,9 @@ export default function BatchPricingCalculator() {
                     throw new Error("Estrutura do XML da NF-e inválida ou não encontrada.");
                 }
 
-                const productList = Array.isArray(dets) ? dets : [dets];
+                const productList: NfeProductDetail[] = Array.isArray(dets) ? dets : [dets];
 
-                const newItems: BatchPriceItem[] = productList.map((det: any, index: number) => {
+                const newItems: BatchPriceItem[] = productList.map((det, index: number) => {
                     const prod = det.prod;
                     return {
                         id: Date.now() + index,

@@ -43,6 +43,15 @@ interface ComparisonResult {
     }>;
 }
 
+interface NfeProductDetail {
+    prod: Record<string, string>;
+}
+
+interface RejectedPromise {
+    fileName: string;
+    message: string;
+}
+
 export default function NfeComparator() {
     const [loadedNfes, setLoadedNfes] = useState<LoadedNfe[]>([]);
     const [comparisonResult, setComparisonResult] = useState<ComparisonResult[]>([]);
@@ -76,9 +85,9 @@ export default function NfeComparator() {
                              return resolve(null);
                         }
 
-                        const dets = Array.isArray(infNFe.det) ? infNFe.det : [infNFe.det];
+                        const dets: NfeProductDetail[] = Array.isArray(infNFe.det) ? infNFe.det : [infNFe.det];
                         
-                        const products: Product[] = dets.map((det: any) => {
+                        const products: Product[] = dets.map((det) => {
                             const prod = det.prod;
                             return {
                                 code: String(prod.cProd),
@@ -96,11 +105,12 @@ export default function NfeComparator() {
                             products 
                         });
 
-                    } catch (error: any) {
-                        reject({fileName: file.name, message: error.message});
+                    } catch (error: unknown) {
+                        const message = error instanceof Error ? error.message : "Erro desconhecido";
+                        reject({fileName: file.name, message: message});
                     }
                 };
-                reader.onerror = (error) => reject({fileName: file.name, message: "Falha ao ler o arquivo."});
+                reader.onerror = () => reject({fileName: file.name, message: "Falha ao ler o arquivo."});
                 reader.readAsText(file, 'ISO-8859-1');
             });
         });
@@ -108,7 +118,6 @@ export default function NfeComparator() {
         Promise.allSettled(filePromises).then(results => {
             const newNfes: LoadedNfe[] = [];
             let filesAddedCount = 0;
-            let filesFailedCount = 0;
             let filesSkippedCount = 0;
 
             results.forEach(result => {
@@ -120,11 +129,11 @@ export default function NfeComparator() {
                       filesSkippedCount++;
                     }
                 } else if (result.status === 'rejected') {
-                    filesFailedCount++;
+                    const reason = result.reason as RejectedPromise;
                     toast({
                         variant: "destructive",
                         title: "Erro de Importação",
-                        description: `Falha ao processar ${result.reason.fileName}: ${result.reason.message}`,
+                        description: `Falha ao processar ${reason.fileName}: ${reason.message}`,
                     });
                 }
             });

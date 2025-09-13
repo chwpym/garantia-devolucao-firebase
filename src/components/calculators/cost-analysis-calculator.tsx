@@ -35,6 +35,11 @@ interface NfeInfo {
     nfeNumber: string;
 }
 
+interface NfeProductDetail {
+    prod: Record<string, string>;
+    imposto: Record<string, any>;
+}
+
 export default function CostAnalysisCalculator() {
     const [items, setItems] = useState<AnalyzedItem[]>([]);
     const [fileName, setFileName] = useState<string | null>(null);
@@ -59,7 +64,7 @@ export default function CostAnalysisCalculator() {
                     throw new Error("Estrutura do XML da NF-e inválida: <infNFe> não encontrado.");
                 }
 
-                const dets = Array.isArray(infNFe.det) ? infNFe.det : [infNFe.det];
+                const dets: NfeProductDetail[] = Array.isArray(infNFe.det) ? infNFe.det : [infNFe.det];
                 const total = infNFe.total?.ICMSTot;
 
                 if (!dets || !total) {
@@ -81,7 +86,7 @@ export default function CostAnalysisCalculator() {
                 const totalOutras = parseFloat(total.vOutro) || 0;
 
 
-                const newItems: AnalyzedItem[] = dets.map((det: any, index: number) => {
+                const newItems: AnalyzedItem[] = dets.map((det, index: number) => {
                     const prod = det.prod;
                     const imposto = det.imposto;
 
@@ -128,15 +133,16 @@ export default function CostAnalysisCalculator() {
                     description: `${newItems.length} itens importados e analisados da NF-e.`,
                 });
 
-            } catch (error: any) {
+            } catch (error: unknown) {
                 console.error("Erro ao processar o XML:", error);
                 setItems([]);
                 setFileName(null);
                 setNfeInfo(null);
+                const message = error instanceof Error ? error.message : "Não foi possível ler o arquivo XML. Verifique se o formato é uma NF-e válida.";
                 toast({
                     variant: "destructive",
                     title: "Erro de Importação",
-                    description: error.message || "Não foi possível ler o arquivo XML. Verifique se o formato é uma NF-e válida.",
+                    description: message,
                 });
             } finally {
               if(fileInputRef.current) {
@@ -226,8 +232,8 @@ export default function CostAnalysisCalculator() {
             showFoot: 'lastPage',
             headStyles: { fillColor: [63, 81, 181] },
             footStyles: { fillColor: [224, 224, 224], textColor: [0,0,0], fontStyle: 'bold' },
-            didDrawPage: (data) => {
-                const pageCount = (doc as any).internal.getNumberOfPages ? (doc as any).internal.getNumberOfPages() : (doc as any).getNumberOfPages();
+            didDrawPage: (data: { pageNumber: number; settings: { margin: { left: number; right: number } } }) => {
+                const pageCount = doc.getNumberOfPages ? doc.getNumberOfPages() : (doc as any).internal.getNumberOfPages();
                 doc.setFontSize(8);
                 const pageText = `Página ${data.pageNumber} de ${pageCount}`;
                 doc.text(pageText, data.settings.margin.left, doc.internal.pageSize.height - 10);
