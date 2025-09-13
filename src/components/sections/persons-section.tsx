@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { Person } from '@/lib/types';
 import * as db from '@/lib/db';
@@ -49,8 +49,9 @@ import {
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MoreHorizontal, Pencil, Trash2, PlusCircle, Download } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, PlusCircle, Download, Search } from 'lucide-react';
 import PersonForm from '../person-form';
+import { Input } from '../ui/input';
 
 const formatCpfCnpj = (value?: string) => {
     if (!value) return '-';
@@ -67,6 +68,7 @@ const formatCpfCnpj = (value?: string) => {
 
 export default function PersonsSection() {
   const [persons, setPersons] = useState<Person[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [editingPerson, setEditingPerson] = useState<Person | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Person | null>(null);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -113,6 +115,17 @@ export default function PersonsSection() {
       window.removeEventListener('datachanged', loadPersons);
     };
   }, [loadPersons, toast, isDbReady]);
+  
+  const filteredPersons = useMemo(() => {
+    const lowercasedTerm = searchTerm.toLowerCase();
+    if (!lowercasedTerm) return persons;
+
+    return persons.filter(person => 
+        person.nome.toLowerCase().includes(lowercasedTerm) ||
+        (person.cpfCnpj && person.cpfCnpj.replace(/\D/g, '').includes(lowercasedTerm.replace(/\D/g, ''))) ||
+        (person.telefone && person.telefone.toLowerCase().includes(lowercasedTerm))
+    );
+  }, [persons, searchTerm]);
 
 
   const handleSave = () => {
@@ -241,6 +254,17 @@ export default function PersonsSection() {
             <CardDescription>Lista de todos os clientes e mecânicos cadastrados no sistema.</CardDescription>
           </CardHeader>
           <CardContent>
+            <div className="mb-4">
+                 <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Buscar por nome, CPF/CNPJ ou telefone..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-10"
+                    />
+                </div>
+            </div>
             <div className="border rounded-md">
               <Table>
                 <TableHeader>
@@ -253,8 +277,8 @@ export default function PersonsSection() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {persons.length > 0 ? (
-                    persons.map(person => (
+                  {filteredPersons.length > 0 ? (
+                    filteredPersons.map(person => (
                       <TableRow key={person.id}>
                         <TableCell className="font-medium">{person.nome}</TableCell>
                         <TableCell>{formatCpfCnpj(person.cpfCnpj)}</TableCell>
@@ -287,7 +311,7 @@ export default function PersonsSection() {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={5} className="h-24 text-center">
-                        Nenhum registro encontrado.
+                        Nenhum registro encontrado para a busca realizada.
                       </TableCell>
                     </TableRow>
                   )}

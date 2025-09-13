@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { Supplier } from '@/lib/types';
 import * as db from '@/lib/db';
@@ -46,8 +46,9 @@ import {
 } from '@/components/ui/dialog';
 
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Pencil, Trash2, PlusCircle } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, PlusCircle, Search } from 'lucide-react';
 import SupplierForm from '../supplier-form';
+import { Input } from '../ui/input';
 
 
 const formatCnpj = (value?: string) => {
@@ -62,6 +63,7 @@ const formatCnpj = (value?: string) => {
 
 export default function SuppliersSection() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Supplier | null>(null);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -108,6 +110,17 @@ export default function SuppliersSection() {
       window.removeEventListener('datachanged', loadSuppliers);
     };
   }, [loadSuppliers, toast, isDbReady]);
+  
+  const filteredSuppliers = useMemo(() => {
+    const lowercasedTerm = searchTerm.toLowerCase();
+    if (!lowercasedTerm) return suppliers;
+
+    return suppliers.filter(supplier => 
+        supplier.nomeFantasia.toLowerCase().includes(lowercasedTerm) ||
+        supplier.razaoSocial.toLowerCase().includes(lowercasedTerm) ||
+        (supplier.cnpj && supplier.cnpj.replace(/\D/g, '').includes(lowercasedTerm.replace(/\D/g, '')))
+    );
+  }, [suppliers, searchTerm]);
   
 
   const handleSave = () => {
@@ -187,6 +200,17 @@ export default function SuppliersSection() {
           <CardDescription>Lista de todos os fornecedores.</CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="mb-4">
+               <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                      placeholder="Buscar por Nome Fantasia, Razão Social ou CNPJ..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-10"
+                  />
+              </div>
+          </div>
           <div className="border rounded-md">
             <Table>
               <TableHeader>
@@ -199,8 +223,8 @@ export default function SuppliersSection() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {suppliers.length > 0 ? (
-                  suppliers.map(supplier => (
+                {filteredSuppliers.length > 0 ? (
+                  filteredSuppliers.map(supplier => (
                     <TableRow key={supplier.id}>
                       <TableCell className="font-medium">{supplier.nomeFantasia}</TableCell>
                       <TableCell>{supplier.razaoSocial}</TableCell>
@@ -231,7 +255,7 @@ export default function SuppliersSection() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={5} className="h-24 text-center">
-                      Nenhum fornecedor encontrado.
+                      Nenhum fornecedor encontrado para a busca realizada.
                     </TableCell>
                   </TableRow>
                 )}
