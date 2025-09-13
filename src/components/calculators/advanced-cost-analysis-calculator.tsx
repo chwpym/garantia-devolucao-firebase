@@ -3,7 +3,7 @@
 
 import { useState, useMemo, useRef } from "react";
 import jsPDF from "jspdf";
-import autoTable, { RowInput, Styles } from "jspdf-autotable";
+import autoTable, { RowInput, Styles, HookData } from "jspdf-autotable";
 import { XMLParser } from "fast-xml-parser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,6 +52,7 @@ interface NfeProductDetail {
 }
 
 interface InfNFe {
+    ['@_Id']: string;
     ide: { nNF: string };
     emit: { xNome: string; CNPJ: string };
     det: NfeProductDetail[] | NfeProductDetail;
@@ -324,8 +325,8 @@ export default function AdvancedCostAnalysisCalculator() {
             showFoot: 'lastPage',
             headStyles: { fillColor: [63, 81, 181] },
             footStyles: footStyles,
-            didDrawPage: (data) => {
-                const pageCount = doc.getNumberOfPages ? doc.getNumberOfPages() : (doc as any).internal.getNumberOfPages();
+            didDrawPage: (data: HookData) => {
+                const pageCount = doc.internal.pages.length;
                 doc.setFontSize(8);
                 const pageText = `Página ${data.pageNumber} de ${pageCount}`;
                 doc.text(pageText, data.settings.margin.left, doc.internal.pageSize.height - 10);
@@ -484,6 +485,8 @@ export default function AdvancedCostAnalysisCalculator() {
         </div>
     );
 }
+
+    
 
     
 
