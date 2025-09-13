@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Settings, Menu, DatabaseBackup, Wrench, Undo2, Package } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Settings, Menu, DatabaseBackup, Wrench, Undo2, Package, Calculator } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from './theme-toggle';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
@@ -154,6 +154,10 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
                 <Button variant="accent-green" size="sm" onClick={onNewLoteClick}>
                     <Package className="mr-2 h-4 w-4" />
                     Novo Lote
+                </Button>
+                <Button style={{ backgroundColor: 'hsl(var(--third))' }} size="sm" onClick={() => setActiveView('calculators')}>
+                    <Calculator className="mr-2 h-4 w-4" />
+                    Calculadoras
                 </Button>
             </div>
 
