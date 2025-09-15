@@ -147,7 +147,7 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
                     <Wrench className="mr-2 h-4 w-4" />
                     Nova Garantia
                 </Button>
-                <Button size="sm" variant='secondary' onClick={() => setActiveView('batch-register')}>
+                <Button size="sm" style={{ backgroundColor: 'hsl(var(--third))', color: 'hsl(var(--primary-foreground))' }}  onClick={() => setActiveView('batch-register')}>
                     <History className="mr-2 h-4 w-4" />
                     Garantia em Lote
                 </Button>
