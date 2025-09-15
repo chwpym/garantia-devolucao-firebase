@@ -155,8 +155,12 @@ export default function LotesSection({ onNavigateToLote, isNewLoteModalOpen = fa
             >
               <CardHeader className="flex flex-row items-start justify-between">
                 <div>
-                   <CardTitle className="text-xl">{lote.nome}</CardTitle>
-                   <CardDescription className="flex items-center gap-2 pt-1">
+                   <CardTitle className="text-xl">
+                        <span className="text-muted-foreground font-normal">Lote #{lote.id}</span>
+                        <br />
+                        {lote.nome}
+                   </CardTitle>
+                   <CardDescription className="flex items-center gap-2 pt-2">
                         <Building className="h-4 w-4" /> 
                         {lote.fornecedor}
                    </CardDescription>
