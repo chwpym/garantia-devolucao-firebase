@@ -168,9 +168,7 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
             <ThemeToggle />
         </header>
         <main className="flex-1 p-4 md:p-8 overflow-auto">
-          <div className="max-w-7xl mx-auto">
             {children}
-          </div>
         </main>
       </div>
     </div>
