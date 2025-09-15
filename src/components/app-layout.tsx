@@ -37,7 +37,7 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
             "flex items-center gap-3 h-16 border-b px-6",
             isSidebarCollapsed && "justify-center px-0"
         )}>
-           <Image src="/logo.jpeg" alt="Synergia OS Logo" width={32} height={32} className="h-8 w-8 rounded-md flex-shrink-0" />
+           <Image src="/logo.jpeg" alt="Synergia OS Logo" width={32} height={32} unoptimized className="h-8 w-8 rounded-md flex-shrink-0" />
           <h1 className={cn(
             "text-xl font-bold font-headline text-foreground whitespace-nowrap transition-opacity duration-200",
             isSidebarCollapsed && "opacity-0 w-0"
@@ -84,7 +84,7 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
             </div>
         </div>
       </aside>
-      <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col overflow-hidden">
         <header className="p-4 border-b bg-background shadow-sm sticky top-0 z-10 flex items-center justify-between gap-4 h-16">
             <div className='flex items-center gap-4'>
                 <Button variant="ghost" size="icon" className="h-8 w-8 hidden md:inline-flex" onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} title={isSidebarCollapsed ? 'Expandir menu' : 'Recolher menu'}>
@@ -100,7 +100,7 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
                     </SheetTrigger>
                     <SheetContent side="left" className="w-[280px] p-0 flex flex-col">
                          <div className="flex items-center gap-3 h-16 border-b px-6">
-                           <Image src="/logo.jpeg" alt="Synergia OS Logo" width={32} height={32} className="h-8 w-8 rounded-md flex-shrink-0" />
+                           <Image src="/logo.jpeg" alt="Synergia OS Logo" width={32} height={32} unoptimized className="h-8 w-8 rounded-md flex-shrink-0" />
                           <h1 className="text-xl font-bold font-headline text-foreground whitespace-nowrap">
                             Synergia OS
                           </h1>
