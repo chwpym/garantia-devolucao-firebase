@@ -128,8 +128,9 @@ export function generatePdf(input: GeneratePdfInput): string {
         }
          if (supplierData.cidade) {
             doc.text(`Cidade: ${supplierData.cidade}`, margin, cursorY);
+            cursorY += 4;
         }
-        cursorY += 8;
+        cursorY += 8; // Espaço extra depois dos dados do fornecedor
     }
     
     // --- TABELA ---
@@ -181,10 +182,9 @@ export function generatePdf(input: GeneratePdfInput): string {
         alternateRowStyles: { fillColor: [240, 240, 240] },
     });
     
-    // --- CONTADOR DE ITENS ---
     const finalY = (doc as any).lastAutoTable.finalY || cursorY;
     doc.setFontSize(10).setFont('helvetica', 'bold');
-    doc.text(`Total de Itens no Lote: ${selectedWarranties.length}`, margin, finalY + 10);
+    doc.text(`Total de Itens no Relatório: ${selectedWarranties.length}`, margin, finalY + 10);
 
     return doc.output('datauristring');
 }
