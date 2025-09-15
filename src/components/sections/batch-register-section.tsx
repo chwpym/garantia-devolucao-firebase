@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Trash2, PlusCircle, Save, Loader2 } from "lucide-react";
 import { Combobox } from "../ui/combobox";
 import { Form } from "@/components/ui/form";
+import { Label } from "../ui/label";
 
 const warrantyRowSchema = z.object({
   id: z.number(), // Used for unique key in React
@@ -26,7 +27,6 @@ const warrantyRowSchema = z.object({
   requisicoesGarantia: z.string().optional(),
   cliente: z.string().optional(),
   mecanico: z.string().optional(),
-  fornecedor: z.string().optional(),
 });
 
 const formSchema = z.object({
@@ -38,6 +38,7 @@ type FormValues = z.infer<typeof formSchema>;
 export default function BatchRegisterSection() {
   const [persons, setPersons] = useState<Person[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [selectedSupplier, setSelectedSupplier] = useState<string>("");
   const { toast } = useToast();
 
   const form = useForm<FormValues>({
@@ -80,6 +81,15 @@ export default function BatchRegisterSection() {
   }, [loadDropdownData]);
 
   const onSubmit = async (data: FormValues) => {
+    if (!selectedSupplier) {
+        toast({
+            title: "Fornecedor não selecionado",
+            description: "Por favor, selecione um fornecedor para o lote.",
+            variant: "destructive",
+        });
+        return;
+    }
+      
     const validWarranties = data.warranties.filter(
       (w) => w.codigo || w.descricao
     );
@@ -98,6 +108,7 @@ export default function BatchRegisterSection() {
       for (const warrantyData of validWarranties) {
         const newWarranty: Omit<Warranty, "id"> = {
           ...warrantyData,
+          fornecedor: selectedSupplier,
           quantidade: warrantyData.quantidade ?? 1,
           status: 'Em análise',
           dataRegistro: new Date().toISOString(),
@@ -107,7 +118,7 @@ export default function BatchRegisterSection() {
       }
       toast({
         title: "Sucesso!",
-        description: `${savedCount} garantias foram salvas com sucesso.`,
+        description: `${savedCount} garantias foram salvas com sucesso para o fornecedor ${selectedSupplier}.`,
       });
       // Reset form to a single empty row
       form.reset({
@@ -149,12 +160,26 @@ export default function BatchRegisterSection() {
         <CardHeader>
           <CardTitle>Lançamento Rápido</CardTitle>
           <CardDescription>
-            Preencha as linhas abaixo e clique em "Salvar Tudo". Linhas sem código ou descrição serão ignoradas.
+            Selecione um fornecedor e preencha as linhas abaixo. Linhas sem código ou descrição serão ignoradas.
           </CardDescription>
         </CardHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            <CardContent>
+            <CardContent className="space-y-6">
+               <div className="max-w-sm space-y-2">
+                  <Label htmlFor="supplier-selector" className="font-semibold">
+                      Fornecedor <span className="text-destructive">*</span>
+                  </Label>
+                  <Combobox 
+                      options={supplierOptions}
+                      value={selectedSupplier}
+                      onChange={setSelectedSupplier}
+                      placeholder="Selecione um fornecedor"
+                      searchPlaceholder="Buscar fornecedor..."
+                      notFoundMessage="Nenhum encontrado."
+                  />
+              </div>
+
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
@@ -273,7 +298,7 @@ export default function BatchRegisterSection() {
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Adicionar Linha
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting || !selectedSupplier}>
                 {isSubmitting ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
