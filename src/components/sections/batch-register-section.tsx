@@ -20,13 +20,13 @@ const warrantyRowSchema = z.object({
   id: z.number(), // Used for unique key in React
   codigo: z.string().optional(),
   descricao: z.string().optional(),
-  fornecedor: z.string().optional(),
   quantidade: z.coerce.number().min(1).optional(),
   defeito: z.string().optional(),
   requisicaoVenda: z.string().optional(),
   requisicoesGarantia: z.string().optional(),
   cliente: z.string().optional(),
   mecanico: z.string().optional(),
+  fornecedor: z.string().optional(),
 });
 
 const formSchema = z.object({
@@ -162,12 +162,11 @@ export default function BatchRegisterSection() {
                       <TableHead className="min-w-[150px]">Código</TableHead>
                       <TableHead className="min-w-[250px]">Descrição</TableHead>
                       <TableHead className="w-[80px]">Qtd.</TableHead>
-                      <TableHead className="min-w-[200px]">Fornecedor</TableHead>
-                      <TableHead className="min-w-[200px]">Cliente</TableHead>
-                      <TableHead className="min-w-[200px]">Mecânico</TableHead>
                       <TableHead className="min-w-[150px]">Defeito</TableHead>
                       <TableHead className="min-w-[150px]">Req. Venda</TableHead>
                       <TableHead className="min-w-[150px]">Req. Garantia</TableHead>
+                      <TableHead className="min-w-[200px]">Cliente</TableHead>
+                      <TableHead className="min-w-[200px]">Mecânico</TableHead>
                       <TableHead className="w-[50px]"></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -196,19 +195,24 @@ export default function BatchRegisterSection() {
                           />
                         </TableCell>
                         <TableCell>
-                           <Controller
-                            name={`warranties.${index}.fornecedor`}
+                          <Controller
+                            name={`warranties.${index}.defeito`}
                             control={form.control}
-                            render={({ field }) => (
-                                <Combobox 
-                                    options={supplierOptions}
-                                    value={field.value ?? ''}
-                                    onChange={field.onChange}
-                                    placeholder="Fornecedor"
-                                    searchPlaceholder="Buscar..."
-                                    notFoundMessage="Nenhum encontrado."
-                                />
-                            )}
+                            render={({ field }) => <Input {...field} placeholder="Defeito apresentado" />}
+                          />
+                        </TableCell>
+                         <TableCell>
+                          <Controller
+                            name={`warranties.${index}.requisicaoVenda`}
+                            control={form.control}
+                            render={({ field }) => <Input {...field} placeholder="Nº da Req. de Venda" />}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Controller
+                            name={`warranties.${index}.requisicoesGarantia`}
+                            control={form.control}
+                            render={({ field }) => <Input {...field} placeholder="Nº da Req. de Garantia" />}
                           />
                         </TableCell>
                         <TableCell>
@@ -241,27 +245,6 @@ export default function BatchRegisterSection() {
                                     notFoundMessage="Nenhum encontrado."
                                 />
                             )}
-                          />
-                        </TableCell>
-                         <TableCell>
-                          <Controller
-                            name={`warranties.${index}.defeito`}
-                            control={form.control}
-                            render={({ field }) => <Input {...field} placeholder="Defeito apresentado" />}
-                          />
-                        </TableCell>
-                         <TableCell>
-                          <Controller
-                            name={`warranties.${index}.requisicaoVenda`}
-                            control={form.control}
-                            render={({ field }) => <Input {...field} placeholder="Nº da Req. de Venda" />}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Controller
-                            name={`warranties.${index}.requisicoesGarantia`}
-                            control={form.control}
-                            render={({ field }) => <Input {...field} placeholder="Nº da Req. de Garantia" />}
                           />
                         </TableCell>
                         <TableCell>
