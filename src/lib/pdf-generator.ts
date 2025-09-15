@@ -130,6 +130,11 @@ export function generatePdf(input: GeneratePdfInput): string {
         }
         cursorY += 6;
     }
+    
+    // --- CONTADOR DE ITENS ---
+    doc.setFontSize(10).setFont('helvetica', 'bold');
+    doc.text(`Total de Itens no Lote: ${selectedWarranties.length}`, margin, cursorY);
+    cursorY += 8;
 
 
     // --- TABELA ---
