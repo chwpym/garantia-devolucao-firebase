@@ -269,6 +269,7 @@ export default function PersonsSection() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className='w-[80px]'>ID</TableHead>
                     <TableHead>Nome</TableHead>
                     <TableHead>CPF/CNPJ</TableHead>
                     <TableHead>Telefone</TableHead>
@@ -280,6 +281,7 @@ export default function PersonsSection() {
                   {filteredPersons.length > 0 ? (
                     filteredPersons.map(person => (
                       <TableRow key={person.id}>
+                        <TableCell className="font-medium text-muted-foreground">{person.id}</TableCell>
                         <TableCell className="font-medium">{person.nome}</TableCell>
                         <TableCell>{formatCpfCnpj(person.cpfCnpj)}</TableCell>
                         <TableCell>{person.telefone || '-'}</TableCell>
@@ -310,7 +312,7 @@ export default function PersonsSection() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5} className="h-24 text-center">
+                      <TableCell colSpan={6} className="h-24 text-center">
                         Nenhum registro encontrado para a busca realizada.
                       </TableCell>
                     </TableRow>
