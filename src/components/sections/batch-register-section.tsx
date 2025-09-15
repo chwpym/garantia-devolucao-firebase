@@ -177,6 +177,7 @@ export default function BatchRegisterSection() {
                       placeholder="Selecione um fornecedor"
                       searchPlaceholder="Buscar fornecedor..."
                       notFoundMessage="Nenhum encontrado."
+                      className="w-full"
                   />
               </div>
 
