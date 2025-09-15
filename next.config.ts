@@ -30,7 +30,8 @@ const nextConfig: NextConfig = {
 const pwaConfig = withPWA({
   dest: 'public',
   register: true,
-  skipWaiting: true,
+  skipWaiting: true, // Garante que o novo Service Worker ative imediatamente
+  // runtimeCaching, // Descomente para configurar estratégias de cache
   disable: process.env.NODE_ENV === 'development',
 });
 

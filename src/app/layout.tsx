@@ -4,6 +4,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { cn } from '@/lib/utils';
+import PwaUpdateAlert from '@/components/pwa-update-alert';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -42,6 +43,7 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {children}
           <Toaster />
+          <PwaUpdateAlert />
         </ThemeProvider>
       </body>
     </html>
