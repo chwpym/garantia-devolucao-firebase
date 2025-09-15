@@ -3,20 +3,29 @@ import type { SVGProps } from "react";
 export function Logo(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 256 256"
-      width="1em"
-      height="1em"
-      fill="currentColor"
-      {...props}
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 100 100"
+        width="1em"
+        height="1em"
+        fill="none"
+        {...props}
     >
-      <path
-        d="M128 24a104 104 0 1 0 104 104A104.11 104.11 0 0 0 128 24Zm0 192a88 88 0 1 1 88-88a88.1 88.1 0 0 1-88 88Z"
-        opacity="0.2"
-      />
-      <path d="M168 88H88a8 8 0 0 0-8 8v80a8 8 0 0 0 8 8h80a8 8 0 0 0 8-8V96a8 8 0 0 0-8-8Zm-8 80h-64V104h64Z" />
-      <path d="M151.21 88a8 8 0 0 0-7.37 5.11l-32 80a8 8 0 0 0 14.74 5.78l32-80a8 8 0 0 0-7.37-10.89Z" />
-      <path d="M184 128a56 56 0 1 0-56 56a56.06 56.06 0 0 0 56-56Zm-8 0a48 48 0 1 1-48-48a48.05 48.05 0 0 1 48 48Z" />
+        <path
+        fill="hsl(var(--primary))"
+        d="M36.19 95.83h27.62c17.38 0 31.5-14.12 31.5-31.5V36.19c0-17.38-14.12-31.5-31.5-31.5H36.19c-17.38 0-31.5 14.12-31.5 31.5v27.62c0 17.81 14.56 32 31.5 32Z"
+        />
+        <path
+        fill="hsl(var(--primary-foreground))"
+        d="M62.66 43.1v-6.38H50.5v-12.3h-6.8v12.3H31.55v6.37h12.16v12.15h6.8V43.1h12.15Z"
+        />
+        <path
+        fill="hsl(var(--primary-foreground))"
+        d="M74.82 74.82H50.5V62.66h12.16v-6.97h6.8v6.97h11.8v12.16h-6.44Z"
+        />
+        <path
+        fill="hsl(var(--primary-foreground))"
+        d="M44.12 68.45H31.55V50.5h12.57v-6.2h-19v30.54h19V68.45Z"
+        />
     </svg>
   );
 }
