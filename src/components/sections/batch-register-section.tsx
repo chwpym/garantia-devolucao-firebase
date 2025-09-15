@@ -185,63 +185,63 @@ export default function BatchRegisterSection() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="min-w-[150px]">Código</TableHead>
-                      <TableHead className="min-w-[250px]">Descrição</TableHead>
-                      <TableHead className="w-[80px]">Qtd.</TableHead>
-                      <TableHead className="min-w-[150px]">Defeito</TableHead>
-                      <TableHead className="min-w-[150px]">Req. Venda</TableHead>
-                      <TableHead className="min-w-[150px]">Req. Garantia</TableHead>
-                      <TableHead className="min-w-[200px]">Cliente</TableHead>
-                      <TableHead className="min-w-[200px]">Mecânico</TableHead>
-                      <TableHead className="w-[50px]"></TableHead>
+                      <TableHead className="min-w-[150px] p-2">Código</TableHead>
+                      <TableHead className="min-w-[250px] p-2">Descrição</TableHead>
+                      <TableHead className="w-[100px] p-2">Qtd.</TableHead>
+                      <TableHead className="min-w-[150px] p-2">Defeito</TableHead>
+                      <TableHead className="min-w-[150px] p-2">Req. Venda</TableHead>
+                      <TableHead className="min-w-[150px] p-2">Req. Garantia</TableHead>
+                      <TableHead className="min-w-[200px] p-2">Cliente</TableHead>
+                      <TableHead className="min-w-[200px] p-2">Mecânico</TableHead>
+                      <TableHead className="w-[50px] p-2"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {fields.map((field, index) => (
                       <TableRow key={field.id}>
-                        <TableCell>
+                        <TableCell className="p-1">
                           <Controller
                             name={`warranties.${index}.codigo`}
                             control={form.control}
                             render={({ field }) => <Input {...field} placeholder="Código do produto" />}
                           />
                         </TableCell>
-                         <TableCell>
+                         <TableCell className="p-1">
                           <Controller
                             name={`warranties.${index}.descricao`}
                             control={form.control}
                             render={({ field }) => <Input {...field} placeholder="Descrição do produto" />}
                           />
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="p-1">
                           <Controller
                             name={`warranties.${index}.quantidade`}
                             control={form.control}
                             render={({ field }) => <Input type="text" inputMode="decimal" {...field} />}
                           />
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="p-1">
                           <Controller
                             name={`warranties.${index}.defeito`}
                             control={form.control}
                             render={({ field }) => <Input {...field} placeholder="Defeito apresentado" />}
                           />
                         </TableCell>
-                         <TableCell>
+                         <TableCell className="p-1">
                           <Controller
                             name={`warranties.${index}.requisicaoVenda`}
                             control={form.control}
                             render={({ field }) => <Input {...field} placeholder="Nº da Req. de Venda" />}
                           />
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="p-1">
                           <Controller
                             name={`warranties.${index}.requisicoesGarantia`}
                             control={form.control}
                             render={({ field }) => <Input {...field} placeholder="Nº da Req. de Garantia" />}
                           />
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="p-1">
                            <Controller
                             name={`warranties.${index}.cliente`}
                             control={form.control}
@@ -257,7 +257,7 @@ export default function BatchRegisterSection() {
                             )}
                           />
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="p-1">
                            <Controller
                             name={`warranties.${index}.mecanico`}
                             control={form.control}
@@ -273,7 +273,7 @@ export default function BatchRegisterSection() {
                             )}
                           />
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="p-1">
                           <Button
                             type="button"
                             variant="ghost"
