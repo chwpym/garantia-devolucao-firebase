@@ -24,7 +24,9 @@ const warrantyRowSchema = z.object({
   quantidade: z.coerce.number().min(1).optional(),
   defeito: z.string().optional(),
   requisicaoVenda: z.string().optional(),
+  requisicoesGarantia: z.string().optional(),
   cliente: z.string().optional(),
+  mecanico: z.string().optional(),
 });
 
 const formSchema = z.object({
@@ -126,6 +128,12 @@ export default function BatchRegisterSection() {
     .map(c => ({ value: c.nome, label: c.nome })), 
     [persons]
   );
+
+  const mechanicOptions = useMemo(() => persons
+    .filter(p => p.tipo === 'Mecânico' || p.tipo === 'Ambos')
+    .map(m => ({ value: m.nome, label: m.nome })),
+    [persons]
+  );
   
   const supplierOptions = useMemo(() => suppliers.map(s => ({ value: s.nomeFantasia, label: s.nomeFantasia })), [suppliers]);
 
@@ -156,8 +164,10 @@ export default function BatchRegisterSection() {
                       <TableHead className="w-[80px]">Qtd.</TableHead>
                       <TableHead className="min-w-[200px]">Fornecedor</TableHead>
                       <TableHead className="min-w-[200px]">Cliente</TableHead>
+                      <TableHead className="min-w-[200px]">Mecânico</TableHead>
                       <TableHead className="min-w-[150px]">Defeito</TableHead>
-                      <TableHead className="min-w-[150px]">Requisição</TableHead>
+                      <TableHead className="min-w-[150px]">Req. Venda</TableHead>
+                      <TableHead className="min-w-[150px]">Req. Garantia</TableHead>
                       <TableHead className="w-[50px]"></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -217,6 +227,22 @@ export default function BatchRegisterSection() {
                             )}
                           />
                         </TableCell>
+                        <TableCell>
+                           <Controller
+                            name={`warranties.${index}.mecanico`}
+                            control={form.control}
+                            render={({ field }) => (
+                                <Combobox 
+                                    options={mechanicOptions}
+                                    value={field.value ?? ''}
+                                    onChange={field.onChange}
+                                    placeholder="Mecânico"
+                                    searchPlaceholder="Buscar..."
+                                    notFoundMessage="Nenhum encontrado."
+                                />
+                            )}
+                          />
+                        </TableCell>
                          <TableCell>
                           <Controller
                             name={`warranties.${index}.defeito`}
@@ -228,7 +254,14 @@ export default function BatchRegisterSection() {
                           <Controller
                             name={`warranties.${index}.requisicaoVenda`}
                             control={form.control}
-                            render={({ field }) => <Input {...field} placeholder="Nº da Requisição" />}
+                            render={({ field }) => <Input {...field} placeholder="Nº da Req. de Venda" />}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Controller
+                            name={`warranties.${index}.requisicoesGarantia`}
+                            control={form.control}
+                            render={({ field }) => <Input {...field} placeholder="Nº da Req. de Garantia" />}
                           />
                         </TableCell>
                         <TableCell>
