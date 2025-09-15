@@ -215,6 +215,7 @@ export default function SuppliersSection() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className='w-[80px]'>ID</TableHead>
                   <TableHead>Nome Fantasia</TableHead>
                   <TableHead>Razão Social</TableHead>
                   <TableHead>CNPJ</TableHead>
@@ -226,6 +227,7 @@ export default function SuppliersSection() {
                 {filteredSuppliers.length > 0 ? (
                   filteredSuppliers.map(supplier => (
                     <TableRow key={supplier.id}>
+                      <TableCell className="font-medium text-muted-foreground">{supplier.id}</TableCell>
                       <TableCell className="font-medium">{supplier.nomeFantasia}</TableCell>
                       <TableCell>{supplier.razaoSocial}</TableCell>
                       <TableCell>{formatCnpj(supplier.cnpj)}</TableCell>
@@ -254,7 +256,7 @@ export default function SuppliersSection() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">
+                    <TableCell colSpan={6} className="h-24 text-center">
                       Nenhum fornecedor encontrado para a busca realizada.
                     </TableCell>
                   </TableRow>
