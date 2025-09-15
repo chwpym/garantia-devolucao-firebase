@@ -80,6 +80,7 @@ export default function WarrantyTable({ warranties, selectedIds, onSelectionChan
               <TableHead>Data</TableHead>
               <TableHead>Código</TableHead>
               <TableHead>Descrição</TableHead>
+              <TableHead>Qtd.</TableHead>
               <TableHead>Fornecedor</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>NF Retorno</TableHead>
@@ -103,6 +104,7 @@ export default function WarrantyTable({ warranties, selectedIds, onSelectionChan
                   </TableCell>
                   <TableCell className="font-medium">{warranty.codigo || '-'}</TableCell>
                   <TableCell>{warranty.descricao || '-'}</TableCell>
+                  <TableCell>{warranty.quantidade || '-'}</TableCell>
                   <TableCell>{warranty.fornecedor || '-'}</TableCell>
                   <TableCell>{warranty.cliente || '-'}</TableCell>
                   <TableCell>{warranty.notaFiscalRetorno || '-'}</TableCell>
@@ -141,7 +143,7 @@ export default function WarrantyTable({ warranties, selectedIds, onSelectionChan
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={9} className="h-24 text-center">
+                <TableCell colSpan={10} className="h-24 text-center">
                   Nenhuma garantia encontrada para os filtros selecionados.
                 </TableCell>
               </TableRow>
