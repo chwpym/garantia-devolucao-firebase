@@ -6,6 +6,7 @@ Um sistema web completo e moderno para gerenciamento de garantias, devoluções 
 
 ### 🔧 Módulo de Garantias
 - **Cadastro Detalhado**: Registre garantias com informações de produto, defeito, cliente, fornecedor, notas fiscais e anexo de fotos.
+- **Cadastro em Lote**: Insira múltiplas garantias de uma só vez em uma interface de planilha, associando todas a um único fornecedor para maior agilidade.
 - **Consulta Avançada**: Busque garantias por qualquer texto ou filtre por período e status.
 - **Gestão de Lotes**: Agrupe garantias para envio a fornecedores, controle o status do lote, adicione NFs de saída/retorno e atualize o status de vários itens de uma vez.
 - **Relatórios de Lote em PDF**: Crie relatórios profissionais de envio de lote para fornecedores, selecionando os campos que deseja exibir.
@@ -17,6 +18,13 @@ Um sistema web completo e moderno para gerenciamento de garantias, devoluções 
 - **Relatórios Analíticos**:
     - **Gerais**: Analise o volume de devoluções, ranking de peças, clientes e mecânicos.
     - **Mensal por Cliente**: Gere um extrato detalhado de devoluções por cliente, ideal para conferência financeira.
+
+### 🔢 Módulo de Ferramentas e Calculadoras
+- **Análise de Custo por NF-e**: Importe o XML de uma NF-e para calcular o custo final real de cada produto, incluindo impostos (IPI, ICMS-ST) e outras despesas rateadas (frete, seguro).
+- **Análise de Custo Avançada**: Uma versão mais detalhada da análise de custo que permite simular o crédito de PIS/COFINS para empresas do regime Lucro Real.
+- **Precificação em Lote**: Importe um XML ou insira itens manualmente para calcular o preço de venda de múltiplos produtos de uma só vez, aplicando uma margem de lucro global ou individual.
+- **Comparador de NF-e**: Carregue múltiplos arquivos XML para encontrar produtos duplicados ou para buscar itens específicos em diversas notas fiscais.
+- **Cálculos Rápidos**: Ferramentas para calcular preço médio, preço de venda, custo unitário e porcentagens de forma simples e direta.
 
 ### 🗃️ Cadastros e Configurações
 - **Gestão Centralizada com Busca**: Mantenha um cadastro único para Clientes, Mecânicos e Fornecedores, com uma busca inteligente que permite encontrar registros por nome, CPF/CNPJ ou telefone.
@@ -72,23 +80,33 @@ O sistema foi projetado para funcionar diretamente no navegador, sem a necessida
 - Anexe fotos, se necessário. As imagens são armazenadas localmente.
 - Clique em "Salvar".
 
-### 3. Gerenciando Lotes de Garantia
+### 3. Registrando Garantias em Lote
+- Use o atalho **Garantia em Lote** no cabeçalho.
+- Selecione um **Fornecedor** para todo o lote.
+- Preencha os detalhes de cada garantia na tabela, como se fosse uma planilha.
+- Clique em "Salvar Tudo" para registrar todas as garantias de uma vez.
+
+### 4. Gerenciando Lotes de Garantia
 - Vá para **Garantias → Consulta de Garantias**. Marque as garantias que deseja agrupar e clique em "Adicionar ao Lote".
 - Em **Garantias → Lotes de Garantia**, você pode criar novos lotes ou visualizar os existentes.
 - Ao clicar em um lote, você pode gerenciar os itens, aplicar NFs de saída/retorno em massa e alterar o status das garantias.
 
-### 4. Registrando uma Devolução
+### 5. Registrando uma Devolução
 - Vá para **Devoluções → Cadastro de Devolução** (ou use o atalho "Nova Devolução").
 - Adicione uma ou mais peças, preenchendo código, descrição e quantidade.
 - Preencha as informações gerais, como cliente e requisição de venda.
 - Clique em "Salvar Devolução".
 
-### 5. Gerando Relatórios
+### 6. Usando as Ferramentas e Calculadoras
+- Acesse a seção **Ferramentas → Calculadoras** no menu lateral ou use o atalho **Calculadoras** no cabeçalho.
+- Escolha a ferramenta desejada, como a "Análise de Custo por NF-e", e siga as instruções na tela para importar arquivos XML ou preencher os campos.
+
+### 7. Gerando Relatórios
 - Acesse a seção **Relatórios** no menu lateral.
 - **Relatório de Garantias**: Filtre e selecione as garantias que deseja incluir, escolha os campos e gere um PDF.
 - **Relatório de Devoluções**: Use os filtros de data para análises gerais ou gere relatórios mensais específicos por cliente para conferência.
 
-### 6. Backup
+### 8. Backup
 - Em **Backup**, você pode exportar todos os seus dados para um arquivo JSON para segurança.
 - Use a função "Restaurar" para importar dados de um arquivo de backup. **Atenção: a restauração substitui todos os dados existentes.**
 
@@ -100,6 +118,7 @@ O sistema foi projetado para funcionar diretamente no navegador, sem a necessida
 - **Next-PWA**: Para transformar o sistema em um Progressive Web App instalável.
 - **Lucide-React**: Para ícones limpos e modernos.
 - **jsPDF & jspdf-autotable**: Para a geração de relatórios em PDF.
+- **fast-xml-parser**: Para a análise de arquivos XML de NF-e nas calculadoras.
 
 ---
 *Este projeto foi desenvolvido com o auxílio do **Firebase Studio**.*
