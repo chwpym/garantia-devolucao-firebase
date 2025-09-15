@@ -167,8 +167,9 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
         toast({ title: 'Aviso', description: 'Não há dados para exportar.'});
         return;
     }
-    const headers = ['Data Dev.', 'Cliente', 'Requisição', 'Código Peça', 'Descrição Peça', 'Qtd.', 'Ação Req.', 'Status'];
+    const headers = ['ID Dev.','Data Dev.', 'Cliente', 'Requisição', 'Código Peça', 'Descrição Peça', 'Qtd.', 'Ação Req.', 'Status'];
     const rows = filteredDevolucoes.map(item => [
+      item.id,
       item.dataDevolucao ? format(parseISO(item.dataDevolucao), 'dd/MM/yyyy') : '',
       `"${item.cliente || ''}"`,
       `"${item.requisicaoVenda || ''}"`,
@@ -247,6 +248,7 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
                 <Table>
                     <TableHeader>
                         <TableRow>
+                            <TableHead className="w-[80px]">ID Dev.</TableHead>
                             <TableHead>Data Dev.</TableHead>
                             <TableHead>Cliente</TableHead>
                             <TableHead>Requisição</TableHead>
@@ -262,6 +264,7 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
                         {filteredDevolucoes.length > 0 ? (
                             filteredDevolucoes.map(item => (
                                 <TableRow key={`${item.id}-${item.itemId || 'no-item'}`}>
+                                    <TableCell className="font-medium text-muted-foreground">{item.id}</TableCell>
                                     <TableCell>{item.dataDevolucao ? format(parseISO(item.dataDevolucao), 'dd/MM/yyyy') : '-'}</TableCell>
                                     <TableCell>{item.cliente}</TableCell>
                                     <TableCell>{item.requisicaoVenda}</TableCell>
@@ -300,7 +303,7 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={9} className="h-24 text-center">
+                                <TableCell colSpan={10} className="h-24 text-center">
                                     Nenhuma devolução encontrada para os filtros selecionados.
                                 </TableCell>
                             </TableRow>
