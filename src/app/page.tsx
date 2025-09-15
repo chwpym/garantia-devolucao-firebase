@@ -20,6 +20,7 @@ import DevolucaoReportSection from '@/components/sections/devolucao-report-secti
 import CalculatorsSection from '@/components/sections/calculators-section';
 import type { Warranty } from '@/lib/types';
 import BatchRegisterSection from '@/components/sections/batch-register-section';
+import { cn } from '@/lib/utils';
 
 export type RegisterMode = 'edit' | 'clone';
 
@@ -145,7 +146,9 @@ export default function Home() {
             setIsNewLoteModalOpen(true);
         }}
       >
-        {renderContent()}
+        <div className={cn(activeView !== 'batch-register' && 'max-w-7xl mx-auto')}>
+            {renderContent()}
+        </div>
       </AppLayout>
   );
 }
