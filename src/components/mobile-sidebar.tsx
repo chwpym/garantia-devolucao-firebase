@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, FileText, Search, PlusSquare, Users, Building, Package, FolderKanban, Wrench, Undo2, Calculator } from 'lucide-react';
+import { LayoutDashboard, FileText, Search, PlusSquare, Users, Building, Package, FolderKanban, Wrench, Undo2, Calculator, History } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 
 
@@ -19,6 +19,7 @@ const navItems = {
 
 const garantiaNavItems = [
     { id: 'register', label: 'Cadastro de Garantia', icon: PlusSquare },
+    { id: 'batch-register', label: 'Cadastro em Lote', icon: History },
     { id: 'query', label: 'Consulta de Garantias', icon: Search },
     { id: 'lotes', label: 'Lotes de Garantia', icon: Package },
 ];

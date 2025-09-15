@@ -19,6 +19,7 @@ import DevolucaoQuerySection from '@/components/sections/devolucao-query-section
 import DevolucaoReportSection from '@/components/sections/devolucao-report-section';
 import CalculatorsSection from '@/components/sections/calculators-section';
 import type { Warranty } from '@/lib/types';
+import BatchRegisterSection from '@/components/sections/batch-register-section';
 
 export type RegisterMode = 'edit' | 'clone';
 
@@ -95,6 +96,8 @@ export default function Home() {
                     onSave={handleWarrantySave} 
                     onClear={() => setEditingWarrantyId(null)}
                 />;
+      case 'batch-register':
+        return <BatchRegisterSection />;
       case 'query':
         return <QuerySection 
                     setActiveView={handleViewChange} 

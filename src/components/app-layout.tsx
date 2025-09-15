@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Settings, Menu, DatabaseBackup, Wrench, Undo2, Package, Calculator } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Settings, Menu, DatabaseBackup, Wrench, Undo2, Package, Calculator, History } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from './theme-toggle';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
@@ -146,6 +146,10 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
                 <Button size="sm" onClick={() => setActiveView('register')}>
                     <Wrench className="mr-2 h-4 w-4" />
                     Nova Garantia
+                </Button>
+                <Button size="sm" variant='secondary' onClick={() => setActiveView('batch-register')}>
+                    <History className="mr-2 h-4 w-4" />
+                    Garantia em Lote
                 </Button>
                  <Button variant="accent-blue" size="sm" onClick={() => setActiveView('devolucao-register')}>
                     <Undo2 className="mr-2 h-4 w-4" />
