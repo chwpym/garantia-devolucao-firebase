@@ -20,18 +20,12 @@ export function usePwaUpdate() {
         setIsUpdateAvailable(true);
       };
 
-      // Adiciona o listener para o evento 'waiting'
+      // Adiciona o listener para o evento 'waiting'.
+      // Este evento é disparado quando um novo service worker está instalado mas "esperando" para ativar.
       wb.addEventListener('waiting', handleWaiting);
-
-      // Checa se já existe um service worker esperando quando a página carrega
-      // A workbox pode já ter um 'waiting' sw.
-      wb.getSW().then(sw => {
-        if (sw?.waiting) {
-            handleWaiting();
-        }
-      });
       
-      // Força a verificação de atualizações
+      // Força a verificação por uma nova versão do service worker.
+      // Se uma nova versão for encontrada e instalada, o evento 'waiting' acima será disparado.
       wb.update();
 
       return () => {
@@ -43,15 +37,15 @@ export function usePwaUpdate() {
   const update = () => {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator && window.workbox) {
       const wb = window.workbox;
-      // Ativa o novo Service Worker
+      // Envia uma mensagem para o service worker "em espera" para que ele se ative.
       wb.messageSkipWaiting();
-      // Não precisa de reload forçado aqui, o skipWaiting e o controllerchange farão o trabalho
     }
   };
 
   useEffect(() => {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      // Recarrega a página quando um novo service worker assume o controle
+      // Recarrega a página quando um novo service worker assume o controle,
+      // o que acontece após o messageSkipWaiting() ser chamado.
       const handleControllerChange = () => {
         window.location.reload();
       };
