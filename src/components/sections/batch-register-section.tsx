@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Trash2, PlusCircle, Save, Loader2 } from "lucide-react";
 import { Combobox } from "../ui/combobox";
+import { Form } from "@/components/ui/form";
 
 const warrantyRowSchema = z.object({
   id: z.number(), // Used for unique key in React
