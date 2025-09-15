@@ -23,9 +23,10 @@ export function usePwaUpdate() {
       // Adiciona o listener para o evento 'waiting'
       wb.addEventListener('waiting', handleWaiting);
 
-      // Se já existe um service worker esperando, mostra a notificação
-      wb.controlling.then(controller => {
-        if (controller && wb.waiting) {
+      // Checa se já existe um service worker esperando quando a página carrega
+      // A workbox pode já ter um 'waiting' sw.
+      wb.getSW().then(sw => {
+        if (sw?.waiting) {
             handleWaiting();
         }
       });
