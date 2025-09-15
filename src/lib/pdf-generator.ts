@@ -132,6 +132,11 @@ export function generatePdf(input: GeneratePdfInput): string {
         }
         cursorY += 8; // Espaço extra depois dos dados do fornecedor
     }
+
+    // Adiciona o total de itens ANTES da tabela
+    doc.setFontSize(10).setFont('helvetica', 'bold');
+    doc.text(`Total de Itens no Lote: ${selectedWarranties.length}`, margin, cursorY);
+    cursorY += 8;
     
     // --- TABELA ---
     
@@ -181,10 +186,6 @@ export function generatePdf(input: GeneratePdfInput): string {
         styles: { fontSize: 8 },
         alternateRowStyles: { fillColor: [240, 240, 240] },
     });
-    
-    const finalY = (doc as any).lastAutoTable.finalY || cursorY;
-    doc.setFontSize(10).setFont('helvetica', 'bold');
-    doc.text(`Total de Itens no Relatório: ${selectedWarranties.length}`, margin, finalY + 10);
 
     return doc.output('datauristring');
 }
