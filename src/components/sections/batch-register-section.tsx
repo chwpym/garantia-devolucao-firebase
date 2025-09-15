@@ -149,14 +149,14 @@ export default function BatchRegisterSection() {
   const supplierOptions = useMemo(() => suppliers.map(s => ({ value: s.nomeFantasia, label: s.nomeFantasia })), [suppliers]);
 
   return (
-    <div className="space-y-8">
+    <div className="w-full space-y-8">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Cadastro de Garantia em Lote</h1>
         <p className="text-lg text-muted-foreground">
           Adicione múltiplas garantias de forma rápida, como em uma planilha.
         </p>
       </div>
-      <Card>
+      <Card className="w-full">
         <CardHeader>
           <CardTitle>Lançamento Rápido</CardTitle>
           <CardDescription>
