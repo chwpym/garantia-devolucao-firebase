@@ -110,11 +110,11 @@ export function generatePdf(input: GeneratePdfInput): string {
 
     // --- DADOS DO FORNECEDOR (se houver) ---
     if (supplierData) {
-        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10).setFont('helvetica', 'bold');
         doc.text('DESTINATÁRIO:', margin, cursorY);
         cursorY += 5;
 
-        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9).setFont('helvetica', 'normal');
         doc.text(supplierData.nomeFantasia, margin, cursorY);
         if (supplierData.razaoSocial && supplierData.razaoSocial !== supplierData.nomeFantasia) {
             doc.text(`(${supplierData.razaoSocial})`, margin + doc.getTextWidth(supplierData.nomeFantasia) + 2, cursorY);
