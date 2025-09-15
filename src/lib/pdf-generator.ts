@@ -1,3 +1,4 @@
+
 'use client';
 
 import { jsPDF } from 'jspdf';
@@ -128,15 +129,9 @@ export function generatePdf(input: GeneratePdfInput): string {
          if (supplierData.cidade) {
             doc.text(`Cidade: ${supplierData.cidade}`, margin, cursorY);
         }
-        cursorY += 6;
+        cursorY += 8;
     }
     
-    // --- CONTADOR DE ITENS ---
-    doc.setFontSize(10).setFont('helvetica', 'bold');
-    doc.text(`Total de Itens no Lote: ${selectedWarranties.length}`, margin, cursorY);
-    cursorY += 8;
-
-
     // --- TABELA ---
     
     const FIELD_LABELS: Record<string, string> = {
@@ -186,6 +181,11 @@ export function generatePdf(input: GeneratePdfInput): string {
         alternateRowStyles: { fillColor: [240, 240, 240] },
     });
     
+    // --- CONTADOR DE ITENS ---
+    const finalY = (doc as any).lastAutoTable.finalY || cursorY;
+    doc.setFontSize(10).setFont('helvetica', 'bold');
+    doc.text(`Total de Itens no Lote: ${selectedWarranties.length}`, margin, finalY + 10);
+
     return doc.output('datauristring');
 }
 
