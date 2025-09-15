@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Settings, Menu, DatabaseBackup, Wrench, Undo2, Package, Calculator, History } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -37,7 +38,7 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
             "flex items-center gap-3 h-16 border-b px-6",
             isSidebarCollapsed && "justify-center px-0"
         )}>
-           <img src="/logo.jpeg" alt="Synergia OS Logo" width={32} height={32} className="h-8 w-8 rounded-md flex-shrink-0" />
+           <Image src="/logo.jpeg" alt="Synergia OS Logo" width={32} height={32} className="h-8 w-8 rounded-md flex-shrink-0" />
           <h1 className={cn(
             "text-xl font-bold font-headline text-foreground whitespace-nowrap transition-opacity duration-200",
             isSidebarCollapsed && "opacity-0 w-0"
@@ -100,7 +101,7 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
                     </SheetTrigger>
                     <SheetContent side="left" className="w-[280px] p-0 flex flex-col">
                          <div className="flex items-center gap-3 h-16 border-b px-6">
-                           <img src="/logo.jpeg" alt="Synergia OS Logo" width={32} height={32} className="h-8 w-8 rounded-md flex-shrink-0" />
+                           <Image src="/logo.jpeg" alt="Synergia OS Logo" width={32} height={32} className="h-8 w-8 rounded-md flex-shrink-0" />
                           <h1 className="text-xl font-bold font-headline text-foreground whitespace-nowrap">
                             Synergia OS
                           </h1>
@@ -174,3 +175,5 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
     </div>
   );
 }
+
+    
