@@ -65,7 +65,7 @@ export default function BatchRegisterSection() {
       setSuppliers(
         allSuppliers.sort((a, b) => a.nomeFantasia.localeCompare(b.nomeFantasia))
       );
-    } catch (error) {
+    } catch {
       toast({
         title: "Erro ao carregar dados",
         description: "Não foi possível carregar clientes e fornecedores.",
@@ -125,7 +125,7 @@ export default function BatchRegisterSection() {
         warranties: [{ id: Date.now(), quantidade: 1 }],
       });
       window.dispatchEvent(new CustomEvent('datachanged'));
-    } catch (error) {
+    } catch {
       toast({
         title: "Erro ao salvar garantias",
         description: "Ocorreu um erro ao tentar salvar os registros.",
