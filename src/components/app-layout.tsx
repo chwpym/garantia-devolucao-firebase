@@ -18,9 +18,6 @@ interface AppLayoutProps {
   onNewLoteClick: () => void;
 }
 
-
-
-
 export default function AppLayout({ children, activeView, setActiveView, isMobileMenuOpen, setMobileMenuOpen, onNewLoteClick }: AppLayoutProps) {
   
   const handleNavClick = (view: string) => {
@@ -86,9 +83,7 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
                 </div>
                 <ThemeToggle />
             </div>
-            <div>
-              <QuickShortcuts setActiveView={setActiveView} onNewLoteClick={onNewLoteClick} />
-            </div>
+            <QuickShortcuts setActiveView={setActiveView} onNewLoteClick={onNewLoteClick} />
         </header>
         <main className="flex-1 p-4 md:p-8 overflow-auto">
           {children}
