@@ -5,7 +5,7 @@ import type { Lote, Warranty, Supplier, WarrantyStatus, LoteAttachment } from '@
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '../ui/button';
-import { ArrowLeft, Package, Calendar, Building, FileText, MoreHorizontal, Pencil, Trash2, CheckSquare, FileDown, Camera, Image as ImageIcon, Paperclip, Download } from 'lucide-react';
+import { ArrowLeft, Package, Calendar, Building, FileText, MoreHorizontal, Pencil, Trash2, CheckSquare, FileDown, Camera, Image as ImageIcon, Link as LinkIcon, Download } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { format, parseISO } from 'date-fns';
@@ -203,8 +203,8 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
      try {
       if (formData.id) {
         const fullWarranty = {
-          ...(warranties.find(w => w.id === formData.id)), // get existing data
-          ...formData, // apply changes from form
+          ...(warranties.find(w => w.id === formData.id)),
+          ...formData,
         };
         await db.updateWarranty(fullWarranty);
         toast({ title: 'Sucesso', description: 'Garantia atualizada com sucesso.' });
@@ -474,12 +474,13 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                         {lote.attachments.map((att, index) => (
                             <a
                                 key={index}
-                                href={att.dataUri}
-                                download={att.name}
+                                href={att.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 className="flex items-center justify-between text-sm p-2 bg-muted rounded-md hover:bg-muted/80 transition-colors"
                             >
                                 <div className='flex items-center gap-2'>
-                                    <Paperclip className='h-4 w-4' />
+                                    <LinkIcon className='h-4 w-4' />
                                     <span className='truncate' title={att.name}>{att.name}</span>
                                 </div>
                                 <Download className="h-4 w-4" />

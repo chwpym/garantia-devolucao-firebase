@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, Upload, Paperclip, X } from 'lucide-react';
+import { Loader2, Upload, Paperclip, X, Link as LinkIcon } from 'lucide-react';
 import type { Lote, Supplier, LoteStatus, LoteAttachment } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
@@ -15,12 +15,13 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from './ui/textarea';
+import { uploadFile } from '@/lib/storage';
 
 const loteStatuses: [LoteStatus, ...LoteStatus[]] = ['Aberto', 'Enviado', 'Aprovado Parcialmente', 'Aprovado Totalmente', 'Recusado'];
 
 const attachmentSchema = z.object({
     name: z.string(),
-    dataUri: z.string(),
+    url: z.string(),
 });
 
 const formSchema = z.object({
@@ -43,6 +44,8 @@ interface LoteFormProps {
 export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
   const form = useForm<LoteFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: editingLote || { nome: '', fornecedor: '', notaFiscalSaida: '', notasFiscaisRetorno: '', status: 'Aberto', attachments: [] },
@@ -91,36 +94,49 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
     }
   };
   
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-    if (!files) return;
+    if (!files || !editingLote?.id) {
+        if (!editingLote?.id) {
+            toast({
+                title: 'Aviso',
+                description: 'Por favor, salve o lote antes de anexar arquivos.',
+                variant: 'destructive'
+            });
+        }
+        return;
+    }
 
+    setIsUploading(true);
     const currentAttachments = form.getValues('attachments') || [];
     
-    const filePromises = Array.from(files).map(file => {
-        return new Promise<LoteAttachment>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                resolve({ name: file.name, dataUri: e.target?.result as string });
-            };
-            reader.onerror = (error) => reject(error);
-            reader.readAsDataURL(file);
+    try {
+        const uploadPromises = Array.from(files).map(async file => {
+            const downloadURL = await uploadFile(file, editingLote.id!);
+            return { name: file.name, url: downloadURL };
         });
-    });
-    
-    Promise.all(filePromises)
-        .then(newAttachments => {
-            setValue('attachments', [...currentAttachments, ...newAttachments], { shouldValidate: true });
-        })
-        .catch(error => {
-            toast({
-                title: 'Erro ao carregar arquivo',
-                description: error.message,
-                variant: 'destructive',
-            });
+
+        const newAttachments = await Promise.all(uploadPromises);
+        setValue('attachments', [...currentAttachments, ...newAttachments], { shouldValidate: true });
+        
+        toast({
+            title: 'Sucesso',
+            description: `${newAttachments.length} arquivo(s) anexado(s) com sucesso.`
         });
-    
-    if(event.target) event.target.value = '';
+        // Trigger immediate save
+        await handleSave(form.getValues());
+
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : "Ocorreu um erro desconhecido.";
+         toast({
+            title: 'Erro de Upload',
+            description: message,
+            variant: 'destructive',
+        });
+    } finally {
+        setIsUploading(false);
+        if(event.target) event.target.value = '';
+    }
   };
 
   const removeAttachment = (index: number) => {
@@ -128,6 +144,8 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
     const newAttachments = [...currentAttachments];
     newAttachments.splice(index, 1);
     setValue('attachments', newAttachments, { shouldValidate: true });
+    // Trigger save on removal
+    handleSave(form.getValues());
   };
 
 
@@ -240,26 +258,33 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
                             multiple
                             className="hidden"
                             onChange={handleFileChange}
+                            disabled={isUploading || !editingLote}
                         />
                         <Button 
                             type="button" 
                             variant="outline"
                             onClick={() => fileInputRef.current?.click()}
+                            disabled={isUploading || !editingLote}
                         >
-                            <Upload className="mr-2 h-4 w-4" />
-                            Anexar Arquivos
+                            {isUploading ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                                <Upload className="mr-2 h-4 w-4" />
+                            )}
+                            {isUploading ? 'Enviando...' : 'Anexar Arquivos'}
                         </Button>
                         </div>
                     </FormControl>
+                    {!editingLote && <FormDescription>Salve o lote para poder anexar arquivos.</FormDescription>}
                     <FormMessage />
                     {attachments && attachments.length > 0 && (
                         <div className="space-y-2 pt-2">
                             {attachments.map((att, index) => (
                                 <div key={index} className="flex items-center justify-between text-sm p-2 bg-muted rounded-md">
-                                    <div className='flex items-center gap-2'>
-                                        <Paperclip className='h-4 w-4' />
+                                    <a href={att.url} target="_blank" rel="noopener noreferrer" className='flex items-center gap-2 hover:underline truncate'>
+                                        <LinkIcon className='h-4 w-4' />
                                         <span className='truncate' title={att.name}>{att.name}</span>
-                                    </div>
+                                    </a>
                                     <Button
                                         type="button"
                                         variant="ghost"
@@ -278,8 +303,8 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
             />
         </div>
         <DialogFooter>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          <Button type="submit" disabled={isSubmitting || isUploading}>
+            {isSubmitting || isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             {editingLote ? 'Atualizar Lote' : 'Criar Lote'}
           </Button>
         </DialogFooter>

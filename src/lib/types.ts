@@ -52,7 +52,7 @@ export type LoteStatus = 'Aberto' | 'Enviado' | 'Aprovado Parcialmente' | 'Aprov
 
 export interface LoteAttachment {
     name: string;
-    dataUri: string;
+    url: string; // Changed from dataUri to url
 }
 
 export interface Lote {
