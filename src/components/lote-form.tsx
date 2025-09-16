@@ -112,7 +112,8 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
     
     try {
         const uploadPromises = Array.from(files).map(async file => {
-            const downloadURL = await uploadFile(file, editingLote.id!);
+            const filePath = `lotes/${editingLote.id}/${file.name}`;
+            const downloadURL = await uploadFile(file, filePath);
             return { name: file.name, url: downloadURL };
         });
 
