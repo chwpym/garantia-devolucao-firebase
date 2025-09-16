@@ -146,7 +146,7 @@ export default function Home() {
             setIsNewLoteModalOpen(true);
         }}
       >
-        <div className={cn(activeView !== 'batch-register' && 'max-w-7xl mx-auto')}>
+        <div className={cn(activeView === 'batch-register' ? "" : "max-w-7xl mx-auto")}>
             {renderContent()}
         </div>
       </AppLayout>
