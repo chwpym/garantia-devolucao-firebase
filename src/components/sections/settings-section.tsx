@@ -150,36 +150,38 @@ export default function SettingsSection() {
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(handleSave)}>
                         <CardContent className="space-y-4">
-                             <FormField
-                                name="nomeEmpresa"
-                                control={form.control}
-                                render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Nome da Empresa</FormLabel>
-                                    <FormControl><Input placeholder="Minha Empresa Ltda" {...field} /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                                )}
-                            />
-                             <FormField
-                                name="cnpj"
-                                control={form.control}
-                                render={({ field }) => (
-                                    <FormItem>
-                                    <FormLabel>CNPJ</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                        placeholder="00.000.000/0001-00"
-                                        {...field}
-                                        onChange={(e) => {
-                                            field.onChange(formatCNPJ(e.target.value));
-                                        }}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <FormField
+                                    name="nomeEmpresa"
+                                    control={form.control}
+                                    render={({ field }) => (
+                                    <FormItem className="md:col-span-2">
+                                        <FormLabel>Nome da Empresa</FormLabel>
+                                        <FormControl><Input placeholder="Minha Empresa Ltda" {...field} /></FormControl>
+                                        <FormMessage />
                                     </FormItem>
-                                )}
+                                    )}
                                 />
+                                <FormField
+                                    name="cnpj"
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>CNPJ</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                            placeholder="00.000.000/0001-00"
+                                            {...field}
+                                            onChange={(e) => {
+                                                field.onChange(formatCNPJ(e.target.value));
+                                            }}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                    />
+                            </div>
 
                             <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
                                  <FormField
@@ -210,7 +212,7 @@ export default function SettingsSection() {
                                     )}
                                 />
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <FormField
                                     name="bairro"
                                     control={form.control}
@@ -233,18 +235,19 @@ export default function SettingsSection() {
                                     </FormItem>
                                     )}
                                 />
+                                 <FormField
+                                    name="telefone"
+                                    control={form.control}
+                                    render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Telefone</FormLabel>
+                                        <FormControl><Input placeholder="(11) 99999-9999" {...field} /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                    )}
+                                />
                             </div>
-                            <FormField
-                                name="telefone"
-                                control={form.control}
-                                render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Telefone</FormLabel>
-                                    <FormControl><Input placeholder="(11) 99999-9999" {...field} /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                                )}
-                            />
+                           
                              <FormField
                                 name="email"
                                 control={form.control}
