@@ -3,10 +3,11 @@
 import React from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Settings, Menu, DatabaseBackup, Wrench, History, Undo2, Package, CalculatorIcon } from 'lucide-react';
+import { Settings, Menu, DatabaseBackup } from 'lucide-react';
 import { ThemeToggle } from './theme-toggle';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
 import MobileSidebar from './mobile-sidebar';
+import QuickShortcuts from './quick-shortcuts';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -17,25 +18,7 @@ interface AppLayoutProps {
   onNewLoteClick: () => void;
 }
 
-const QuickShortcuts = ({ setActiveView, onNewLoteClick }: { setActiveView: (view: string) => void; onNewLoteClick: () => void; }) => (
-    <div className="flex items-center justify-center flex-wrap gap-2 pt-4">
-        <Button variant="default" onClick={() => setActiveView('register')}>
-            <Wrench /> Nova Garantia
-        </Button>
-        <Button variant="outline" className="bg-orange-400 text-white hover:bg-orange-500 hover:text-white" onClick={() => setActiveView('batch-register')}>
-            <History /> Garantia em Lote
-        </Button>
-        <Button variant="accent-blue" onClick={() => setActiveView('devolucao-register')}>
-            <Undo2 /> Nova Devolução
-        </Button>
-        <Button variant="accent-green" onClick={onNewLoteClick}>
-            <Package /> Novo Lote
-        </Button>
-         <Button variant="outline" className="bg-orange-400 text-white hover:bg-orange-500 hover:text-white" onClick={() => setActiveView('calculators')}>
-            <CalculatorIcon /> Calculadoras
-        </Button>
-    </div>
-);
+
 
 
 export default function AppLayout({ children, activeView, setActiveView, isMobileMenuOpen, setMobileMenuOpen, onNewLoteClick }: AppLayoutProps) {
