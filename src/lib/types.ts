@@ -50,6 +50,11 @@ export interface Supplier {
 
 export type LoteStatus = 'Aberto' | 'Enviado' | 'Aprovado Parcialmente' | 'Aprovado Totalmente' | 'Recusado';
 
+export interface LoteAttachment {
+    name: string;
+    dataUri: string;
+}
+
 export interface Lote {
     id?: number;
     nome: string;
@@ -59,6 +64,7 @@ export interface Lote {
     notaFiscalSaida?: string;
     notasFiscaisRetorno?: string;
     status: LoteStatus;
+    attachments?: LoteAttachment[];
 }
 
 export interface LoteItem {

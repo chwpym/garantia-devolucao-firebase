@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2 } from 'lucide-react';
-import type { Lote, Supplier, LoteStatus } from '@/lib/types';
+import { Loader2, Upload, Paperclip, X } from 'lucide-react';
+import type { Lote, Supplier, LoteStatus, LoteAttachment } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 
@@ -18,12 +18,18 @@ import { Textarea } from './ui/textarea';
 
 const loteStatuses: [LoteStatus, ...LoteStatus[]] = ['Aberto', 'Enviado', 'Aprovado Parcialmente', 'Aprovado Totalmente', 'Recusado'];
 
+const attachmentSchema = z.object({
+    name: z.string(),
+    dataUri: z.string(),
+});
+
 const formSchema = z.object({
   nome: z.string().min(2, { message: 'O nome do lote deve ter pelo menos 2 caracteres.' }),
   fornecedor: z.string({ required_error: 'Selecione um fornecedor.' }),
   notaFiscalSaida: z.string().optional(),
   notasFiscaisRetorno: z.string().optional(),
   status: z.enum(loteStatuses, { required_error: 'Selecione um status.' }),
+  attachments: z.array(attachmentSchema).optional(),
 });
 
 type LoteFormValues = z.infer<typeof formSchema>;
@@ -36,17 +42,22 @@ interface LoteFormProps {
 
 export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormProps) {
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const form = useForm<LoteFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: editingLote || { nome: '', fornecedor: '', notaFiscalSaida: '', notasFiscaisRetorno: '', status: 'Aberto' },
+    defaultValues: editingLote || { nome: '', fornecedor: '', notaFiscalSaida: '', notasFiscaisRetorno: '', status: 'Aberto', attachments: [] },
   });
+
+  const { watch, setValue } = form;
+  const attachments = watch('attachments', []);
 
   useEffect(() => {
     form.reset(editingLote ? {
       ...editingLote,
       notaFiscalSaida: editingLote.notaFiscalSaida || '',
       notasFiscaisRetorno: editingLote.notasFiscaisRetorno || '',
-    } : { nome: '', fornecedor: '', notaFiscalSaida: '', notasFiscaisRetorno: '', status: 'Aberto' });
+      attachments: editingLote.attachments || [],
+    } : { nome: '', fornecedor: '', notaFiscalSaida: '', notasFiscaisRetorno: '', status: 'Aberto', attachments: [] });
   }, [editingLote, form]);
 
   const { isSubmitting } = form.formState;
@@ -79,6 +90,46 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
       });
     }
   };
+  
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+
+    const currentAttachments = form.getValues('attachments') || [];
+    
+    const filePromises = Array.from(files).map(file => {
+        return new Promise<LoteAttachment>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                resolve({ name: file.name, dataUri: e.target?.result as string });
+            };
+            reader.onerror = (error) => reject(error);
+            reader.readAsDataURL(file);
+        });
+    });
+    
+    Promise.all(filePromises)
+        .then(newAttachments => {
+            setValue('attachments', [...currentAttachments, ...newAttachments], { shouldValidate: true });
+        })
+        .catch(error => {
+            toast({
+                title: 'Erro ao carregar arquivo',
+                description: error.message,
+                variant: 'destructive',
+            });
+        });
+    
+    if(event.target) event.target.value = '';
+  };
+
+  const removeAttachment = (index: number) => {
+    const currentAttachments = form.getValues('attachments') || [];
+    const newAttachments = [...currentAttachments];
+    newAttachments.splice(index, 1);
+    setValue('attachments', newAttachments, { shouldValidate: true });
+  };
+
 
   return (
     <Form {...form}>
@@ -172,6 +223,56 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
               </FormItem>
             )}
           />
+          <FormField
+            control={form.control}
+            name="attachments"
+            render={() => (
+                <FormItem>
+                    <FormLabel>Anexos de Autorização</FormLabel>
+                     <FormControl>
+                        <div>
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            multiple
+                            className="hidden"
+                            onChange={handleFileChange}
+                        />
+                        <Button 
+                            type="button" 
+                            variant="outline"
+                            onClick={() => fileInputRef.current?.click()}
+                        >
+                            <Upload className="mr-2 h-4 w-4" />
+                            Anexar Arquivos
+                        </Button>
+                        </div>
+                    </FormControl>
+                    <FormMessage />
+                    {attachments && attachments.length > 0 && (
+                        <div className="space-y-2 pt-2">
+                            {attachments.map((att, index) => (
+                                <div key={index} className="flex items-center justify-between text-sm p-2 bg-muted rounded-md">
+                                    <div className='flex items-center gap-2'>
+                                        <Paperclip className='h-4 w-4' />
+                                        <span className='truncate' title={att.name}>{att.name}</span>
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6 text-destructive hover:text-destructive"
+                                        onClick={() => removeAttachment(index)}
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </FormItem>
+            )}
+            />
         </div>
         <DialogFooter>
           <Button type="submit" disabled={isSubmitting}>

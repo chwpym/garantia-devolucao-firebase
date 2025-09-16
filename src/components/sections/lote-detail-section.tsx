@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import type { Lote, Warranty, Supplier, WarrantyStatus } from '@/lib/types';
+import type { Lote, Warranty, Supplier, WarrantyStatus, LoteAttachment } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '../ui/button';
-import { ArrowLeft, Package, Calendar, Building, FileText, MoreHorizontal, Pencil, Trash2, CheckSquare, FileDown, Camera, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Package, Calendar, Building, FileText, MoreHorizontal, Pencil, Trash2, CheckSquare, FileDown, Camera, Image as ImageIcon, Paperclip, Download } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { format, parseISO } from 'date-fns';
@@ -202,7 +202,11 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
   const handleFormSave = async (formData: Warranty) => {
      try {
       if (formData.id) {
-        await db.updateWarranty(formData);
+        const fullWarranty = {
+          ...(warranties.find(w => w.id === formData.id)), // get existing data
+          ...formData, // apply changes from form
+        };
+        await db.updateWarranty(fullWarranty);
         toast({ title: 'Sucesso', description: 'Garantia atualizada com sucesso.' });
       }
       setIsFormModalOpen(false);
@@ -420,41 +424,75 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
             </div>
       </div>
 
-      <Card>
-        <CardHeader>
-            <CardTitle>Informações do Lote</CardTitle>
-        </CardHeader>
-        <CardContent className='grid md:grid-cols-2 lg:grid-cols-4 gap-6'>
-            <div className="flex items-center gap-3">
-                <Building className="h-8 w-8 text-muted-foreground" />
-                <div>
-                    <p className="text-sm text-muted-foreground">Fornecedor</p>
-                    <p className="font-medium">{lote.fornecedor}</p>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <Card>
+            <CardHeader>
+                <CardTitle>Informações do Lote</CardTitle>
+            </CardHeader>
+            <CardContent className='grid md:grid-cols-2 lg:grid-cols-4 gap-6'>
+                <div className="flex items-center gap-3">
+                    <Building className="h-8 w-8 text-muted-foreground" />
+                    <div>
+                        <p className="text-sm text-muted-foreground">Fornecedor</p>
+                        <p className="font-medium">{lote.fornecedor}</p>
+                    </div>
                 </div>
-            </div>
-             <div className="flex items-center gap-3">
-                <Calendar className="h-8 w-8 text-muted-foreground" />
-                <div>
-                    <p className="text-sm text-muted-foreground">Data de Criação</p>
-                    <p className="font-medium">{lote.dataCriacao ? format(parseISO(lote.dataCriacao), 'dd/MM/yyyy') : '-'}</p>
+                <div className="flex items-center gap-3">
+                    <Calendar className="h-8 w-8 text-muted-foreground" />
+                    <div>
+                        <p className="text-sm text-muted-foreground">Data de Criação</p>
+                        <p className="font-medium">{lote.dataCriacao ? format(parseISO(lote.dataCriacao), 'dd/MM/yyyy') : '-'}</p>
+                    </div>
                 </div>
-            </div>
-             <div className="flex items-center gap-3">
-                <FileText className="h-8 w-8 text-muted-foreground" />
-                <div>
-                    <p className="text-sm text-muted-foreground">NF(s) de Retorno</p>
-                    <p className="font-medium">{lote.notasFiscaisRetorno || 'Nenhuma'}</p>
+                <div className="flex items-center gap-3">
+                    <FileText className="h-8 w-8 text-muted-foreground" />
+                    <div>
+                        <p className="text-sm text-muted-foreground">NF(s) de Retorno</p>
+                        <p className="font-medium">{lote.notasFiscaisRetorno || 'Nenhuma'}</p>
+                    </div>
                 </div>
-            </div>
-             <div className="flex items-center gap-3">
-                <Package className="h-8 w-8 text-muted-foreground" />
-                <div>
-                    <p className="text-sm text-muted-foreground">Status</p>
-                    <Badge variant={getStatusVariant(lote.status)}>{lote.status}</Badge>
+                <div className="flex items-center gap-3">
+                    <Package className="h-8 w-8 text-muted-foreground" />
+                    <div>
+                        <p className="text-sm text-muted-foreground">Status</p>
+                        <Badge variant={getStatusVariant(lote.status)}>{lote.status}</Badge>
+                    </div>
                 </div>
-            </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Anexos</CardTitle>
+                <CardDescription>Arquivos de autorização do fornecedor.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {lote.attachments && lote.attachments.length > 0 ? (
+                    <div className="space-y-2">
+                        {lote.attachments.map((att, index) => (
+                            <a
+                                key={index}
+                                href={att.dataUri}
+                                download={att.name}
+                                className="flex items-center justify-between text-sm p-2 bg-muted rounded-md hover:bg-muted/80 transition-colors"
+                            >
+                                <div className='flex items-center gap-2'>
+                                    <Paperclip className='h-4 w-4' />
+                                    <span className='truncate' title={att.name}>{att.name}</span>
+                                </div>
+                                <Download className="h-4 w-4" />
+                            </a>
+                        ))}
+                    </div>
+                ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">Nenhum anexo encontrado.</p>
+                )}
+            </CardContent>
+        </Card>
+      </div>
+
 
       <Card>
         <CardHeader className='flex flex-row justify-between items-center'>
