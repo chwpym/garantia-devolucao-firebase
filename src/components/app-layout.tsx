@@ -103,7 +103,9 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
                 </div>
                 <ThemeToggle />
             </div>
-            <QuickShortcuts setActiveView={setActiveView} onNewLoteClick={onNewLoteClick} />
+            <div>
+              <QuickShortcuts setActiveView={setActiveView} onNewLoteClick={onNewLoteClick} />
+            </div>
         </header>
         <main className="flex-1 p-4 md:p-8 overflow-auto">
           {children}
