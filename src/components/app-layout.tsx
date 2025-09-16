@@ -49,7 +49,7 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
     <div className="flex h-screen w-full bg-muted/40">
       <div className="flex flex-1 flex-col overflow-hidden">
         <header className="p-4 border-b bg-background shadow-sm sticky top-0 z-10 flex flex-col gap-2">
-            <div className='flex items-center justify-between w-full h-16'>
+            <div className='flex items-center justify-between w-full h-12'>
                 <div className='flex items-center gap-4'>
                      <Sheet open={isMobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                         <SheetTrigger asChild>
