@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import type { Lote, Warranty, Supplier, WarrantyStatus, LoteAttachment } from '@/lib/types';
+import type { Lote, Warranty, Supplier, WarrantyStatus } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '../ui/button';
@@ -202,11 +202,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
   const handleFormSave = async (formData: Warranty) => {
      try {
       if (formData.id) {
-        const fullWarranty = {
-          ...(warranties.find(w => w.id === formData.id)),
-          ...formData,
-        };
-        await db.updateWarranty(fullWarranty);
+        await db.updateWarranty(formData);
         toast({ title: 'Sucesso', description: 'Garantia atualizada com sucesso.' });
       }
       setIsFormModalOpen(false);

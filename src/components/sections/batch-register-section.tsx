@@ -21,7 +21,7 @@ const warrantyRowSchema = z.object({
   id: z.number(), // Used for unique key in React
   codigo: z.string().optional(),
   descricao: z.string().optional(),
-  quantidade: z.string().transform(val => val === '' ? undefined : Number(val)).pipe(z.number().min(1).optional()),
+  quantidade: z.coerce.number().min(1, 'A quantidade deve ser ao menos 1').optional(),
   defeito: z.string().optional(),
   requisicaoVenda: z.string().optional(),
   requisicoesGarantia: z.string().optional(),
@@ -44,7 +44,7 @@ export default function BatchRegisterSection() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      warranties: [{ id: Date.now(), quantidade: "1" }],
+      warranties: [{ id: Date.now(), quantidade: 1 }],
     },
   });
 
@@ -122,7 +122,7 @@ export default function BatchRegisterSection() {
       });
       // Reset form to a single empty row
       form.reset({
-        warranties: [{ id: Date.now(), quantidade: "1" }],
+        warranties: [{ id: Date.now(), quantidade: 1 }],
       });
       window.dispatchEvent(new CustomEvent('datachanged'));
     } catch {
@@ -217,7 +217,7 @@ export default function BatchRegisterSection() {
                           <Controller
                             name={`warranties.${index}.quantidade`}
                             control={form.control}
-                            render={({ field }) => <Input type="text" inputMode="decimal" {...field} />}
+                            render={({ field }) => <Input type="number" {...field} />}
                           />
                         </TableCell>
                         <TableCell className="p-1">
@@ -294,7 +294,7 @@ export default function BatchRegisterSection() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => append({ id: Date.now(), quantidade: "1" })}
+                onClick={() => append({ id: Date.now(), quantidade: 1 })}
               >
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Adicionar Linha
