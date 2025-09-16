@@ -11,7 +11,7 @@ interface QuickShortcutsProps {
 
 export default function QuickShortcuts({ setActiveView, onNewLoteClick }: QuickShortcutsProps) {
     return (
-        <div className="flex items-center justify-center flex-wrap gap-2 pt-4">
+        <div className="flex items-center justify-center flex-wrap gap-2">
             <Button variant="default" onClick={() => setActiveView('register')}>
                 <Wrench /> Nova Garantia
             </Button>
