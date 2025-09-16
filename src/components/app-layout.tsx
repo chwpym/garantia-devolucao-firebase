@@ -175,5 +175,3 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
     </div>
   );
 }
-
-    
