@@ -134,7 +134,7 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSave)} className="space-y-6">
-        <div className="space-y-4 px-1">
+        <div className="space-y-4 px-1 max-h-[60vh] overflow-y-auto pr-4">
           <FormField
             name="nome"
             control={form.control}
@@ -172,19 +172,43 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
               </FormItem>
             )}
           />
-           <FormField
-            name="notaFiscalSaida"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nota Fiscal de Saída (Envio)</FormLabel>
-                <FormControl>
-                  <Input placeholder="Digite o número da nota de envio" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <FormField
+              name="notaFiscalSaida"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nota Fiscal de Saída (Envio)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Digite o número da nota de envio" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              name="status"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Status do Lote</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                          <SelectTrigger>
+                              <SelectValue placeholder="Selecione um status para o lote" />
+                          </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                          {loteStatuses.map(status => (
+                              <SelectItem key={status} value={status}>{status}</SelectItem>
+                          ))}
+                      </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
           <FormField
             name="notasFiscaisRetorno"
             control={form.control}
@@ -201,28 +225,7 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
               </FormItem>
             )}
           />
-          <FormField
-            name="status"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Status do Lote</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Selecione um status para o lote" />
-                        </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                        {loteStatuses.map(status => (
-                            <SelectItem key={status} value={status}>{status}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          
           <FormField
             control={form.control}
             name="attachments"
