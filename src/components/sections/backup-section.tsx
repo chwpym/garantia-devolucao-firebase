@@ -1,13 +1,15 @@
 'use client';
 
+import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import * as db from '@/lib/db';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Download } from 'lucide-react';
+import { Download, UploadCloud, Loader2 } from 'lucide-react';
 import { ImportButton } from '@/components/import-button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CsvExporter from '../csv-exporter';
+import { uploadFile } from '@/lib/storage';
 
 interface FullBackupData {
   warranties: Awaited<ReturnType<typeof db.getAllWarranties>>;
@@ -21,35 +23,40 @@ interface FullBackupData {
 
 export default function BackupSection() {
   const { toast } = useToast();
+  const [isUploading, setIsUploading] = useState(false);
 
-  const handleExport = async () => {
+  const gatherDataForBackup = async (): Promise<FullBackupData> => {
+    await db.initDB();
+    
+    const [
+        warranties,
+        persons,
+        suppliers,
+        lotes,
+        devolucoes,
+        companyData
+    ] = await Promise.all([
+        db.getAllWarranties(),
+        db.getAllPersons(),
+        db.getAllSuppliers(),
+        db.getAllLotes(),
+        db.getAllDevolucoes(),
+        db.getCompanyData()
+    ]);
+    
+    return {
+        warranties,
+        persons,
+        suppliers,
+        lotes,
+        devolucoes,
+        companyData
+    };
+  }
+
+  const handleLocalExport = async () => {
     try {
-        await db.initDB();
-        
-        const [
-            warranties,
-            persons,
-            suppliers,
-            lotes,
-            devolucoes,
-            companyData
-        ] = await Promise.all([
-            db.getAllWarranties(),
-            db.getAllPersons(),
-            db.getAllSuppliers(),
-            db.getAllLotes(),
-            db.getAllDevolucoes(),
-            db.getCompanyData()
-        ]);
-        
-        const fullBackup: FullBackupData = {
-            warranties,
-            persons,
-            suppliers,
-            lotes,
-            devolucoes,
-            companyData
-        };
+        const fullBackup = await gatherDataForBackup();
 
         const dataStr = JSON.stringify(fullBackup, null, 2);
         const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
@@ -57,12 +64,12 @@ export default function BackupSection() {
         const linkElement = document.createElement('a');
         const date = new Date().toISOString().split('T')[0];
         linkElement.setAttribute('href', dataUri);
-        linkElement.setAttribute('download', `backup_total_warrantywise_${date}.json`);
+        linkElement.setAttribute('download', `backup_synergia_os_${date}.json`);
         linkElement.click();
         
         toast({
             title: "Exportação Concluída",
-            description: "Seus dados foram exportados para um arquivo JSON."
+            description: "Seus dados foram exportados para um arquivo JSON local."
         });
     } catch (error) {
         console.error("Failed to export data:", error);
@@ -73,6 +80,37 @@ export default function BackupSection() {
         });
     }
   };
+
+  const handleCloudExport = async () => {
+    setIsUploading(true);
+    try {
+      const fullBackup = await gatherDataForBackup();
+      const dataStr = JSON.stringify(fullBackup, null, 2);
+      const backupBlob = new Blob([dataStr], { type: 'application/json' });
+      
+      const date = new Date().toISOString().split('T')[0];
+      const fileName = `backup_synergia_os_${date}.json`;
+      const filePath = `backups/${fileName}`;
+
+      await uploadFile(backupBlob, filePath);
+
+      toast({
+        title: "Backup na Nuvem Concluído",
+        description: `O arquivo ${fileName} foi salvo com sucesso no Firebase Storage.`,
+      });
+
+    } catch (error) {
+      console.error("Failed to upload backup:", error);
+      toast({
+          title: "Erro no Backup para Nuvem",
+          description: "Não foi possível salvar o backup no Firebase Storage.",
+          variant: "destructive"
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
 
   const handleDataImported = () => {
     toast({
@@ -102,14 +140,22 @@ export default function BackupSection() {
                     <CardHeader>
                         <CardTitle>Backup e Restauração Completa</CardTitle>
                         <CardDescription>
-                            Faça o backup (exportação) de <span className='font-bold'>todos os dados</span> do sistema para um único arquivo JSON.
+                            Faça o backup (exportação) de <span className='font-bold'>todos os dados</span> do sistema para um único arquivo JSON, salvando-o localmente ou na nuvem (Firebase Storage).
                             A importação <span className='font-bold text-destructive'>substituirá todos os dados existentes</span>. Use com cuidado.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="flex flex-col md:flex-row gap-4">
-                        <Button onClick={handleExport}>
+                        <Button onClick={handleLocalExport} disabled={isUploading}>
                             <Download className="mr-2 h-4 w-4" />
-                            Exportar Backup Completo
+                            Baixar Backup Local
+                        </Button>
+                        <Button onClick={handleCloudExport} variant="secondary" disabled={isUploading}>
+                          {isUploading ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            <UploadCloud className="mr-2 h-4 w-4" />
+                          )}
+                          Salvar Backup na Nuvem
                         </Button>
                         <ImportButton onDataImported={handleDataImported} />
                     </CardContent>
