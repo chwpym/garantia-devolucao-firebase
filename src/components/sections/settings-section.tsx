@@ -140,7 +140,7 @@ export default function SettingsSection() {
                     Gerencie as informações da sua empresa.
                 </p>
             </div>
-            <Card className="shadow-lg max-w-2xl">
+            <Card className="shadow-lg max-w-4xl">
                 <CardHeader>
                     <CardTitle>Dados da Empresa</CardTitle>
                     <CardDescription>
