@@ -3,13 +3,10 @@
 import React from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Settings, Menu, DatabaseBackup, Wrench, Undo2, Package, Calculator, History } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Settings, Menu, DatabaseBackup } from 'lucide-react';
 import { ThemeToggle } from './theme-toggle';
-import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
 import MobileSidebar from './mobile-sidebar';
-import { useIsMobile } from '@/hooks/use-mobile';
-
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -20,10 +17,8 @@ interface AppLayoutProps {
   onNewLoteClick: () => void;
 }
 
-export default function AppLayout({ children, activeView, setActiveView, isMobileMenuOpen, setMobileMenuOpen, onNewLoteClick }: AppLayoutProps) {
+export default function AppLayout({ children, activeView, setActiveView, isMobileMenuOpen, setMobileMenuOpen }: AppLayoutProps) {
   
-  const isMobile = useIsMobile();
-
   const handleNavClick = (view: string) => {
     setActiveView(view);
     setMobileMenuOpen(false);
@@ -42,7 +37,7 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
                         </Button>
                     </SheetTrigger>
                     <SheetContent side="left" className="w-[280px] p-0 flex flex-col">
-                         <div className="flex items-center gap-3 h-16 border-b px-6">
+                        <SheetHeader className="flex items-center gap-3 h-16 border-b px-6">
                            <Image 
                               src="/logo.jpeg" 
                               alt="Synergia OS Logo" 
@@ -50,10 +45,10 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
                               height={32} 
                               className="h-8 w-8 rounded-md flex-shrink-0" 
                            />
-                          <h1 className="text-xl font-bold font-headline text-foreground whitespace-nowrap">
+                          <SheetTitle className="text-xl font-bold font-headline text-foreground whitespace-nowrap">
                             Synergia OS
-                          </h1>
-                        </div>
+                          </SheetTitle>
+                        </SheetHeader>
                         <MobileSidebar 
                           activeView={activeView} 
                           onNavigate={handleNavClick}
@@ -83,35 +78,7 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
                         </div>
                     </SheetContent>
                 </Sheet>
-                
-                <h1 className="text-xl font-bold font-headline text-foreground">
-                    Synergia OS
-                </h1>
             </div>
-
-             <div className={cn("flex-1 items-center justify-center gap-2", isMobile ? "hidden" : "flex")}>
-                <Button size="sm" onClick={() => setActiveView('register')}>
-                    <Wrench className="mr-2 h-4 w-4" />
-                    Nova Garantia
-                </Button>
-                <Button size="sm" style={{ backgroundColor: 'hsl(var(--third))', color: 'hsl(var(--primary-foreground))' }}  onClick={() => setActiveView('batch-register')}>
-                    <History className="mr-2 h-4 w-4" />
-                    Garantia em Lote
-                </Button>
-                 <Button variant="accent-blue" size="sm" onClick={() => setActiveView('devolucao-register')}>
-                    <Undo2 className="mr-2 h-4 w-4" />
-                    Nova Devolução
-                </Button>
-                <Button variant="accent-green" size="sm" onClick={onNewLoteClick}>
-                    <Package className="mr-2 h-4 w-4" />
-                    Novo Lote
-                </Button>
-                <Button style={{ backgroundColor: 'hsl(var(--third))' }} size="sm" onClick={() => setActiveView('calculators')}>
-                    <Calculator className="mr-2 h-4 w-4" />
-                    Calculadoras
-                </Button>
-            </div>
-
             <ThemeToggle />
         </header>
         <main className="flex-1 p-4 md:p-8 overflow-auto">
