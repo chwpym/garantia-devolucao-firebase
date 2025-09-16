@@ -122,11 +122,9 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
         
         toast({
             title: 'Sucesso',
-            description: `${newAttachments.length} arquivo(s) anexado(s) com sucesso.`
+            description: `${newAttachments.length} arquivo(s) anexado(s) com sucesso. Clique em 'Atualizar Lote' para salvar.`
         });
-        // Trigger immediate save
-        await handleSave(form.getValues());
-
+        
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : "Ocorreu um erro desconhecido.";
          toast({
@@ -145,8 +143,6 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
     const newAttachments = [...currentAttachments];
     newAttachments.splice(index, 1);
     setValue('attachments', newAttachments, { shouldValidate: true });
-    // Trigger save on removal
-    handleSave(form.getValues());
   };
 
 
