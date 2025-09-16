@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, Upload, Paperclip, X, Link as LinkIcon } from 'lucide-react';
-import type { Lote, Supplier, LoteStatus, LoteAttachment } from '@/lib/types';
+import { Loader2, Upload, X, Link as LinkIcon } from 'lucide-react';
+import type { Lote, Supplier, LoteStatus } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 

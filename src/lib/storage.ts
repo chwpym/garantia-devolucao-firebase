@@ -1,6 +1,6 @@
 'use client';
 
-import { ref, uploadBytes, getDownloadURL, uploadString } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from './firebase';
 
 // Updated to be more generic, accepting a File or Blob
