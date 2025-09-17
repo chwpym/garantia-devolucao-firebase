@@ -41,7 +41,7 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
                 <SheetContent side="left" className="w-[280px] p-0 flex flex-col">
                   <SheetHeader className="flex items-center gap-3 h-16 border-b px-6">
                     <Image
-                      src="/logo.jpeg"
+                      src="/logo.png"
                       alt="Synergia OS Logo"
                       width={32}
                       height={32}

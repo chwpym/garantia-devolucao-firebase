@@ -1,7 +1,8 @@
 
+
 'use client';
 
-import { jsPDF } from 'jspdf';
+import { jsPDF, type GState } from 'jspdf';
 import 'jspdf-autotable';
 import type { UserOptions } from 'jspdf-autotable';
 import type { Warranty, CompanyData, Supplier, Person, Devolucao, ItemDevolucao } from '@/lib/types';
@@ -15,11 +16,17 @@ declare module 'jspdf' {
     }
 }
 
+export type ReportLayout = 'standard' | 'professional';
+export type ReportOrientation = 'portrait' | 'landscape';
+
 interface GeneratePdfInput {
     selectedWarranties: Omit<Warranty, 'id'>[];
     selectedFields: string[];
     companyData: CompanyData | null;
     supplierData?: Supplier | null;
+    loteId?: number | null;
+    layout?: ReportLayout;
+    orientation?: ReportOrientation;
 }
 
 interface GeneratePersonsPdfInput {
@@ -46,12 +53,12 @@ const formatCnpj = (cnpj: string | undefined): string => {
     return cnpj;
 };
 
-const addHeader = (doc: jsPDF, companyData: CompanyData | null, title: string) => {
+
+const addStandardHeader = (doc: jsPDF, companyData: CompanyData | null, title: string) => {
     const page_width = doc.internal.pageSize.getWidth();
     const margin = 14;
     let cursorY = 20;
 
-    // Linha 1: Nome da Empresa (esquerda) e Data (direita)
     doc.setFontSize(10).setFont('helvetica', 'bold');
     doc.text(companyData?.nomeEmpresa || 'Relatório', margin, cursorY);
     
@@ -60,20 +67,14 @@ const addHeader = (doc: jsPDF, companyData: CompanyData | null, title: string) =
     doc.text(`Gerado em: ${date}`, page_width - margin, cursorY, { align: 'right'});
     cursorY += 6;
 
-    // Linha 2: Informações da Empresa
     doc.setFontSize(9);
     
     if (companyData?.cnpj) {
         doc.text(`CNPJ: ${formatCnpj(companyData.cnpj)}`, margin, cursorY);
         cursorY += 4;
     }
-
     if (companyData?.endereco) {
-        let fullAddress = companyData.endereco;
-        if (companyData.bairro) {
-            fullAddress += `, ${companyData.bairro}`;
-        }
-        doc.text(fullAddress, margin, cursorY);
+        doc.text(`${companyData.endereco}, ${companyData.bairro || ''}`, margin, cursorY);
         cursorY += 4;
     }
     if (companyData?.cidade) {
@@ -82,18 +83,11 @@ const addHeader = (doc: jsPDF, companyData: CompanyData | null, title: string) =
     }
     
     let infoLine = '';
-    if (companyData?.telefone) {
-        infoLine += `Tel: ${companyData.telefone}`;
-    }
-    if (companyData?.email) {
-        infoLine += `${infoLine ? ' | ' : ''}Email: ${companyData.email}`;
-    }
-    if (infoLine) {
-        doc.text(infoLine, margin, cursorY);
-    }
+    if (companyData?.telefone) infoLine += `Tel: ${companyData.telefone}`;
+    if (companyData?.email) infoLine += `${infoLine ? ' | ' : ''}Email: ${companyData.email}`;
+    if (infoLine) doc.text(infoLine, margin, cursorY);
 
-    // Linha 3: Título do Relatório (Centralizado e com espaço)
-    cursorY += 12; // Espaço extra antes do título
+    cursorY += 12;
     doc.setFontSize(16).setFont('helvetica', 'bold');
     doc.text(title, page_width / 2, cursorY, { align: 'center'});
     cursorY += 10;
@@ -101,62 +95,140 @@ const addHeader = (doc: jsPDF, companyData: CompanyData | null, title: string) =
     return cursorY;
 }
 
-
-export function generatePdf(input: GeneratePdfInput): string {
-    const { selectedWarranties, selectedFields, companyData, supplierData } = input;
-    const doc = new jsPDF();
+const addProfessionalHeader = (doc: jsPDF, companyData: CompanyData | null, loteId: number | null | undefined) => {
+    const pageCount = doc.internal.pages.length;
     const margin = 14;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let cursorY = 15;
 
-    let cursorY = addHeader(doc, companyData, 'Relatório de Garantias');
-
-    // --- DADOS DO FORNECEDOR (se houver) ---
-    if (supplierData) {
+    // --- Company Info ---
+    if (companyData?.nomeEmpresa) {
         doc.setFontSize(10).setFont('helvetica', 'bold');
-        doc.text('DESTINATÁRIO:', margin, cursorY);
+        doc.text(companyData.nomeEmpresa, pageWidth / 2, cursorY, { align: 'center' });
         cursorY += 5;
-
-        doc.setFontSize(9).setFont('helvetica', 'normal');
-        doc.text(supplierData.nomeFantasia, margin, cursorY);
-        if (supplierData.razaoSocial && supplierData.razaoSocial !== supplierData.nomeFantasia) {
-            doc.text(`(${supplierData.razaoSocial})`, margin + doc.getTextWidth(supplierData.nomeFantasia) + 2, cursorY);
-        }
+    }
+    doc.setFontSize(9).setFont('helvetica', 'normal');
+    if (companyData?.cnpj) {
+        doc.text(`CNPJ: ${formatCnpj(companyData.cnpj)}`, pageWidth / 2, cursorY, { align: 'center' });
         cursorY += 4;
-
-        if (supplierData.cnpj) {
-            doc.text(`CNPJ: ${formatCnpj(supplierData.cnpj)}`, margin, cursorY);
-            cursorY += 4;
-        }
-         if (supplierData.cidade) {
-            doc.text(`Cidade: ${supplierData.cidade}`, margin, cursorY);
-            cursorY += 4;
-        }
-        cursorY += 8; // Espaço extra depois dos dados do fornecedor
+    }
+    if (companyData?.endereco) {
+        doc.text(`${companyData.endereco}, ${companyData.bairro || ''}`, pageWidth / 2, cursorY, { align: 'center' });
+        cursorY += 4;
+    }
+    if (companyData?.cidade) {
+        doc.text(`${companyData.cidade} - CEP: ${companyData.cep || ''}`, pageWidth / 2, cursorY, { align: 'center' });
     }
 
-    // Adiciona o total de itens ANTES da tabela
-    doc.setFontSize(10).setFont('helvetica', 'bold');
-    doc.text(`Total de Itens no Lote: ${selectedWarranties.length}`, margin, cursorY);
-    cursorY += 8;
+    // --- Pagination ---
+    doc.setFontSize(9).setFont('helvetica', 'normal');
+    const pageStr = `Pág. ${doc.internal.getNumberOfPages()}`;
+    doc.text(pageStr, pageWidth - margin, 15);
     
-    // --- TABELA ---
+    cursorY += 6;
+    doc.setDrawColor(180, 180, 180);
+    doc.line(margin, cursorY, pageWidth - margin, cursorY); // Top line
+    cursorY += 2;
+
+    // --- Report Title Section ---
+    const sectionHeight = 12;
+    const title = 'SOLICITAÇÃO DE AVALIAÇÃO DE GARANTIA';
+    doc.line(margin, cursorY, pageWidth - margin, cursorY);
+    doc.line(margin, cursorY, margin, cursorY + sectionHeight); // Left line
+    doc.line(pageWidth - margin, cursorY, pageWidth - margin, cursorY + sectionHeight); // Right line
+    
+    const dateText = `Data: ${new Date().toLocaleDateString('pt-BR')}`;
+    const idText = `Lote ID: ${loteId || 'N/A'}`;
+    const dateWidth = doc.getTextWidth(dateText);
+    const idWidth = doc.getTextWidth(idText);
+
+    const titleBoxWidth = pageWidth - (margin * 2) - dateWidth - idWidth - 30; // 30 for padding
+    const dateBoxX = margin + titleBoxWidth + 10;
+    const idBoxX = dateBoxX + dateWidth + 10;
+
+    doc.line(dateBoxX - 5, cursorY, dateBoxX - 5, cursorY + sectionHeight);
+    doc.line(idBoxX - 5, cursorY, idBoxX - 5, cursorY + sectionHeight);
+    
+    doc.setFontSize(11).setFont('helvetica', 'bold');
+    doc.text(title, margin + titleBoxWidth / 2, cursorY + sectionHeight / 2 + 2, { align: 'center' });
+    
+    doc.setFontSize(9).setFont('helvetica', 'normal');
+    doc.text(dateText, dateBoxX, cursorY + sectionHeight / 2 + 2);
+    doc.text(idText, idBoxX, cursorY + sectionHeight / 2 + 2);
+
+    cursorY += sectionHeight;
+    doc.line(margin, cursorY, pageWidth - margin, cursorY); // Bottom line
+    
+    return cursorY + 5;
+};
+
+
+export function generatePdf(input: GeneratePdfInput): string {
+    const { 
+        selectedWarranties, 
+        selectedFields, 
+        companyData, 
+        supplierData, 
+        loteId,
+        layout = 'standard',
+        orientation = 'portrait'
+    } = input;
+
+    const doc = new jsPDF({ orientation });
+    const margin = 14;
+    let startY = 0;
+
+    const addPageNumbers = () => {
+        const pageCount = doc.internal.getNumberOfPages();
+        doc.setFontSize(8);
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            const pageText = `Página ${i} de ${pageCount}`;
+            doc.text(pageText, doc.internal.pageSize.getWidth() - margin, doc.internal.pageSize.getHeight() - 10, { align: 'right' });
+        }
+    }
+
+    if (layout === 'professional') {
+        startY = addProfessionalHeader(doc, companyData, loteId);
+    } else {
+        startY = addStandardHeader(doc, companyData, 'Relatório de Garantias');
+    }
+
+    if (supplierData) {
+        doc.setFontSize(10).setFont('helvetica', 'bold');
+        doc.text('DESTINATÁRIO:', margin, startY);
+        startY += 5;
+
+        doc.setFontSize(9).setFont('helvetica', 'normal');
+        doc.text(supplierData.nomeFantasia, margin, startY);
+        if (supplierData.razaoSocial && supplierData.razaoSocial !== supplierData.nomeFantasia) {
+            doc.text(`(${supplierData.razaoSocial})`, margin + doc.getTextWidth(supplierData.nomeFantasia) + 2, startY);
+        }
+        startY += 4;
+
+        if (supplierData.cnpj) {
+            doc.text(`CNPJ: ${formatCnpj(supplierData.cnpj)}`, margin, startY);
+            startY += 4;
+        }
+         if (supplierData.cidade) {
+            doc.text(`Cidade: ${supplierData.cidade}`, margin, startY);
+            startY += 4;
+        }
+        startY += 8;
+    }
+    
+    if (layout === 'standard') {
+        doc.setFontSize(10).setFont('helvetica', 'bold');
+        doc.text(`Total de Itens: ${selectedWarranties.length}`, margin, startY);
+        startY += 8;
+    }
     
     const FIELD_LABELS: Record<string, string> = {
-        codigo: 'Código',
-        descricao: 'Descrição',
-        fornecedor: 'Fornecedor',
-        quantidade: 'Qtd.',
-        defeito: 'Defeito',
-        requisicaoVenda: 'Req. Venda',
-        requisicoesGarantia: 'Req. Garantia',
-        nfCompra: 'NF Compra',
-        valorCompra: 'Valor Compra',
-        cliente: 'Cliente',
-        mecanico: 'Mecânico',
-        notaFiscalSaida: 'NF Saída',
-        notaFiscalRetorno: 'NF Retorno',
-        observacao: 'Observação',
-        status: 'Status',
-        dataRegistro: 'Data Registro',
+        codigo: 'Código', descricao: 'Descrição', fornecedor: 'Fornecedor', quantidade: 'Qtd.',
+        defeito: 'Defeito', requisicaoVenda: 'Req. Venda', requisicoesGarantia: 'Req. Garantia',
+        nfCompra: 'NF Compra', valorCompra: 'Valor Compra', cliente: 'Cliente', mecanico: 'Mecânico',
+        notaFiscalSaida: 'NF Saída', notaFiscalRetorno: 'NF Retorno', observacao: 'Observação',
+        status: 'Status', dataRegistro: 'Data Registro',
     };
 
     const tableHeaders = selectedFields.map(field => FIELD_LABELS[field] || field.replace(/([A-Z])/g, ' $1').toUpperCase());
@@ -165,27 +237,32 @@ export function generatePdf(input: GeneratePdfInput): string {
         return selectedFields.map(field => {
             const key = field as keyof Omit<Warranty, 'id'>;
             const value = warrantyRecord[key];
-
             if (key === 'dataRegistro' && typeof value === 'string') {
-                try {
-                    return new Date(value).toLocaleDateString('pt-BR');
-                } catch {
-                    return value;
-                }
+                return format(parseISO(value), 'dd/MM/yyyy');
             }
             return value?.toString() || '-';
         });
     });
 
     doc.autoTable({
-        startY: cursorY,
+        startY: startY,
         head: [tableHeaders],
         body: tableBody,
         theme: 'striped',
         headStyles: { fillColor: [41, 128, 185], textColor: 255 },
         styles: { fontSize: 8 },
         alternateRowStyles: { fillColor: [240, 240, 240] },
+        didDrawPage: (data) => {
+            if (layout === 'professional') {
+                 addProfessionalHeader(doc, companyData, loteId);
+            }
+        }
     });
+
+    if(layout === 'standard') {
+        addPageNumbers();
+    }
+
 
     return doc.output('datauristring');
 }
@@ -195,7 +272,7 @@ export function generatePersonsPdf(input: GeneratePersonsPdfInput): string {
     const { persons, companyData } = input;
     const doc = new jsPDF();
     
-    const startY = addHeader(doc, companyData, 'Relatório de Clientes e Mecânicos');
+    const startY = addStandardHeader(doc, companyData, 'Relatório de Clientes e Mecânicos');
 
     const tableHeaders = ['Nome / Razão Social', 'CPF/CNPJ', 'Telefone', 'Email', 'Cidade', 'Tipo'];
     
@@ -228,7 +305,7 @@ export function generateDevolucoesPdf(input: GenerateDevolucoesPdfInput): string
     const isClientReport = customTitle?.includes('Relatório de Devoluções -');
     const title = customTitle || 'Relatório de Devoluções';
 
-    const startY = addHeader(doc, companyData, title);
+    const startY = addStandardHeader(doc, companyData, title);
     
     const baseHeaders = ['Data Dev.', 'Cliente', 'Requisição', 'Código Peça', 'Descrição Peça', 'Qtd.', 'Ação Req.', 'Status'];
 
@@ -250,7 +327,6 @@ export function generateDevolucoesPdf(input: GenerateDevolucoesPdfInput): string
         ];
 
         if (isClientReport) {
-            // Reorder to match headers: 'Data Dev.', 'Requisição', 'Código Peça', 'Descrição Peça', 'Qtd.'
             return [fullRow[0], fullRow[2], fullRow[3], fullRow[4], fullRow[5]];
         }
 

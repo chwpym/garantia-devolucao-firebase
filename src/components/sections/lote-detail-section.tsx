@@ -508,7 +508,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                     <DialogHeader>
                         <DialogTitle>Gerar PDF para este Lote</DialogTitle>
                          <DialogDescription>
-                            Selecione os campos que deseja incluir no relatório para o fornecedor.
+                            Selecione as opções de layout e os campos que deseja incluir no relatório para o fornecedor.
                         </DialogDescription>
                     </DialogHeader>
                     <div className='py-4'>
@@ -518,6 +518,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                             description=""
                             supplierData={supplierData}
                             defaultFields={LOTE_PDF_DEFAULT_FIELDS}
+                            loteId={lote.id}
                         />
                     </div>
                 </DialogContent>

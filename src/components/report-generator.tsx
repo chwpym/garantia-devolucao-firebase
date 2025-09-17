@@ -1,15 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { generatePdf } from '@/lib/pdf-generator';
+import { generatePdf, type ReportLayout, type ReportOrientation } from '@/lib/pdf-generator';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Loader2, FileDown } from 'lucide-react';
 import type { Warranty, Supplier } from '@/lib/types';
 import * as db from '@/lib/db';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 const ALL_FIELDS: (keyof Omit<Warranty, 'id' | 'photos'>)[] = [
   'codigo', 'descricao', 'fornecedor', 'quantidade', 'defeito', 'requisicaoVenda', 'requisicoesGarantia',
@@ -42,6 +43,7 @@ interface ReportGeneratorProps {
   description?: string;
   supplierData?: Supplier | null;
   defaultFields?: string[];
+  loteId?: number | null;
 }
 
 export default function ReportGenerator({ 
@@ -49,9 +51,12 @@ export default function ReportGenerator({
     title = "Gerador de Relatório",
     description = "Selecione os campos a serem incluídos no relatório em PDF.",
     supplierData,
-    defaultFields = ['codigo', 'descricao', 'quantidade', 'defeito', 'cliente', 'status', 'fornecedor']
+    defaultFields = ['codigo', 'descricao', 'quantidade', 'defeito', 'cliente', 'status', 'fornecedor'],
+    loteId
 }: ReportGeneratorProps) {
   const [selectedFields, setSelectedFields] = useState<string[]>(defaultFields);
+  const [layout, setLayout] = useState<ReportLayout>('standard');
+  const [orientation, setOrientation] = useState<ReportOrientation>('portrait');
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
@@ -62,18 +67,12 @@ export default function ReportGenerator({
   };
 
   const handleGeneratePdf = async () => {
-    if (selectedWarranties.length === 0) {
+    if (selectedWarranties.length === 0 || selectedFields.length === 0) {
         toast({
-            title: 'Nenhuma garantia selecionada',
-            description: 'Por favor, selecione pelo menos uma garantia na tabela acima para gerar o relatório.',
-            variant: 'destructive'
-        });
-        return;
-    }
-    if (selectedFields.length === 0) {
-        toast({
-            title: 'Nenhum campo selecionado',
-            description: 'Por favor, selecione pelo menos um campo para incluir no relatório.',
+            title: 'Ação Inválida',
+            description: selectedWarranties.length === 0 
+                ? 'Nenhuma garantia selecionada para gerar o relatório.'
+                : 'Selecione pelo menos um campo para incluir no relatório.',
             variant: 'destructive'
         });
         return;
@@ -94,24 +93,24 @@ export default function ReportGenerator({
         selectedFields,
         companyData,
         supplierData,
+        loteId,
+        layout,
+        orientation
       });
       
-      if (pdfDataUri) {
-        const link = document.createElement('a');
-        const date = new Date().toISOString().split('T')[0];
-        const supplierName = supplierData?.nomeFantasia.replace(/\s+/g, '_') || 'relatorio';
-        link.href = pdfDataUri;
-        link.download = `relatorio_garantias_${supplierName}_${date}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast({
-          title: 'Sucesso',
-          description: 'Seu relatório em PDF foi gerado e o download foi iniciado.',
-        });
-      } else {
-        throw new Error('A resposta da API não continha um PDF.');
-      }
+      const link = document.createElement('a');
+      const date = new Date().toISOString().split('T')[0];
+      const supplierName = supplierData?.nomeFantasia.replace(/\s+/g, '_') || 'relatorio';
+      link.href = pdfDataUri;
+      link.download = `relatorio_garantias_${supplierName}_${date}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast({
+        title: 'Sucesso',
+        description: 'Seu relatório em PDF foi gerado e o download foi iniciado.',
+      });
+
     } catch (error) {
       console.error('Failed to generate PDF:', error);
       toast({
@@ -137,6 +136,29 @@ export default function ReportGenerator({
     <Wrapper>
       {header}
       <CardContent className={!title ? 'p-0' : ''}>
+        <div className='grid grid-cols-2 md:grid-cols-3 gap-6 mb-6'>
+            <div>
+                <Label htmlFor="layout-select">Layout do Relatório</Label>
+                <Select value={layout} onValueChange={(v) => setLayout(v as ReportLayout)}>
+                    <SelectTrigger id='layout-select'><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="standard">Padrão</SelectItem>
+                        <SelectItem value="professional">Profissional</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+             <div>
+                <Label htmlFor="orientation-select">Orientação da Página</Label>
+                <Select value={orientation} onValueChange={(v) => setOrientation(v as ReportOrientation)}>
+                    <SelectTrigger id='orientation-select'><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="portrait">Retrato</SelectItem>
+                        <SelectItem value="landscape">Paisagem</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+        </div>
+
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
           {ALL_FIELDS.map(field => (
             <div key={field} className="flex items-center space-x-2">
