@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calculator, ShoppingCart, Percent, Plus, FileScan, Tag, DivideCircle, Files, Microscope, ArrowLeft } from 'lucide-react';
+import { Calculator, ShoppingCart, Percent, Plus, FileScan, Tag, DivideCircle, Files, Microscope, ArrowLeft, Landmark } from 'lucide-react';
 import AveragePriceCalculator from '@/components/calculators/average-price-calculator';
 import BatchPricingCalculator from '@/components/calculators/batch-pricing-calculator';
 import CalculateSaleCalculator from '@/components/calculators/calculate-sale-calculator';
@@ -13,15 +13,37 @@ import SumPercentCalculator from '../calculators/sum-percent-calculator';
 import CostAnalysisCalculator from '../calculators/cost-analysis-calculator';
 import AdvancedCostAnalysisCalculator from '../calculators/advanced-cost-analysis-calculator';
 import NfeComparator from '../calculators/nfe-comparator';
+import TaxAnalysisCalculator from '../calculators/tax-analysis-calculator';
 
 
 const calculators = [
   {
-    id: 'average-price',
-    icon: Calculator,
-    title: 'Preço Médio',
-    description: 'Calcule o preço médio de suas compras de ativos.',
-    component: AveragePriceCalculator,
+    id: 'tax-analysis',
+    icon: Landmark,
+    title: 'Análise de Impostos da NF-e',
+    description: 'Extrai todos os impostos (ICMS, IPI, PIS/COFINS) de uma NF-e.',
+    component: TaxAnalysisCalculator,
+  },
+  {
+    id: 'advanced-cost-analysis',
+    icon: Microscope,
+    title: 'Análise de Custo Avançada',
+    description: 'Análise detalhada de NF-e com crédito de PIS/COFINS.',
+    component: AdvancedCostAnalysisCalculator,
+  },
+  {
+    id: 'cost-analysis',
+    icon: FileScan,
+    title: 'Análise de Custo por NF-e',
+    description: 'Importe uma NF-e para calcular o custo real dos produtos.',
+    component: CostAnalysisCalculator,
+  },
+  {
+    id: 'compare-nfe',
+    icon: Files,
+    title: 'Comparador de NF-e',
+    description: 'Compare produtos entre múltiplos arquivos XML de NF-e.',
+    component: NfeComparator,
   },
   {
     id: 'batch-pricing',
@@ -36,6 +58,13 @@ const calculators = [
     title: 'Calcular Venda',
     description: 'Calcule o preço de venda a partir do custo e margem.',
     component: CalculateSaleCalculator,
+  },
+  {
+    id: 'average-price',
+    icon: Calculator,
+    title: 'Preço Médio',
+    description: 'Calcule o preço médio de suas compras de ativos.',
+    component: AveragePriceCalculator,
   },
   {
     id: 'unit-cost',
@@ -57,27 +86,6 @@ const calculators = [
     title: 'Somar com Porcentagem',
     description: 'Adicione uma porcentagem a um valor inicial.',
     component: SumPercentCalculator,
-  },
-  {
-    id: 'cost-analysis',
-    icon: FileScan,
-    title: 'Análise de Custo por NF-e',
-    description: 'Importe uma NF-e para calcular o custo real dos produtos.',
-    component: CostAnalysisCalculator,
-  },
-    {
-    id: 'advanced-cost-analysis',
-    icon: Microscope,
-    title: 'Análise de Custo Avançada',
-    description: 'Análise detalhada de NF-e com PIS/COFINS e mais.',
-    component: AdvancedCostAnalysisCalculator,
-  },
-  {
-    id: 'compare-nfe',
-    icon: Files,
-    title: 'Comparador de NF-e',
-    description: 'Compare produtos entre múltiplos arquivos XML de NF-e.',
-    component: NfeComparator,
   },
 ];
 
