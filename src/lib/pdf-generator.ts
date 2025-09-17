@@ -96,7 +96,6 @@ const addStandardHeader = (doc: jsPDF, companyData: CompanyData | null, title: s
 }
 
 const addProfessionalHeader = (doc: jsPDF, companyData: CompanyData | null, loteId: number | null | undefined) => {
-    const pageCount = doc.internal.pages.length;
     const margin = 14;
     const pageWidth = doc.internal.pageSize.getWidth();
     let cursorY = 15;
@@ -126,12 +125,13 @@ const addProfessionalHeader = (doc: jsPDF, companyData: CompanyData | null, lote
     doc.text(pageStr, pageWidth - margin, 15);
     
     cursorY += 6;
-    doc.setDrawColor(180, 180, 180);
-    // doc.line(margin, cursorY, pageWidth - margin, cursorY); // Top line - REMOVED
+    // doc.setDrawColor(180, 180, 180); // This line was drawing an unwanted rule
+    // doc.line(margin, cursorY, pageWidth - margin, cursorY);
     cursorY += 2;
 
     // --- Report Title Section ---
     const sectionHeight = 12;
+    doc.setDrawColor(180, 180, 180);
     doc.line(margin, cursorY, pageWidth - margin, cursorY);
     doc.line(margin, cursorY, margin, cursorY + sectionHeight); // Left line
     doc.line(pageWidth - margin, cursorY, pageWidth - margin, cursorY + sectionHeight); // Right line
@@ -258,6 +258,13 @@ export function generatePdf(input: GeneratePdfInput): string {
             }
         }
     });
+
+    if (layout === 'professional') {
+        const finalY = (doc as any).lastAutoTable.finalY || startY;
+        doc.setFontSize(10).setFont('helvetica', 'bold');
+        doc.text(`Total de Itens: ${selectedWarranties.length}`, margin, finalY + 10);
+    }
+
 
     if(layout === 'standard') {
         addPageNumbers();
