@@ -102,7 +102,7 @@ const addProfessionalHeader = (doc: jsPDF, companyData: CompanyData | null, lote
 
     // --- Company Info ---
     if (companyData?.nomeEmpresa) {
-        doc.setFontSize(10).setFont('helvetica', 'bold');
+        doc.setFontSize(11).setFont('helvetica', 'bold');
         doc.text(companyData.nomeEmpresa, pageWidth / 2, cursorY, { align: 'center' });
         cursorY += 5;
     }
@@ -124,7 +124,7 @@ const addProfessionalHeader = (doc: jsPDF, companyData: CompanyData | null, lote
     const pageStr = `Pág. ${doc.internal.getNumberOfPages()}`;
     doc.text(pageStr, pageWidth - margin, 15);
     
-    cursorY += 5; // Reduced gap
+    cursorY += 3; // Reduced gap
     
     // --- Report Title Section ---
     const sectionHeight = 12;
@@ -194,7 +194,7 @@ export function generatePdf(input: GeneratePdfInput): string {
     if (supplierData) {
         doc.setFontSize(10).setFont('helvetica', 'bold');
         doc.text('DESTINATÁRIO:', margin, startY);
-        startY += 5;
+        startY += 4; // Reduced gap
 
         doc.setFontSize(9).setFont('helvetica', 'normal');
         doc.text(supplierData.nomeFantasia, margin, startY);
@@ -211,7 +211,7 @@ export function generatePdf(input: GeneratePdfInput): string {
             doc.text(`Cidade: ${supplierData.cidade}`, margin, startY);
             startY += 4;
         }
-        startY += 5; // Reduced gap
+        startY += 2; // Reduced gap
     }
     
     if (layout === 'standard') {
@@ -250,7 +250,7 @@ export function generatePdf(input: GeneratePdfInput): string {
         styles: { fontSize: 8 },
         alternateRowStyles: { fillColor: [240, 240, 240] },
         didDrawPage: (data) => {
-            if (layout === 'professional') {
+            if (layout === 'professional' && data.pageNumber > 1) {
                  addProfessionalHeader(doc, companyData, loteId);
             }
         }
