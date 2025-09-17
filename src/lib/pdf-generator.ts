@@ -124,11 +124,8 @@ const addProfessionalHeader = (doc: jsPDF, companyData: CompanyData | null, lote
     const pageStr = `Pág. ${doc.internal.getNumberOfPages()}`;
     doc.text(pageStr, pageWidth - margin, 15);
     
-    cursorY += 6;
-    // doc.setDrawColor(180, 180, 180); // This line was drawing an unwanted rule
-    // doc.line(margin, cursorY, pageWidth - margin, cursorY);
-    cursorY += 2;
-
+    cursorY += 5; // Reduced gap
+    
     // --- Report Title Section ---
     const sectionHeight = 12;
     doc.setDrawColor(180, 180, 180);
@@ -214,7 +211,7 @@ export function generatePdf(input: GeneratePdfInput): string {
             doc.text(`Cidade: ${supplierData.cidade}`, margin, startY);
             startY += 4;
         }
-        startY += 8;
+        startY += 5; // Reduced gap
     }
     
     if (layout === 'standard') {
