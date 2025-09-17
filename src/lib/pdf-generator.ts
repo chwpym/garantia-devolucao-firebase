@@ -127,12 +127,11 @@ const addProfessionalHeader = (doc: jsPDF, companyData: CompanyData | null, lote
     
     cursorY += 6;
     doc.setDrawColor(180, 180, 180);
-    doc.line(margin, cursorY, pageWidth - margin, cursorY); // Top line
+    // doc.line(margin, cursorY, pageWidth - margin, cursorY); // Top line - REMOVED
     cursorY += 2;
 
     // --- Report Title Section ---
     const sectionHeight = 12;
-    const title = 'SOLICITAÇÃO DE AVALIAÇÃO DE GARANTIA';
     doc.line(margin, cursorY, pageWidth - margin, cursorY);
     doc.line(margin, cursorY, margin, cursorY + sectionHeight); // Left line
     doc.line(pageWidth - margin, cursorY, pageWidth - margin, cursorY + sectionHeight); // Right line
@@ -142,6 +141,7 @@ const addProfessionalHeader = (doc: jsPDF, companyData: CompanyData | null, lote
     const dateWidth = doc.getTextWidth(dateText);
     const idWidth = doc.getTextWidth(idText);
 
+    const title = 'SOLICITAÇÃO DE AVALIAÇÃO DE GARANTIA';
     const titleBoxWidth = pageWidth - (margin * 2) - dateWidth - idWidth - 30; // 30 for padding
     const dateBoxX = margin + titleBoxWidth + 10;
     const idBoxX = dateBoxX + dateWidth + 10;
