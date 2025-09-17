@@ -102,9 +102,9 @@ const addProfessionalHeader = (doc: jsPDF, companyData: CompanyData | null, lote
 
     // --- Company Info ---
     if (companyData?.nomeEmpresa) {
-        doc.setFontSize(11).setFont('helvetica', 'bold');
+        doc.setFontSize(18).setFont('helvetica', 'bold');
         doc.text(companyData.nomeEmpresa, pageWidth / 2, cursorY, { align: 'center' });
-        cursorY += 5;
+        cursorY += 6;
     }
     doc.setFontSize(9).setFont('helvetica', 'normal');
     if (companyData?.cnpj) {
@@ -124,12 +124,11 @@ const addProfessionalHeader = (doc: jsPDF, companyData: CompanyData | null, lote
     const pageStr = `Pág. ${doc.internal.getNumberOfPages()}`;
     doc.text(pageStr, pageWidth - margin, 15);
     
-    cursorY += 3; // Reduced gap
+    cursorY += 5;
     
     // --- Report Title Section ---
     const sectionHeight = 12;
     doc.setDrawColor(180, 180, 180);
-    doc.line(margin, cursorY, pageWidth - margin, cursorY);
     doc.line(margin, cursorY, margin, cursorY + sectionHeight); // Left line
     doc.line(pageWidth - margin, cursorY, pageWidth - margin, cursorY + sectionHeight); // Right line
     
@@ -194,7 +193,7 @@ export function generatePdf(input: GeneratePdfInput): string {
     if (supplierData) {
         doc.setFontSize(10).setFont('helvetica', 'bold');
         doc.text('DESTINATÁRIO:', margin, startY);
-        startY += 4; // Reduced gap
+        startY += 2;
 
         doc.setFontSize(9).setFont('helvetica', 'normal');
         doc.text(supplierData.nomeFantasia, margin, startY);
@@ -211,13 +210,7 @@ export function generatePdf(input: GeneratePdfInput): string {
             doc.text(`Cidade: ${supplierData.cidade}`, margin, startY);
             startY += 4;
         }
-        startY += 2; // Reduced gap
-    }
-    
-    if (layout === 'standard') {
-        doc.setFontSize(10).setFont('helvetica', 'bold');
-        doc.text(`Total de Itens: ${selectedWarranties.length}`, margin, startY);
-        startY += 8;
+        startY += 4;
     }
     
     const FIELD_LABELS: Record<string, string> = {
