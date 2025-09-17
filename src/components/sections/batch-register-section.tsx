@@ -107,10 +107,23 @@ export default function BatchRegisterSection() {
       let savedCount = 0;
       for (const warrantyData of validWarranties) {
         const newWarranty: Omit<Warranty, "id"> = {
-          ...warrantyData,
+          codigo: warrantyData.codigo || '',
+          descricao: warrantyData.descricao || '',
           fornecedor: selectedSupplier,
           quantidade: warrantyData.quantidade ?? 1,
+          defeito: warrantyData.defeito || '',
+          requisicaoVenda: warrantyData.requisicaoVenda || '',
+          requisicoesGarantia: warrantyData.requisicoesGarantia || '',
+          nfCompra: '',
+          valorCompra: '',
+          cliente: warrantyData.cliente || '',
+          mecanico: warrantyData.mecanico || '',
+          notaFiscalSaida: '',
+          notaFiscalRetorno: '',
+          observacao: '',
           status: 'Em análise',
+          loteId: null,
+          photos: [],
           dataRegistro: new Date().toISOString(),
         };
         await db.addWarranty(newWarranty);
