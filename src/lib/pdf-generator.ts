@@ -102,7 +102,7 @@ const addProfessionalHeader = (doc: jsPDF, companyData: CompanyData | null, lote
 
     // --- Company Info ---
     if (companyData?.nomeEmpresa) {
-        doc.setFontSize(18).setFont('helvetica', 'bold');
+        doc.setFontSize(16).setFont('helvetica', 'bold');
         doc.text(companyData.nomeEmpresa, pageWidth / 2, cursorY, { align: 'center' });
         cursorY += 6;
     }
@@ -124,7 +124,7 @@ const addProfessionalHeader = (doc: jsPDF, companyData: CompanyData | null, lote
     const pageStr = `Pág. ${doc.internal.getNumberOfPages()}`;
     doc.text(pageStr, pageWidth - margin, 15);
     
-    cursorY += 5;
+    cursorY += 8;
     
     // --- Report Title Section ---
     const sectionHeight = 12;
@@ -155,7 +155,7 @@ const addProfessionalHeader = (doc: jsPDF, companyData: CompanyData | null, lote
     cursorY += sectionHeight;
     doc.line(margin, cursorY, pageWidth - margin, cursorY); // Bottom line
     
-    return cursorY + 5;
+    return cursorY + 4;
 };
 
 
@@ -208,7 +208,6 @@ export function generatePdf(input: GeneratePdfInput): string {
         }
          if (supplierData.cidade) {
             doc.text(`Cidade: ${supplierData.cidade}`, margin, startY);
-            startY += 4;
         }
         startY += 4;
     }
