@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo, useRef } from "react";
@@ -22,10 +23,14 @@ interface AnalyzedItem {
     unitCost: number;
     totalCost: number;
     icms: number;
+    pIcms: number;
     icmsSt: number;
     ipi: number;
+    pIpi: number;
     pis: number;
+    pPis: number;
     cofins: number;
+    pCofins: number;
 }
 
 interface NfeInfo {
@@ -43,12 +48,13 @@ interface NfeInfo {
 interface NfeProductDetail {
     prod: Record<string, string>;
     imposto: {
-        ICMS: Record<string, { CST: string, vICMS: string }>;
-        IPI: { IPITrib: { vIPI: string } };
-        PIS: { PISAliq: { vPIS: string }, PISST?: { vPIS: string } };
-        COFINS: { COFINSAliq: { vCOFINS: string }, COFINSST?: { vCOFINS: string } };
+        ICMS: Record<string, { CST: string, vICMS: string, pICMS: string, vICMSST?: string }>;
+        IPI: { IPITrib?: { CST: string, vIPI: string, pIPI: string }, IPINT?: { CST: string } };
+        PIS: { PISAliq?: { vPIS: string, pPIS: string }, PISST?: { vPIS: string, pPIS: string }, PISNT?: { CST: string } };
+        COFINS: { COFINSAliq?: { vCOFINS: string, pCOFINS: string }, COFINSST?: { vCOFINS: string, pCOFINS: string }, COFINSNT?: { CST: string } };
     };
 }
+
 
 interface InfNFe {
     ['@_Id']: string;
@@ -81,23 +87,49 @@ export default function TaxAnalysisCalculator() {
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
     
-    const getIcmsValue = (icmsData: any): { vICMS: number, vICMSST: number, cst: string } => {
-        let vICMS = 0;
-        let vICMSST = 0;
-        let cst = '';
+    const getIcmsData = (icmsGroup: any): { vICMS: number, vICMSST: number, pICMS: number, cst: string } => {
+        let vICMS = 0, vICMSST = 0, pICMS = 0, cst = '';
 
-        if (!icmsData) return { vICMS, vICMSST, cst };
+        if (!icmsGroup) return { vICMS, vICMSST, pICMS, cst };
 
-        const icmsKeys = Object.keys(icmsData);
-        if (icmsKeys.length > 0) {
-            const icmsContent = icmsData[icmsKeys[0]];
+        const icmsKey = Object.keys(icmsGroup)[0];
+        if (icmsKey) {
+            const icmsContent = icmsGroup[icmsKey];
             if (icmsContent) {
                  vICMS = parseFloat(icmsContent.vICMS) || 0;
                  vICMSST = parseFloat(icmsContent.vICMSST) || 0;
+                 pICMS = parseFloat(icmsContent.pICMS) || 0;
                  cst = icmsContent.CST || icmsContent.CSOSN || '';
             }
         }
-        return { vICMS, vICMSST, cst };
+        return { vICMS, vICMSST, pICMS, cst };
+    }
+    
+    const getIpiData = (ipiGroup: any): { vIPI: number, pIPI: number } => {
+        let vIPI = 0, pIPI = 0;
+        if(ipiGroup?.IPITrib) {
+            vIPI = parseFloat(ipiGroup.IPITrib.vIPI) || 0;
+            pIPI = parseFloat(ipiGroup.IPITrib.pIPI) || 0;
+        }
+        return { vIPI, pIPI };
+    }
+
+    const getPisCofinsData = (taxGroup: any): { v: number, p: number } => {
+        let v = 0, p = 0;
+        if (taxGroup?.PISAliq) {
+            v = parseFloat(taxGroup.PISAliq.vPIS) || 0;
+            p = parseFloat(taxGroup.PISAliq.pPIS) || 0;
+        } else if (taxGroup?.PISST) {
+            v = parseFloat(taxGroup.PISST.vPIS) || 0;
+            p = parseFloat(taxGroup.PISST.pPIS) || 0;
+        } else if (taxGroup?.COFINSAliq) {
+            v = parseFloat(taxGroup.COFINSAliq.vCOFINS) || 0;
+            p = parseFloat(taxGroup.COFINSAliq.pCOFINS) || 0;
+        } else if (taxGroup?.COFINSST) {
+            v = parseFloat(taxGroup.COFINSST.vCOFINS) || 0;
+            p = parseFloat(taxGroup.COFINSST.pCOFINS) || 0;
+        }
+        return { v, p };
     }
 
     const handleImportXml = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -141,11 +173,10 @@ export default function TaxAnalysisCalculator() {
                     const prod = det.prod;
                     const imposto = det.imposto;
                     
-                    const { vICMS: icmsValor, vICMSST: stValor, cst } = getIcmsValue(imposto?.ICMS);
-
-                    const ipiValor = parseFloat(imposto?.IPI?.IPITrib?.vIPI) || 0;
-                    const pisValor = parseFloat(imposto?.PIS?.PISAliq?.vPIS) || parseFloat(imposto?.PIS?.PISST?.vPIS) || 0;
-                    const cofinsValor = parseFloat(imposto?.COFINS?.COFINSAliq?.vCOFINS) || parseFloat(imposto?.COFINS?.COFINSST?.vCOFINS) || 0;
+                    const { vICMS, vICMSST, pICMS, cst } = getIcmsData(imposto?.ICMS);
+                    const { vIPI, pIPI } = getIpiData(imposto?.IPI);
+                    const { v: vPIS, p: pPis } = getPisCofinsData(imposto?.PIS);
+                    const { v: vCofins, p: pCofins } = getPisCofinsData(imposto?.COFINS);
                     
                     return {
                         id: Date.now() + index,
@@ -156,11 +187,15 @@ export default function TaxAnalysisCalculator() {
                         quantity: parseFloat(prod.qCom) || 0,
                         unitCost: parseFloat(prod.vUnCom) || 0,
                         totalCost: parseFloat(prod.vProd) || 0,
-                        icms: icmsValor,
-                        icmsSt: stValor,
-                        ipi: ipiValor,
-                        pis: pisValor,
-                        cofins: cofinsValor,
+                        icms: vICMS,
+                        pIcms: pICMS,
+                        icmsSt: vICMSST,
+                        ipi: vIPI,
+                        pIpi: pIPI,
+                        pis: vPIS,
+                        pPis: pPis,
+                        cofins: vCofins,
+                        pCofins: pCofins
                     };
                 });
                 
@@ -229,16 +264,20 @@ export default function TaxAnalysisCalculator() {
             doc.text(`Valor Total NF-e: ${formatCurrency(nfeInfo.totalNf)}`, doc.internal.pageSize.getWidth() - 14, startY, { align: "right" });
         }
 
-        const head = [['Descrição', 'Qtde', 'Custo Total', 'ICMS', 'ICMS-ST', 'IPI', 'PIS', 'COFINS']];
+        const head = [['Descrição', 'Qtde', 'Total', 'ICMS', 'pICMS', 'ICMS-ST', 'IPI', 'pIPI', 'PIS', 'pPIS', 'COFINS', 'pCOFINS']];
         const body = items.map(item => [
             item.description,
             formatNumber(item.quantity),
             formatCurrency(item.totalCost),
             formatCurrency(item.icms),
+            `${formatNumber(item.pIcms)}%`,
             formatCurrency(item.icmsSt),
             formatCurrency(item.ipi),
+            `${formatNumber(item.pIpi)}%`,
             formatCurrency(item.pis),
+            `${formatNumber(item.pPis)}%`,
             formatCurrency(item.cofins),
+            `${formatNumber(item.pCofins)}%`,
         ]);
         
         const foot: RowInput[] = [
@@ -246,10 +285,14 @@ export default function TaxAnalysisCalculator() {
                 { content: 'Totais:', colSpan: 2, styles: { halign: 'right', fontStyle: 'bold' } },
                 { content: formatCurrency(totals.totalCost), styles: { fontStyle: 'bold' } },
                 { content: formatCurrency(totals.totalIcms), styles: { fontStyle: 'bold' } },
+                { content: '' }, // pICMS total
                 { content: formatCurrency(totals.totalIcmsSt), styles: { fontStyle: 'bold' } },
                 { content: formatCurrency(totals.totalIpi), styles: { fontStyle: 'bold' } },
+                { content: '' }, // pIPI total
                 { content: formatCurrency(totals.totalPis), styles: { fontStyle: 'bold' } },
+                { content: '' }, // pPIS total
                 { content: formatCurrency(totals.totalCofins), styles: { fontStyle: 'bold' } },
+                { content: '' }, // pCOFINS total
             ]
         ];
 
@@ -332,10 +375,14 @@ export default function TaxAnalysisCalculator() {
                                 <TableHead className="text-right">Qtde</TableHead>
                                 <TableHead className="text-right">Custo Total</TableHead>
                                 <TableHead className="text-right">ICMS</TableHead>
+                                <TableHead className="text-right">pICMS</TableHead>
                                 <TableHead className="text-right">ICMS-ST</TableHead>
                                 <TableHead className="text-right">IPI</TableHead>
+                                <TableHead className="text-right">pIPI</TableHead>
                                 <TableHead className="text-right">PIS</TableHead>
+                                <TableHead className="text-right">pPIS</TableHead>
                                 <TableHead className="text-right">COFINS</TableHead>
+                                <TableHead className="text-right">pCOFINS</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -348,10 +395,14 @@ export default function TaxAnalysisCalculator() {
                                     <TableCell className="text-right">{formatNumber(item.quantity)}</TableCell>
                                     <TableCell className="text-right">{formatCurrency(item.totalCost)}</TableCell>
                                     <TableCell className="text-right">{formatCurrency(item.icms)}</TableCell>
+                                    <TableCell className="text-right text-muted-foreground">{formatNumber(item.pIcms)}%</TableCell>
                                     <TableCell className="text-right">{formatCurrency(item.icmsSt)}</TableCell>
                                     <TableCell className="text-right">{formatCurrency(item.ipi)}</TableCell>
+                                     <TableCell className="text-right text-muted-foreground">{formatNumber(item.pIpi)}%</TableCell>
                                     <TableCell className="text-right">{formatCurrency(item.pis)}</TableCell>
+                                     <TableCell className="text-right text-muted-foreground">{formatNumber(item.pPis)}%</TableCell>
                                     <TableCell className="text-right">{formatCurrency(item.cofins)}</TableCell>
+                                     <TableCell className="text-right text-muted-foreground">{formatNumber(item.pCofins)}%</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
@@ -360,10 +411,14 @@ export default function TaxAnalysisCalculator() {
                                 <TableCell className="sticky left-0 bg-muted/50 z-10 text-right" colSpan={5}>Totais:</TableCell>
                                 <TableCell className="text-right">{formatCurrency(totals.totalCost)}</TableCell>
                                 <TableCell className="text-right">{formatCurrency(totals.totalIcms)}</TableCell>
+                                <TableCell></TableCell>
                                 <TableCell className="text-right">{formatCurrency(totals.totalIcmsSt)}</TableCell>
                                 <TableCell className="text-right">{formatCurrency(totals.totalIpi)}</TableCell>
+                                <TableCell></TableCell>
                                 <TableCell className="text-right">{formatCurrency(totals.totalPis)}</TableCell>
+                                <TableCell></TableCell>
                                 <TableCell className="text-right">{formatCurrency(totals.totalCofins)}</TableCell>
+                                <TableCell></TableCell>
                             </TableRow>
                         </TableFooter>
                     </Table>
