@@ -104,7 +104,7 @@ const addProfessionalHeader = (doc: jsPDF, companyData: CompanyData | null, lote
     if (companyData?.nomeEmpresa) {
         doc.setFontSize(16).setFont('helvetica', 'bold');
         doc.text(companyData.nomeEmpresa, pageWidth / 2, cursorY, { align: 'center' });
-        cursorY += 6;
+        cursorY += 8;
     }
     doc.setFontSize(9).setFont('helvetica', 'normal');
     if (companyData?.cnpj) {
@@ -124,7 +124,7 @@ const addProfessionalHeader = (doc: jsPDF, companyData: CompanyData | null, lote
     const pageStr = `Pág. ${doc.internal.getNumberOfPages()}`;
     doc.text(pageStr, pageWidth - margin, 15);
     
-    cursorY += 8;
+    cursorY += 10; // Gap after company data
     
     // --- Report Title Section ---
     const sectionHeight = 12;
@@ -155,7 +155,7 @@ const addProfessionalHeader = (doc: jsPDF, companyData: CompanyData | null, lote
     cursorY += sectionHeight;
     doc.line(margin, cursorY, pageWidth - margin, cursorY); // Bottom line
     
-    return cursorY + 4;
+    return cursorY + 8; // Increased gap after title section
 };
 
 
@@ -193,7 +193,7 @@ export function generatePdf(input: GeneratePdfInput): string {
     if (supplierData) {
         doc.setFontSize(10).setFont('helvetica', 'bold');
         doc.text('DESTINATÁRIO:', margin, startY);
-        startY += 2;
+        startY += 4; // Smaller gap
 
         doc.setFontSize(9).setFont('helvetica', 'normal');
         doc.text(supplierData.nomeFantasia, margin, startY);
@@ -209,7 +209,7 @@ export function generatePdf(input: GeneratePdfInput): string {
          if (supplierData.cidade) {
             doc.text(`Cidade: ${supplierData.cidade}`, margin, startY);
         }
-        startY += 4;
+        startY += 8; // Gap before table
     }
     
     const FIELD_LABELS: Record<string, string> = {
@@ -312,7 +312,7 @@ export function generateDevolucoesPdf(input: GenerateDevolucoesPdfInput): string
 
     const tableBody = devolucoes.map(item => {
         const fullRow = [
-            item.dataDevolucao ? format(parseISO(item.dataDevolucao), 'dd/MM/yyyy') : '-',
+            item.dataDevolucao ? format(parseISO(item.dataDevolucae), 'dd/MM/yyyy') : '-',
             item.cliente || '-',
             item.requisicaoVenda || '-',
             item.codigoPeca || '-',
