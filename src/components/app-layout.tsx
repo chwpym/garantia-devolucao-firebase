@@ -39,7 +39,7 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="w-[280px] p-0 flex flex-col">
-                  <SheetHeader className="flex flex-row items-center gap-2 h-16 border-b px-4">
+                  <SheetHeader className="flex flex-row items-center gap-3 h-16 border-b px-4">
                     <Image
                       src="/logo.png"
                       alt="Synergia OS Logo"
@@ -47,7 +47,7 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
                       height={32}
                       className="h-8 w-8 rounded-md flex-shrink-0"
                     />
-                    <SheetTitle className="text-xl font-bold font-headline text-foreground whitespace-nowrap">
+                    <SheetTitle className="text-2xl font-bold font-headline text-foreground whitespace-nowrap">
                       Synergia OS
                     </SheetTitle>
                   </SheetHeader>
