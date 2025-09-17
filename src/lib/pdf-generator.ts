@@ -104,7 +104,7 @@ const addProfessionalHeader = (doc: jsPDF, companyData: CompanyData | null, lote
     if (companyData?.nomeEmpresa) {
         doc.setFontSize(16).setFont('helvetica', 'bold');
         doc.text(companyData.nomeEmpresa, pageWidth / 2, cursorY, { align: 'center' });
-        cursorY += 6;
+        cursorY += 8;
     }
     doc.setFontSize(9).setFont('helvetica', 'normal');
     if (companyData?.cnpj) {
@@ -121,10 +121,10 @@ const addProfessionalHeader = (doc: jsPDF, companyData: CompanyData | null, lote
 
     // --- Pagination ---
     doc.setFontSize(9).setFont('helvetica', 'normal');
-    const pageStr = `Pág. ${doc.internal.getNumberOfPages()}`;
+    const pageStr = `Pág. ${doc.getNumberOfPages()}`;
     doc.text(pageStr, pageWidth - margin, 15);
     
-    cursorY += 6; // Gap after company data
+    cursorY += 4; // Gap after company data
     
     // --- Report Title Section ---
     const sectionHeight = 10;
@@ -156,7 +156,7 @@ const addProfessionalHeader = (doc: jsPDF, companyData: CompanyData | null, lote
     cursorY += sectionHeight;
     doc.line(margin, cursorY, pageWidth - margin, cursorY); // Bottom line
     
-    return cursorY + 6;
+    return cursorY + 4;
 };
 
 
@@ -176,7 +176,7 @@ export function generatePdf(input: GeneratePdfInput): string {
     let startY = 0;
 
     const addPageNumbers = () => {
-        const pageCount = doc.internal.getNumberOfPages();
+        const pageCount = doc.getNumberOfPages();
         doc.setFontSize(8);
         for (let i = 1; i <= pageCount; i++) {
             doc.setPage(i);
@@ -210,7 +210,7 @@ export function generatePdf(input: GeneratePdfInput): string {
          if (supplierData.cidade) {
             doc.text(`Cidade: ${supplierData.cidade}`, margin, startY);
         }
-        startY += 6; 
+        startY += 4; 
     }
     
     const FIELD_LABELS: Record<string, string> = {
