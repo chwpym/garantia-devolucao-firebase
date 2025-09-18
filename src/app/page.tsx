@@ -22,6 +22,7 @@ import type { Warranty } from '@/lib/types';
 import BatchRegisterSection from '@/components/sections/batch-register-section';
 import { cn } from '@/lib/utils';
 import ProductsSection from '@/components/sections/products-section';
+import ProductReportSection from '@/components/sections/product-report-section';
 
 export type RegisterMode = 'edit' | 'clone';
 
@@ -128,6 +129,8 @@ export default function Home() {
         return <DevolucaoQuerySection onEdit={handleEditDevolucao} />;
       case 'devolucao-reports':
         return <DevolucaoReportSection />;
+      case 'product-reports':
+        return <ProductReportSection />;
       case 'calculators':
         return <CalculatorsSection />;
       default:

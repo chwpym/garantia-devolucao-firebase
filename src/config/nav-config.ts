@@ -1,4 +1,6 @@
-import { LayoutDashboard, FileText, Search, PlusSquare, Users, Building, Package, FolderKanban, Wrench, Undo2, Calculator, History, Archive } from 'lucide-react';
+'use client';
+
+import { LayoutDashboard, FileText, Search, PlusSquare, Users, Building, Package, FolderKanban, Wrench, Undo2, Calculator, History, Archive, BarChartHorizontal } from 'lucide-react';
 
 export type NavItem = {
     id: string;
@@ -50,6 +52,7 @@ export const navConfig: NavItem[] = [
     items: [
         { id: 'reports', label: 'Relatório de Garantias', icon: FileText },
         { id: 'devolucao-reports', label: 'Relatório de Devoluções', icon: FileText },
+        { id: 'product-reports', label: 'Relatórios de Produtos', icon: BarChartHorizontal },
     ]
   },
   {
