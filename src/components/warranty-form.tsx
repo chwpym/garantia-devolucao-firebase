@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
@@ -9,7 +8,7 @@ import { Loader2, PlusCircle, Upload, X as XIcon, Image as ImageIcon } from 'luc
 import Image from 'next/image';
 
 
-import type { Warranty, Person, Supplier } from '@/lib/types';
+import type { Warranty, Person, Supplier, Product } from '@/lib/types';
 import * as db from '@/lib/db';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,6 +22,9 @@ import SupplierForm from './supplier-form';
 import PersonForm from './person-form';
 import { Combobox } from './ui/combobox';
 import { useToast } from '@/hooks/use-toast';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './ui/command';
+import ProductForm from './product-form';
 
 
 const formSchema = z.object({
@@ -45,6 +47,8 @@ const formSchema = z.object({
   loteId: z.number().nullable().optional(),
   photos: z.array(z.string()).optional(),
   dataRegistro: z.string().optional(),
+  marca: z.string().optional(),
+  referencia: z.string().optional(),
 });
 
 type WarrantyFormValues = z.infer<typeof formSchema>;
@@ -75,6 +79,8 @@ const defaultValues: WarrantyFormValues = {
   status: 'Em análise',
   loteId: null,
   photos: [],
+  marca: '',
+  referencia: '',
 };
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -84,9 +90,14 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [persons, setPersons] = useState<Person[]>([]);
     const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+    const [products, setProducts] = useState<Product[]>([]);
 
     const [isSupplierModalOpen, setSupplierModalOpen] = useState(false);
     const [isPersonModalOpen, setPersonModalOpen] = useState(false);
+    const [isProductModalOpen, setProductModalOpen] = useState(false);
+    
+    const [productSearch, setProductSearch] = useState('');
+    const [isProductPopoverOpen, setProductPopoverOpen] = useState(false);
     
     const { toast } = useToast();
 
@@ -108,10 +119,14 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
     const { isSubmitting } = form.formState;
 
     const loadDropdownData = async () => {
-        const allPersons = await db.getAllPersons();
-        const allSuppliers = await db.getAllSuppliers();
+        const [allPersons, allSuppliers, allProducts] = await Promise.all([
+            db.getAllPersons(),
+            db.getAllSuppliers(),
+            db.getAllProducts()
+        ]);
         setPersons(allPersons.sort((a, b) => a.nome.localeCompare(b.nome)));
         setSuppliers(allSuppliers.sort((a, b) => a.nomeFantasia.localeCompare(b.nomeFantasia)));
+        setProducts(allProducts);
     }
 
     useEffect(() => {
@@ -159,13 +174,15 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
     };
     
     const handleSupplierSaved = (newSupplier: Supplier) => {
-        loadDropdownData();
+        // No need to reload all data, just update the state
+        setSuppliers(prev => [...prev, newSupplier].sort((a, b) => a.nomeFantasia.localeCompare(b.nomeFantasia)));
         setSupplierModalOpen(false);
         form.setValue('fornecedor', newSupplier.nomeFantasia);
     };
 
     const handlePersonSaved = (newPerson: Person) => {
-        loadDropdownData();
+        // No need to reload all data, just update the state
+        setPersons(prev => [...prev, newPerson].sort((a, b) => a.nome.localeCompare(b.nome)));
         setPersonModalOpen(false);
         if (newPerson.tipo === 'Cliente' || newPerson.tipo === 'Ambos') {
              form.setValue('cliente', newPerson.nome);
@@ -173,6 +190,20 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
         if (newPerson.tipo === 'Mecânico' || newPerson.tipo === 'Ambos') {
              form.setValue('mecanico', newPerson.nome);
         }
+    };
+
+    const handleProductSaved = (newProduct: Product) => {
+        setProducts(prev => [...prev, newProduct]);
+        setProductModalOpen(false);
+        handleProductSelect(newProduct);
+    };
+
+    const handleProductSelect = (product: Product) => {
+        form.setValue('codigo', product.codigo);
+        form.setValue('descricao', product.descricao);
+        form.setValue('marca', product.marca);
+        form.setValue('referencia', product.referencia);
+        setProductPopoverOpen(false);
     };
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -220,6 +251,13 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
         setValue('photos', newPhotos, { shouldValidate: true });
     };
 
+    const filteredProducts = productSearch 
+        ? products.filter(p => 
+            p.codigo.toLowerCase().includes(productSearch.toLowerCase()) || 
+            p.descricao.toLowerCase().includes(productSearch.toLowerCase())
+        ).slice(0, 5) // Limit results for performance
+        : [];
+
     const clients = persons.filter(p => p.tipo === 'Cliente' || p.tipo === 'Ambos');
     const mechanics = persons.filter(p => p.tipo === 'Mecânico' || p.tipo === 'Ambos');
 
@@ -235,7 +273,51 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                     <h3 className="text-lg font-medium text-foreground">Informações do Produto e Defeito</h3>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <FormField name="codigo" control={form.control} render={({ field }) => (
-                            <FormItem><FormLabel>Código</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormItem>
+                                <FormLabel>Código</FormLabel>
+                                <Popover open={isProductPopoverOpen} onOpenChange={setProductPopoverOpen}>
+                                    <PopoverTrigger asChild>
+                                        <FormControl>
+                                            <Input 
+                                                {...field}
+                                                onChange={(e) => {
+                                                    field.onChange(e);
+                                                    setProductSearch(e.target.value);
+                                                    if (e.target.value) {
+                                                        setProductPopoverOpen(true);
+                                                    } else {
+                                                        setProductPopoverOpen(false);
+                                                    }
+                                                }}
+                                            />
+                                        </FormControl>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                        <Command>
+                                            <CommandInput placeholder="Buscar produto..." value={productSearch} onValueChange={setProductSearch} />
+                                            <CommandList>
+                                                <CommandEmpty>
+                                                    <div className='p-4 text-sm text-center'>
+                                                        <p>Nenhum produto encontrado.</p>
+                                                         <Button variant="link" type="button" onClick={() => setProductModalOpen(true)}>Cadastrar Novo Produto</Button>
+                                                    </div>
+                                                </CommandEmpty>
+                                                <CommandGroup>
+                                                    {filteredProducts.map((product) => (
+                                                        <CommandItem
+                                                            key={product.id}
+                                                            onSelect={() => handleProductSelect(product)}
+                                                        >
+                                                            {product.codigo} - {product.descricao}
+                                                        </CommandItem>
+                                                    ))}
+                                                </CommandGroup>
+                                            </CommandList>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
+                                <FormMessage />
+                            </FormItem>
                         )} />
                         <FormField name="descricao" control={form.control} render={({ field }) => (
                             <FormItem className="md:col-span-2"><FormLabel>Descrição</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
@@ -483,6 +565,14 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                 </Button>
             </CardFooter>
         </form>
+         <Dialog open={isProductModalOpen} onOpenChange={setProductModalOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Cadastrar Novo Produto</DialogTitle>
+                </DialogHeader>
+                <ProductForm onSave={handleProductSaved} isModal />
+            </DialogContent>
+        </Dialog>
     </Form>
     );
 
