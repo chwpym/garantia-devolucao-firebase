@@ -1,4 +1,4 @@
-import { LayoutDashboard, FileText, Search, PlusSquare, Users, Building, Package, FolderKanban, Wrench, Undo2, Calculator, History } from 'lucide-react';
+import { LayoutDashboard, FileText, Search, PlusSquare, Users, Building, Package, FolderKanban, Wrench, Undo2, Calculator, History, Archive } from 'lucide-react';
 
 export type NavItem = {
     id: string;
@@ -20,6 +20,7 @@ export const navConfig: NavItem[] = [
     items: [
         { id: 'persons', label: 'Clientes/Mecânicos', icon: Users },
         { id: 'suppliers', label: 'Fornecedores', icon: Building },
+        { id: 'products', label: 'Produtos', icon: Archive },
     ]
   },
   {

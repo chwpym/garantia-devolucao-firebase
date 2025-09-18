@@ -21,6 +21,7 @@ import CalculatorsSection from '@/components/sections/calculators-section';
 import type { Warranty } from '@/lib/types';
 import BatchRegisterSection from '@/components/sections/batch-register-section';
 import { cn } from '@/lib/utils';
+import ProductsSection from '@/components/sections/products-section';
 
 export type RegisterMode = 'edit' | 'clone';
 
@@ -115,6 +116,8 @@ export default function Home() {
         return <PersonsSection />;
       case 'suppliers':
         return <SuppliersSection />;
+      case 'products':
+        return <ProductsSection />;
       case 'backup':
         return <BackupSection />;
       case 'settings':

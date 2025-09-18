@@ -85,6 +85,14 @@ export interface CompanyData {
     email?: string;
 }
 
+export interface Product {
+  id?: number;
+  codigo: string;
+  descricao: string;
+  referencia?: string;
+  marca?: string;
+}
+
 // --- Novas Estruturas para Devolução ---
 
 export type ReturnStatus = 'Recebido' | 'Aguardando Peças' | 'Finalizada' | 'Cancelada';
