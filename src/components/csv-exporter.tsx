@@ -11,7 +11,7 @@ import { FileDown, Loader2 } from 'lucide-react';
 import type { Devolucao, ItemDevolucao } from '@/lib/types';
 import { format } from 'date-fns';
 
-type DataType = 'warranties' | 'devolutions' | 'persons' | 'suppliers';
+type DataType = 'warranties' | 'devolutions' | 'persons' | 'suppliers' | 'products';
 
 const FIELD_CONFIG: Record<DataType, Record<string, string>> = {
   warranties: {
@@ -68,6 +68,13 @@ const FIELD_CONFIG: Record<DataType, Record<string, string>> = {
     cnpj: 'CNPJ',
     cidade: 'Cidade/UF',
   },
+  products: {
+    id: 'ID',
+    codigo: 'Código',
+    descricao: 'Descrição',
+    marca: 'Marca',
+    referencia: 'Referência',
+  },
 };
 
 export default function CsvExporter() {
@@ -105,6 +112,8 @@ export default function CsvExporter() {
         return db.getAllPersons();
       case 'suppliers':
         return db.getAllSuppliers();
+      case 'products':
+        return db.getAllProducts();
       case 'devolutions': {
         const devolucoes: (Devolucao & { itens: ItemDevolucao[] })[] = await db.getAllDevolucoes();
         return devolucoes.flatMap(devolucao => {
@@ -204,6 +213,7 @@ export default function CsvExporter() {
               <SelectItem value="devolutions">Devoluções</SelectItem>
               <SelectItem value="persons">Clientes e Mecânicos</SelectItem>
               <SelectItem value="suppliers">Fornecedores</SelectItem>
+              <SelectItem value="products">Produtos</SelectItem>
             </SelectContent>
           </Select>
         </div>
