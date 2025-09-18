@@ -6,6 +6,7 @@ Um sistema web completo e moderno para gerenciamento de garantias, devoluções 
 
 ### 🔧 Módulo de Garantias
 - **Cadastro Detalhado**: Registre garantias com informações de produto, defeito, cliente, fornecedor, notas fiscais e anexo de fotos.
+- **Busca Inteligente de Produtos**: Digite o código do produto e o sistema preenche a descrição automaticamente, com a opção de cadastrar novos itens na hora.
 - **Cadastro em Lote**: Insira múltiplas garantias de uma só vez em uma interface de planilha, associando todas a um único fornecedor para maior agilidade.
 - **Consulta Avançada**: Busque garantias por qualquer texto ou filtre por período e status.
 - **Gestão de Lotes**: Agrupe garantias para envio a fornecedores, controle o status do lote, adicione NFs de saída/retorno e atualize o status de vários itens de uma vez.
@@ -13,7 +14,7 @@ Um sistema web completo e moderno para gerenciamento de garantias, devoluções 
 
 ### ↩️ Módulo de Devoluções
 - **Múltiplas Peças por Devolução**: Adicione vários itens em um único registro de devolução.
-- **Cadastro de Devolução**: Associe devoluções a clientes, mecânicos e requisições de venda.
+- **Cadastro de Devolução com Busca de Produtos**: Utilize a busca por código para preencher automaticamente a descrição das peças.
 - **Consulta de Devoluções**: Filtre todas as devoluções por data, cliente, peça ou qualquer outro dado relevante.
 - **Relatórios Analíticos**:
     - **Gerais**: Analise o volume de devoluções, ranking de peças, clientes e mecânicos.
@@ -27,7 +28,8 @@ Um sistema web completo e moderno para gerenciamento de garantias, devoluções 
 - **Cálculos Rápidos**: Ferramentas para calcular preço médio, preço de venda, custo unitário e porcentagens de forma simples e direta.
 
 ### 🗃️ Cadastros e Configurações
-- **Gestão Centralizada com Busca**: Mantenha um cadastro único para Clientes, Mecânicos e Fornecedores, com uma busca inteligente que permite encontrar registros por nome, CPF/CNPJ ou telefone.
+- **Gestão Centralizada com Busca**: Mantenha um cadastro único para Clientes, Mecânicos, Fornecedores e Produtos.
+- **Cadastro de Produtos**: Centralize as informações dos seus produtos (código, descrição, marca, referência) para agilizar os lançamentos.
 - **Backup e Restauração (JSON)**: Exporte e importe todos os dados do sistema com um único arquivo JSON.
 - **Exportação Avançada (CSV)**: Crie exportações personalizadas de qualquer módulo, escolhendo exatamente quais campos incluir.
 - **Dados da Empresa**: Personalize os cabeçalhos dos relatórios em PDF com as informações da sua empresa.
@@ -70,20 +72,19 @@ O sistema foi projetado para funcionar diretamente no navegador, sem a necessida
 
 ### 1. Primeiros Passos: Cadastros
 - Acesse a seção **Cadastros** no menu lateral.
-- Antes de criar um novo registro, use o campo de **busca** para verificar se o cliente ou fornecedor já existe.
-- Cadastre seus **Clientes/Mecânicos** e **Fornecedores**. Estes dados serão usados nos menus de seleção ao registrar garantias e devoluções.
+- Cadastre seus **Produtos**, **Clientes/Mecânicos** e **Fornecedores**. Estes dados serão usados para agilizar os lançamentos.
 - Em **Configurações**, preencha os dados da sua empresa para que apareçam nos relatórios em PDF.
 
 ### 2. Registrando uma Garantia
-- Vá para **Garantias → Cadastro de Garantia** (ou use o atalho "Nova Garantia").
-- Preencha as informações do produto, defeito, e selecione o cliente, mecânico e fornecedor.
-- Anexe fotos, se necessário. As imagens são armazenadas localmente.
-- Clique em "Salvar".
+- Vá para **Garantias → Cadastro de Garantia**.
+- No campo **Código**, digite o código do produto. A descrição será preenchida automaticamente se o produto já estiver cadastrado.
+- Se o produto não for encontrado, um aviso aparecerá e você poderá cadastrá-lo em uma janela, sem sair da tela.
+- Preencha o restante das informações e clique em "Salvar".
 
 ### 3. Registrando Garantias em Lote
 - Use o atalho **Garantia em Lote** no cabeçalho.
 - Selecione um **Fornecedor** para todo o lote.
-- Preencha os detalhes de cada garantia na tabela, como se fosse uma planilha.
+- Preencha os detalhes de cada garantia na tabela. A busca automática por código também funciona aqui.
 - Clique em "Salvar Tudo" para registrar todas as garantias de uma vez.
 
 ### 4. Gerenciando Lotes de Garantia
@@ -92,19 +93,17 @@ O sistema foi projetado para funcionar diretamente no navegador, sem a necessida
 - Ao clicar em um lote, você pode gerenciar os itens, aplicar NFs de saída/retorno em massa e alterar o status das garantias.
 
 ### 5. Registrando uma Devolução
-- Vá para **Devoluções → Cadastro de Devolução** (ou use o atalho "Nova Devolução").
-- Adicione uma ou mais peças, preenchendo código, descrição e quantidade.
-- Preencha as informações gerais, como cliente e requisição de venda.
-- Clique em "Salvar Devolução".
+- Vá para **Devoluções → Cadastro de Devolução**.
+- Ao adicionar uma peça, digite o código do produto para que a descrição seja preenchida automaticamente.
+- Preencha as informações gerais e clique em "Salvar Devolução".
 
 ### 6. Usando as Ferramentas e Calculadoras
 - Acesse a seção **Ferramentas → Calculadoras** no menu lateral ou use o atalho **Calculadoras** no cabeçalho.
-- Escolha a ferramenta desejada, como a "Análise de Custo por NF-e", e siga as instruções na tela para importar arquivos XML ou preencher os campos.
+- Escolha a ferramenta desejada e siga as instruções na tela.
 
 ### 7. Gerando Relatórios
 - Acesse a seção **Relatórios** no menu lateral.
-- **Relatório de Garantias**: Filtre e selecione as garantias que deseja incluir, escolha os campos e gere um PDF.
-- **Relatório de Devoluções**: Use os filtros de data para análises gerais ou gere relatórios mensais específicos por cliente para conferência.
+- Escolha o tipo de relatório desejado (Garantias ou Devoluções) e use os filtros para gerar os PDFs.
 
 ### 8. Backup
 - Em **Backup**, você pode exportar todos os seus dados para um arquivo JSON para segurança.
