@@ -3,8 +3,7 @@
 
 import { useState, useMemo, useRef } from "react";
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import type { UserOptions, RowInput } from "jspdf-autotable";
+import autoTable, { type RowInput } from "jspdf-autotable";
 import { XMLParser } from "fast-xml-parser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -312,7 +311,7 @@ export default function TaxAnalysisCalculator() {
             didDrawPage: (data) => {
                 const pageCount = doc.getNumberOfPages();
                 doc.setFontSize(8);
-                const pageText = `Página ${data.pageNumber}`;
+                const pageText = `Página ${data.pageNumber} de ${pageCount}`;
                 doc.text(pageText, data.settings.margin.left, doc.internal.pageSize.height - 10);
             }
         });
@@ -433,5 +432,7 @@ export default function TaxAnalysisCalculator() {
         </div>
     );
 }
+
+    
 
     
