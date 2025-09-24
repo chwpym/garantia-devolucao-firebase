@@ -4,7 +4,7 @@
 import { useState, useMemo, useRef } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import type { UserOptions } from "jspdf-autotable";
+import type { UserOptions, RowInput } from "jspdf-autotable";
 import { XMLParser } from "fast-xml-parser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
