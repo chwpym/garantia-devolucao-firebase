@@ -2,7 +2,7 @@
 
 'use client';
 
-import { jsPDF, type GState } from 'jspdf';
+import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import type { UserOptions } from 'jspdf-autotable';
 import type { Warranty, CompanyData, Supplier, Person, Devolucao, ItemDevolucao } from '@/lib/types';
@@ -250,7 +250,7 @@ export function generatePdf(input: GeneratePdfInput): string {
     });
 
     if (layout === 'professional') {
-        const finalY = (doc as any).lastAutoTable.finalY || startY;
+        const finalY = (doc as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY || startY;
         doc.setFontSize(10).setFont('helvetica', 'bold');
         doc.text(`Total de Itens: ${selectedWarranties.length}`, margin, finalY + 10);
     }
@@ -342,3 +342,5 @@ export function generateDevolucoesPdf(input: GenerateDevolucoesPdfInput): string
 
     return doc.output('datauristring');
 }
+
+    

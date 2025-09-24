@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { generatePdf, type ReportLayout, type ReportOrientation } from '@/lib/pdf-generator';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Loader2, FileDown } from 'lucide-react';
@@ -193,3 +193,5 @@ export default function ReportGenerator({
     </Wrapper>
   );
 }
+
+    

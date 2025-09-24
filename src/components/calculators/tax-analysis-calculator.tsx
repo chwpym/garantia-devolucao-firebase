@@ -45,13 +45,18 @@ interface NfeInfo {
     totalNf: number;
 }
 
+type IcmsGroup = Record<string, { CST: string, vICMS: string, pICMS: string, vICMSST?: string }>;
+type IpiGroup = { IPITrib?: { CST: string, vIPI: string, pIPI: string }, IPINT?: { CST: string } };
+type PisCofinsGroup = { PISAliq?: { vPIS?: string, pPIS?: string, vCOFINS?: string, pCOFINS?: string }, PISST?: { vPIS?: string, pPIS?: string, vCOFINS?: string, pCOFINS?: string }, PISNT?: { CST: string }, COFINSAliq?: { vPIS?: string, pPIS?: string, vCOFINS?: string, pCOFINS?: string }, COFINSST?: { vPIS?: string, pPIS?: string, vCOFINS?: string, pCOFINS?: string }, COFINSNT?: { CST: string } };
+
+
 interface NfeProductDetail {
     prod: Record<string, string>;
     imposto: {
-        ICMS: Record<string, { CST: string, vICMS: string, pICMS: string, vICMSST?: string }>;
-        IPI: { IPITrib?: { CST: string, vIPI: string, pIPI: string }, IPINT?: { CST: string } };
-        PIS: { PISAliq?: { vPIS: string, pPIS: string }, PISST?: { vPIS: string, pPIS: string }, PISNT?: { CST: string } };
-        COFINS: { COFINSAliq?: { vCOFINS: string, pCOFINS: string }, COFINSST?: { vCOFINS: string, pCOFINS: string }, COFINSNT?: { CST: string } };
+        ICMS: IcmsGroup;
+        IPI: IpiGroup;
+        PIS: PisCofinsGroup;
+        COFINS: PisCofinsGroup;
     };
 }
 
@@ -87,7 +92,7 @@ export default function TaxAnalysisCalculator() {
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
     
-    const getIcmsData = (icmsGroup: any): { vICMS: number, vICMSST: number, pICMS: number, cst: string } => {
+    const getIcmsData = (icmsGroup: IcmsGroup): { vICMS: number, vICMSST: number, pICMS: number, cst: string } => {
         let vICMS = 0, vICMSST = 0, pICMS = 0, cst = '';
 
         if (!icmsGroup) return { vICMS, vICMSST, pICMS, cst };
@@ -99,13 +104,13 @@ export default function TaxAnalysisCalculator() {
                  vICMS = parseFloat(icmsContent.vICMS) || 0;
                  vICMSST = parseFloat(icmsContent.vICMSST) || 0;
                  pICMS = parseFloat(icmsContent.pICMS) || 0;
-                 cst = icmsContent.CST || icmsContent.CSOSN || '';
+                 cst = icmsContent.CST || (icmsContent as { CSOSN: string }).CSOSN || '';
             }
         }
         return { vICMS, vICMSST, pICMS, cst };
     }
     
-    const getIpiData = (ipiGroup: any): { vIPI: number, pIPI: number } => {
+    const getIpiData = (ipiGroup: IpiGroup): { vIPI: number, pIPI: number } => {
         let vIPI = 0, pIPI = 0;
         if(ipiGroup?.IPITrib) {
             vIPI = parseFloat(ipiGroup.IPITrib.vIPI) || 0;
@@ -114,20 +119,20 @@ export default function TaxAnalysisCalculator() {
         return { vIPI, pIPI };
     }
 
-    const getPisCofinsData = (taxGroup: any): { v: number, p: number } => {
+    const getPisCofinsData = (taxGroup: PisCofinsGroup): { v: number, p: number } => {
         let v = 0, p = 0;
         if (taxGroup?.PISAliq) {
-            v = parseFloat(taxGroup.PISAliq.vPIS) || 0;
-            p = parseFloat(taxGroup.PISAliq.pPIS) || 0;
+            v = parseFloat(taxGroup.PISAliq.vPIS || taxGroup.PISAliq.vCOFINS || '0') || 0;
+            p = parseFloat(taxGroup.PISAliq.pPIS || taxGroup.PISAliq.pCOFINS || '0') || 0;
         } else if (taxGroup?.PISST) {
-            v = parseFloat(taxGroup.PISST.vPIS) || 0;
-            p = parseFloat(taxGroup.PISST.pPIS) || 0;
+            v = parseFloat(taxGroup.PISST.vPIS || taxGroup.PISST.vCOFINS || '0') || 0;
+            p = parseFloat(taxGroup.PISST.pPIS || taxGroup.PISST.pCOFINS || '0') || 0;
         } else if (taxGroup?.COFINSAliq) {
-            v = parseFloat(taxGroup.COFINSAliq.vCOFINS) || 0;
-            p = parseFloat(taxGroup.COFINSAliq.pCOFINS) || 0;
+            v = parseFloat(taxGroup.COFINSAliq.vCOFINS || taxGroup.COFINSAliq.vPIS || '0') || 0;
+            p = parseFloat(taxGroup.COFINSAliq.pCOFINS || taxGroup.COFINSAliq.pPIS || '0') || 0;
         } else if (taxGroup?.COFINSST) {
-            v = parseFloat(taxGroup.COFINSST.vCOFINS) || 0;
-            p = parseFloat(taxGroup.COFINSST.pCOFINS) || 0;
+            v = parseFloat(taxGroup.COFINSST.vCOFINS || taxGroup.COFINSST.vPIS || '0') || 0;
+            p = parseFloat(taxGroup.COFINSST.pCOFINS || taxGroup.COFINSST.pPIS || '0') || 0;
         }
         return { v, p };
     }
@@ -304,7 +309,8 @@ export default function TaxAnalysisCalculator() {
             showFoot: 'lastPage',
             headStyles: { fillColor: [63, 81, 181] },
             footStyles: { fillColor: [224, 224, 224], textColor: [0, 0, 0], fontStyle: 'bold' },
-            didDrawPage: (data: NonNullable<UserOptions['didDrawPage']>['arguments'][0]) => {
+            didDrawPage: (data) => {
+                const pageCount = doc.getNumberOfPages();
                 doc.setFontSize(8);
                 const pageText = `Página ${data.pageNumber}`;
                 doc.text(pageText, data.settings.margin.left, doc.internal.pageSize.height - 10);
@@ -427,3 +433,5 @@ export default function TaxAnalysisCalculator() {
         </div>
     );
 }
+
+    

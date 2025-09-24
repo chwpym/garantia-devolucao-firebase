@@ -27,7 +27,6 @@ interface ProductFormProps {
   onSave: (newProduct: Product) => void;
   editingProduct?: Product | null;
   onClear?: () => void;
-  isModal?: boolean;
 }
 
 const defaultFormValues: ProductFormValues = {
@@ -37,7 +36,7 @@ const defaultFormValues: ProductFormValues = {
   marca: ''
 };
 
-export default function ProductForm({ onSave, editingProduct, onClear, isModal = false }: ProductFormProps) {
+export default function ProductForm({ onSave, editingProduct, onClear }: ProductFormProps) {
   const { toast } = useToast();
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(formSchema),
@@ -154,3 +153,5 @@ export default function ProductForm({ onSave, editingProduct, onClear, isModal =
     </Form>
   );
 }
+
+    

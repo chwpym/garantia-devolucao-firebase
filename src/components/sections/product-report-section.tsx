@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { Devolucao, ItemDevolucao, Product, Warranty } from '@/lib/types';
 import * as db from '@/lib/db';
-import { addDays, endOfMonth, format, parseISO, startOfMonth } from 'date-fns';
+import { addDays, endOfMonth, parseISO, startOfMonth } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -307,3 +307,5 @@ export default function ProductReportSection() {
         </div>
     );
 }
+
+    
