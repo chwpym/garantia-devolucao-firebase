@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calculator, ShoppingCart, Percent, Plus, FileScan, Tag, DivideCircle, Files, Microscope, ArrowLeft, Landmark } from 'lucide-react';
+import { Calculator, ShoppingCart, Percent, Plus, FileScan, Tag, DivideCircle, Files, Microscope, ArrowLeft, Landmark, Replace } from 'lucide-react';
 import AveragePriceCalculator from '@/components/calculators/average-price-calculator';
 import BatchPricingCalculator from '@/components/calculators/batch-pricing-calculator';
 import CalculateSaleCalculator from '@/components/calculators/calculate-sale-calculator';
@@ -14,9 +14,17 @@ import CostAnalysisCalculator from '../calculators/cost-analysis-calculator';
 import AdvancedCostAnalysisCalculator from '../calculators/advanced-cost-analysis-calculator';
 import NfeComparator from '../calculators/nfe-comparator';
 import TaxAnalysisCalculator from '../calculators/tax-analysis-calculator';
+import PurchaseSimulatorCalculator from '../calculators/purchase-simulator-calculator';
 
 
 const calculators = [
+  {
+    id: 'purchase-simulator',
+    icon: Replace,
+    title: 'Simulador de Compra por NF-e',
+    description: 'Simule compras alterando quantidades e itens de um XML.',
+    component: PurchaseSimulatorCalculator,
+  },
   {
     id: 'tax-analysis',
     icon: Landmark,
