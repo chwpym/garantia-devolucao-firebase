@@ -18,7 +18,8 @@ interface SimulatedItem {
     description: string;
     originalQuantity: number;
     simulatedQuantity: string;
-    unitCost: number;
+    unitCost: number; // This is the net cost from XML
+    additionalCosts: number; // This is the calculated additional cost per unit
     ipi: number;
     icmsST: number;
     frete: number;
@@ -70,21 +71,15 @@ export default function PurchaseSimulatorCalculator() {
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const calculateCosts = (item: Omit<SimulatedItem, 'id' | 'description'>) => {
-        const finalUnitCost = item.originalQuantity > 0 ? 
-            (item.unitCost * item.originalQuantity +
-            item.ipi +
-            item.icmsST +
-            item.frete +
-            item.seguro +
-            item.outras -
-            item.desconto) / item.originalQuantity
-            : 0;
+    const calculateCosts = (item: Omit<SimulatedItem, 'id' | 'description' | 'finalUnitCost' | 'originalTotalCost' | 'simulatedTotalCost'>) => {
+        const totalAdditionalCosts = item.ipi + item.icmsST + item.frete + item.seguro + item.outras - item.desconto;
+        const additionalCostsPerUnit = item.originalQuantity > 0 ? totalAdditionalCosts / item.originalQuantity : 0;
         
+        const finalUnitCost = item.unitCost + additionalCostsPerUnit;
         const originalTotalCost = finalUnitCost * item.originalQuantity;
         const simulatedTotalCost = finalUnitCost * (parseFloat(item.simulatedQuantity) || 0);
 
-        return { finalUnitCost, originalTotalCost, simulatedTotalCost };
+        return { additionalCosts: additionalCostsPerUnit, finalUnitCost, originalTotalCost, simulatedTotalCost };
     };
 
     const handleImportXml = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -288,6 +283,8 @@ export default function PurchaseSimulatorCalculator() {
                                 <TableHead className="min-w-[250px] p-2">Descrição</TableHead>
                                 <TableHead className="w-[100px] text-right p-2">Qtde. Original</TableHead>
                                 <TableHead className="w-[100px] text-right p-2">Qtde. Simulada</TableHead>
+                                <TableHead className="text-right p-2">Custo Líquido (NF-e)</TableHead>
+                                <TableHead className="text-right p-2">Custos Adicionais/Un.</TableHead>
                                 <TableHead className="text-right p-2">Custo Un. Final</TableHead>
                                 <TableHead className="text-right p-2">Custo Total Orig.</TableHead>
                                 <TableHead className="text-right font-bold text-primary p-2">Custo Total Sim.</TableHead>
@@ -308,7 +305,9 @@ export default function PurchaseSimulatorCalculator() {
                                             onChange={(e) => handleQuantityChange(item.id, e.target.value)}
                                         />
                                     </TableCell>
-                                    <TableCell className="text-right p-2">{formatCurrency(item.finalUnitCost)}</TableCell>
+                                    <TableCell className="text-right p-2">{formatCurrency(item.unitCost)}</TableCell>
+                                    <TableCell className="text-right p-2 text-red-500">{formatCurrency(item.additionalCosts)}</TableCell>
+                                    <TableCell className="text-right p-2 font-bold">{formatCurrency(item.finalUnitCost)}</TableCell>
                                     <TableCell className="text-right p-2">{formatCurrency(item.originalTotalCost)}</TableCell>
                                     <TableCell className="text-right font-bold text-primary p-2">{formatCurrency(item.simulatedTotalCost)}</TableCell>
                                     <TableCell className="p-2">
@@ -321,7 +320,7 @@ export default function PurchaseSimulatorCalculator() {
                         </TableBody>
                         <TableFooter>
                             <TableRow className="font-bold bg-muted/50">
-                                <TableCell colSpan={4} className="text-right p-2">Totais:</TableCell>
+                                <TableCell colSpan={6} className="text-right p-2">Totais:</TableCell>
                                 <TableCell className="text-right p-2">{formatCurrency(totals.originalTotalCost)}</TableCell>
                                 <TableCell className="text-right text-primary p-2">{formatCurrency(totals.simulatedTotalCost)}</TableCell>
                                 <TableCell className="p-2"></TableCell>
@@ -333,5 +332,3 @@ export default function PurchaseSimulatorCalculator() {
         </div>
     );
 }
-
-    
