@@ -270,6 +270,14 @@ export default function PurchaseSimulatorCalculator() {
             sim.nfeInfo.nfeNumber.includes(lowerCaseQuery)
         );
     }, [savedSimulations, searchQuery]);
+    
+     const filteredTotals = useMemo(() => {
+        return filteredSimulations.reduce((acc, sim) => {
+            acc.original += sim.originalTotalCost;
+            acc.simulated += sim.simulatedTotalCost;
+            return acc;
+        }, { original: 0, simulated: 0 });
+    }, [filteredSimulations]);
 
     const handleLoadSimulation = (sim: PurchaseSimulation) => {
         setNfeInfo(sim.nfeInfo);
@@ -352,6 +360,41 @@ export default function PurchaseSimulatorCalculator() {
     
         doc.save(`simulacao_compra_${nfeInfo?.nfeNumber || 'sem_numero'}.pdf`);
     };
+    
+    const generateSavedSimulationsPdf = () => {
+        if (filteredSimulations.length === 0) {
+            toast({ title: "Aviso", description: "Não há dados para exportar." });
+            return;
+        }
+        
+        const doc = new jsPDF();
+        doc.setFontSize(18);
+        doc.text("Relatório de Simulações Salvas", 14, 22);
+
+        const head = [['Nome da Simulação', 'Fornecedor', 'Nº NF-e', 'Custo Original', 'Custo Simulado', 'Economia']];
+        const body = filteredSimulations.map(sim => [
+            sim.simulationName,
+            sim.nfeInfo.emitterName,
+            sim.nfeInfo.nfeNumber,
+            formatCurrency(sim.originalTotalCost),
+            formatCurrency(sim.simulatedTotalCost),
+            formatCurrency(sim.originalTotalCost - sim.simulatedTotalCost)
+        ]);
+        
+        autoTable(doc, {
+            startY: 30,
+            head: head,
+            body: body,
+            foot: [
+                ['Total:', '', '', formatCurrency(filteredTotals.original), formatCurrency(filteredTotals.simulated), formatCurrency(filteredTotals.original - filteredTotals.simulated)]
+            ],
+            headStyles: { fillColor: [63, 81, 181] },
+            footStyles: { fontStyle: 'bold', fillColor: [224, 224, 224], textColor: [0, 0, 0] },
+        });
+
+        doc.save(`relatorio_simulacoes_salvas.pdf`);
+    };
+
 
     return (
         <>
@@ -464,7 +507,7 @@ export default function PurchaseSimulatorCalculator() {
                                         <TableRow>
                                             <TableHead className="min-w-[250px] p-2">Descrição</TableHead>
                                             <TableHead className="w-[100px] text-right p-2">Qtde. Original</TableHead>
-                                            <TableHead className="w-[100px] text-right p-2">Qtde. Simulada</TableHead>
+                                            <TableHead className="w-[120px] text-right p-2">Qtde. Simulada</TableHead>
                                             <TableHead className="text-right p-2 w-[130px]">Custo Líquido (NF-e)</TableHead>
                                             <TableHead className="text-right p-2 w-[130px]">Custos Adicionais/Un.</TableHead>
                                             <TableHead className="text-right p-2">Custo Un. Final</TableHead>
@@ -477,8 +520,8 @@ export default function PurchaseSimulatorCalculator() {
                                         {items.map(item => (
                                             <TableRow key={item.id}>
                                                 <TableCell className="font-medium text-xs p-2">{item.description}</TableCell>
-                                                <TableCell className="text-right p-2">{formatNumber(item.originalQuantity)}</TableCell>
-                                                <TableCell className="p-2">
+                                                <TableCell className="w-[100px] text-right p-2">{formatNumber(item.originalQuantity)}</TableCell>
+                                                <TableCell className="p-2 w-[120px]">
                                                     <Input
                                                         type="text"
                                                         inputMode="decimal"
@@ -522,6 +565,32 @@ export default function PurchaseSimulatorCalculator() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
+                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                <Card>
+                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <CardTitle className="text-sm font-medium">Custo Total Original</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="text-2xl font-bold">{formatCurrency(filteredTotals.original)}</div>
+                                    </CardContent>
+                                </Card>
+                                <Card>
+                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <CardTitle className="text-sm font-medium">Custo Total Simulado</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="text-2xl font-bold text-primary">{formatCurrency(filteredTotals.simulated)}</div>
+                                    </CardContent>
+                                </Card>
+                                <Card>
+                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <CardTitle className="text-sm font-medium">Economia Potencial Total</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="text-2xl font-bold text-accent-green">{formatCurrency(filteredTotals.original - filteredTotals.simulated)}</div>
+                                    </CardContent>
+                                </Card>
+                            </div>
                             <div className="mb-4 flex flex-col md:flex-row gap-2">
                                 <div className="relative flex-1">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -535,6 +604,10 @@ export default function PurchaseSimulatorCalculator() {
                                 <Button onClick={handleClearSearch} variant="outline">
                                     <X className="mr-2 h-4 w-4" />
                                     Limpar Busca
+                                </Button>
+                                <Button onClick={generateSavedSimulationsPdf} variant="secondary" disabled={filteredSimulations.length === 0}>
+                                    <Printer className="mr-2 h-4 w-4" />
+                                    Exportar para PDF
                                 </Button>
                             </div>
                             {isLoadingSims ? <Loader2 className="animate-spin" /> : (
