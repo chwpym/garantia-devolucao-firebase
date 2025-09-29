@@ -384,8 +384,39 @@ export default function PurchaseSimulatorCalculator() {
         }
         
         const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const margin = 14;
+        let cursorY = 22;
+
         doc.setFontSize(18);
-        doc.text("Relatório de Simulações Salvas", 14, 22);
+        doc.text("Relatório de Simulações Salvas", margin, cursorY);
+        cursorY += 10;
+
+        // Draw summary cards
+        const cardWidth = (pageWidth - margin * 4) / 3;
+        const cardHeight = 25;
+        const cardY = cursorY;
+
+        const drawCard = (x: number, title: string, value: string, titleColor = [0,0,0], valueColor = [0,0,0]) => {
+            doc.setDrawColor(224, 224, 224);
+            doc.setFillColor(250, 250, 250);
+            doc.rect(x, cardY, cardWidth, cardHeight, 'FD');
+            
+            doc.setFontSize(10);
+            doc.setTextColor(100, 100, 100);
+            doc.text(title, x + cardWidth / 2, cardY + 8, { align: 'center' });
+            
+            doc.setFontSize(14).setFont('helvetica', 'bold');
+            doc.setTextColor(valueColor[0], valueColor[1], valueColor[2]);
+            doc.text(value, x + cardWidth / 2, cardY + 18, { align: 'center' });
+        };
+        
+        drawCard(margin, "Custo Total Original", formatCurrency(filteredTotals.original));
+        drawCard(margin + cardWidth + margin, "Custo Total Simulado", formatCurrency(filteredTotals.simulated), [0,0,0], [96, 11, 232]); // Primary color
+        drawCard(margin + (cardWidth + margin) * 2, "Economia Potencial Total", formatCurrency(filteredTotals.original - filteredTotals.simulated), [0,0,0], [22, 163, 74]); // Accent-green color
+
+        cursorY += cardHeight + 15;
+
 
         const head = [['Nome da Simulação', 'Fornecedor', 'Nº NF-e', 'Custo Original', 'Custo Simulado', 'Economia']];
         const body = filteredSimulations.map(sim => [
@@ -398,7 +429,7 @@ export default function PurchaseSimulatorCalculator() {
         ]);
         
         autoTable(doc, {
-            startY: 30,
+            startY: cursorY,
             head: head,
             body: body,
             foot: [
@@ -523,7 +554,7 @@ export default function PurchaseSimulatorCalculator() {
                                         <TableRow>
                                             <TableHead className="min-w-[250px] p-2">Descrição</TableHead>
                                             <TableHead className="w-[100px] text-right p-2">Qtde. Original</TableHead>
-                                            <TableHead className="w-[100px] text-right p-2">Qtde. Simulada</TableHead>
+                                            <TableHead className="p-2 w-[120px]">Qtde. Simulada</TableHead>
                                             <TableHead className="text-right p-2 w-[130px]">Custo Líquido (NF-e)</TableHead>
                                             <TableHead className="text-right p-2 w-[130px]">Custos Adicionais/Un.</TableHead>
                                             <TableHead className="text-right p-2">Custo Un. Final</TableHead>
