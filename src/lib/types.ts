@@ -1,3 +1,4 @@
+
 'use client';
 
 export type WarrantyStatus = 'Em análise' | 'Aprovada' | 'Recusada' | 'Paga';
@@ -116,4 +117,30 @@ export interface ItemDevolucao {
     codigoPeca: string;
     descricaoPeca: string;
     quantidade: number;
+}
+
+// --- Purchase Simulator ---
+export interface NfeInfo {
+    emitterName: string;
+    emitterCnpj: string;
+    emitterCity: string;
+    nfeNumber: string;
+}
+
+export interface SimulatedItemData {
+    id: number;
+    description: string;
+    originalQuantity: number;
+    simulatedQuantity: string;
+    finalUnitCost: number;
+}
+
+export interface PurchaseSimulation {
+    id?: number;
+    simulationName: string;
+    nfeInfo: NfeInfo;
+    items: SimulatedItemData[];
+    originalTotalCost: number;
+    simulatedTotalCost: number;
+    createdAt: string;
 }

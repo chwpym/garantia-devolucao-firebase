@@ -1,9 +1,10 @@
+
 'use client';
 
-import type { Warranty, Person, Supplier, Lote, LoteItem, CompanyData, Devolucao, ItemDevolucao, Product } from './types';
+import type { Warranty, Person, Supplier, Lote, LoteItem, CompanyData, Devolucao, ItemDevolucao, Product, PurchaseSimulation } from './types';
 
 const DB_NAME = 'GarantiasDB';
-const DB_VERSION = 6; // Incremented version
+const DB_VERSION = 7; // Incremented version
 
 const GARANTIAS_STORE_NAME = 'garantias';
 const PERSONS_STORE_NAME = 'persons';
@@ -14,6 +15,7 @@ const COMPANY_DATA_STORE_NAME = 'company_data';
 const DEVOLUCOES_STORE_NAME = 'devolucoes';
 const ITENS_DEVOLUCAO_STORE_NAME = 'itens_devolucao';
 const PRODUCTS_STORE_NAME = 'products';
+const SIMULATIONS_STORE_NAME = 'simulations';
 
 
 let dbPromise: Promise<IDBDatabase> | null = null;
@@ -73,6 +75,11 @@ const getDB = (): Promise<IDBDatabase> => {
         if (!dbInstance.objectStoreNames.contains(PRODUCTS_STORE_NAME)) {
             const productStore = dbInstance.createObjectStore(PRODUCTS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
             productStore.createIndex('codigo', 'codigo', { unique: true });
+        }
+        if (!dbInstance.objectStoreNames.contains(SIMULATIONS_STORE_NAME)) {
+            const simulationStore = dbInstance.createObjectStore(SIMULATIONS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+            simulationStore.createIndex('nfeNumber', 'nfeInfo.nfeNumber', { unique: false });
+            simulationStore.createIndex('emitterName', 'nfeInfo.emitterName', { unique: false });
         }
       };
 
@@ -768,3 +775,47 @@ export const deleteProduct = (id: number): Promise<void> => {
 };
 
 export const clearProducts = (): Promise<void> => clearStore(PRODUCTS_STORE_NAME);
+
+
+// --- Purchase Simulation Functions ---
+
+export const addSimulation = (simulation: Omit<PurchaseSimulation, 'id'>): Promise<number> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(SIMULATIONS_STORE_NAME, 'readwrite');
+      const request = store.add(simulation);
+      request.onsuccess = () => resolve(request.result as number);
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+export const getAllSimulations = (): Promise<PurchaseSimulation[]> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(SIMULATIONS_STORE_NAME, 'readonly');
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result as PurchaseSimulation[]);
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+export const deleteSimulation = (id: number): Promise<void> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(SIMULATIONS_STORE_NAME, 'readwrite');
+      const request = store.delete(id);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+export const clearSimulations = (): Promise<void> => clearStore(SIMULATIONS_STORE_NAME);
