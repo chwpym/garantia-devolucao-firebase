@@ -283,21 +283,21 @@ export default function PurchaseSimulatorCalculator() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="min-w-[250px]">Descrição</TableHead>
-                                <TableHead className="w-[120px] text-right">Qtde. Original</TableHead>
-                                <TableHead className="w-[120px]">Qtde. Simulada</TableHead>
-                                <TableHead className="text-right">Custo Un. Final</TableHead>
-                                <TableHead className="text-right">Custo Total Orig.</TableHead>
-                                <TableHead className="text-right font-bold text-primary">Custo Total Sim.</TableHead>
-                                <TableHead className="w-[50px]"></TableHead>
+                                <TableHead className="min-w-[250px] p-2">Descrição</TableHead>
+                                <TableHead className="w-[120px] text-right p-2">Qtde. Original</TableHead>
+                                <TableHead className="w-[120px] p-2">Qtde. Simulada</TableHead>
+                                <TableHead className="text-right p-2">Custo Un. Final</TableHead>
+                                <TableHead className="text-right p-2">Custo Total Orig.</TableHead>
+                                <TableHead className="text-right font-bold text-primary p-2">Custo Total Sim.</TableHead>
+                                <TableHead className="w-[50px] p-2"></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {items.map(item => (
                                 <TableRow key={item.id}>
-                                    <TableCell className="font-medium text-xs">{item.description}</TableCell>
-                                    <TableCell className="text-right">{formatNumber(item.originalQuantity)}</TableCell>
-                                    <TableCell>
+                                    <TableCell className="font-medium text-xs p-2">{item.description}</TableCell>
+                                    <TableCell className="text-right p-2">{formatNumber(item.originalQuantity)}</TableCell>
+                                    <TableCell className="p-2">
                                         <Input
                                             type="text"
                                             inputMode="decimal"
@@ -306,10 +306,10 @@ export default function PurchaseSimulatorCalculator() {
                                             onChange={(e) => handleQuantityChange(item.id, e.target.value)}
                                         />
                                     </TableCell>
-                                    <TableCell className="text-right">{formatCurrency(item.finalUnitCost)}</TableCell>
-                                    <TableCell className="text-right">{formatCurrency(item.originalTotalCost)}</TableCell>
-                                    <TableCell className="text-right font-bold text-primary">{formatCurrency(item.simulatedTotalCost)}</TableCell>
-                                    <TableCell>
+                                    <TableCell className="text-right p-2">{formatCurrency(item.finalUnitCost)}</TableCell>
+                                    <TableCell className="text-right p-2">{formatCurrency(item.originalTotalCost)}</TableCell>
+                                    <TableCell className="text-right font-bold text-primary p-2">{formatCurrency(item.simulatedTotalCost)}</TableCell>
+                                    <TableCell className="p-2">
                                         <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.id)}>
                                             <Trash2 className="h-4 w-4 text-destructive" />
                                         </Button>
@@ -319,10 +319,10 @@ export default function PurchaseSimulatorCalculator() {
                         </TableBody>
                         <TableFooter>
                             <TableRow className="font-bold bg-muted/50">
-                                <TableCell colSpan={4} className="text-right">Totais:</TableCell>
-                                <TableCell className="text-right">{formatCurrency(totals.originalTotalCost)}</TableCell>
-                                <TableCell className="text-right text-primary">{formatCurrency(totals.simulatedTotalCost)}</TableCell>
-                                <TableCell></TableCell>
+                                <TableCell colSpan={4} className="text-right p-2">Totais:</TableCell>
+                                <TableCell className="text-right p-2">{formatCurrency(totals.originalTotalCost)}</TableCell>
+                                <TableCell className="text-right text-primary p-2">{formatCurrency(totals.simulatedTotalCost)}</TableCell>
+                                <TableCell className="p-2"></TableCell>
                             </TableRow>
                         </TableFooter>
                     </Table>
