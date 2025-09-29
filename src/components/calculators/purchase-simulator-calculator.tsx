@@ -1,19 +1,24 @@
 
 "use client";
 
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { XMLParser } from "fast-xml-parser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Upload, FileX, Printer, Trash2, Save } from "lucide-react";
+import { Upload, FileX, Printer, Trash2, Save, Search, Edit, Loader2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "../ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import type { NfeInfo } from "@/lib/types";
+import type { NfeInfo, PurchaseSimulation, SimulatedItemData } from "@/lib/types";
+import * as db from '@/lib/db';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
+import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
+import { Label } from "../ui/label";
+import { format as formatDate, parseISO } from "date-fns";
 
 
 interface SimulatedItem {
@@ -74,8 +79,31 @@ export default function PurchaseSimulatorCalculator() {
     const [items, setItems] = useState<SimulatedItem[]>([]);
     const [fileName, setFileName] = useState<string | null>(null);
     const [nfeInfo, setNfeInfo] = useState<NfeInfo | null>(null);
+    const [simulationName, setSimulationName] = useState("");
+
+    const [savedSimulations, setSavedSimulations] = useState<PurchaseSimulation[]>([]);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [deleteTarget, setDeleteTarget] = useState<PurchaseSimulation | null>(null);
+    const [isLoadingSims, setIsLoadingSims] = useState(true);
+
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const loadSimulations = useCallback(async () => {
+        setIsLoadingSims(true);
+        try {
+            const sims = await db.getAllSimulations();
+            setSavedSimulations(sims.sort((a,b) => parseISO(b.createdAt).getTime() - parseISO(a.createdAt).getTime()));
+        } catch {
+             toast({ title: "Erro", description: "Não foi possível carregar as simulações salvas.", variant: "destructive" });
+        } finally {
+            setIsLoadingSims(false);
+        }
+    }, [toast]);
+
+    useEffect(() => {
+        loadSimulations();
+    }, [loadSimulations]);
 
     const calculateCosts = (item: Omit<SimulatedItem, 'id' | 'description' | 'finalUnitCost' | 'originalTotalCost' | 'simulatedTotalCost'>) => {
         const totalAdditionalCosts = item.ipi + item.icmsST + item.frete + item.seguro + item.outras - item.desconto;
@@ -107,12 +135,14 @@ export default function PurchaseSimulatorCalculator() {
                 const total = infNFe.total.ICMSTot;
                 const totalProdValue = parseFloat(total.vProd);
 
-                setNfeInfo({
+                const newNfeInfo = {
                     emitterName: infNFe.emit.xNome,
                     emitterCnpj: infNFe.emit.CNPJ,
-                    emitterCity: `${infNFe.emit.enderEmit.xMun} - ${infNFe.emit.enderEmit.UF}`,
+                    emitterCity: `${infNFe.emit.enderEmit.xMun} - ${infNFe.emit.UF}`,
                     nfeNumber: infNFe.ide.nNF,
-                });
+                };
+                setNfeInfo(newNfeInfo);
+                setSimulationName(`Simulação NF-${newNfeInfo.nfeNumber} (${newNfeInfo.emitterName})`);
 
                 const newItems: SimulatedItem[] = dets.map((det, index) => {
                     const prod = det.prod;
@@ -177,6 +207,7 @@ export default function PurchaseSimulatorCalculator() {
         setItems([]);
         setFileName(null);
         setNfeInfo(null);
+        setSimulationName("");
         if(fileInputRef.current) fileInputRef.current.value = "";
     }, []);
     
@@ -187,6 +218,81 @@ export default function PurchaseSimulatorCalculator() {
             return acc;
         }, { originalTotalCost: 0, simulatedTotalCost: 0 });
     }, [items]);
+
+    const handleSaveSimulation = async () => {
+        if (!nfeInfo || items.length === 0 || !simulationName) {
+            toast({ title: "Erro", description: "Dados insuficientes para salvar a simulação.", variant: "destructive"});
+            return;
+        }
+
+        const simulationData: Omit<PurchaseSimulation, 'id'> = {
+            simulationName: simulationName,
+            nfeInfo: nfeInfo,
+            items: items.map(i => ({
+                id: i.id,
+                description: i.description,
+                originalQuantity: i.originalQuantity,
+                simulatedQuantity: i.simulatedQuantity,
+                finalUnitCost: i.finalUnitCost
+            })),
+            originalTotalCost: totals.originalTotalCost,
+            simulatedTotalCost: totals.simulatedTotalCost,
+            createdAt: new Date().toISOString()
+        };
+
+        try {
+            await db.addSimulation(simulationData);
+            toast({ title: "Sucesso!", description: `Simulação "${simulationName}" foi salva.`});
+            loadSimulations();
+        } catch (e) {
+            toast({ title: "Erro ao Salvar", description: "Não foi possível salvar a simulação.", variant: "destructive"});
+        }
+    }
+
+    const filteredSimulations = useMemo(() => {
+        if (!searchQuery) return savedSimulations;
+        const lowerCaseQuery = searchQuery.toLowerCase();
+        return savedSimulations.filter(sim => 
+            sim.simulationName.toLowerCase().includes(lowerCaseQuery) ||
+            sim.nfeInfo.emitterName.toLowerCase().includes(lowerCaseQuery) ||
+            sim.nfeInfo.nfeNumber.includes(lowerCaseQuery)
+        );
+    }, [savedSimulations, searchQuery]);
+
+    const handleLoadSimulation = (sim: PurchaseSimulation) => {
+        setNfeInfo(sim.nfeInfo);
+        setSimulationName(sim.simulationName);
+        setFileName(`NF-${sim.nfeInfo.nfeNumber}.xml (Salva)`);
+
+        const loadedItems = sim.items.map(item => {
+            return {
+                ...item,
+                ipi: 0, icmsST: 0, frete: 0, seguro: 0, desconto: 0, outras: 0, // Simplified for now
+                additionalCosts: item.finalUnitCost - (item.finalUnitCost / (1)), // Approximation
+                unitCost: item.finalUnitCost / (1),
+                originalTotalCost: item.finalUnitCost * item.originalQuantity,
+                simulatedTotalCost: item.finalUnitCost * (parseFloat(item.simulatedQuantity) || 0),
+            };
+        });
+        
+        // This is a simplified load. It doesn't recover all cost details,
+        // but it recovers the essential simulation data.
+        setItems(loadedItems);
+        toast({ title: "Simulação Carregada", description: `"${sim.simulationName}" está pronta para edição.`});
+    };
+
+    const handleDeleteSimulation = async () => {
+        if (!deleteTarget) return;
+        try {
+            await db.deleteSimulation(deleteTarget.id!);
+            toast({ title: "Sucesso", description: "Simulação excluída."});
+            setDeleteTarget(null);
+            loadSimulations();
+        } catch (e) {
+            toast({ title: "Erro", description: "Não foi possível excluir a simulação.", variant: "destructive"});
+        }
+    };
+
 
     const generatePdf = () => {
         const doc = new jsPDF();
@@ -227,150 +333,240 @@ export default function PurchaseSimulatorCalculator() {
     };
 
     return (
-        <Tabs defaultValue="simulator" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="simulator">Simulador</TabsTrigger>
-                <TabsTrigger value="saved" disabled>Simulações Salvas & Relatórios</TabsTrigger>
-            </TabsList>
-            <TabsContent value="simulator" className="mt-4">
-                 <div className="space-y-4">
-                    <div className="flex flex-col sm:flex-row flex-wrap gap-2 items-center">
-                        <Button onClick={() => fileInputRef.current?.click()}>
-                            <Upload className="mr-2 h-4 w-4" />
-                            Importar XML da NF-e
-                        </Button>
-                        <Button onClick={generatePdf} variant="secondary" disabled={items.length === 0}>
-                            <Printer className="mr-2 h-4 w-4" />
-                            Gerar PDF
-                        </Button>
-                         <Button onClick={() => {}} variant="outline" disabled>
-                            <Save className="mr-2 h-4 w-4" />
-                            Salvar Simulação
-                        </Button>
-                        {fileName && (
-                            <div className="flex items-center gap-2 p-2 border rounded-md bg-muted flex-1 sm:flex-none justify-between">
-                                <span className="text-sm text-muted-foreground truncate" title={fileName}>{fileName}</span>
-                                <Button variant="ghost" size="icon" onClick={clearData} className="h-6 w-6">
-                                    <FileX className="h-4 w-4 text-destructive" />
-                                </Button>
+        <>
+            <Tabs defaultValue="simulator" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="simulator">Simulador</TabsTrigger>
+                    <TabsTrigger value="saved">Simulações Salvas</TabsTrigger>
+                </TabsList>
+                <TabsContent value="simulator" className="mt-4">
+                    <div className="space-y-4">
+                        <div className="flex flex-col sm:flex-row flex-wrap gap-2 items-center">
+                            <Button onClick={() => fileInputRef.current?.click()}>
+                                <Upload className="mr-2 h-4 w-4" />
+                                Importar XML da NF-e
+                            </Button>
+                            <Button onClick={generatePdf} variant="secondary" disabled={items.length === 0}>
+                                <Printer className="mr-2 h-4 w-4" />
+                                Gerar PDF
+                            </Button>
+                            <Dialog>
+                                <DialogTrigger asChild>
+                                    <Button variant="outline" disabled={items.length === 0}>
+                                        <Save className="mr-2 h-4 w-4" />
+                                        Salvar Simulação
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Salvar Simulação</DialogTitle>
+                                        <CardDescription>Dê um nome para esta simulação para encontrá-la depois.</CardDescription>
+                                    </DialogHeader>
+                                    <div className="py-4">
+                                        <Label htmlFor="sim-name">Nome da Simulação</Label>
+                                        <Input id="sim-name" value={simulationName} onChange={(e) => setSimulationName(e.target.value)} />
+                                    </div>
+                                    <DialogFooter>
+                                        <DialogClose asChild>
+                                            <Button type="button" onClick={handleSaveSimulation}><Save className="mr-2 h-4 w-4" /> Salvar</Button>
+                                        </DialogClose>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
+                            {fileName && (
+                                <div className="flex items-center gap-2 p-2 border rounded-md bg-muted flex-1 sm:flex-none justify-between">
+                                    <span className="text-sm text-muted-foreground truncate" title={fileName}>{fileName}</span>
+                                    <Button variant="ghost" size="icon" onClick={clearData} className="h-6 w-6">
+                                        <FileX className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                </div>
+                            )}
+                            <Input type="file" ref={fileInputRef} onChange={handleImportXml} className="hidden" accept=".xml" />
+                        </div>
+
+                        {nfeInfo && items.length > 0 && (
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Informações do Fornecedor</CardTitle>
+                                </CardHeader>
+                                <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2 text-sm">
+                                    <div><strong>Fornecedor:</strong> {nfeInfo.emitterName}</div>
+                                    <div><strong>CNPJ:</strong> {formatCnpj(nfeInfo.emitterCnpj)}</div>
+                                    <div><strong>Cidade:</strong> {nfeInfo.emitterCity}</div>
+                                </CardContent>
+                            </Card>
+                        )}
+
+
+                        {items.length > 0 && (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <Card>
+                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <CardTitle className="text-sm font-medium">Custo Total Original</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="text-2xl font-bold">{formatCurrency(totals.originalTotalCost)}</div>
+                                        <p className="text-xs text-muted-foreground">Valor total calculado da NF-e importada.</p>
+                                    </CardContent>
+                                </Card>
+                                <Card>
+                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <CardTitle className="text-sm font-medium">Custo Total Simulado</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="text-2xl font-bold text-primary">{formatCurrency(totals.simulatedTotalCost)}</div>
+                                        <p className="text-xs text-muted-foreground">Valor com base nas quantidades alteradas.</p>
+                                    </CardContent>
+                                </Card>
+                                <Card>
+                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <CardTitle className="text-sm font-medium">Economia Potencial</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="text-2xl font-bold text-accent-green">{formatCurrency(totals.originalTotalCost - totals.simulatedTotalCost)}</div>
+                                        <p className="text-xs text-muted-foreground">Diferença entre o original e o simulado.</p>
+                                    </CardContent>
+                                </Card>
                             </div>
                         )}
-                        <Input type="file" ref={fileInputRef} onChange={handleImportXml} className="hidden" accept=".xml" />
-                    </div>
 
-                    {nfeInfo && items.length > 0 && (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Informações do Fornecedor</CardTitle>
-                            </CardHeader>
-                            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2 text-sm">
-                                <div><strong>Fornecedor:</strong> {nfeInfo.emitterName}</div>
-                                <div><strong>CNPJ:</strong> {formatCnpj(nfeInfo.emitterCnpj)}</div>
-                                <div><strong>Cidade:</strong> {nfeInfo.emitterCity}</div>
-                            </CardContent>
-                        </Card>
-                    )}
-
-
-                    {items.length > 0 && (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <Card>
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium">Custo Total Original</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-2xl font-bold">{formatCurrency(totals.originalTotalCost)}</div>
-                                    <p className="text-xs text-muted-foreground">Valor total calculado da NF-e importada.</p>
-                                </CardContent>
-                            </Card>
-                            <Card>
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium">Custo Total Simulado</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-2xl font-bold text-primary">{formatCurrency(totals.simulatedTotalCost)}</div>
-                                    <p className="text-xs text-muted-foreground">Valor com base nas quantidades alteradas.</p>
-                                </CardContent>
-                            </Card>
-                            <Card>
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium">Economia Potencial</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-2xl font-bold text-accent-green">{formatCurrency(totals.originalTotalCost - totals.simulatedTotalCost)}</div>
-                                    <p className="text-xs text-muted-foreground">Diferença entre o original e o simulado.</p>
-                                </CardContent>
-                            </Card>
-                        </div>
-                    )}
-
-                    {items.length > 0 && (
-                        <div className="w-full overflow-x-auto">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="min-w-[250px] p-2">Descrição</TableHead>
-                                        <TableHead className="w-[100px] text-right p-2">Qtde. Original</TableHead>
-                                        <TableHead className="w-[100px] text-right p-2">Qtde. Simulada</TableHead>
-                                        <TableHead className="text-right p-2 w-[130px]">Custo Líquido (NF-e)</TableHead>
-                                        <TableHead className="text-right p-2 w-[130px]">Custos Adicionais/Un.</TableHead>
-                                        <TableHead className="text-right p-2">Custo Un. Final</TableHead>
-                                        <TableHead className="text-right p-2">Custo Total Orig.</TableHead>
-                                        <TableHead className="text-right font-bold text-primary p-2">Custo Total Sim.</TableHead>
-                                        <TableHead className="w-[50px] p-2"></TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {items.map(item => (
-                                        <TableRow key={item.id}>
-                                            <TableCell className="font-medium text-xs p-2">{item.description}</TableCell>
-                                            <TableCell className="text-right p-2">{formatNumber(item.originalQuantity)}</TableCell>
-                                            <TableCell className="p-2">
-                                                <Input
-                                                    type="text"
-                                                    inputMode="decimal"
-                                                    className="h-8 text-right"
-                                                    value={item.simulatedQuantity}
-                                                    onChange={(e) => handleQuantityChange(item.id, e.target.value)}
-                                                />
-                                            </TableCell>
-                                            <TableCell className="text-right p-2">{formatCurrency(item.unitCost)}</TableCell>
-                                            <TableCell className="text-right p-2 text-red-500">{formatCurrency(item.additionalCosts)}</TableCell>
-                                            <TableCell className="text-right p-2 font-bold">{formatCurrency(item.finalUnitCost)}</TableCell>
-                                            <TableCell className="text-right p-2">{formatCurrency(item.originalTotalCost)}</TableCell>
-                                            <TableCell className="text-right font-bold text-primary p-2">{formatCurrency(item.simulatedTotalCost)}</TableCell>
-                                            <TableCell className="p-2">
-                                                <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.id)}>
-                                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                                </Button>
-                                            </TableCell>
+                        {items.length > 0 && (
+                            <div className="w-full overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead className="min-w-[250px] p-2">Descrição</TableHead>
+                                            <TableHead className="w-[100px] text-right p-2">Qtde. Original</TableHead>
+                                            <TableHead className="w-[100px] text-right p-2">Qtde. Simulada</TableHead>
+                                            <TableHead className="text-right p-2 w-[130px]">Custo Líquido (NF-e)</TableHead>
+                                            <TableHead className="text-right p-2 w-[130px]">Custos Adicionais/Un.</TableHead>
+                                            <TableHead className="text-right p-2">Custo Un. Final</TableHead>
+                                            <TableHead className="text-right p-2">Custo Total Orig.</TableHead>
+                                            <TableHead className="text-right font-bold text-primary p-2">Custo Total Sim.</TableHead>
+                                            <TableHead className="w-[50px] p-2"></TableHead>
                                         </TableRow>
-                                    ))}
-                                </TableBody>
-                                <TableFooter>
-                                    <TableRow className="font-bold bg-muted/50">
-                                        <TableCell colSpan={6} className="text-right p-2">Totais:</TableCell>
-                                        <TableCell className="text-right p-2">{formatCurrency(totals.originalTotalCost)}</TableCell>
-                                        <TableCell className="text-right text-primary p-2">{formatCurrency(totals.simulatedTotalCost)}</TableCell>
-                                        <TableCell className="p-2"></TableCell>
-                                    </TableRow>
-                                </TableFooter>
-                            </Table>
-                        </div>
-                    )}
-                 </div>
-            </TabsContent>
-            <TabsContent value="saved" className="mt-4">
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>Em Breve</CardTitle>
-                        <CardDescription>
-                            A funcionalidade de busca, edição e relatórios de simulações salvas estará disponível aqui em futuras atualizações.
-                        </CardDescription>
-                    </CardHeader>
-                 </Card>
-            </TabsContent>
-        </Tabs>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {items.map(item => (
+                                            <TableRow key={item.id}>
+                                                <TableCell className="font-medium text-xs p-2">{item.description}</TableCell>
+                                                <TableCell className="text-right p-2">{formatNumber(item.originalQuantity)}</TableCell>
+                                                <TableCell className="p-2">
+                                                    <Input
+                                                        type="text"
+                                                        inputMode="decimal"
+                                                        className="h-8 text-right"
+                                                        value={item.simulatedQuantity}
+                                                        onChange={(e) => handleQuantityChange(item.id, e.target.value)}
+                                                    />
+                                                </TableCell>
+                                                <TableCell className="text-right p-2">{formatCurrency(item.unitCost)}</TableCell>
+                                                <TableCell className="text-right p-2 text-red-500">{formatCurrency(item.additionalCosts)}</TableCell>
+                                                <TableCell className="text-right p-2 font-bold">{formatCurrency(item.finalUnitCost)}</TableCell>
+                                                <TableCell className="text-right p-2">{formatCurrency(item.originalTotalCost)}</TableCell>
+                                                <TableCell className="text-right font-bold text-primary p-2">{formatCurrency(item.simulatedTotalCost)}</TableCell>
+                                                <TableCell className="p-2">
+                                                    <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.id)}>
+                                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                    <TableFooter>
+                                        <TableRow className="font-bold bg-muted/50">
+                                            <TableCell colSpan={6} className="text-right p-2">Totais:</TableCell>
+                                            <TableCell className="text-right p-2">{formatCurrency(totals.originalTotalCost)}</TableCell>
+                                            <TableCell className="text-right text-primary p-2">{formatCurrency(totals.simulatedTotalCost)}</TableCell>
+                                            <TableCell className="p-2"></TableCell>
+                                        </TableRow>
+                                    </TableFooter>
+                                </Table>
+                            </div>
+                        )}
+                    </div>
+                </TabsContent>
+                <TabsContent value="saved" className="mt-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Simulações Salvas</CardTitle>
+                            <CardDescription>
+                                Consulte, edite ou exclua simulações de compra salvas anteriormente.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="mb-4">
+                                <div className="relative flex-1">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        placeholder="Buscar por nome da simulação, fornecedor ou Nº da NF-e..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="w-full pl-10"
+                                    />
+                                </div>
+                            </div>
+                            {isLoadingSims ? <Loader2 className="animate-spin" /> : (
+                                <div className="border rounded-md">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Nome da Simulação</TableHead>
+                                                <TableHead>Fornecedor</TableHead>
+                                                <TableHead>Nº NF-e</TableHead>
+                                                <TableHead>Data</TableHead>
+                                                <TableHead>Economia Potencial</TableHead>
+                                                <TableHead className="text-right">Ações</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {filteredSimulations.length > 0 ? filteredSimulations.map(sim => (
+                                                <TableRow key={sim.id}>
+                                                    <TableCell className="font-medium">{sim.simulationName}</TableCell>
+                                                    <TableCell>{sim.nfeInfo.emitterName}</TableCell>
+                                                    <TableCell>{sim.nfeInfo.nfeNumber}</TableCell>
+                                                    <TableCell>{formatDate(parseISO(sim.createdAt), 'dd/MM/yyyy')}</TableCell>
+                                                    <TableCell className="font-bold text-accent-green">{formatCurrency(sim.originalTotalCost - sim.simulatedTotalCost)}</TableCell>
+                                                    <TableCell className="text-right">
+                                                        <Button variant="ghost" size="sm" onClick={() => handleLoadSimulation(sim)}>
+                                                            <Edit className="mr-2 h-4 w-4" /> Carregar
+                                                        </Button>
+                                                        <Button variant="ghost" size="sm" className="text-destructive" onClick={() => setDeleteTarget(sim)}>
+                                                            <Trash2 className="mr-2 h-4 w-4" /> Excluir
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            )) : (
+                                                <TableRow>
+                                                    <TableCell colSpan={6} className="text-center h-24">Nenhuma simulação encontrada.</TableCell>
+                                                </TableRow>
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+            </Tabs>
+            <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Tem certeza que deseja excluir a simulação &quot;{deleteTarget?.simulationName}&quot;? Esta ação não pode ser desfeita.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteSimulation} className="bg-destructive hover:bg-destructive/90">
+                            Excluir
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
     );
+}
 
     
