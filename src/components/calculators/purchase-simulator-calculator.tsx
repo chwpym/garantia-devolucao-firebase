@@ -7,11 +7,11 @@ import autoTable from "jspdf-autotable";
 import { XMLParser } from "fast-xml-parser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Upload, FileX, Printer, Trash2, Save, Search, Edit, Loader2 } from "lucide-react";
+import { Upload, FileX, Printer, Trash2, Save, Search, Edit, Loader2, X } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatNumber } from "@/lib/utils";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "../ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "../ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import type { NfeInfo, PurchaseSimulation, SimulatedItemData } from "@/lib/types";
 import * as db from '@/lib/db';
@@ -220,6 +220,10 @@ export default function PurchaseSimulatorCalculator() {
         if(fileInputRef.current) fileInputRef.current.value = "";
     }, []);
     
+    const handleClearSearch = () => {
+        setSearchQuery("");
+    };
+
     const totals = useMemo(() => {
         return items.reduce((acc, item) => {
             acc.simulatedTotalCost += item.simulatedTotalCost;
@@ -367,7 +371,7 @@ export default function PurchaseSimulatorCalculator() {
                                 <Printer className="mr-2 h-4 w-4" />
                                 Gerar PDF
                             </Button>
-                            <Dialog>
+                             <Dialog>
                                 <DialogTrigger asChild>
                                     <Button variant="outline" disabled={items.length === 0}>
                                         <Save className="mr-2 h-4 w-4" />
@@ -390,6 +394,12 @@ export default function PurchaseSimulatorCalculator() {
                                     </DialogFooter>
                                 </DialogContent>
                             </Dialog>
+                             {items.length > 0 && (
+                                <Button onClick={clearData} variant="destructive">
+                                    <X className="mr-2 h-4 w-4" />
+                                    Limpar
+                                </Button>
+                            )}
                             {fileName && (
                                 <div className="flex items-center gap-2 p-2 border rounded-md bg-muted flex-1 sm:flex-none justify-between">
                                     <span className="text-sm text-muted-foreground truncate" title={fileName}>{fileName}</span>
@@ -492,7 +502,8 @@ export default function PurchaseSimulatorCalculator() {
                                     </TableBody>
                                     <TableFooter>
                                         <TableRow className="font-bold bg-muted/50">
-                                            <TableCell colSpan={7} className="text-right p-2">Totais:</TableCell>
+                                            <TableCell colSpan={6} className="text-right p-2">Totais:</TableCell>
+                                            <TableCell className="text-right p-2">{formatCurrency(originalNfeTotalCost)}</TableCell>
                                             <TableCell className="text-right text-primary p-2">{formatCurrency(totals.simulatedTotalCost)}</TableCell>
                                             <TableCell className="p-2"></TableCell>
                                         </TableRow>
@@ -511,7 +522,7 @@ export default function PurchaseSimulatorCalculator() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <div className="mb-4">
+                            <div className="mb-4 flex flex-col md:flex-row gap-2">
                                 <div className="relative flex-1">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
@@ -521,6 +532,10 @@ export default function PurchaseSimulatorCalculator() {
                                         className="w-full pl-10"
                                     />
                                 </div>
+                                <Button onClick={handleClearSearch} variant="outline">
+                                    <X className="mr-2 h-4 w-4" />
+                                    Limpar Busca
+                                </Button>
                             </div>
                             {isLoadingSims ? <Loader2 className="animate-spin" /> : (
                                 <div className="border rounded-md">
@@ -584,6 +599,8 @@ export default function PurchaseSimulatorCalculator() {
         </>
     );
 }
+
+    
 
     
 
