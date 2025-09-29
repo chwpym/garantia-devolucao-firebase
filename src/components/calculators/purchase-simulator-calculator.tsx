@@ -7,16 +7,16 @@ import autoTable from "jspdf-autotable";
 import { XMLParser } from "fast-xml-parser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Upload, FileX, Printer, Trash2, Save, Search, Edit, Loader2, X, RefreshCw } from "lucide-react";
+import { Upload, Printer, Trash2, Save, Search, Edit, Loader2, X, RefreshCw } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatNumber } from "@/lib/utils";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "../ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import type { NfeInfo, PurchaseSimulation, SimulatedItemData } from "@/lib/types";
 import * as db from '@/lib/db';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { Label } from "../ui/label";
 import { format as formatDate, parseISO, addDays } from "date-fns";
 import { DatePickerWithRange } from "../ui/date-range-picker";
@@ -246,14 +246,12 @@ export default function PurchaseSimulatorCalculator() {
             id: editingSimulationId || undefined,
             simulationName: simulationName,
             nfeInfo: nfeInfo,
-            items: items.map(i => {
-                return {
-                    description: i.description,
-                    originalQuantity: i.originalQuantity,
-                    simulatedQuantity: i.simulatedQuantity,
-                    finalUnitCost: i.finalUnitCost,
-                } as SimulatedItemData;
-            }),
+            items: items.map(i => ({
+                description: i.description,
+                originalQuantity: i.originalQuantity,
+                simulatedQuantity: i.simulatedQuantity,
+                finalUnitCost: i.finalUnitCost,
+            })),
             originalTotalCost: originalNfeTotalCost,
             simulatedTotalCost: totals.simulatedTotalCost,
         };
@@ -269,8 +267,8 @@ export default function PurchaseSimulatorCalculator() {
             loadSimulations();
             setActiveTab("saved");
             clearData();
-        } catch (e) {
-            console.error(e)
+        } catch (error) {
+            console.error(error)
             toast({ title: "Erro ao Salvar", description: "Não foi possível salvar a simulação.", variant: "destructive"});
         }
     }
@@ -345,7 +343,7 @@ export default function PurchaseSimulatorCalculator() {
             toast({ title: "Sucesso", description: "Simulação excluída."});
             setDeleteTarget(null);
             loadSimulations();
-        } catch (e) {
+        } catch {
             toast({ title: "Erro", description: "Não foi possível excluir a simulação.", variant: "destructive"});
         }
     };
@@ -408,7 +406,7 @@ export default function PurchaseSimulatorCalculator() {
         const cardHeight = 25;
         const cardY = cursorY;
 
-        const drawCard = (x: number, title: string, value: string, titleColor = [0,0,0], valueColor = [0,0,0]) => {
+        const drawCard = (x: number, title: string, value: string, valueColor: number[] | string = [0,0,0]) => {
             doc.setDrawColor(224, 224, 224);
             doc.setFillColor(250, 250, 250);
             doc.rect(x, cardY, cardWidth, cardHeight, 'FD');
@@ -418,13 +416,18 @@ export default function PurchaseSimulatorCalculator() {
             doc.text(title, x + cardWidth / 2, cardY + 8, { align: 'center' });
             
             doc.setFontSize(14).setFont('helvetica', 'bold');
-            doc.setTextColor(valueColor[0], valueColor[1], valueColor[2]);
+            if (typeof valueColor === 'string') {
+                 doc.setTextColor(valueColor);
+            } else {
+                 doc.setTextColor(valueColor[0], valueColor[1], valueColor[2]);
+            }
+           
             doc.text(value, x + cardWidth / 2, cardY + 18, { align: 'center' });
         };
         
         drawCard(margin, "Custo Total Original", formatCurrency(filteredTotals.original));
-        drawCard(margin + cardWidth + margin, "Custo Total Simulado", formatCurrency(filteredTotals.simulated), [0,0,0], [96, 11, 232]); // Primary color
-        drawCard(margin + (cardWidth + margin) * 2, "Economia Potencial Total", formatCurrency(filteredTotals.original - filteredTotals.simulated), [0,0,0], [22, 163, 74]); // Accent-green color
+        drawCard(margin + cardWidth + margin, "Custo Total Simulado", formatCurrency(filteredTotals.simulated), [96, 11, 232]); // Primary color
+        drawCard(margin + (cardWidth + margin) * 2, "Economia Potencial Total", formatCurrency(filteredTotals.original - filteredTotals.simulated), [22, 163, 74]); // Accent-green color
 
         cursorY += cardHeight + 15;
 
