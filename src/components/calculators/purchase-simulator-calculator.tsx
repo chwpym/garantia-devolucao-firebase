@@ -284,8 +284,8 @@ export default function PurchaseSimulatorCalculator() {
                         <TableHeader>
                             <TableRow>
                                 <TableHead className="min-w-[250px] p-2">Descrição</TableHead>
-                                <TableHead className="w-[120px] text-right p-2">Qtde. Original</TableHead>
-                                <TableHead className="w-[120px] p-2">Qtde. Simulada</TableHead>
+                                <TableHead className="w-[100px] text-right p-2">Qtde. Original</TableHead>
+                                <TableHead className="w-[100px] p-2">Qtde. Simulada</TableHead>
                                 <TableHead className="text-right p-2">Custo Un. Final</TableHead>
                                 <TableHead className="text-right p-2">Custo Total Orig.</TableHead>
                                 <TableHead className="text-right font-bold text-primary p-2">Custo Total Sim.</TableHead>
