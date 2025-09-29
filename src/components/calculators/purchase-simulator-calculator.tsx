@@ -18,7 +18,9 @@ import * as db from '@/lib/db';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { Label } from "../ui/label";
-import { format as formatDate, parseISO } from "date-fns";
+import { format as formatDate, parseISO, addDays } from "date-fns";
+import { DatePickerWithRange } from "../ui/date-range-picker";
+import { DateRange } from "react-day-picker";
 
 
 interface SimulatedItem {
@@ -84,6 +86,7 @@ export default function PurchaseSimulatorCalculator() {
 
     const [savedSimulations, setSavedSimulations] = useState<PurchaseSimulation[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
+    const [savedSimsDateRange, setSavedSimsDateRange] = useState<DateRange | undefined>();
     const [deleteTarget, setDeleteTarget] = useState<PurchaseSimulation | null>(null);
     const [isLoadingSims, setIsLoadingSims] = useState(true);
 
@@ -222,6 +225,7 @@ export default function PurchaseSimulatorCalculator() {
     
     const handleClearSearch = () => {
         setSearchQuery("");
+        setSavedSimsDateRange(undefined);
     };
 
     const totals = useMemo(() => {
@@ -262,14 +266,29 @@ export default function PurchaseSimulatorCalculator() {
     }
 
     const filteredSimulations = useMemo(() => {
-        if (!searchQuery) return savedSimulations;
         const lowerCaseQuery = searchQuery.toLowerCase();
-        return savedSimulations.filter(sim => 
-            sim.simulationName.toLowerCase().includes(lowerCaseQuery) ||
-            sim.nfeInfo.emitterName.toLowerCase().includes(lowerCaseQuery) ||
-            sim.nfeInfo.nfeNumber.includes(lowerCaseQuery)
-        );
-    }, [savedSimulations, searchQuery]);
+
+        return savedSimulations.filter(sim => {
+             // Date filter
+            const { from, to } = savedSimsDateRange || {};
+            if (from && sim.createdAt) {
+                if (parseISO(sim.createdAt) < from) return false;
+            }
+            if (to && sim.createdAt) {
+                const toDate = addDays(to, 1);
+                if (parseISO(sim.createdAt) >= toDate) return false;
+            }
+
+            // Search term filter
+            if (!lowerCaseQuery) return true;
+
+            return (
+                sim.simulationName.toLowerCase().includes(lowerCaseQuery) ||
+                sim.nfeInfo.emitterName.toLowerCase().includes(lowerCaseQuery) ||
+                sim.nfeInfo.nfeNumber.includes(lowerCaseQuery)
+            )
+        });
+    }, [savedSimulations, searchQuery, savedSimsDateRange]);
     
      const filteredTotals = useMemo(() => {
         return filteredSimulations.reduce((acc, sim) => {
@@ -289,11 +308,8 @@ export default function PurchaseSimulatorCalculator() {
             const simulatedTotalCost = item.finalUnitCost * (parseFloat(item.simulatedQuantity) || 0);
             const originalTotalCost = item.finalUnitCost * item.originalQuantity;
             
-            // Re-calculate unitCost and additionalCosts for display (approximation)
-            // This part is complex as we don't save all the tax/freight details.
-            // We can assume unitCost is the same and additionalCosts is the difference.
             // This is a simplification. For full accuracy, we'd need to re-parse the XML or save all details.
-            const unitCostApproximation = item.finalUnitCost; // Simplified: assumes no additional costs. A better way would be needed if detailed cost breakdown is required upon loading.
+            const unitCostApproximation = item.finalUnitCost;
             const additionalCostsApproximation = 0;
 
             return {
@@ -507,7 +523,7 @@ export default function PurchaseSimulatorCalculator() {
                                         <TableRow>
                                             <TableHead className="min-w-[250px] p-2">Descrição</TableHead>
                                             <TableHead className="w-[100px] text-right p-2">Qtde. Original</TableHead>
-                                            <TableHead className="w-[120px] text-right p-2">Qtde. Simulada</TableHead>
+                                            <TableHead className="w-[100px] text-right p-2">Qtde. Simulada</TableHead>
                                             <TableHead className="text-right p-2 w-[130px]">Custo Líquido (NF-e)</TableHead>
                                             <TableHead className="text-right p-2 w-[130px]">Custos Adicionais/Un.</TableHead>
                                             <TableHead className="text-right p-2">Custo Un. Final</TableHead>
@@ -525,7 +541,7 @@ export default function PurchaseSimulatorCalculator() {
                                                     <Input
                                                         type="text"
                                                         inputMode="decimal"
-                                                        className="h-8 text-right"
+                                                        className="h-8 text-right w-[100px]"
                                                         value={item.simulatedQuantity}
                                                         onChange={(e) => handleQuantityChange(item.id, e.target.value)}
                                                     />
@@ -601,9 +617,10 @@ export default function PurchaseSimulatorCalculator() {
                                         className="w-full pl-10"
                                     />
                                 </div>
+                                <DatePickerWithRange date={savedSimsDateRange} setDate={setSavedSimsDateRange} />
                                 <Button onClick={handleClearSearch} variant="outline">
                                     <X className="mr-2 h-4 w-4" />
-                                    Limpar Busca
+                                    Limpar
                                 </Button>
                                 <Button onClick={generateSavedSimulationsPdf} variant="secondary" disabled={filteredSimulations.length === 0}>
                                     <Printer className="mr-2 h-4 w-4" />
@@ -672,9 +689,3 @@ export default function PurchaseSimulatorCalculator() {
         </>
     );
 }
-
-    
-
-    
-
-    
