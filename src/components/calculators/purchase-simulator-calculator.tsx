@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import type { NfeInfo, PurchaseSimulation, SimulatedItemData } from "@/lib/types";
 import * as db from '@/lib/db';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { Label } from "../ui/label";
 import { format as formatDate, parseISO, addDays } from "date-fns";
 import { DatePickerWithRange } from "../ui/date-range-picker";
@@ -245,13 +245,16 @@ export default function PurchaseSimulatorCalculator() {
             id: editingSimulationId || undefined,
             simulationName: simulationName,
             nfeInfo: nfeInfo,
-            items: items.map(i => ({
-                id: i.id,
-                description: i.description,
-                originalQuantity: i.originalQuantity,
-                simulatedQuantity: i.simulatedQuantity,
-                finalUnitCost: i.finalUnitCost
-            })),
+            items: items.map(i => {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { id, ...rest } = i; // Do not save internal UI id to DB
+                 return {
+                    description: rest.description,
+                    originalQuantity: rest.originalQuantity,
+                    simulatedQuantity: rest.simulatedQuantity,
+                    finalUnitCost: rest.finalUnitCost,
+                };
+            }),
             originalTotalCost: originalNfeTotalCost,
             simulatedTotalCost: totals.simulatedTotalCost,
         };
@@ -312,7 +315,7 @@ export default function PurchaseSimulatorCalculator() {
         setOriginalNfeTotalCost(sim.originalTotalCost);
         setEditingSimulationId(sim.id!);
 
-        const loadedItems = sim.items.map(item => {
+        const loadedItems = sim.items.map((item, index) => {
             const simulatedTotalCost = item.finalUnitCost * (parseFloat(item.simulatedQuantity) || 0);
             const originalTotalCost = item.finalUnitCost * item.originalQuantity;
             
@@ -321,6 +324,7 @@ export default function PurchaseSimulatorCalculator() {
 
             return {
                 ...item,
+                id: Date.now() + index, // Assign a temporary id for the UI
                 ipi: 0, icmsST: 0, frete: 0, seguro: 0, desconto: 0, outras: 0,
                 additionalCosts: additionalCostsApproximation,
                 unitCost: unitCostApproximation,
@@ -727,3 +731,4 @@ export default function PurchaseSimulatorCalculator() {
         </>
     );
 }
+
