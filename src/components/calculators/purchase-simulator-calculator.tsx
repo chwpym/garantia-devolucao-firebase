@@ -71,13 +71,15 @@ export default function PurchaseSimulatorCalculator() {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const calculateCosts = (item: Omit<SimulatedItem, 'id' | 'description'>) => {
-        const finalUnitCost = item.unitCost +
-            (item.ipi / item.originalQuantity) +
-            (item.icmsST / item.originalQuantity) +
-            (item.frete / item.originalQuantity) +
-            (item.seguro / item.originalQuantity) +
-            (item.outras / item.originalQuantity) -
-            (item.desconto / item.originalQuantity);
+        const finalUnitCost = item.originalQuantity > 0 ? 
+            (item.unitCost * item.originalQuantity +
+            item.ipi +
+            item.icmsST +
+            item.frete +
+            item.seguro +
+            item.outras -
+            item.desconto) / item.originalQuantity
+            : 0;
         
         const originalTotalCost = finalUnitCost * item.originalQuantity;
         const simulatedTotalCost = finalUnitCost * (parseFloat(item.simulatedQuantity) || 0);
@@ -285,7 +287,7 @@ export default function PurchaseSimulatorCalculator() {
                             <TableRow>
                                 <TableHead className="min-w-[250px] p-2">Descrição</TableHead>
                                 <TableHead className="w-[100px] text-right p-2">Qtde. Original</TableHead>
-                                <TableHead className="w-[100px] p-2">Qtde. Simulada</TableHead>
+                                <TableHead className="w-[100px] text-right p-2">Qtde. Simulada</TableHead>
                                 <TableHead className="text-right p-2">Custo Un. Final</TableHead>
                                 <TableHead className="text-right p-2">Custo Total Orig.</TableHead>
                                 <TableHead className="text-right font-bold text-primary p-2">Custo Total Sim.</TableHead>
