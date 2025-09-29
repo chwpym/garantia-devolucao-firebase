@@ -13,6 +13,7 @@ import { format, parseISO } from 'date-fns';
 declare module 'jspdf' {
     interface jsPDF {
       autoTable: (options: UserOptions) => jsPDF;
+      lastAutoTable: { finalY: number };
     }
 }
 
@@ -250,7 +251,7 @@ export function generatePdf(input: GeneratePdfInput): string {
     });
 
     if (layout === 'professional') {
-        const finalY = (doc as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY || startY;
+        const finalY = doc.lastAutoTable.finalY || startY;
         doc.setFontSize(10).setFont('helvetica', 'bold');
         doc.text(`Total de Itens: ${selectedWarranties.length}`, margin, finalY + 10);
     }
@@ -342,5 +343,7 @@ export function generateDevolucoesPdf(input: GenerateDevolucoesPdfInput): string
 
     return doc.output('datauristring');
 }
+
+    
 
     

@@ -44,7 +44,7 @@ interface NfeInfo {
     totalNf: number;
 }
 
-type IcmsGroup = Record<string, { CST: string, vICMS: string, pICMS: string, vICMSST?: string }>;
+type IcmsGroup = Record<string, { CST: string, vICMS: string, pICMS: string, vICMSST?: string, CSOSN?: string }>;
 type IpiGroup = { IPITrib?: { CST: string, vIPI: string, pIPI: string }, IPINT?: { CST: string } };
 type PisCofinsGroup = { PISAliq?: { vPIS?: string, pPIS?: string, vCOFINS?: string, pCOFINS?: string }, PISST?: { vPIS?: string, pPIS?: string, vCOFINS?: string, pCOFINS?: string }, PISNT?: { CST: string }, COFINSAliq?: { vPIS?: string, pPIS?: string, vCOFINS?: string, pCOFINS?: string }, COFINSST?: { vPIS?: string, pPIS?: string, vCOFINS?: string, pCOFINS?: string }, COFINSNT?: { CST: string } };
 
@@ -101,9 +101,9 @@ export default function TaxAnalysisCalculator() {
             const icmsContent = icmsGroup[icmsKey];
             if (icmsContent) {
                  vICMS = parseFloat(icmsContent.vICMS) || 0;
-                 vICMSST = parseFloat(icmsContent.vICMSST) || 0;
+                 vICMSST = parseFloat(icmsContent.vICMSST || '0') || 0;
                  pICMS = parseFloat(icmsContent.pICMS) || 0;
-                 cst = icmsContent.CST || (icmsContent as { CSOSN: string }).CSOSN || '';
+                 cst = icmsContent.CST || icmsContent.CSOSN || '';
             }
         }
         return { vICMS, vICMSST, pICMS, cst };
@@ -432,6 +432,8 @@ export default function TaxAnalysisCalculator() {
         </div>
     );
 }
+
+    
 
     
 

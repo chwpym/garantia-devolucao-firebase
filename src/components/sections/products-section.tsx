@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
@@ -177,7 +178,6 @@ export default function ProductsSection() {
                         onSave={handleSave} 
                         editingProduct={editingProduct} 
                         onClear={() => setEditingProduct(null)}
-                        isModal={true}
                       />
                 </DialogContent>
             </Dialog>
@@ -273,3 +273,5 @@ export default function ProductsSection() {
     </div>
   );
 }
+
+    

@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import type { NfeInfo, PurchaseSimulation, SimulatedItemData } from "@/lib/types";
 import * as db from '@/lib/db';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
-import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { Label } from "../ui/label";
 import { format as formatDate, parseISO, addDays } from "date-fns";
 import { DatePickerWithRange } from "../ui/date-range-picker";
@@ -145,7 +145,7 @@ export default function PurchaseSimulatorCalculator() {
                 const newNfeInfo = {
                     emitterName: infNFe.emit.xNome,
                     emitterCnpj: infNFe.emit.CNPJ,
-                    emitterCity: `${infNFe.emit.enderEmit.xMun} - ${infNFe.emit.UF}`,
+                    emitterCity: `${infNFe.emit.enderEmit.xMun} - ${infNFe.emit.enderEmit.UF}`,
                     nfeNumber: infNFe.ide.nNF,
                 };
                 setNfeInfo(newNfeInfo);
@@ -169,6 +169,7 @@ export default function PurchaseSimulatorCalculator() {
                         seguro: (parseFloat(total.vSeg) || 0) * itemWeight,
                         desconto: (parseFloat(total.vDesc) || 0) * itemWeight,
                         outras: (parseFloat(total.vOutro) || 0) * itemWeight,
+                        additionalCosts: 0, // Placeholder, will be calculated
                     };
                     
                     const costs = calculateCosts(baseItem);
@@ -246,14 +247,12 @@ export default function PurchaseSimulatorCalculator() {
             simulationName: simulationName,
             nfeInfo: nfeInfo,
             items: items.map(i => {
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const { id, ...rest } = i; // Do not save internal UI id to DB
-                 return {
-                    description: rest.description,
-                    originalQuantity: rest.originalQuantity,
-                    simulatedQuantity: rest.simulatedQuantity,
-                    finalUnitCost: rest.finalUnitCost,
-                };
+                return {
+                    description: i.description,
+                    originalQuantity: i.originalQuantity,
+                    simulatedQuantity: i.simulatedQuantity,
+                    finalUnitCost: i.finalUnitCost,
+                } as SimulatedItemData;
             }),
             originalTotalCost: originalNfeTotalCost,
             simulatedTotalCost: totals.simulatedTotalCost,
@@ -271,6 +270,7 @@ export default function PurchaseSimulatorCalculator() {
             setActiveTab("saved");
             clearData();
         } catch (e) {
+            console.error(e)
             toast({ title: "Erro ao Salvar", description: "Não foi possível salvar a simulação.", variant: "destructive"});
         }
     }
@@ -732,3 +732,5 @@ export default function PurchaseSimulatorCalculator() {
     );
 }
 
+
+    

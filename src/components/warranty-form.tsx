@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
@@ -570,7 +571,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                 <DialogHeader>
                     <DialogTitle>Cadastrar Novo Produto</DialogTitle>
                 </DialogHeader>
-                <ProductForm onSave={handleProductSaved} isModal />
+                <ProductForm onSave={handleProductSaved} />
             </DialogContent>
         </Dialog>
     </Form>
@@ -590,3 +591,5 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
       </Card>
     );
 }
+
+    
