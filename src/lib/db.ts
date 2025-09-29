@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { Warranty, Person, Supplier, Lote, LoteItem, CompanyData, Devolucao, ItemDevolucao, Product, PurchaseSimulation } from './types';
@@ -784,6 +785,19 @@ export const addSimulation = (simulation: Omit<PurchaseSimulation, 'id'>): Promi
     try {
       const store = await getStore(SIMULATIONS_STORE_NAME, 'readwrite');
       const request = store.add(simulation);
+      request.onsuccess = () => resolve(request.result as number);
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+export const updateSimulation = (simulation: PurchaseSimulation): Promise<number> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(SIMULATIONS_STORE_NAME, 'readwrite');
+      const request = store.put(simulation);
       request.onsuccess = () => resolve(request.result as number);
       request.onerror = () => reject(request.error);
     } catch (err) {

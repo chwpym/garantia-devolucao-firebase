@@ -7,11 +7,11 @@ import autoTable from "jspdf-autotable";
 import { XMLParser } from "fast-xml-parser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Upload, FileX, Printer, Trash2, Save, Search, Edit, Loader2, X } from "lucide-react";
+import { Upload, FileX, Printer, Trash2, Save, Search, Edit, Loader2, X, RefreshCw } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatNumber } from "@/lib/utils";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "../ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "../ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import type { NfeInfo, PurchaseSimulation, SimulatedItemData } from "@/lib/types";
 import * as db from '@/lib/db';
@@ -28,8 +28,8 @@ interface SimulatedItem {
     description: string;
     originalQuantity: number;
     simulatedQuantity: string;
-    unitCost: number; // This is the net cost from XML
-    additionalCosts: number; // This is the calculated additional cost per unit
+    unitCost: number; 
+    additionalCosts: number; 
     ipi: number;
     icmsST: number;
     frete: number;
@@ -83,12 +83,14 @@ export default function PurchaseSimulatorCalculator() {
     const [nfeInfo, setNfeInfo] = useState<NfeInfo | null>(null);
     const [simulationName, setSimulationName] = useState("");
     const [originalNfeTotalCost, setOriginalNfeTotalCost] = useState(0);
+    const [editingSimulationId, setEditingSimulationId] = useState<number | null>(null);
 
     const [savedSimulations, setSavedSimulations] = useState<PurchaseSimulation[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [savedSimsDateRange, setSavedSimsDateRange] = useState<DateRange | undefined>();
     const [deleteTarget, setDeleteTarget] = useState<PurchaseSimulation | null>(null);
     const [isLoadingSims, setIsLoadingSims] = useState(true);
+    const [activeTab, setActiveTab] = useState("simulator");
 
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -186,10 +188,7 @@ export default function PurchaseSimulatorCalculator() {
                 toast({ title: "Sucesso!", description: `${newItems.length} itens importados da NF-e.` });
             } catch (error) {
                 console.error("Erro ao processar o XML:", error);
-                setItems([]);
-                setFileName(null);
-                setNfeInfo(null);
-                setOriginalNfeTotalCost(0);
+                clearData();
                 toast({ variant: "destructive", title: "Erro de Importação", description: "Não foi possível ler o arquivo XML." });
             } finally {
               if(fileInputRef.current) fileInputRef.current.value = "";
@@ -220,6 +219,7 @@ export default function PurchaseSimulatorCalculator() {
         setNfeInfo(null);
         setSimulationName("");
         setOriginalNfeTotalCost(0);
+        setEditingSimulationId(null);
         if(fileInputRef.current) fileInputRef.current.value = "";
     }, []);
     
@@ -241,7 +241,8 @@ export default function PurchaseSimulatorCalculator() {
             return;
         }
 
-        const simulationData: Omit<PurchaseSimulation, 'id'> = {
+        const simulationData: Omit<PurchaseSimulation, 'id' | 'createdAt'> & { id?: number, createdAt?: string } = {
+            id: editingSimulationId || undefined,
             simulationName: simulationName,
             nfeInfo: nfeInfo,
             items: items.map(i => ({
@@ -253,13 +254,19 @@ export default function PurchaseSimulatorCalculator() {
             })),
             originalTotalCost: originalNfeTotalCost,
             simulatedTotalCost: totals.simulatedTotalCost,
-            createdAt: new Date().toISOString()
         };
 
         try {
-            await db.addSimulation(simulationData);
-            toast({ title: "Sucesso!", description: `Simulação "${simulationName}" foi salva.`});
+            if (editingSimulationId) {
+                await db.updateSimulation({ ...simulationData, id: editingSimulationId, createdAt: new Date().toISOString() });
+                toast({ title: "Sucesso!", description: `Simulação "${simulationName}" foi atualizada.`});
+            } else {
+                await db.addSimulation({ ...simulationData, createdAt: new Date().toISOString() });
+                toast({ title: "Sucesso!", description: `Simulação "${simulationName}" foi salva.`});
+            }
             loadSimulations();
+            setActiveTab("saved");
+            clearData();
         } catch (e) {
             toast({ title: "Erro ao Salvar", description: "Não foi possível salvar a simulação.", variant: "destructive"});
         }
@@ -303,12 +310,12 @@ export default function PurchaseSimulatorCalculator() {
         setSimulationName(sim.simulationName);
         setFileName(`NF-${sim.nfeInfo.nfeNumber}.xml (Salva)`);
         setOriginalNfeTotalCost(sim.originalTotalCost);
+        setEditingSimulationId(sim.id!);
 
         const loadedItems = sim.items.map(item => {
             const simulatedTotalCost = item.finalUnitCost * (parseFloat(item.simulatedQuantity) || 0);
             const originalTotalCost = item.finalUnitCost * item.originalQuantity;
             
-            // This is a simplification. For full accuracy, we'd need to re-parse the XML or save all details.
             const unitCostApproximation = item.finalUnitCost;
             const additionalCostsApproximation = 0;
 
@@ -323,6 +330,7 @@ export default function PurchaseSimulatorCalculator() {
         });
         
         setItems(loadedItems);
+        setActiveTab("simulator");
         toast({ title: "Simulação Carregada", description: `"${sim.simulationName}" está pronta para edição.`});
     };
 
@@ -392,7 +400,6 @@ export default function PurchaseSimulatorCalculator() {
         doc.text("Relatório de Simulações Salvas", margin, cursorY);
         cursorY += 10;
 
-        // Draw summary cards
         const cardWidth = (pageWidth - margin * 4) / 3;
         const cardHeight = 25;
         const cardY = cursorY;
@@ -445,7 +452,7 @@ export default function PurchaseSimulatorCalculator() {
 
     return (
         <>
-            <Tabs defaultValue="simulator" className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="simulator">Simulador</TabsTrigger>
                     <TabsTrigger value="saved">Simulações Salvas</TabsTrigger>
@@ -464,14 +471,14 @@ export default function PurchaseSimulatorCalculator() {
                              <Dialog>
                                 <DialogTrigger asChild>
                                     <Button variant="outline" disabled={items.length === 0}>
-                                        <Save className="mr-2 h-4 w-4" />
-                                        Salvar Simulação
+                                        {editingSimulationId ? <RefreshCw className="mr-2 h-4 w-4" /> : <Save className="mr-2 h-4 w-4" />}
+                                        {editingSimulationId ? 'Atualizar Simulação' : 'Salvar Simulação'}
                                     </Button>
                                 </DialogTrigger>
                                 <DialogContent>
                                     <DialogHeader>
-                                        <DialogTitle>Salvar Simulação</DialogTitle>
-                                        <CardDescription>Dê um nome para esta simulação para encontrá-la depois.</CardDescription>
+                                        <DialogTitle>{editingSimulationId ? 'Atualizar Simulação' : 'Salvar Nova Simulação'}</DialogTitle>
+                                        <CardDescription>{editingSimulationId ? 'Confirme o nome e atualize esta simulação.' : 'Dê um nome para esta simulação para encontrá-la depois.'}</CardDescription>
                                     </DialogHeader>
                                     <div className="py-4">
                                         <Label htmlFor="sim-name">Nome da Simulação</Label>
@@ -479,7 +486,10 @@ export default function PurchaseSimulatorCalculator() {
                                     </div>
                                     <DialogFooter>
                                         <DialogClose asChild>
-                                            <Button type="button" onClick={handleSaveSimulation}><Save className="mr-2 h-4 w-4" /> Salvar</Button>
+                                            <Button type="button" onClick={handleSaveSimulation}>
+                                            {editingSimulationId ? <RefreshCw className="mr-2 h-4 w-4" /> : <Save className="mr-2 h-4 w-4" />}
+                                            {editingSimulationId ? 'Confirmar Atualização' : 'Salvar'}
+                                            </Button>
                                         </DialogClose>
                                     </DialogFooter>
                                 </DialogContent>
@@ -493,9 +503,6 @@ export default function PurchaseSimulatorCalculator() {
                             {fileName && (
                                 <div className="flex items-center gap-2 p-2 border rounded-md bg-muted flex-1 sm:flex-none justify-between">
                                     <span className="text-sm text-muted-foreground truncate" title={fileName}>{fileName}</span>
-                                    <Button variant="ghost" size="icon" onClick={clearData} className="h-6 w-6">
-                                        <FileX className="h-4 w-4 text-destructive" />
-                                    </Button>
                                 </div>
                             )}
                             <Input type="file" ref={fileInputRef} onChange={handleImportXml} className="hidden" accept=".xml" />
