@@ -478,7 +478,7 @@ export default function PurchaseSimulatorCalculator() {
                                 <DialogContent>
                                     <DialogHeader>
                                         <DialogTitle>{editingSimulationId ? 'Atualizar Simulação' : 'Salvar Nova Simulação'}</DialogTitle>
-                                        <CardDescription>{editingSimulationId ? 'Confirme o nome e atualize esta simulação.' : 'Dê um nome para esta simulação para encontrá-la depois.'}</CardDescription>
+                                        <DialogDescription>{editingSimulationId ? 'Confirme ou edite o nome e atualize esta simulação.' : 'Dê um nome para esta simulação para encontrá-la depois.'}</DialogDescription>
                                     </DialogHeader>
                                     <div className="py-4">
                                         <Label htmlFor="sim-name">Nome da Simulação</Label>
@@ -562,8 +562,8 @@ export default function PurchaseSimulatorCalculator() {
                                             <TableHead className="min-w-[250px] p-2">Descrição</TableHead>
                                             <TableHead className="w-[100px] text-right p-2">Qtde. Original</TableHead>
                                             <TableHead className="p-2 w-[120px]">Qtde. Simulada</TableHead>
-                                            <TableHead className="text-right p-2 w-[130px]">Custo Líquido (NF-e)</TableHead>
-                                            <TableHead className="text-right p-2 w-[130px]">Custos Adicionais/Un.</TableHead>
+                                            <TableHead className="text-right p-2 w-[120px]">Custo Líquido (NF-e)</TableHead>
+                                            <TableHead className="text-right p-2 w-[120px]">Custos Adicionais/Un.</TableHead>
                                             <TableHead className="text-right p-2">Custo Un. Final</TableHead>
                                             <TableHead className="text-right p-2">Custo Total Orig.</TableHead>
                                             <TableHead className="text-right font-bold text-primary p-2">Custo Total Sim.</TableHead>
@@ -584,8 +584,8 @@ export default function PurchaseSimulatorCalculator() {
                                                         onChange={(e) => handleQuantityChange(item.id, e.target.value)}
                                                     />
                                                 </TableCell>
-                                                <TableCell className="text-right p-2 w-[130px]">{formatCurrency(item.unitCost)}</TableCell>
-                                                <TableCell className="text-right p-2 w-[130px] text-red-500">{formatCurrency(item.additionalCosts)}</TableCell>
+                                                <TableCell className="text-right p-2 w-[120px]">{formatCurrency(item.unitCost)}</TableCell>
+                                                <TableCell className="text-right p-2 w-[120px] text-red-500">{formatCurrency(item.additionalCosts)}</TableCell>
                                                 <TableCell className="text-right p-2 font-bold">{formatCurrency(item.finalUnitCost)}</TableCell>
                                                 <TableCell className="text-right p-2">{formatCurrency(item.originalTotalCost)}</TableCell>
                                                 <TableCell className="text-right font-bold text-primary p-2">{formatCurrency(item.simulatedTotalCost)}</TableCell>
