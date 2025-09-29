@@ -80,6 +80,7 @@ export default function PurchaseSimulatorCalculator() {
     const [fileName, setFileName] = useState<string | null>(null);
     const [nfeInfo, setNfeInfo] = useState<NfeInfo | null>(null);
     const [simulationName, setSimulationName] = useState("");
+    const [originalNfeTotalCost, setOriginalNfeTotalCost] = useState(0);
 
     const [savedSimulations, setSavedSimulations] = useState<PurchaseSimulation[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
@@ -120,6 +121,7 @@ export default function PurchaseSimulatorCalculator() {
         const file = event.target.files?.[0];
         if (!file) return;
 
+        clearData(); // Clear previous simulation before importing a new one
         setFileName(file.name);
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -144,6 +146,8 @@ export default function PurchaseSimulatorCalculator() {
                 setNfeInfo(newNfeInfo);
                 setSimulationName(`Simulação NF-${newNfeInfo.nfeNumber} (${newNfeInfo.emitterName})`);
 
+                let calculatedOriginalTotal = 0;
+
                 const newItems: SimulatedItem[] = dets.map((det, index) => {
                     const prod = det.prod;
                     const imposto = det.imposto;
@@ -163,6 +167,7 @@ export default function PurchaseSimulatorCalculator() {
                     };
                     
                     const costs = calculateCosts(baseItem);
+                    calculatedOriginalTotal += costs.originalTotalCost;
 
                     return {
                         id: Date.now() + index,
@@ -173,12 +178,15 @@ export default function PurchaseSimulatorCalculator() {
                 });
                 
                 setItems(newItems);
+                setOriginalNfeTotalCost(calculatedOriginalTotal);
+
                 toast({ title: "Sucesso!", description: `${newItems.length} itens importados da NF-e.` });
             } catch (error) {
                 console.error("Erro ao processar o XML:", error);
                 setItems([]);
                 setFileName(null);
                 setNfeInfo(null);
+                setOriginalNfeTotalCost(0);
                 toast({ variant: "destructive", title: "Erro de Importação", description: "Não foi possível ler o arquivo XML." });
             } finally {
               if(fileInputRef.current) fileInputRef.current.value = "";
@@ -208,19 +216,19 @@ export default function PurchaseSimulatorCalculator() {
         setFileName(null);
         setNfeInfo(null);
         setSimulationName("");
+        setOriginalNfeTotalCost(0);
         if(fileInputRef.current) fileInputRef.current.value = "";
     }, []);
     
     const totals = useMemo(() => {
         return items.reduce((acc, item) => {
-            acc.originalTotalCost += item.originalTotalCost;
             acc.simulatedTotalCost += item.simulatedTotalCost;
             return acc;
-        }, { originalTotalCost: 0, simulatedTotalCost: 0 });
+        }, { simulatedTotalCost: 0 });
     }, [items]);
 
     const handleSaveSimulation = async () => {
-        if (!nfeInfo || items.length === 0 || !simulationName) {
+        if (!nfeInfo || !simulationName) {
             toast({ title: "Erro", description: "Dados insuficientes para salvar a simulação.", variant: "destructive"});
             return;
         }
@@ -235,7 +243,7 @@ export default function PurchaseSimulatorCalculator() {
                 simulatedQuantity: i.simulatedQuantity,
                 finalUnitCost: i.finalUnitCost
             })),
-            originalTotalCost: totals.originalTotalCost,
+            originalTotalCost: originalNfeTotalCost,
             simulatedTotalCost: totals.simulatedTotalCost,
             createdAt: new Date().toISOString()
         };
@@ -263,20 +271,29 @@ export default function PurchaseSimulatorCalculator() {
         setNfeInfo(sim.nfeInfo);
         setSimulationName(sim.simulationName);
         setFileName(`NF-${sim.nfeInfo.nfeNumber}.xml (Salva)`);
+        setOriginalNfeTotalCost(sim.originalTotalCost);
 
         const loadedItems = sim.items.map(item => {
+            const simulatedTotalCost = item.finalUnitCost * (parseFloat(item.simulatedQuantity) || 0);
+            const originalTotalCost = item.finalUnitCost * item.originalQuantity;
+            
+            // Re-calculate unitCost and additionalCosts for display (approximation)
+            // This part is complex as we don't save all the tax/freight details.
+            // We can assume unitCost is the same and additionalCosts is the difference.
+            // This is a simplification. For full accuracy, we'd need to re-parse the XML or save all details.
+            const unitCostApproximation = item.finalUnitCost; // Simplified: assumes no additional costs. A better way would be needed if detailed cost breakdown is required upon loading.
+            const additionalCostsApproximation = 0;
+
             return {
                 ...item,
-                ipi: 0, icmsST: 0, frete: 0, seguro: 0, desconto: 0, outras: 0, // Simplified for now
-                additionalCosts: item.finalUnitCost - (item.finalUnitCost / (1)), // Approximation
-                unitCost: item.finalUnitCost / (1),
-                originalTotalCost: item.finalUnitCost * item.originalQuantity,
-                simulatedTotalCost: item.finalUnitCost * (parseFloat(item.simulatedQuantity) || 0),
+                ipi: 0, icmsST: 0, frete: 0, seguro: 0, desconto: 0, outras: 0,
+                additionalCosts: additionalCostsApproximation,
+                unitCost: unitCostApproximation,
+                originalTotalCost,
+                simulatedTotalCost
             };
         });
         
-        // This is a simplified load. It doesn't recover all cost details,
-        // but it recovers the essential simulation data.
         setItems(loadedItems);
         toast({ title: "Simulação Carregada", description: `"${sim.simulationName}" está pronta para edição.`});
     };
@@ -319,7 +336,7 @@ export default function PurchaseSimulatorCalculator() {
             head: head,
             body: body,
             foot: [
-                ['Total:', '', '', '', formatCurrency(totals.originalTotalCost), formatCurrency(totals.simulatedTotalCost)]
+                ['Total:', '', '', '', formatCurrency(originalNfeTotalCost), formatCurrency(totals.simulatedTotalCost)]
             ],
             headStyles: { fillColor: [63, 81, 181] },
             footStyles: { fontStyle: 'bold', fillColor: [224, 224, 224], textColor: [0, 0, 0] },
@@ -327,7 +344,7 @@ export default function PurchaseSimulatorCalculator() {
 
         const finalY = (doc as any).lastAutoTable.finalY + 10;
         doc.setFontSize(12);
-        doc.text(`Economia Potencial: ${formatCurrency(totals.originalTotalCost - totals.simulatedTotalCost)}`, 14, finalY);
+        doc.text(`Economia Potencial: ${formatCurrency(originalNfeTotalCost - totals.simulatedTotalCost)}`, 14, finalY);
     
         doc.save(`simulacao_compra_${nfeInfo?.nfeNumber || 'sem_numero'}.pdf`);
     };
@@ -405,7 +422,7 @@ export default function PurchaseSimulatorCalculator() {
                                         <CardTitle className="text-sm font-medium">Custo Total Original</CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <div className="text-2xl font-bold">{formatCurrency(totals.originalTotalCost)}</div>
+                                        <div className="text-2xl font-bold">{formatCurrency(originalNfeTotalCost)}</div>
                                         <p className="text-xs text-muted-foreground">Valor total calculado da NF-e importada.</p>
                                     </CardContent>
                                 </Card>
@@ -423,7 +440,7 @@ export default function PurchaseSimulatorCalculator() {
                                         <CardTitle className="text-sm font-medium">Economia Potencial</CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <div className="text-2xl font-bold text-accent-green">{formatCurrency(totals.originalTotalCost - totals.simulatedTotalCost)}</div>
+                                        <div className="text-2xl font-bold text-accent-green">{formatCurrency(originalNfeTotalCost - totals.simulatedTotalCost)}</div>
                                         <p className="text-xs text-muted-foreground">Diferença entre o original e o simulado.</p>
                                     </CardContent>
                                 </Card>
@@ -460,8 +477,8 @@ export default function PurchaseSimulatorCalculator() {
                                                         onChange={(e) => handleQuantityChange(item.id, e.target.value)}
                                                     />
                                                 </TableCell>
-                                                <TableCell className="text-right p-2">{formatCurrency(item.unitCost)}</TableCell>
-                                                <TableCell className="text-right p-2 text-red-500">{formatCurrency(item.additionalCosts)}</TableCell>
+                                                <TableCell className="text-right p-2 w-[130px]">{formatCurrency(item.unitCost)}</TableCell>
+                                                <TableCell className="text-right p-2 w-[130px] text-red-500">{formatCurrency(item.additionalCosts)}</TableCell>
                                                 <TableCell className="text-right p-2 font-bold">{formatCurrency(item.finalUnitCost)}</TableCell>
                                                 <TableCell className="text-right p-2">{formatCurrency(item.originalTotalCost)}</TableCell>
                                                 <TableCell className="text-right font-bold text-primary p-2">{formatCurrency(item.simulatedTotalCost)}</TableCell>
@@ -475,8 +492,7 @@ export default function PurchaseSimulatorCalculator() {
                                     </TableBody>
                                     <TableFooter>
                                         <TableRow className="font-bold bg-muted/50">
-                                            <TableCell colSpan={6} className="text-right p-2">Totais:</TableCell>
-                                            <TableCell className="text-right p-2">{formatCurrency(totals.originalTotalCost)}</TableCell>
+                                            <TableCell colSpan={7} className="text-right p-2">Totais:</TableCell>
                                             <TableCell className="text-right text-primary p-2">{formatCurrency(totals.simulatedTotalCost)}</TableCell>
                                             <TableCell className="p-2"></TableCell>
                                         </TableRow>
@@ -568,5 +584,7 @@ export default function PurchaseSimulatorCalculator() {
         </>
     );
 }
+
+    
 
     
