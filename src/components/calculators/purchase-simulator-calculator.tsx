@@ -60,13 +60,13 @@ interface NFeData {
     NFe?: { infNFe: InfNFe };
 }
 
-const formatCnpj = (value?: string) => {
+const formatCnpj = (value?: string | number) => {
     if (!value) return '-';
-    const cleaned = value.replace(/\D/g, '');
+    const cleaned = String(value).replace(/\D/g, '');
     if (cleaned.length === 14) { // CNPJ
         return cleaned.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
     }
-    return value;
+    return String(value);
 };
 
 
@@ -372,4 +372,5 @@ export default function PurchaseSimulatorCalculator() {
             </TabsContent>
         </Tabs>
     );
-}
+
+    
