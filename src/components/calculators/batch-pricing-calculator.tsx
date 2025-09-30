@@ -22,13 +22,14 @@ interface BatchPriceItem {
     id: number;
     description: string;
     quantity: string;
-    cost: string;
+    cost: string; // This will now be the final calculated cost
     margin: string;
     price: string;
 }
 
 interface NfeProductDetail {
     prod: Record<string, string>;
+    imposto: Record<string, Record<string, Record<string, string>>>;
 }
   
 export default function BatchPricingCalculator() {
@@ -139,23 +140,53 @@ export default function BatchPricingCalculator() {
         reader.onload = (e) => {
             try {
                 const xmlData = e.target?.result as string;
-                const parser = new XMLParser({ ignoreAttributes: false });
+                const parser = new XMLParser({ ignoreAttributes: false, parseAttributeValue: true });
                 const jsonObj = parser.parse(xmlData);
 
-                const dets = jsonObj?.nfeProc?.NFe?.infNFe?.det;
-                if (!dets) {
-                    throw new Error("Estrutura do XML da NF-e inválida ou não encontrada.");
+                const infNFe = jsonObj?.nfeProc?.NFe?.infNFe || jsonObj?.NFe?.infNFe;
+                if (!infNFe) {
+                    throw new Error("Estrutura do XML da NF-e inválida: <infNFe> não encontrado.");
                 }
 
-                const productList: NfeProductDetail[] = Array.isArray(dets) ? dets : [dets];
+                const dets: NfeProductDetail[] = Array.isArray(infNFe.det) ? infNFe.det : [infNFe.det];
+                const total = infNFe.total?.ICMSTot;
+                
+                if (!dets || !total) {
+                    throw new Error("Estrutura do XML da NF-e inválida: <det> ou <ICMSTot> não encontrados.");
+                }
 
-                const newItems: BatchPriceItem[] = productList.map((det, index: number) => {
+                const totalProdValue = parseFloat(total.vProd) || 0;
+                const totalFrete = parseFloat(total.vFrete) || 0;
+                const totalSeguro = parseFloat(total.vSeg) || 0;
+                const totalDesconto = parseFloat(total.vDesc) || 0;
+                const totalOutras = parseFloat(total.vOutro) || 0;
+
+
+                const newItems: BatchPriceItem[] = dets.map((det: NfeProductDetail, index: number) => {
                     const prod = det.prod;
+                    const imposto = det.imposto;
+
+                    const quantity = parseFloat(prod.qCom) || 0;
+                    const itemTotalCost = parseFloat(prod.vProd) || 0;
+                    
+                    const itemWeight = totalProdValue > 0 ? itemTotalCost / totalProdValue : 0;
+                    
+                    const ipiValor = parseFloat(imposto?.IPI?.IPITrib?.vIPI) || 0;
+                    const stValor = parseFloat(imposto?.ICMS?.ICMSST?.vICMSST) || 0;
+                    
+                    const freteRateado = parseFloat(prod.vFrete) || (totalFrete * itemWeight) || 0;
+                    const seguroRateado = parseFloat(prod.vSeg) || (totalSeguro * itemWeight) || 0;
+                    const descontoRateado = parseFloat(prod.vDesc) || (totalDesconto * itemWeight) || 0;
+                    const outrasRateado = parseFloat(prod.vOutro) || (totalOutras * itemWeight) || 0;
+                    
+                    const finalTotalCost = itemTotalCost + ipiValor + stValor + freteRateado + seguroRateado + outrasRateado - descontoRateado;
+                    const finalUnitCost = quantity > 0 ? finalTotalCost / quantity : 0;
+                    
                     return {
                         id: Date.now() + index,
                         description: prod.xProd || "",
-                        quantity: String(prod.qCom || 0),
-                        cost: String(prod.vUnCom || 0),
+                        quantity: String(quantity),
+                        cost: finalUnitCost > 0 ? finalUnitCost.toFixed(2) : "0",
                         margin: "",
                         price: ""
                     };
@@ -165,7 +196,7 @@ export default function BatchPricingCalculator() {
 
                 toast({
                     title: "Sucesso!",
-                    description: `${newItems.length} itens importados da NF-e.`,
+                    description: `${newItems.length} itens importados e precificados da NF-e.`,
                 });
 
             } catch (error) {
@@ -250,7 +281,7 @@ export default function BatchPricingCalculator() {
                     <TableRow>
                     <TableHead className="min-w-[250px]">Descrição</TableHead>
                     <TableHead className="w-[80px]">Qtde</TableHead>
-                    <TableHead className="w-[120px]">Custo Un. (R$)</TableHead>
+                    <TableHead className="w-[120px]">Custo Un. Final (R$)</TableHead>
                     <TableHead className="w-[120px]">Custo Total (R$)</TableHead>
                     <TableHead className="w-[120px]">Margem (%)</TableHead>
                     <TableHead className="w-[120px]">Venda Un. (R$)</TableHead>
