@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import type { NfeInfo, PurchaseSimulation, SimulatedItemData } from "@/lib/types";
 import * as db from '@/lib/db';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
-import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { Label } from "../ui/label";
 import { format as formatDate, parseISO, addDays } from "date-fns";
 import { DatePickerWithRange } from "../ui/date-range-picker";
@@ -406,7 +406,7 @@ export default function PurchaseSimulatorCalculator() {
         const cardHeight = 25;
         const cardY = cursorY;
 
-        const drawCard = (x: number, title: string, value: string, valueColor: number[] | string = [0,0,0]) => {
+        const drawCard = (x: number, title: string, value: string, valueColor: string = "#000000") => {
             doc.setDrawColor(224, 224, 224);
             doc.setFillColor(250, 250, 250);
             doc.rect(x, cardY, cardWidth, cardHeight, 'FD');
@@ -416,18 +416,14 @@ export default function PurchaseSimulatorCalculator() {
             doc.text(title, x + cardWidth / 2, cardY + 8, { align: 'center' });
             
             doc.setFontSize(14).setFont('helvetica', 'bold');
-            if (typeof valueColor === 'string') {
-                 doc.setTextColor(valueColor);
-            } else {
-                 doc.setTextColor(valueColor[0], valueColor[1], valueColor[2]);
-            }
+            doc.setTextColor(valueColor);
            
             doc.text(value, x + cardWidth / 2, cardY + 18, { align: 'center' });
         };
         
         drawCard(margin, "Custo Total Original", formatCurrency(filteredTotals.original));
-        drawCard(margin + cardWidth + margin, "Custo Total Simulado", formatCurrency(filteredTotals.simulated), [96, 11, 232]); // Primary color
-        drawCard(margin + (cardWidth + margin) * 2, "Economia Potencial Total", formatCurrency(filteredTotals.original - filteredTotals.simulated), [22, 163, 74]); // Accent-green color
+        drawCard(margin + cardWidth + margin, "Custo Total Simulado", formatCurrency(filteredTotals.simulated), "#600BE8"); // Primary color
+        drawCard(margin + (cardWidth + margin) * 2, "Economia Potencial Total", formatCurrency(filteredTotals.original - filteredTotals.simulated), "#16A34A"); // Accent-green color
 
         cursorY += cardHeight + 15;
 
@@ -734,6 +730,9 @@ export default function PurchaseSimulatorCalculator() {
         </>
     );
 }
+
+
+    
 
 
     

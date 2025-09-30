@@ -128,7 +128,6 @@ export interface NfeInfo {
 }
 
 export interface SimulatedItemData {
-    id: number;
     description: string;
     originalQuantity: number;
     simulatedQuantity: string;
@@ -144,3 +143,5 @@ export interface PurchaseSimulation {
     simulatedTotalCost: number;
     createdAt: string;
 }
+
+    
