@@ -179,7 +179,7 @@ export default function BatchPricingCalculator() {
                     const freteRateado = parseFloat(prod.vFrete) || (totalFrete * itemWeight) || 0;
                     const seguroRateado = parseFloat(prod.vSeg) || (totalSeguro * itemWeight) || 0;
                     const descontoRateado = parseFloat(prod.vDesc) || 0;
-                    const outrasRateado = parseFloat(prod.vOutro) || (totalOutras * itemWeight) || 0;
+                    const outrasRateado = parseFloat(prod.vOutro) || 0;
 
                     const totalImpostosItem = ipiValor + stValor + freteRateado + seguroRateado + outrasRateado;
                     const finalTotalCost = itemTotalCost + totalImpostosItem - descontoRateado;
@@ -265,12 +265,21 @@ export default function BatchPricingCalculator() {
         
     return (
         <div className="pt-4 space-y-4">
-            <div className="flex flex-col sm:flex-row gap-2">
+             <div className="flex flex-col sm:flex-row flex-wrap gap-2 items-center">
+                 <Button onClick={generatePdf}>
+                    <Printer className="mr-2 h-4 w-4" />
+                    Gerar PDF
+                </Button>
+                <Button onClick={() => fileInputRef.current?.click()} variant="secondary">
+                    <Upload className="mr-2 h-4 w-4" />
+                    Importar XML
+                </Button>
                 <div className="flex-1 sm:flex-none flex items-center gap-2">
                     <Label htmlFor="global-margin" className="whitespace-nowrap">Aplicar Margem Global (%):</Label>
                     <Input
                         id="global-margin"
-                        type="number"
+                        type="text"
+                        inputMode="decimal"
                         placeholder="Ex: 40"
                         value={globalMargin}
                         onChange={(e) => setGlobalMargin(e.target.value)}
@@ -280,7 +289,15 @@ export default function BatchPricingCalculator() {
                         <ChevronsRight className="h-4 w-4" />
                     </Button>
                 </div>
+                 <Input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    onChange={handleImportXml}
+                    className="hidden" 
+                    accept=".xml"
+                />
             </div>
+            
             <div className="overflow-x-auto">
                 <Table>
                 <TableHeader>
@@ -313,27 +330,27 @@ export default function BatchPricingCalculator() {
                                     onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} />
                                 </TableCell>
                                 <TableCell>
-                                    <Input type="number" value={item.originalCost}
+                                    <Input type="text" inputMode="decimal" value={item.originalCost}
                                     onChange={e => handleItemChange(item.id, 'originalCost', e.target.value)} />
                                 </TableCell>
                                 <TableCell>
-                                    <Input type="number" value={item.impostos}
+                                    <Input type="text" inputMode="decimal" value={item.impostos}
                                     onChange={e => handleItemChange(item.id, 'impostos', e.target.value)} />
                                 </TableCell>
                                 <TableCell>
-                                    <Input type="number" value={item.desconto}
+                                    <Input type="text" inputMode="decimal" value={item.desconto}
                                     onChange={e => handleItemChange(item.id, 'desconto', e.target.value)} />
                                 </TableCell>
                                 <TableCell>
-                                    <Input type="number" value={item.finalCost}
+                                    <Input type="text" inputMode="decimal" value={item.finalCost}
                                     onChange={e => handleItemChange(item.id, 'finalCost', e.target.value)} className="bg-muted font-bold" />
                                 </TableCell>
                                 <TableCell>
-                                    <Input type="number" value={item.margin}
+                                    <Input type="text" inputMode="decimal" value={item.margin}
                                     onChange={e => handleItemChange(item.id, 'margin', e.target.value)} />
                                 </TableCell>
                                 <TableCell>
-                                    <Input type="number" value={item.price}
+                                    <Input type="text" inputMode="decimal" value={item.price}
                                     onChange={e => handleItemChange(item.id, 'price', e.target.value)} />
                                 </TableCell>
                                 <TableCell>
@@ -388,21 +405,6 @@ export default function BatchPricingCalculator() {
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Adicionar Item
                 </Button>
-                <Button onClick={generatePdf}>
-                    <Printer className="mr-2 h-4 w-4" />
-                    Gerar PDF
-                </Button>
-                <Button onClick={() => fileInputRef.current?.click()} variant="secondary">
-                    <Upload className="mr-2 h-4 w-4" />
-                    Importar XML
-                </Button>
-                <Input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    onChange={handleImportXml}
-                    className="hidden" 
-                    accept=".xml"
-                />
             </div>
         </div>
     );
