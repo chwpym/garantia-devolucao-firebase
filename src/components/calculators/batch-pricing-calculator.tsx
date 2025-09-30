@@ -23,7 +23,7 @@ interface BatchPriceItem {
     description: string;
     quantity: string;
     originalCost: string;
-    impostos: string; // IPI + ICMS-ST
+    impostos: string; // IPI + ICMS-ST + Frete + Seguro + Outras
     desconto: string;
     finalCost: string; // Custo Final Líquido
     margin: string;
@@ -178,14 +178,14 @@ export default function BatchPricingCalculator() {
                     
                     const freteRateado = parseFloat(prod.vFrete) || (totalFrete * itemWeight) || 0;
                     const seguroRateado = parseFloat(prod.vSeg) || (totalSeguro * itemWeight) || 0;
-                    const descontoRateado = parseFloat(prod.vDesc) || 0;
-                    const outrasRateado = parseFloat(prod.vOutro) || 0;
+                    const descontoTotal = parseFloat(prod.vDesc) || 0;
+                    const outrasRateado = parseFloat(prod.vOutro) || (totalOutras * itemWeight) || 0;
 
                     const totalImpostosItem = ipiValor + stValor + freteRateado + seguroRateado + outrasRateado;
-                    const finalTotalCost = itemTotalCost + totalImpostosItem - descontoRateado;
+                    const finalTotalCost = itemTotalCost + totalImpostosItem - descontoTotal;
                     const finalUnitCost = quantity > 0 ? finalTotalCost / quantity : 0;
                     const impostosUnit = quantity > 0 ? totalImpostosItem / quantity : 0;
-                    const descontoUnit = quantity > 0 ? descontoRateado / quantity : 0;
+                    const descontoUnit = quantity > 0 ? descontoTotal / quantity : 0;
                     
                     return {
                         id: Date.now() + index,
@@ -266,7 +266,7 @@ export default function BatchPricingCalculator() {
     return (
         <div className="pt-4 space-y-4">
              <div className="flex flex-col sm:flex-row flex-wrap gap-2 items-center">
-                 <Button onClick={generatePdf}>
+                 <Button onClick={generatePdf} disabled={items.length === 0 || (items.length === 1 && !items[0].description)}>
                     <Printer className="mr-2 h-4 w-4" />
                     Gerar PDF
                 </Button>
@@ -326,7 +326,7 @@ export default function BatchPricingCalculator() {
                                     onChange={e => handleItemChange(item.id, 'description', e.target.value)} />
                                 </TableCell>
                                 <TableCell>
-                                    <Input type="number" value={item.quantity}
+                                    <Input type="text" inputMode="decimal" value={item.quantity}
                                     onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} />
                                 </TableCell>
                                 <TableCell>
