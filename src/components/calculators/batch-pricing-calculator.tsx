@@ -22,7 +22,10 @@ interface BatchPriceItem {
     id: number;
     description: string;
     quantity: string;
-    cost: string; // This will now be the final calculated cost
+    originalCost: string;
+    impostos: string; // IPI + ICMS-ST
+    desconto: string;
+    finalCost: string; // Custo Final Líquido
     margin: string;
     price: string;
 }
@@ -34,7 +37,7 @@ interface NfeProductDetail {
   
 export default function BatchPricingCalculator() {
     const [items, setItems] = useState<BatchPriceItem[]>([
-        { id: 1, description: "", quantity: "1", cost: "", margin: "", price: "" },
+        { id: 1, description: "", quantity: "1", originalCost: "", impostos: "", desconto: "", finalCost: "", margin: "", price: "" },
     ]);
     const [globalMargin, setGlobalMargin] = useState("");
     const { toast } = useToast();
@@ -42,32 +45,32 @@ export default function BatchPricingCalculator() {
 
     const handleItemChange = (id: number, field: keyof BatchPriceItem, value: string) => {
         setItems(prevItems => {
-        const newItems = prevItems.map(item => {
-            if (item.id === id) {
-                const updatedItem = { ...item, [field]: value };
-                
-                const cost = parseFloat(updatedItem.cost) || 0;
-                let margin = parseFloat(updatedItem.margin) || 0;
-                let price = parseFloat(updatedItem.price) || 0;
+            const newItems = prevItems.map(item => {
+                if (item.id === id) {
+                    const updatedItem = { ...item, [field]: value };
+                    
+                    const finalCost = parseFloat(updatedItem.finalCost) || 0;
+                    let margin = parseFloat(updatedItem.margin) || 0;
+                    let price = parseFloat(updatedItem.price) || 0;
 
-                if (cost > 0) {
-                    if (field === 'margin' || field === 'cost' || field === 'quantity') {
-                        price = cost * (1 + margin / 100);
-                        updatedItem.price = price > 0 ? price.toFixed(2) : "";
-                    } else if (field === 'price') {
-                        margin = price > 0 && cost > 0 ? ((price / cost) - 1) * 100 : 0;
-                        updatedItem.margin = margin > 0 ? margin.toFixed(2) : "";
+                    if (finalCost > 0) {
+                        if (field === 'margin' || field === 'finalCost') {
+                            price = finalCost * (1 + margin / 100);
+                            updatedItem.price = price > 0 ? price.toFixed(2) : "";
+                        } else if (field === 'price') {
+                            margin = price > 0 && finalCost > 0 ? ((price / finalCost) - 1) * 100 : 0;
+                            updatedItem.margin = margin > 0 ? margin.toFixed(2) : "";
+                        }
+                    } else {
+                        updatedItem.price = "";
+                        updatedItem.margin = "";
                     }
-                } else {
-                    updatedItem.price = "";
-                    updatedItem.margin = "";
+                    
+                    return updatedItem;
                 }
-                
-                return updatedItem;
-            }
-            return item;
-        });
-        return newItems;
+                return item;
+            });
+            return newItems;
         });
     };
 
@@ -84,9 +87,9 @@ export default function BatchPricingCalculator() {
 
         setItems(prevItems => {
             return prevItems.map(item => {
-                const cost = parseFloat(item.cost) || 0;
-                if (cost > 0) {
-                    const price = cost * (1 + marginValue / 100);
+                const finalCost = parseFloat(item.finalCost) || 0;
+                if (finalCost > 0) {
+                    const price = finalCost * (1 + marginValue / 100);
                     return {
                         ...item,
                         margin: globalMargin,
@@ -106,7 +109,7 @@ export default function BatchPricingCalculator() {
     const addItem = () => {
         setItems(prev => [
         ...prev,
-        { id: Date.now(), description: "", quantity: "1", cost: "", margin: "", price: "" },
+        { id: Date.now(), description: "", quantity: "1", originalCost: "", impostos: "", desconto: "", finalCost: "", margin: "", price: "" },
         ]);
     };
 
@@ -115,21 +118,21 @@ export default function BatchPricingCalculator() {
     };
 
     const totals = useMemo(() => {
-        const totalCost = items.reduce((acc, item) => {
+        const totalFinalCost = items.reduce((acc, item) => {
             const quantity = parseFloat(item.quantity) || 0;
-            const cost = parseFloat(item.cost) || 0;
+            const cost = parseFloat(item.finalCost) || 0;
             return acc + (quantity * cost);
         }, 0);
 
-        const totalValue = items.reduce((acc, item) => {
+        const totalSaleValue = items.reduce((acc, item) => {
             const quantity = parseFloat(item.quantity) || 0;
             const price = parseFloat(item.price) || 0;
             return acc + (quantity * price);
         }, 0);
 
-        const averageMargin = totalCost > 0 ? ((totalValue - totalCost) / totalCost) * 100 : 0;
+        const averageMargin = totalFinalCost > 0 ? ((totalSaleValue - totalFinalCost) / totalFinalCost) * 100 : 0;
 
-        return { totalCost, totalValue, averageMargin };
+        return { totalFinalCost, totalSaleValue, averageMargin };
     }, [items]);
 
     const handleImportXml = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -154,21 +157,20 @@ export default function BatchPricingCalculator() {
                 if (!dets || !total) {
                     throw new Error("Estrutura do XML da NF-e inválida: <det> ou <ICMSTot> não encontrados.");
                 }
-
+                
                 const totalProdValue = parseFloat(total.vProd) || 0;
                 const totalFrete = parseFloat(total.vFrete) || 0;
                 const totalSeguro = parseFloat(total.vSeg) || 0;
-                const totalDesconto = parseFloat(total.vDesc) || 0;
                 const totalOutras = parseFloat(total.vOutro) || 0;
-
 
                 const newItems: BatchPriceItem[] = dets.map((det: NfeProductDetail, index: number) => {
                     const prod = det.prod;
                     const imposto = det.imposto;
 
                     const quantity = parseFloat(prod.qCom) || 0;
+                    const originalUnitCost = parseFloat(prod.vUnCom) || 0;
                     const itemTotalCost = parseFloat(prod.vProd) || 0;
-                    
+
                     const itemWeight = totalProdValue > 0 ? itemTotalCost / totalProdValue : 0;
                     
                     const ipiValor = parseFloat(imposto?.IPI?.IPITrib?.vIPI) || 0;
@@ -176,27 +178,33 @@ export default function BatchPricingCalculator() {
                     
                     const freteRateado = parseFloat(prod.vFrete) || (totalFrete * itemWeight) || 0;
                     const seguroRateado = parseFloat(prod.vSeg) || (totalSeguro * itemWeight) || 0;
-                    const descontoRateado = parseFloat(prod.vDesc) || (totalDesconto * itemWeight) || 0;
+                    const descontoRateado = parseFloat(prod.vDesc) || 0;
                     const outrasRateado = parseFloat(prod.vOutro) || (totalOutras * itemWeight) || 0;
-                    
-                    const finalTotalCost = itemTotalCost + ipiValor + stValor + freteRateado + seguroRateado + outrasRateado - descontoRateado;
+
+                    const totalImpostosItem = ipiValor + stValor + freteRateado + seguroRateado + outrasRateado;
+                    const finalTotalCost = itemTotalCost + totalImpostosItem - descontoRateado;
                     const finalUnitCost = quantity > 0 ? finalTotalCost / quantity : 0;
+                    const impostosUnit = quantity > 0 ? totalImpostosItem / quantity : 0;
+                    const descontoUnit = quantity > 0 ? descontoRateado / quantity : 0;
                     
                     return {
                         id: Date.now() + index,
                         description: prod.xProd || "",
                         quantity: String(quantity),
-                        cost: finalUnitCost > 0 ? finalUnitCost.toFixed(2) : "0",
+                        originalCost: originalUnitCost.toFixed(2),
+                        impostos: impostosUnit.toFixed(2),
+                        desconto: descontoUnit.toFixed(2),
+                        finalCost: finalUnitCost.toFixed(2),
                         margin: "",
                         price: ""
                     };
                 });
                 
-                setItems(newItems.length > 0 ? newItems : [{ id: 1, description: "", quantity: "1", cost: "", margin: "", price: "" }]);
+                setItems(newItems.length > 0 ? newItems : [{ id: 1, description: "", quantity: "1", originalCost: "", impostos: "", desconto: "", finalCost: "", margin: "", price: "" }]);
 
                 toast({
                     title: "Sucesso!",
-                    description: `${newItems.length} itens importados e precificados da NF-e.`,
+                    description: `${newItems.length} itens importados da NF-e.`,
                 });
 
             } catch (error) {
@@ -207,7 +215,6 @@ export default function BatchPricingCalculator() {
                     description: "Não foi possível ler o arquivo XML. Verifique se o formato é uma NF-e válida.",
                 });
             } finally {
-              // Reseta o input para permitir o upload do mesmo arquivo novamente
               if(fileInputRef.current) {
                 fileInputRef.current.value = "";
               }
@@ -217,25 +224,25 @@ export default function BatchPricingCalculator() {
     };
 
     const generatePdf = () => {
-        const doc = new jsPDF();
+        const doc = new jsPDF({orientation: "landscape"});
         
         doc.setFontSize(18);
         doc.text("Precificação de Lote", 14, 22);
 
         autoTable(doc, {
             startY: 30,
-            head: [['Descrição', 'Qtde', 'Custo Un. (R$)', 'Custo Total (R$)', 'Margem (%)', 'Venda Un. (R$)', 'Venda Total (R$)']],
+            head: [['Descrição', 'Qtde', 'C. Orig. Un.', 'Impostos Un.', 'Desc. Un.', 'C. Final Un.', 'Margem (%)', 'Venda Un.', 'Venda Total']],
             body: items.map(item => {
                 const quantity = parseFloat(item.quantity) || 0;
-                const cost = parseFloat(item.cost) || 0;
                 const price = parseFloat(item.price) || 0;
-                const totalCost = quantity * cost;
                 const totalSale = quantity * price;
                 return [
                     item.description,
                     formatNumber(quantity),
-                    formatCurrency(cost),
-                    formatCurrency(totalCost),
+                    formatCurrency(parseFloat(item.originalCost) || 0),
+                    formatCurrency(parseFloat(item.impostos) || 0),
+                    formatCurrency(parseFloat(item.desconto) || 0),
+                    formatCurrency(parseFloat(item.finalCost) || 0),
                     `${formatNumber(parseFloat(item.margin) || 0)}%`,
                     formatCurrency(price),
                     formatCurrency(totalSale)
@@ -243,11 +250,10 @@ export default function BatchPricingCalculator() {
             }),
             foot: [
                 [
-                    { content: 'Totais:', colSpan: 3, styles: { halign: 'right', fontStyle: 'bold' } },
-                    { content: formatCurrency(totals.totalCost), styles: { fontStyle: 'bold' } },
-                    { content: 'Média (%):', styles: { halign: 'right', fontStyle: 'bold' } },
+                    { content: 'Totais:', colSpan: 6, styles: { halign: 'right', fontStyle: 'bold' } },
+                    { content: 'Média:', styles: { halign: 'right', fontStyle: 'bold' } },
                     { content: `${formatNumber(totals.averageMargin)}%`, styles: { fontStyle: 'bold' } },
-                    { content: formatCurrency(totals.totalValue), styles: { fontStyle: 'bold' } },
+                    { content: formatCurrency(totals.totalSaleValue), styles: { fontStyle: 'bold' } },
                 ]
             ],
             headStyles: { fillColor: [63, 81, 181] },
@@ -281,63 +287,54 @@ export default function BatchPricingCalculator() {
                     <TableRow>
                     <TableHead className="min-w-[250px]">Descrição</TableHead>
                     <TableHead className="w-[80px]">Qtde</TableHead>
-                    <TableHead className="w-[120px]">Custo Un. Final (R$)</TableHead>
-                    <TableHead className="w-[120px]">Custo Total (R$)</TableHead>
+                    <TableHead className="w-[120px]">C. Orig. Un.</TableHead>
+                    <TableHead className="w-[120px]">Impostos (+)</TableHead>
+                    <TableHead className="w-[120px]">Desconto (-)</TableHead>
+                    <TableHead className="w-[120px] bg-muted">C. Final Un.</TableHead>
                     <TableHead className="w-[120px]">Margem (%)</TableHead>
-                    <TableHead className="w-[120px]">Venda Un. (R$)</TableHead>
-                    <TableHead className="w-[120px]">Venda Total (R$)</TableHead>
+                    <TableHead className="w-[120px]">Venda Un.</TableHead>
+                    <TableHead className="w-[120px]">Venda Total</TableHead>
                     <TableHead className="w-[50px]"></TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {items.map(item => {
                         const quantity = parseFloat(item.quantity) || 0;
-                        const cost = parseFloat(item.cost) || 0;
                         const price = parseFloat(item.price) || 0;
-                        const totalCost = quantity * cost;
                         const totalSale = quantity * price;
                         return (
                             <TableRow key={item.id}>
                                 <TableCell>
-                                    <Input
-                                    type="text"
-                                    placeholder="Nome do produto"
-                                    value={item.description}
-                                    onChange={e => handleItemChange(item.id, 'description', e.target.value)}
-                                    />
+                                    <Input type="text" placeholder="Nome do produto" value={item.description}
+                                    onChange={e => handleItemChange(item.id, 'description', e.target.value)} />
                                 </TableCell>
                                 <TableCell>
-                                    <Input
-                                    type="number"
-                                    value={item.quantity}
-                                    onChange={e => handleItemChange(item.id, 'quantity', e.target.value)}
-                                    />
+                                    <Input type="number" value={item.quantity}
+                                    onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} />
                                 </TableCell>
                                 <TableCell>
-                                    <Input
-                                    type="number"
-                                    value={item.cost}
-                                    onChange={e => handleItemChange(item.id, 'cost', e.target.value)}
-                                    />
-                                </TableCell>
-                                    <TableCell>
-                                    <div className="w-full h-10 px-3 py-2 rounded-md border border-input bg-muted flex items-center text-sm">
-                                        {formatCurrency(totalCost)}
-                                    </div>
+                                    <Input type="number" value={item.originalCost}
+                                    onChange={e => handleItemChange(item.id, 'originalCost', e.target.value)} />
                                 </TableCell>
                                 <TableCell>
-                                    <Input
-                                    type="number"
-                                    value={item.margin}
-                                    onChange={e => handleItemChange(item.id, 'margin', e.target.value)}
-                                    />
+                                    <Input type="number" value={item.impostos}
+                                    onChange={e => handleItemChange(item.id, 'impostos', e.target.value)} />
                                 </TableCell>
                                 <TableCell>
-                                    <Input
-                                    type="number"
-                                    value={item.price}
-                                    onChange={e => handleItemChange(item.id, 'price', e.target.value)}
-                                    />
+                                    <Input type="number" value={item.desconto}
+                                    onChange={e => handleItemChange(item.id, 'desconto', e.target.value)} />
+                                </TableCell>
+                                <TableCell>
+                                    <Input type="number" value={item.finalCost}
+                                    onChange={e => handleItemChange(item.id, 'finalCost', e.target.value)} className="bg-muted font-bold" />
+                                </TableCell>
+                                <TableCell>
+                                    <Input type="number" value={item.margin}
+                                    onChange={e => handleItemChange(item.id, 'margin', e.target.value)} />
+                                </TableCell>
+                                <TableCell>
+                                    <Input type="number" value={item.price}
+                                    onChange={e => handleItemChange(item.id, 'price', e.target.value)} />
                                 </TableCell>
                                 <TableCell>
                                     <div className="w-full h-10 px-3 py-2 rounded-md border border-input bg-muted flex items-center text-sm">
@@ -355,35 +352,30 @@ export default function BatchPricingCalculator() {
                 </TableBody>
                 <TableFooter>
                     <TableRow>
-                        <TableCell colSpan={3} className="text-right font-bold">Totais:</TableCell>
-                        <TableCell className="font-bold">
-                            <div className="w-full h-10 px-3 py-2 rounded-md border border-input bg-muted flex items-center text-sm font-bold">
-                                {formatCurrency(totals.totalCost)}
-                            </div>
-                        </TableCell>
-                        <TableCell className="text-right font-bold">
+                        <TableCell colSpan={6} className="text-right font-bold">Totais:</TableCell>
+                        <TableCell className="font-bold text-right">
                             <div className="flex items-center justify-end space-x-2">
-                                <span>Média (%)</span>
+                                <span>Média</span>
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                             <Info className="h-4 w-4 text-muted-foreground" />
                                         </TooltipTrigger>
                                         <TooltipContent>
-                                        <p>sobre o custo total</p>
+                                        <p>Média de margem sobre o custo total</p>
                                         </TooltipContent>
                                     </Tooltip>
                                 </TooltipProvider>
                             </div>
                         </TableCell>
-                            <TableCell className="font-bold">
+                        <TableCell className="font-bold">
                             <div className="w-full h-10 px-3 py-2 rounded-md border border-input bg-muted flex items-center text-sm font-bold">
                                 {`${formatNumber(totals.averageMargin)}%`}
                             </div>
                         </TableCell>
                         <TableCell className="font-bold">
                             <div className="w-full h-10 px-3 py-2 rounded-md border border-input bg-muted flex items-center text-sm font-bold">
-                                {formatCurrency(totals.totalValue)}
+                                {formatCurrency(totals.totalSaleValue)}
                             </div>
                         </TableCell>
                         <TableCell></TableCell>
