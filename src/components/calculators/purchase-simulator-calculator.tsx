@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import type { NfeInfo, PurchaseSimulation } from "@/lib/types";
 import * as db from '@/lib/db';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
-import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Label } from "../ui/label";
 import { format as formatDate, parseISO, addDays } from "date-fns";
 import { DatePickerWithRange } from "../ui/date-range-picker";
@@ -481,7 +481,7 @@ export default function PurchaseSimulatorCalculator() {
                                 <DialogContent>
                                     <DialogHeader>
                                         <DialogTitle>{editingSimulationId ? 'Atualizar Simulação' : 'Salvar Nova Simulação'}</DialogTitle>
-                                        <AlertDialogDescription>{editingSimulationId ? 'Confirme ou edite o nome e atualize esta simulação.' : 'Dê um nome para esta simulação para encontrá-la depois.'}</AlertDialogDescription>
+                                        <DialogDescription>{editingSimulationId ? 'Confirme ou edite o nome e atualize esta simulação.' : 'Dê um nome para esta simulação para encontrá-la depois.'}</DialogDescription>
                                     </DialogHeader>
                                     <div className="py-4">
                                         <Label htmlFor="sim-name">Nome da Simulação</Label>
@@ -566,7 +566,7 @@ export default function PurchaseSimulatorCalculator() {
                                             <TableHead className="w-[100px] text-right p-2">Qtde. Original</TableHead>
                                             <TableHead className="p-2 w-[120px]">Qtde. Simulada</TableHead>
                                             <TableHead className="text-right p-2 w-[120px]">Custo Líquido (NF-e)</TableHead>
-                                            <TableHead className="text-right p-2 w-[120px]">Custos Adicionais/Un.</TableHead>
+                                            <TableHead className="text-right p-2">Custos Adicionais/Un.</TableHead>
                                             <TableHead className="text-right p-2">Custo Un. Final</TableHead>
                                             <TableHead className="text-right p-2">Custo Total Orig.</TableHead>
                                             <TableHead className="text-right font-bold text-primary p-2">Custo Total Sim.</TableHead>
@@ -588,7 +588,7 @@ export default function PurchaseSimulatorCalculator() {
                                                     />
                                                 </TableCell>
                                                 <TableCell className="text-right p-2 w-[120px]">{formatCurrency(item.unitCost)}</TableCell>
-                                                <TableCell className="text-right p-2 w-[120px] text-red-500">{formatCurrency(item.additionalCosts)}</TableCell>
+                                                <TableCell className="text-right p-2 text-red-500">{formatCurrency(item.additionalCosts)}</TableCell>
                                                 <TableCell className="text-right p-2 font-bold">{formatCurrency(item.finalUnitCost)}</TableCell>
                                                 <TableCell className="text-right p-2">{formatCurrency(item.originalTotalCost)}</TableCell>
                                                 <TableCell className="text-right font-bold text-primary p-2">{formatCurrency(item.simulatedTotalCost)}</TableCell>
@@ -729,4 +729,5 @@ export default function PurchaseSimulatorCalculator() {
             </AlertDialog>
         </>
     );
-}
+
+    
