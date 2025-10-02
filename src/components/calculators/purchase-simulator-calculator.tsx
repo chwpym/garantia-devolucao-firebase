@@ -167,10 +167,10 @@ export default function PurchaseSimulatorCalculator() {
                         additionalCosts: 0, // Placeholder, will be calculated
                         ipi: parseFloat(imposto?.IPI?.IPITrib?.vIPI) || 0,
                         icmsST: parseFloat(imposto?.ICMS?.ICMSST?.vICMSST) || 0,
-                        frete: (parseFloat(total.vFrete) || 0) * itemWeight,
-                        seguro: (parseFloat(total.vSeg) || 0) * itemWeight,
-                        desconto: (parseFloat(total.vDesc) || 0) * itemWeight,
-                        outras: (parseFloat(total.vOutro) || 0) * itemWeight,
+                        frete: itemWeight > 0 ? (parseFloat(total.vFrete) || 0) * itemWeight : 0,
+                        seguro: itemWeight > 0 ? (parseFloat(total.vSeg) || 0) * itemWeight : 0,
+                        desconto: itemWeight > 0 ? (parseFloat(total.vDesc) || 0) * itemWeight : 0,
+                        outras: itemWeight > 0 ? (parseFloat(total.vOutro) || 0) * itemWeight : 0,
                     };
                     
                     const costs = calculateCosts(baseItem);
@@ -731,5 +731,6 @@ export default function PurchaseSimulatorCalculator() {
         </>
     );
 }
+
 
 
