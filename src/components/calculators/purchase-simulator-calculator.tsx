@@ -16,8 +16,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../ui
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import type { NfeInfo, PurchaseSimulation } from "@/lib/types";
 import * as db from '@/lib/db';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription as AlertDialogDescriptionComponent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Label } from "../ui/label";
 import { format as formatDate, parseISO, addDays } from "date-fns";
 import { DatePickerWithRange } from "../ui/date-range-picker";
@@ -56,7 +56,7 @@ interface InfNFe {
         ICMSTot: {
             vProd: string;
             vFrete: string;
-            vSeg: string;
+vSeg: string;
             vDesc: string;
             vOutro: string;
         }
@@ -165,8 +165,8 @@ export default function PurchaseSimulatorCalculator() {
                         simulatedQuantity: prod.qCom,
                         unitCost: parseFloat(prod.vUnCom),
                         additionalCosts: 0, // Placeholder, will be calculated
-                        ipi: parseFloat(imposto.IPI?.IPITrib?.vIPI) || 0,
-                        icmsST: parseFloat(imposto.ICMS?.ICMSST?.vICMSST) || 0,
+                        ipi: parseFloat(imposto?.IPI?.IPITrib?.vIPI) || 0,
+                        icmsST: parseFloat(imposto?.ICMS?.ICMSST?.vICMSST) || 0,
                         frete: (parseFloat(total.vFrete) || 0) * itemWeight,
                         seguro: (parseFloat(total.vSeg) || 0) * itemWeight,
                         desconto: (parseFloat(total.vDesc) || 0) * itemWeight,
@@ -716,9 +716,9 @@ export default function PurchaseSimulatorCalculator() {
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-                        <AlertDialogDescription>
+                        <AlertDialogDescriptionComponent>
                             Tem certeza que deseja excluir a simulação &quot;{deleteTarget?.simulationName}&quot;? Esta ação não pode ser desfeita.
-                        </AlertDialogDescription>
+                        </AlertDialogDescriptionComponent>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
@@ -731,4 +731,5 @@ export default function PurchaseSimulatorCalculator() {
         </>
     );
 }
+
 
