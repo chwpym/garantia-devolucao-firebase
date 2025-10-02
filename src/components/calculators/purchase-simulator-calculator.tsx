@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import type { NfeInfo, PurchaseSimulation } from "@/lib/types";
 import * as db from '@/lib/db';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { Label } from "../ui/label";
 import { format as formatDate, parseISO, addDays } from "date-fns";
 import { DatePickerWithRange } from "../ui/date-range-picker";
@@ -159,7 +159,7 @@ export default function PurchaseSimulatorCalculator() {
                     const itemTotalCost = parseFloat(prod.vProd);
                     const itemWeight = totalProdValue > 0 ? itemTotalCost / totalProdValue : 0;
                     
-                    const baseItem = {
+                    const baseItem: Omit<SimulatedItem, 'id' | 'description' | 'finalUnitCost' | 'originalTotalCost' | 'simulatedTotalCost'> = {
                         originalQuantity: parseFloat(prod.qCom),
                         simulatedQuantity: prod.qCom,
                         unitCost: parseFloat(prod.vUnCom),
@@ -481,7 +481,7 @@ export default function PurchaseSimulatorCalculator() {
                                 <DialogContent>
                                     <DialogHeader>
                                         <DialogTitle>{editingSimulationId ? 'Atualizar Simulação' : 'Salvar Nova Simulação'}</DialogTitle>
-                                        <DialogDescription>{editingSimulationId ? 'Confirme ou edite o nome e atualize esta simulação.' : 'Dê um nome para esta simulação para encontrá-la depois.'}</DialogDescription>
+                                        <AlertDialogDescription>{editingSimulationId ? 'Confirme ou edite o nome e atualize esta simulação.' : 'Dê um nome para esta simulação para encontrá-la depois.'}</AlertDialogDescription>
                                     </DialogHeader>
                                     <div className="py-4">
                                         <Label htmlFor="sim-name">Nome da Simulação</Label>
