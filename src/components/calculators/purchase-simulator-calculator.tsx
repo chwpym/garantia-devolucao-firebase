@@ -17,7 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import type { NfeInfo, PurchaseSimulation } from "@/lib/types";
 import * as db from '@/lib/db';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Label } from "../ui/label";
 import { format as formatDate, parseISO, addDays } from "date-fns";
 import { DatePickerWithRange } from "../ui/date-range-picker";
@@ -164,13 +164,13 @@ export default function PurchaseSimulatorCalculator() {
                         originalQuantity: parseFloat(prod.qCom),
                         simulatedQuantity: prod.qCom,
                         unitCost: parseFloat(prod.vUnCom),
+                        additionalCosts: 0, // Placeholder, will be calculated
                         ipi: parseFloat(imposto.IPI?.IPITrib?.vIPI) || 0,
                         icmsST: parseFloat(imposto.ICMS?.ICMSST?.vICMSST) || 0,
                         frete: (parseFloat(total.vFrete) || 0) * itemWeight,
                         seguro: (parseFloat(total.vSeg) || 0) * itemWeight,
                         desconto: (parseFloat(total.vDesc) || 0) * itemWeight,
                         outras: (parseFloat(total.vOutro) || 0) * itemWeight,
-                        additionalCosts: 0, // Placeholder, will be calculated
                     };
                     
                     const costs = calculateCosts(baseItem);
@@ -413,7 +413,7 @@ export default function PurchaseSimulatorCalculator() {
             doc.rect(x, cardY, cardWidth, cardHeight, 'FD');
             
             doc.setFontSize(10);
-            doc.setTextColor(100, 100, 100);
+            doc.setTextColor("#64748b");
             doc.text(title, x + cardWidth / 2, cardY + 8, { align: 'center' });
             
             doc.setFontSize(14).setFont('helvetica', 'bold');
