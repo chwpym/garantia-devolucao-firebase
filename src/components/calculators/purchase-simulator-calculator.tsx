@@ -167,7 +167,7 @@ export default function PurchaseSimulatorCalculator() {
                         additionalCosts: 0, // Placeholder, will be calculated
                         ipi: parseFloat(imposto?.IPI?.IPITrib?.vIPI) || 0,
                         icmsST: parseFloat(imposto?.ICMS?.ICMSST?.vICMSST) || 0,
-                        frete: itemWeight > 0 ? (parseFloat(total.vFrete) || 0) * itemWeight : 0,
+                        frete: itemWeight,
                         seguro: itemWeight > 0 ? (parseFloat(total.vSeg) || 0) * itemWeight : 0,
                         desconto: itemWeight > 0 ? (parseFloat(total.vDesc) || 0) * itemWeight : 0,
                         outras: itemWeight > 0 ? (parseFloat(total.vOutro) || 0) * itemWeight : 0,
@@ -731,6 +731,7 @@ export default function PurchaseSimulatorCalculator() {
         </>
     );
 }
+
 
 
 
