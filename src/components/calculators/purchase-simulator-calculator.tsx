@@ -16,8 +16,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../ui
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import type { NfeInfo, PurchaseSimulation } from "@/lib/types";
 import * as db from '@/lib/db';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription as AlertDialogDescriptionComponent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Label } from "../ui/label";
 import { format as formatDate, parseISO, addDays } from "date-fns";
 import { DatePickerWithRange } from "../ui/date-range-picker";
@@ -167,10 +167,10 @@ export default function PurchaseSimulatorCalculator() {
                         additionalCosts: 0, // Placeholder, will be calculated
                         ipi: parseFloat(imposto?.IPI?.IPITrib?.vIPI) || 0,
                         icmsST: parseFloat(imposto?.ICMS?.ICMSST?.vICMSST) || 0,
-                        frete: itemWeight,
-                        seguro: itemWeight > 0 ? (parseFloat(total.vSeg) || 0) * itemWeight : 0,
-                        desconto: itemWeight > 0 ? (parseFloat(total.vDesc) || 0) * itemWeight : 0,
-                        outras: itemWeight > 0 ? (parseFloat(total.vOutro) || 0) * itemWeight : 0,
+                        frete: totalProdValue > 0 ? (parseFloat(total.vFrete) || 0) * itemWeight : 0,
+                        seguro: totalProdValue > 0 ? (parseFloat(total.vSeg) || 0) * itemWeight : 0,
+                        desconto: totalProdValue > 0 ? (parseFloat(total.vDesc) || 0) * itemWeight : 0,
+                        outras: totalProdValue > 0 ? (parseFloat(total.vOutro) || 0) * itemWeight : 0,
                     };
                     
                     const costs = calculateCosts(baseItem);
@@ -243,8 +243,7 @@ export default function PurchaseSimulatorCalculator() {
             return;
         }
 
-        const simulationData: Omit<PurchaseSimulation, 'id' | 'createdAt'> & { id?: number, createdAt?: string } = {
-            id: editingSimulationId || undefined,
+        const simulationData: Omit<PurchaseSimulation, 'id' | 'createdAt'> = {
             simulationName: simulationName,
             nfeInfo: nfeInfo,
             items: items.map(i => ({
@@ -716,9 +715,9 @@ export default function PurchaseSimulatorCalculator() {
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-                        <AlertDialogDescriptionComponent>
+                        <AlertDialogDescription>
                             Tem certeza que deseja excluir a simulação &quot;{deleteTarget?.simulationName}&quot;? Esta ação não pode ser desfeita.
-                        </AlertDialogDescriptionComponent>
+                        </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
@@ -731,6 +730,7 @@ export default function PurchaseSimulatorCalculator() {
         </>
     );
 }
+
 
 
 
