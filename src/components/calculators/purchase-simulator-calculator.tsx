@@ -17,7 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import type { NfeInfo, PurchaseSimulation } from "@/lib/types";
 import * as db from '@/lib/db';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Label } from "../ui/label";
 import { format as formatDate, parseISO, addDays } from "date-fns";
 import { DatePickerWithRange } from "../ui/date-range-picker";
@@ -57,7 +57,7 @@ interface InfNFe {
         ICMSTot: {
             vProd: string;
             vFrete: string;
-vSeg: string;
+            vSeg: string;
             vDesc: string;
             vOutro: string;
         }
@@ -264,7 +264,7 @@ export default function PurchaseSimulatorCalculator() {
                 await db.updateSimulation({ ...simulationData, id: editingSimulationId, createdAt: new Date().toISOString() });
                 toast({ title: "Sucesso!", description: `Simulação "${simulationName}" foi atualizada.`});
             } else {
-                await db.addSimulation({ ...simulationData, createdAt: new Date().toISOString() });
+                 await db.addSimulation({ ...simulationData, createdAt: new Date().toISOString() });
                 toast({ title: "Sucesso!", description: `Simulação "${simulationName}" foi salva.`});
             }
             loadSimulations();
@@ -485,7 +485,7 @@ export default function PurchaseSimulatorCalculator() {
                                 <DialogContent>
                                     <DialogHeader>
                                         <DialogTitle>{editingSimulationId ? 'Atualizar Simulação' : 'Salvar Nova Simulação'}</DialogTitle>
-                                        <DialogDescription>{editingSimulationId ? 'Confirme ou edite o nome e atualize esta simulação.' : 'Dê um nome para esta simulação para encontrá-la depois.'}</DialogDescription>
+                                        <AlertDialogDescription>{editingSimulationId ? 'Confirme ou edite o nome e atualize esta simulação.' : 'Dê um nome para esta simulação para encontrá-la depois.'}</AlertDialogDescription>
                                     </DialogHeader>
                                     <div className="py-4">
                                         <Label htmlFor="sim-name">Nome da Simulação</Label>
@@ -569,7 +569,7 @@ export default function PurchaseSimulatorCalculator() {
                                             <TableHead className="min-w-[150px] p-2">Código</TableHead>
                                             <TableHead className="min-w-[250px] p-2">Descrição</TableHead>
                                             <TableHead className="w-[100px] text-right p-2">Qtde. Original</TableHead>
-                                            <TableHead className="p-2 w-[120px]">Qtde. Simulada</TableHead>
+                                            <TableHead className="p-2 w-[120px] text-left">Qtde. Simulada</TableHead>
                                             <TableHead className="text-right p-2 w-[120px]">Custo Líquido (NF-e)</TableHead>
                                             <TableHead className="text-right p-2">Custos Adicionais/Un.</TableHead>
                                             <TableHead className="text-right p-2">Custo Un. Final</TableHead>
@@ -588,7 +588,7 @@ export default function PurchaseSimulatorCalculator() {
                                                     <Input
                                                         type="text"
                                                         inputMode="decimal"
-                                                        className="h-8 text-right w-[100px]"
+                                                        className="h-8 w-[100px]"
                                                         value={item.simulatedQuantity}
                                                         onChange={(e) => handleQuantityChange(item.id, e.target.value)}
                                                     />
