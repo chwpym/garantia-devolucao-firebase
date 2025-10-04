@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import type { NfeInfo, PurchaseSimulation } from "@/lib/types";
+import type { NfeInfo, PurchaseSimulation, SimulatedItemData } from "@/lib/types";
 import * as db from '@/lib/db';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
@@ -264,7 +264,10 @@ export default function PurchaseSimulatorCalculator() {
                 await db.updateSimulation({ ...simulationData, id: editingSimulationId, createdAt: new Date().toISOString() });
                 toast({ title: "Sucesso!", description: `Simulação "${simulationName}" foi atualizada.`});
             } else {
-                 await db.addSimulation({ ...simulationData, createdAt: new Date().toISOString() });
+                const { id, ...dataWithoutId } = { ...simulationData, id: editingSimulationId || undefined, createdAt: new Date().toISOString() };
+                if (id === undefined) {
+                    await db.addSimulation(dataWithoutId);
+                }
                 toast({ title: "Sucesso!", description: `Simulação "${simulationName}" foi salva.`});
             }
             loadSimulations();
@@ -485,7 +488,7 @@ export default function PurchaseSimulatorCalculator() {
                                 <DialogContent>
                                     <DialogHeader>
                                         <DialogTitle>{editingSimulationId ? 'Atualizar Simulação' : 'Salvar Nova Simulação'}</DialogTitle>
-                                        <AlertDialogDescription>{editingSimulationId ? 'Confirme ou edite o nome e atualize esta simulação.' : 'Dê um nome para esta simulação para encontrá-la depois.'}</AlertDialogDescription>
+                                        <DialogDescription>{editingSimulationId ? 'Confirme ou edite o nome e atualize esta simulação.' : 'Dê um nome para esta simulação para encontrá-la depois.'}</DialogDescription>
                                     </DialogHeader>
                                     <div className="py-4">
                                         <Label htmlFor="sim-name">Nome da Simulação</Label>
@@ -569,7 +572,7 @@ export default function PurchaseSimulatorCalculator() {
                                             <TableHead className="min-w-[150px] p-2">Código</TableHead>
                                             <TableHead className="min-w-[250px] p-2">Descrição</TableHead>
                                             <TableHead className="w-[100px] text-right p-2">Qtde. Original</TableHead>
-                                            <TableHead className="p-2 w-[120px] text-left">Qtde. Simulada</TableHead>
+                                            <TableHead className="p-2 w-[120px] text-right">Qtde. Simulada</TableHead>
                                             <TableHead className="text-right p-2 w-[120px]">Custo Líquido (NF-e)</TableHead>
                                             <TableHead className="text-right p-2">Custos Adicionais/Un.</TableHead>
                                             <TableHead className="text-right p-2">Custo Un. Final</TableHead>
@@ -588,7 +591,7 @@ export default function PurchaseSimulatorCalculator() {
                                                     <Input
                                                         type="text"
                                                         inputMode="decimal"
-                                                        className="h-8 w-[100px]"
+                                                        className="h-8 w-[100px] text-right"
                                                         value={item.simulatedQuantity}
                                                         onChange={(e) => handleQuantityChange(item.id, e.target.value)}
                                                     />
