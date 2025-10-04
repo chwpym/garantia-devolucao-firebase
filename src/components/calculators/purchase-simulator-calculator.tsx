@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import type { NfeInfo, PurchaseSimulation, SimulatedItemData } from "@/lib/types";
+import type { NfeInfo, PurchaseSimulation } from "@/lib/types";
 import * as db from '@/lib/db';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose, DialogDescription } from "@/components/ui/dialog";
@@ -26,6 +26,7 @@ import { DateRange } from "react-day-picker";
 
 interface SimulatedItem {
     id: number;
+    code: string;
     description: string;
     originalQuantity: number;
     simulatedQuantity: string;
@@ -112,7 +113,7 @@ export default function PurchaseSimulatorCalculator() {
         loadSimulations();
     }, [loadSimulations]);
 
-    const calculateCosts = (item: Omit<SimulatedItem, 'id' | 'description' | 'finalUnitCost' | 'originalTotalCost' | 'simulatedTotalCost'>) => {
+    const calculateCosts = (item: Omit<SimulatedItem, 'id' | 'code' | 'description' | 'finalUnitCost' | 'originalTotalCost' | 'simulatedTotalCost'>) => {
         const totalAdditionalCosts = item.ipi + item.icmsST + item.frete + item.seguro + item.outras - item.desconto;
         const additionalCostsPerUnit = item.originalQuantity > 0 ? totalAdditionalCosts / item.originalQuantity : 0;
         
@@ -160,17 +161,17 @@ export default function PurchaseSimulatorCalculator() {
                     const itemTotalCost = parseFloat(prod.vProd);
                     const itemWeight = totalProdValue > 0 ? itemTotalCost / totalProdValue : 0;
                     
-                    const baseItem: Omit<SimulatedItem, 'id' | 'description' | 'finalUnitCost' | 'originalTotalCost' | 'simulatedTotalCost'> = {
+                    const baseItem: Omit<SimulatedItem, 'id' | 'code' | 'description' | 'finalUnitCost' | 'originalTotalCost' | 'simulatedTotalCost'> = {
                         originalQuantity: parseFloat(prod.qCom),
                         simulatedQuantity: prod.qCom,
                         unitCost: parseFloat(prod.vUnCom),
                         additionalCosts: 0, // Placeholder, will be calculated
                         ipi: parseFloat(imposto?.IPI?.IPITrib?.vIPI) || 0,
                         icmsST: parseFloat(imposto?.ICMS?.ICMSST?.vICMSST) || 0,
-                        frete: totalProdValue > 0 ? (parseFloat(total.vFrete) || 0) * itemWeight : 0,
-                        seguro: totalProdValue > 0 ? (parseFloat(total.vSeg) || 0) * itemWeight : 0,
-                        desconto: totalProdValue > 0 ? (parseFloat(total.vDesc) || 0) * itemWeight : 0,
-                        outras: totalProdValue > 0 ? (parseFloat(total.vOutro) || 0) * itemWeight : 0,
+                        frete: itemWeight * (parseFloat(total.vFrete) || 0),
+                        seguro: itemWeight * (parseFloat(total.vSeg) || 0),
+                        desconto: itemWeight * (parseFloat(total.vDesc) || 0),
+                        outras: itemWeight * (parseFloat(total.vOutro) || 0),
                     };
                     
                     const costs = calculateCosts(baseItem);
@@ -178,6 +179,7 @@ export default function PurchaseSimulatorCalculator() {
 
                     return {
                         id: Date.now() + index,
+                        code: prod.cProd,
                         description: prod.xProd,
                         ...baseItem,
                         ...costs,
@@ -247,6 +249,7 @@ export default function PurchaseSimulatorCalculator() {
             simulationName: simulationName,
             nfeInfo: nfeInfo,
             items: items.map(i => ({
+                code: i.code,
                 description: i.description,
                 originalQuantity: i.originalQuantity,
                 simulatedQuantity: i.simulatedQuantity,
@@ -359,8 +362,9 @@ export default function PurchaseSimulatorCalculator() {
             doc.text(`NF-e: ${nfeInfo.nfeNumber} | Emitente: ${nfeInfo.emitterName}`, 14, 32);
         }
 
-        const head = [['Descrição', 'Qtde Orig.', 'Qtde Sim.', 'Custo Un. Final', 'Custo Total Orig.', 'Custo Total Sim.']];
+        const head = [['Código', 'Descrição', 'Qtde Orig.', 'Qtde Sim.', 'Custo Un. Final', 'Custo Total Orig.', 'Custo Total Sim.']];
         const body = items.map(item => [
+            item.code,
             item.description,
             formatNumber(item.originalQuantity),
             formatNumber(parseFloat(item.simulatedQuantity) || 0),
@@ -374,7 +378,7 @@ export default function PurchaseSimulatorCalculator() {
             head: head,
             body: body,
             foot: [
-                ['Total:', '', '', '', formatCurrency(originalNfeTotalCost), formatCurrency(totals.simulatedTotalCost)]
+                ['Total:', '', '', '', '', formatCurrency(originalNfeTotalCost), formatCurrency(totals.simulatedTotalCost)]
             ],
             headStyles: { fillColor: [63, 81, 181] },
             footStyles: { fontStyle: 'bold', fillColor: [224, 224, 224], textColor: [0, 0, 0] },
@@ -562,6 +566,7 @@ export default function PurchaseSimulatorCalculator() {
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
+                                            <TableHead className="min-w-[150px] p-2">Código</TableHead>
                                             <TableHead className="min-w-[250px] p-2">Descrição</TableHead>
                                             <TableHead className="w-[100px] text-right p-2">Qtde. Original</TableHead>
                                             <TableHead className="p-2 w-[120px]">Qtde. Simulada</TableHead>
@@ -576,6 +581,7 @@ export default function PurchaseSimulatorCalculator() {
                                     <TableBody>
                                         {items.map(item => (
                                             <TableRow key={item.id}>
+                                                <TableCell className="font-medium text-xs p-2">{item.code}</TableCell>
                                                 <TableCell className="font-medium text-xs p-2">{item.description}</TableCell>
                                                 <TableCell className="w-[100px] text-right p-2">{formatNumber(item.originalQuantity)}</TableCell>
                                                 <TableCell className="p-2 w-[120px]">
@@ -602,7 +608,7 @@ export default function PurchaseSimulatorCalculator() {
                                     </TableBody>
                                     <TableFooter>
                                         <TableRow className="font-bold bg-muted/50">
-                                            <TableCell colSpan={6} className="text-right p-2">Totais:</TableCell>
+                                            <TableCell colSpan={7} className="text-right p-2">Totais:</TableCell>
                                             <TableCell className="text-right p-2">{formatCurrency(originalNfeTotalCost)}</TableCell>
                                             <TableCell className="text-right text-primary p-2">{formatCurrency(totals.simulatedTotalCost)}</TableCell>
                                             <TableCell className="p-2"></TableCell>
@@ -736,5 +742,7 @@ export default function PurchaseSimulatorCalculator() {
 
 
 
+
+    
 
     

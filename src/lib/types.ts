@@ -1,4 +1,5 @@
 
+
 'use client';
 
 export type WarrantyStatus = 'Em análise' | 'Aprovada' | 'Recusada' | 'Paga';
@@ -128,6 +129,7 @@ export interface NfeInfo {
 }
 
 export interface SimulatedItemData {
+    code: string;
     description: string;
     originalQuantity: number;
     simulatedQuantity: string;
@@ -143,5 +145,7 @@ export interface PurchaseSimulation {
     simulatedTotalCost: number;
     createdAt: string;
 }
+
+    
 
     
