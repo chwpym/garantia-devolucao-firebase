@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import AppLayout from '@/components/app-layout';
 
 import DashboardSection from '@/components/sections/dashboard-section';
@@ -18,97 +17,53 @@ import DevolucaoRegisterSection from '@/components/sections/devolucao-register-s
 import DevolucaoQuerySection from '@/components/sections/devolucao-query-section';
 import DevolucaoReportSection from '@/components/sections/devolucao-report-section';
 import CalculatorsSection from '@/components/sections/calculators-section';
-import type { Warranty } from '@/lib/types';
 import BatchRegisterSection from '@/components/sections/batch-register-section';
 import { cn } from '@/lib/utils';
 import ProductsSection from '@/components/sections/products-section';
 import ProductReportSection from '@/components/sections/product-report-section';
-
-export type RegisterMode = 'edit' | 'clone';
+import { useAppStore } from '@/store/app-store';
+import type { Warranty } from '@/lib/types';
 
 export default function Home() {
-  const [activeView, setActiveView] = useState('dashboard');
-  const [selectedLoteId, setSelectedLoteId] = useState<number | null>(null);
-  
-  const [editingDevolucaoId, setEditingDevolucaoId] = useState<number | null>(null);
-  const [editingWarrantyId, setEditingWarrantyId] = useState<number | null>(null);
-  const [registerMode, setRegisterMode] = useState<RegisterMode>('edit');
-  
-  const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isNewLoteModalOpen, setIsNewLoteModalOpen] = useState(false);
+  const {
+    activeView,
+    selectedLoteId,
+    editingDevolucaoId,
+    editingWarrantyId,
+    registerMode,
+    setActiveView,
+    handleNavigateToLote,
+    handleBackToList,
+    handleEditDevolucao,
+    handleDevolucaoSaved,
+    handleEditWarranty,
+    handleCloneWarranty,
+    handleWarrantySave,
+  } = useAppStore();
+
   const isMobile = useIsMobile();
-
-
-  const handleNavigateToLote = (loteId: number) => {
-    setSelectedLoteId(loteId);
-    setActiveView('loteDetail');
-  };
-
-  const handleBackToList = () => {
-    setSelectedLoteId(null);
-    setActiveView('lotes');
-  }
-
-  const handleEditDevolucao = (devolucaoId: number) => {
-    setEditingDevolucaoId(devolucaoId);
-    setActiveView('devolucao-register');
-  }
-  
-  const handleDevolucaoSaved = () => {
-    setEditingDevolucaoId(null);
-    setActiveView('devolucao-query');
-  }
-
-  const handleEditWarranty = (warranty: Warranty) => {
-    setEditingWarrantyId(warranty.id!);
-    setRegisterMode('edit');
-    setActiveView('register');
-  }
-
-  const handleCloneWarranty = (warranty: Warranty) => {
-    setEditingWarrantyId(warranty.id!);
-    setRegisterMode('clone');
-    setActiveView('register');
-  }
-  
-  const handleWarrantySave = () => {
-    setEditingWarrantyId(null);
-    setActiveView('query');
-  }
-  
-  const handleViewChange = (view: string) => {
-    // Reset editing states when changing views
-    if (view !== 'register') {
-      setEditingWarrantyId(null);
-    }
-    if (view !== 'devolucao-register') {
-      setEditingDevolucaoId(null);
-    }
-    setActiveView(view);
-  }
-
 
   const renderContent = () => {
     switch (activeView) {
       case 'dashboard':
-        return <DashboardSection setActiveView={handleViewChange} />;
+        return <DashboardSection setActiveView={setActiveView} />;
       case 'register':
         return <RegisterSection 
                     editingId={editingWarrantyId} 
                     mode={registerMode} 
                     onSave={handleWarrantySave} 
-                    onClear={() => setEditingWarrantyId(null)}
+                    onClear={() => useAppStore.getState().clearEditingWarranty()}
                 />;
       case 'batch-register':
         return <BatchRegisterSection />;
       case 'query':
         return <QuerySection 
-                    setActiveView={handleViewChange} 
+                    setActiveView={setActiveView} 
                     onEdit={handleEditWarranty} 
                     onClone={handleCloneWarranty}
                 />;
       case 'lotes':
-        return <LotesSection onNavigateToLote={handleNavigateToLote} isNewLoteModalOpen={isNewLoteModalOpen} setIsNewLoteModalOpen={setIsNewLoteModalOpen} />;
+        return <LotesSection onNavigateToLote={handleNavigateToLote} />;
       case 'loteDetail':
         return <LoteDetailSection loteId={selectedLoteId!} onBack={handleBackToList} />;
       case 'reports':
@@ -134,7 +89,7 @@ export default function Home() {
       case 'calculators':
         return <CalculatorsSection />;
       default:
-        return <DashboardSection setActiveView={handleViewChange} />;
+        return <DashboardSection setActiveView={setActiveView} />;
     }
   };
   
@@ -142,16 +97,7 @@ export default function Home() {
 
 
   return (
-      <AppLayout 
-        activeView={activeView} 
-        setActiveView={handleViewChange} 
-        isMobileMenuOpen={isMobileMenuOpen}
-        setMobileMenuOpen={setMobileMenuOpen}
-        onNewLoteClick={() => {
-            handleViewChange('lotes');
-            setIsNewLoteModalOpen(true);
-        }}
-      >
+      <AppLayout>
         <div className={cn(activeView === 'batch-register' ? "" : "max-w-7xl mx-auto w-full")}>
             {renderContent()}
         </div>

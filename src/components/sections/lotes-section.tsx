@@ -27,12 +27,11 @@ import {
 } from '@/components/ui/alert-dialog';
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
+import { useAppStore } from '@/store/app-store';
 
 
 interface LotesSectionProps {
     onNavigateToLote: (loteId: number) => void;
-    isNewLoteModalOpen?: boolean;
-    setIsNewLoteModalOpen?: (isOpen: boolean) => void;
 }
 
 interface LoteWithItemCount extends Lote {
@@ -40,13 +39,16 @@ interface LoteWithItemCount extends Lote {
 }
 
 
-export default function LotesSection({ onNavigateToLote, isNewLoteModalOpen = false, setIsNewLoteModalOpen }: LotesSectionProps) {
+export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
   const [lotes, setLotes] = useState<LoteWithItemCount[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLote, setEditingLote] = useState<Lote | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Lote | null>(null);
   const { toast } = useToast();
+
+  const isNewLoteModalOpen = useAppStore(state => state.isNewLoteModalOpen);
+  const setNewLoteModalOpen = useAppStore(state => state.setNewLoteModalOpen);
+
 
   const loadData = useCallback(async () => {
     try {
@@ -75,11 +77,10 @@ export default function LotesSection({ onNavigateToLote, isNewLoteModalOpen = fa
   }, [toast]);
   
   useEffect(() => {
-    if(isNewLoteModalOpen && setIsNewLoteModalOpen) {
+    if(isNewLoteModalOpen) {
       handleOpenModal();
-      setIsNewLoteModalOpen(false);
     }
-  }, [isNewLoteModalOpen, setIsNewLoteModalOpen]);
+  }, [isNewLoteModalOpen]);
 
   useEffect(() => {
     loadData();
@@ -90,13 +91,13 @@ export default function LotesSection({ onNavigateToLote, isNewLoteModalOpen = fa
   }, [loadData]);
   
   const handleSave = () => {
-    setIsModalOpen(false);
+    setNewLoteModalOpen(false);
     setEditingLote(null);
   };
   
   const handleEdit = (lote: Lote) => {
     setEditingLote(lote);
-    setIsModalOpen(true);
+    setNewLoteModalOpen(true);
   };
   
   const handleDeleteConfirm = async () => {
@@ -119,7 +120,7 @@ export default function LotesSection({ onNavigateToLote, isNewLoteModalOpen = fa
   
   const handleOpenModal = () => {
     setEditingLote(null);
-    setIsModalOpen(true);
+    setNewLoteModalOpen(true);
   };
 
   const getStatusVariant = (status: Lote['status']) => {
@@ -215,7 +216,7 @@ export default function LotesSection({ onNavigateToLote, isNewLoteModalOpen = fa
          </div>
       )}
       
-       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+       <Dialog open={isNewLoteModalOpen} onOpenChange={setNewLoteModalOpen}>
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>{editingLote ? 'Editar Lote' : 'Criar Novo Lote de Garantia'}</DialogTitle>

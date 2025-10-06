@@ -8,21 +8,23 @@ import { ThemeToggle } from './theme-toggle';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
 import MobileSidebar from './mobile-sidebar';
 import QuickShortcuts from './quick-shortcuts';
+import { useAppStore } from '@/store/app-store';
 
 interface AppLayoutProps {
   children: React.ReactNode;
-  activeView: string;
-  setActiveView: (view: string) => void;
-  isMobileMenuOpen: boolean;
-  setMobileMenuOpen: (isOpen: boolean) => void;
-  onNewLoteClick: () => void;
 }
 
-export default function AppLayout({ children, activeView, setActiveView, isMobileMenuOpen, setMobileMenuOpen, onNewLoteClick }: AppLayoutProps) {
+export default function AppLayout({ children }: AppLayoutProps) {
+  const { activeView, isMobileMenuOpen, setActiveView, setMobileMenuOpen, openNewLoteModal } = useAppStore();
 
   const handleNavClick = (view: string) => {
     setActiveView(view);
     setMobileMenuOpen(false);
+  };
+  
+  const handleNewLoteClick = () => {
+    setActiveView('lotes');
+    openNewLoteModal();
   };
 
   return (
@@ -81,7 +83,7 @@ export default function AppLayout({ children, activeView, setActiveView, isMobil
                 </SheetContent>
               </Sheet>
             </div>
-            <QuickShortcuts setActiveView={setActiveView} onNewLoteClick={onNewLoteClick} />
+            <QuickShortcuts setActiveView={setActiveView} onNewLoteClick={handleNewLoteClick} />
             <ThemeToggle />
           </div>
         </header>
