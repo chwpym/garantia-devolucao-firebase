@@ -1,9 +1,9 @@
+
 "use client";
 
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { XMLParser } from "fast-xml-parser";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatNumber } from "@/lib/utils";
+import { useNfeParser, type NfeData, type NfeProductDetail } from "@/hooks/use-nfe-parser";
+
 
 interface BatchPriceItem {
     id: number;
@@ -30,18 +32,74 @@ interface BatchPriceItem {
     price: string;
 }
 
-interface NfeProductDetail {
-    prod: Record<string, string>;
-    imposto: Record<string, Record<string, Record<string, string>>>;
-}
-  
 export default function BatchPricingCalculator() {
     const [items, setItems] = useState<BatchPriceItem[]>([
         { id: 1, description: "", quantity: "1", originalCost: "", impostos: "", desconto: "", finalCost: "", margin: "", price: "" },
     ]);
     const [globalMargin, setGlobalMargin] = useState("");
     const { toast } = useToast();
-    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const onNfeProcessed = (data: NfeData | null) => {
+        if (!data) {
+            setItems([{ id: 1, description: "", quantity: "1", originalCost: "", impostos: "", desconto: "", finalCost: "", margin: "", price: "" }]);
+            return;
+        }
+
+        const { infNFe, det: dets } = data;
+        const total = infNFe.total.ICMSTot;
+        
+        const totalProdValue = parseFloat(total.vProd) || 0;
+        const totalFrete = parseFloat(total.vFrete) || 0;
+        const totalSeguro = parseFloat(total.vSeg) || 0;
+        const totalOutras = parseFloat(total.vOutro) || 0;
+
+        const newItems: BatchPriceItem[] = dets.map((det: NfeProductDetail, index: number) => {
+            const prod = det.prod;
+            const imposto = det.imposto;
+
+            const quantity = parseFloat(prod.qCom) || 0;
+            const originalUnitCost = parseFloat(prod.vUnCom) || 0;
+            const itemTotalCost = parseFloat(prod.vProd) || 0;
+
+            const itemWeight = totalProdValue > 0 ? itemTotalCost / totalProdValue : 0;
+            
+            const ipiValor = parseFloat(imposto?.IPI?.IPITrib?.vIPI) || 0;
+            const stValor = parseFloat(imposto?.ICMS?.ICMSST?.vICMSST) || 0;
+            
+            const freteRateado = parseFloat(prod.vFrete) || (totalFrete * itemWeight) || 0;
+            const seguroRateado = parseFloat(prod.vSeg) || (totalSeguro * itemWeight) || 0;
+            const descontoTotal = parseFloat(prod.vDesc) || 0;
+            const outrasRateado = parseFloat(prod.vOutro) || (totalOutras * itemWeight) || 0;
+
+            const totalImpostosItem = ipiValor + stValor + freteRateado + seguroRateado + outrasRateado;
+            const finalTotalCost = itemTotalCost + totalImpostosItem - descontoTotal;
+            const finalUnitCost = quantity > 0 ? finalTotalCost / quantity : 0;
+            const impostosUnit = quantity > 0 ? totalImpostosItem / quantity : 0;
+            const descontoUnit = quantity > 0 ? descontoTotal / quantity : 0;
+            
+            return {
+                id: Date.now() + index,
+                description: prod.xProd || "",
+                quantity: String(quantity),
+                originalCost: originalUnitCost.toFixed(2),
+                impostos: impostosUnit.toFixed(2),
+                desconto: descontoUnit.toFixed(2),
+                finalCost: finalUnitCost.toFixed(2),
+                margin: "",
+                price: ""
+            };
+        });
+        
+        setItems(newItems.length > 0 ? newItems : [{ id: 1, description: "", quantity: "1", originalCost: "", impostos: "", desconto: "", finalCost: "", margin: "", price: "" }]);
+
+        toast({
+            title: "Sucesso!",
+            description: `${newItems.length} itens importados da NF-e.`,
+        });
+    };
+    
+    const { handleFileChange, fileInputRef } = useNfeParser({ onNfeProcessed });
+
 
     const handleItemChange = (id: number, field: keyof BatchPriceItem, value: string) => {
         setItems(prevItems => {
@@ -135,93 +193,6 @@ export default function BatchPricingCalculator() {
         return { totalFinalCost, totalSaleValue, averageMargin };
     }, [items]);
 
-    const handleImportXml = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const xmlData = e.target?.result as string;
-                const parser = new XMLParser({ ignoreAttributes: false, parseAttributeValue: true });
-                const jsonObj = parser.parse(xmlData);
-
-                const infNFe = jsonObj?.nfeProc?.NFe?.infNFe || jsonObj?.NFe?.infNFe;
-                if (!infNFe) {
-                    throw new Error("Estrutura do XML da NF-e inválida: <infNFe> não encontrado.");
-                }
-
-                const dets: NfeProductDetail[] = Array.isArray(infNFe.det) ? infNFe.det : [infNFe.det];
-                const total = infNFe.total?.ICMSTot;
-                
-                if (!dets || !total) {
-                    throw new Error("Estrutura do XML da NF-e inválida: <det> ou <ICMSTot> não encontrados.");
-                }
-                
-                const totalProdValue = parseFloat(total.vProd) || 0;
-                const totalFrete = parseFloat(total.vFrete) || 0;
-                const totalSeguro = parseFloat(total.vSeg) || 0;
-                const totalOutras = parseFloat(total.vOutro) || 0;
-
-                const newItems: BatchPriceItem[] = dets.map((det: NfeProductDetail, index: number) => {
-                    const prod = det.prod;
-                    const imposto = det.imposto;
-
-                    const quantity = parseFloat(prod.qCom) || 0;
-                    const originalUnitCost = parseFloat(prod.vUnCom) || 0;
-                    const itemTotalCost = parseFloat(prod.vProd) || 0;
-
-                    const itemWeight = totalProdValue > 0 ? itemTotalCost / totalProdValue : 0;
-                    
-                    const ipiValor = parseFloat(imposto?.IPI?.IPITrib?.vIPI) || 0;
-                    const stValor = parseFloat(imposto?.ICMS?.ICMSST?.vICMSST) || 0;
-                    
-                    const freteRateado = parseFloat(prod.vFrete) || (totalFrete * itemWeight) || 0;
-                    const seguroRateado = parseFloat(prod.vSeg) || (totalSeguro * itemWeight) || 0;
-                    const descontoTotal = parseFloat(prod.vDesc) || 0;
-                    const outrasRateado = parseFloat(prod.vOutro) || (totalOutras * itemWeight) || 0;
-
-                    const totalImpostosItem = ipiValor + stValor + freteRateado + seguroRateado + outrasRateado;
-                    const finalTotalCost = itemTotalCost + totalImpostosItem - descontoTotal;
-                    const finalUnitCost = quantity > 0 ? finalTotalCost / quantity : 0;
-                    const impostosUnit = quantity > 0 ? totalImpostosItem / quantity : 0;
-                    const descontoUnit = quantity > 0 ? descontoTotal / quantity : 0;
-                    
-                    return {
-                        id: Date.now() + index,
-                        description: prod.xProd || "",
-                        quantity: String(quantity),
-                        originalCost: originalUnitCost.toFixed(2),
-                        impostos: impostosUnit.toFixed(2),
-                        desconto: descontoUnit.toFixed(2),
-                        finalCost: finalUnitCost.toFixed(2),
-                        margin: "",
-                        price: ""
-                    };
-                });
-                
-                setItems(newItems.length > 0 ? newItems : [{ id: 1, description: "", quantity: "1", originalCost: "", impostos: "", desconto: "", finalCost: "", margin: "", price: "" }]);
-
-                toast({
-                    title: "Sucesso!",
-                    description: `${newItems.length} itens importados da NF-e.`,
-                });
-
-            } catch (error) {
-                console.error("Erro ao processar o XML:", error);
-                toast({
-                    variant: "destructive",
-                    title: "Erro de Importação",
-                    description: "Não foi possível ler o arquivo XML. Verifique se o formato é uma NF-e válida.",
-                });
-            } finally {
-              if(fileInputRef.current) {
-                fileInputRef.current.value = "";
-              }
-            }
-        };
-        reader.readAsText(file, 'ISO-8859-1');
-    };
 
     const generatePdf = () => {
         const doc = new jsPDF({orientation: "landscape"});
@@ -292,7 +263,7 @@ export default function BatchPricingCalculator() {
                  <Input 
                     type="file" 
                     ref={fileInputRef} 
-                    onChange={handleImportXml}
+                    onChange={handleFileChange}
                     className="hidden" 
                     accept=".xml"
                 />

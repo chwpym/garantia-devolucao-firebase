@@ -1,7 +1,7 @@
+
 "use client";
 
-import { useState, useRef, useCallback } from "react";
-import { XMLParser } from "fast-xml-parser";
+import { useState, useRef, useCallback, ChangeEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Upload, Trash2, GitCompareArrows, Search } from "lucide-react";
@@ -12,6 +12,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "../ui/label";
+import { useNfeParser, type NfeData, type NfeProductDetail } from "@/hooks/use-nfe-parser";
 
 interface Product {
     code: string;
@@ -43,15 +44,6 @@ interface ComparisonResult {
     }>;
 }
 
-interface NfeProductDetail {
-    prod: Record<string, string>;
-}
-
-interface RejectedPromise {
-    fileName: string;
-    message: string;
-}
-
 export default function NfeComparator() {
     const [loadedNfes, setLoadedNfes] = useState<LoadedNfe[]>([]);
     const [comparisonResult, setComparisonResult] = useState<ComparisonResult[]>([]);
@@ -61,112 +53,77 @@ export default function NfeComparator() {
     const [searchQuery, setSearchQuery] = useState("");
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const currentFileRef = useRef<File | null>(null);
 
-    const processFiles = useCallback((files: FileList) => {
-        if (!files || files.length === 0) return;
-
-        const filePromises = Array.from(files).map(file => {
-            return new Promise<LoadedNfe | null>((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        const xmlData = e.target?.result as string;
-                        const parser = new XMLParser({ ignoreAttributes: false, parseAttributeValue: true });
-                        const jsonObj = parser.parse(xmlData);
-
-                        const infNFe = jsonObj?.nfeProc?.NFe?.infNFe || jsonObj?.NFe?.infNFe;
-                        if (!infNFe) {
-                            throw new Error(`Estrutura inválida no arquivo ${file.name}`);
-                        }
-                        
-                        const nfeId = infNFe['@_Id'];
-                        if (loadedNfes.some(nfe => nfe.id === nfeId)) {
-                             console.log(`NF-e do arquivo ${file.name} já carregada.`);
-                             return resolve(null);
-                        }
-
-                        const dets: NfeProductDetail[] = Array.isArray(infNFe.det) ? infNFe.det : [infNFe.det];
-                        
-                        const products: Product[] = dets.map((det) => {
-                            const prod = det.prod;
-                            return {
-                                code: String(prod.cProd),
-                                description: prod.xProd || "Sem descrição",
-                                quantity: parseFloat(prod.qCom) || 0,
-                                unitCost: parseFloat(prod.vUnCom) || 0,
-                            };
-                        });
-
-                        resolve({ 
-                            id: nfeId,
-                            name: file.name, 
-                            nfeNumber: infNFe.ide?.nNF || 'N/A',
-                            emitterName: infNFe.emit?.xNome || 'N/A',
-                            products 
-                        });
-
-                    } catch (error: unknown) {
-                        const message = error instanceof Error ? error.message : "Erro desconhecido";
-                        reject({fileName: file.name, message: message});
-                    }
-                };
-                reader.onerror = () => reject({fileName: file.name, message: "Falha ao ler o arquivo."});
-                reader.readAsText(file, 'ISO-8859-1');
-            });
-        });
-
-        Promise.allSettled(filePromises).then(results => {
-            const newNfes: LoadedNfe[] = [];
-            let filesAddedCount = 0;
-            let filesSkippedCount = 0;
-
-            results.forEach(result => {
-                if (result.status === 'fulfilled') {
-                    if (result.value) {
-                      newNfes.push(result.value);
-                      filesAddedCount++;
-                    } else {
-                      filesSkippedCount++;
-                    }
-                } else if (result.status === 'rejected') {
-                    const reason = result.reason as RejectedPromise;
-                    toast({
-                        variant: "destructive",
-                        title: "Erro de Importação",
-                        description: `Falha ao processar ${reason.fileName}: ${reason.message}`,
-                    });
-                }
-            });
-
-            if (newNfes.length > 0) {
-                setLoadedNfes(prev => [...prev, ...newNfes].sort((a, b) => a.emitterName.localeCompare(b.emitterName)));
-            }
-
-            if(filesAddedCount > 0) {
-                 toast({
-                    title: "Sucesso!",
-                    description: `${filesAddedCount} nova(s) NF-e(s) carregada(s).`,
-                });
-            }
-             if (filesSkippedCount > 0) {
+    const onNfeProcessed = (data: NfeData | null) => {
+        if (!data || !currentFileRef.current) {
+            if(currentFileRef.current) {
                 toast({
-                    variant: 'default',
-                    title: "Aviso",
-                    description: `${filesSkippedCount} arquivo(s) ignorado(s) por já terem sido carregados.`,
+                    variant: "destructive",
+                    title: "Erro de Importação",
+                    description: `Falha ao processar ${currentFileRef.current.name}.`,
                 });
             }
+            return;
+        }
+
+        const { infNFe, det: dets } = data;
+        const nfeId = infNFe['@_Id'];
+        
+        if (loadedNfes.some(nfe => nfe.id === nfeId)) {
+            toast({
+                variant: 'default',
+                title: "Aviso",
+                description: `O arquivo ${currentFileRef.current.name} já foi carregado e será ignorado.`,
+            });
+            return;
+        }
+
+        const products: Product[] = dets.map((det: NfeProductDetail) => {
+            const prod = det.prod;
+            return {
+                code: String(prod.cProd),
+                description: prod.xProd || "Sem descrição",
+                quantity: parseFloat(prod.qCom) || 0,
+                unitCost: parseFloat(prod.vUnCom) || 0,
+            };
+        });
+        
+        const newNfe: LoadedNfe = { 
+            id: nfeId,
+            name: currentFileRef.current.name, 
+            nfeNumber: infNFe.ide?.nNF || 'N/A',
+            emitterName: infNFe.emit?.xNome || 'N/A',
+            products 
+        };
+        
+        setLoadedNfes(prev => [...prev, newNfe].sort((a, b) => a.emitterName.localeCompare(b.emitterName)));
+        toast({
+            title: "Sucesso!",
+            description: `NF-e ${newNfe.nfeNumber} do arquivo ${newNfe.name} carregada.`,
+        });
+    };
+    
+    const { handleFileChange: originalHandleFileChange, clearNfeData: originalClearNfeData } = useNfeParser({ onNfeProcessed });
+    
+    const handleFilesChange = (event: ChangeEvent<HTMLInputElement>) => {
+        const files = event.target.files;
+        if (!files) return;
+
+        Array.from(files).forEach(file => {
+            currentFileRef.current = file;
+            // Create a new event object for each file to pass to the hook
+            const singleFileEvent = {
+                target: { files: [file] as unknown as FileList },
+            } as ChangeEvent<HTMLInputElement>;
+            originalHandleFileChange(singleFileEvent);
         });
 
-    }, [loadedNfes, toast]);
-
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (event.target.files) {
-            processFiles(event.target.files);
-        }
         if (fileInputRef.current) {
             fileInputRef.current.value = "";
         }
     };
+
 
     const getAllProducts = useCallback(() => {
        return loadedNfes.flatMap(nfe => 
@@ -307,11 +264,9 @@ export default function NfeComparator() {
         setComparisonResult([]);
         setSearchResult([]);
         setSearchQuery("");
-        if (fileInputRef.current) {
-            fileInputRef.current.value = "";
-        }
+        originalClearNfeData();
         toast({ title: "Dados limpos", description: "A área de comparação está pronta para novos arquivos." });
-    }, [toast]);
+    }, [originalClearNfeData, toast]);
 
     const renderResultTable = (results: ComparisonResult[], title: string) => {
         const grandTotalQuantity = results.reduce((sum, item) => sum + item.totalQuantity, 0);
@@ -405,7 +360,7 @@ export default function NfeComparator() {
                         <Input 
                             type="file" 
                             ref={fileInputRef} 
-                            onChange={handleFileChange}
+                            onChange={handleFilesChange}
                             className="hidden" 
                             accept=".xml"
                             multiple
@@ -483,4 +438,3 @@ export default function NfeComparator() {
         </div>
     );
 }
-    
