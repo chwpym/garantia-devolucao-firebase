@@ -5,13 +5,14 @@ import { useState, useMemo, useRef } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { UserOptions } from "jspdf-autotable";
-import { XMLParser } from "fast-xml-parser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Upload, FileX, Printer } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatNumber } from "@/lib/utils";
+import { useNfeParser } from "@/hooks/use-nfe-parser";
+import type { NfeData, NfeInfo as NfeParserInfo } from "@/hooks/use-nfe-parser";
 
 interface AnalyzedItem {
     id: number;
@@ -31,151 +32,86 @@ interface AnalyzedItem {
     convertedUnitCost: number;
 }
 
-interface NfeInfo {
-    emitterName: string;
-    emitterCnpj: string;
-    nfeNumber: string;
-}
-
-interface NfeProductDetail {
-    prod: Record<string, string>;
-    imposto: Record<string, Record<string, Record<string, string>>>;
-}
-
-interface InfNFe {
-    ['@_Id']: string;
-    ide: { nNF: string };
-    emit: { xNome: string; CNPJ: string };
-    det: NfeProductDetail[] | NfeProductDetail;
-    total: {
-        ICMSTot: {
-            vProd: string;
-            vFrete: string;
-            vSeg: string;
-            vDesc: string;
-            vOutro: string;
-        }
-    }
-}
-
-interface NFeData {
-    nfeProc?: { NFe: { infNFe: InfNFe } };
-    NFe?: { infNFe: InfNFe };
-}
-
+type NfeInfo = NfeParserInfo;
 
 export default function CostAnalysisCalculator() {
     const [items, setItems] = useState<AnalyzedItem[]>([]);
-    const [fileName, setFileName] = useState<string | null>(null);
     const [nfeInfo, setNfeInfo] = useState<NfeInfo | null>(null);
     const { toast } = useToast();
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    
+    const onNfeProcessed = (data: NfeData | null) => {
+        if (!data) {
+            setItems([]);
+            setNfeInfo(null);
+            return;
+        }
 
-    const handleImportXml = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
+        const { infNFe } = data;
+        const total = infNFe.total.ICMSTot;
+        const totalProdValue = parseFloat(total.vProd);
 
-        setFileName(file.name);
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const xmlData = e.target?.result as string;
-                const parser = new XMLParser({ ignoreAttributes: false, parseAttributeValue: true });
-                const jsonObj = parser.parse(xmlData) as NFeData;
-                
-                const infNFe: InfNFe | undefined = jsonObj?.nfeProc?.NFe?.infNFe || jsonObj?.NFe?.infNFe;
-                if (!infNFe) {
-                    throw new Error("Estrutura do XML da NF-e inválida: <infNFe> não encontrado.");
-                }
-
-                const dets: NfeProductDetail[] = Array.isArray(infNFe.det) ? infNFe.det : [infNFe.det];
-                const total = infNFe.total?.ICMSTot;
-
-                if (!dets || !total) {
-                    throw new Error("Estrutura do XML da NF-e inválida: <det> ou <ICMSTot> não encontrados.");
-                }
-
-                const newNfeInfo: NfeInfo = {
-                    emitterName: infNFe.emit?.xNome || 'N/A',
-                    emitterCnpj: infNFe.emit?.CNPJ || 'N/A',
-                    nfeNumber: infNFe.ide?.nNF || 'N/A',
-                };
-                setNfeInfo(newNfeInfo);
-                
-                const totalProdValue = parseFloat(total.vProd) || 0;
-                
-                const totalFrete = parseFloat(total.vFrete) || 0;
-                const totalSeguro = parseFloat(total.vSeg) || 0;
-                const totalDesconto = parseFloat(total.vDesc) || 0;
-                const totalOutras = parseFloat(total.vOutro) || 0;
-
-
-                const newItems: AnalyzedItem[] = dets.map((det: NfeProductDetail, index: number) => {
-                    const prod = det.prod;
-                    const imposto = det.imposto;
-
-                    const quantity = parseFloat(prod.qCom) || 0;
-                    const unitCost = parseFloat(prod.vUnCom) || 0;
-                    const itemTotalCost = parseFloat(prod.vProd) || 0;
-                    
-                    const itemWeight = totalProdValue > 0 ? itemTotalCost / totalProdValue : 0;
-                    
-                    const ipiValor = parseFloat(imposto?.IPI?.IPITrib?.vIPI) || 0;
-                    const stValor = parseFloat(imposto?.ICMS?.ICMSST?.vICMSST) || 0;
-                    
-                    const freteRateado = parseFloat(prod.vFrete) || (totalFrete * itemWeight) || 0;
-                    const seguroRateado = parseFloat(prod.vSeg) || (totalSeguro * itemWeight) || 0;
-                    const descontoRateado = parseFloat(prod.vDesc) || (totalDesconto * itemWeight) || 0;
-                    const outrasRateado = parseFloat(prod.vOutro) || (totalOutras * itemWeight) || 0;
-                    
-                    const finalTotalCost = itemTotalCost + ipiValor + stValor + freteRateado + seguroRateado + outrasRateado - descontoRateado;
-                    const finalUnitCost = quantity > 0 ? finalTotalCost / quantity : 0;
-                    
-                    return {
-                        id: Date.now() + index,
-                        description: prod.xProd || "",
-                        quantity: quantity,
-                        unitCost: unitCost,
-                        totalCost: itemTotalCost,
-                        ipi: ipiValor,
-                        icmsST: stValor,
-                        frete: freteRateado,
-                        seguro: seguroRateado,
-                        desconto: descontoRateado,
-                        outras: outrasRateado,
-                        finalUnitCost: finalUnitCost,
-                        finalTotalCost: finalTotalCost,
-                        conversionFactor: "1",
-                        convertedUnitCost: finalUnitCost,
-                    };
-                });
-                
-                setItems(newItems);
-
-                toast({
-                    title: "Sucesso!",
-                    description: `${newItems.length} itens importados e analisados da NF-e.`,
-                });
-
-            } catch (error: unknown) {
-                console.error("Erro ao processar o XML:", error);
-                setItems([]);
-                setFileName(null);
-                setNfeInfo(null);
-                const message = error instanceof Error ? error.message : "Não foi possível ler o arquivo XML. Verifique se o formato é uma NF-e válida.";
-                toast({
-                    variant: "destructive",
-                    title: "Erro de Importação",
-                    description: message,
-                });
-            } finally {
-              if(fileInputRef.current) {
-                fileInputRef.current.value = "";
-              }
-            }
+        const newNfeInfo: NfeInfo = {
+            emitterName: infNFe.emit.xNome,
+            emitterCnpj: infNFe.emit.CNPJ,
+            nfeNumber: infNFe.ide.nNF,
         };
-        reader.readAsText(file, 'ISO-8859-1');
+        setNfeInfo(newNfeInfo);
+        
+        const totalFrete = parseFloat(total.vFrete) || 0;
+        const totalSeguro = parseFloat(total.vSeg) || 0;
+        const totalDesconto = parseFloat(total.vDesc) || 0;
+        const totalOutras = parseFloat(total.vOutro) || 0;
+
+        const newItems: AnalyzedItem[] = data.det.map((det, index) => {
+            const prod = det.prod;
+            const imposto = det.imposto;
+
+            const quantity = parseFloat(prod.qCom) || 0;
+            const unitCost = parseFloat(prod.vUnCom) || 0;
+            const itemTotalCost = parseFloat(prod.vProd) || 0;
+            
+            const itemWeight = totalProdValue > 0 ? itemTotalCost / totalProdValue : 0;
+            
+            const ipiValor = parseFloat(imposto?.IPI?.IPITrib?.vIPI) || 0;
+            const stValor = parseFloat(imposto?.ICMS?.ICMSST?.vICMSST) || 0;
+            
+            const freteRateado = parseFloat(prod.vFrete) || (totalFrete * itemWeight) || 0;
+            const seguroRateado = parseFloat(prod.vSeg) || (totalSeguro * itemWeight) || 0;
+            const descontoRateado = parseFloat(prod.vDesc) || (totalDesconto * itemWeight) || 0;
+            const outrasRateado = parseFloat(prod.vOutro) || (totalOutras * itemWeight) || 0;
+            
+            const finalTotalCost = itemTotalCost + ipiValor + stValor + freteRateado + seguroRateado + outrasRateado - descontoRateado;
+            const finalUnitCost = quantity > 0 ? finalTotalCost / quantity : 0;
+            
+            return {
+                id: Date.now() + index,
+                description: prod.xProd || "",
+                quantity: quantity,
+                unitCost: unitCost,
+                totalCost: itemTotalCost,
+                ipi: ipiValor,
+                icmsST: stValor,
+                frete: freteRateado,
+                seguro: seguroRateado,
+                desconto: descontoRateado,
+                outras: outrasRateado,
+                finalUnitCost: finalUnitCost,
+                finalTotalCost: finalTotalCost,
+                conversionFactor: "1",
+                convertedUnitCost: finalUnitCost,
+            };
+        });
+        
+        setItems(newItems);
+
+        toast({
+            title: "Sucesso!",
+            description: `${newItems.length} itens importados e analisados da NF-e.`,
+        });
     };
+    
+    const { fileName, handleFileChange, clearNfeData, fileInputRef } = useNfeParser({ onNfeProcessed });
+
 
     const handleConversionFactorChange = (id: number, value: string) => {
         setItems(prevItems =>
@@ -188,15 +124,6 @@ export default function CostAnalysisCalculator() {
                 return item;
             })
         );
-    };
-
-    const clearData = () => {
-        setItems([]);
-        setFileName(null);
-        setNfeInfo(null);
-        if(fileInputRef.current) {
-            fileInputRef.current.value = "";
-        }
     };
     
     const totals = useMemo(() => {
@@ -287,7 +214,7 @@ export default function CostAnalysisCalculator() {
                 {fileName && (
                     <div className="flex items-center gap-2 p-2 border rounded-md bg-muted flex-1 sm:flex-none justify-between">
                         <span className="text-sm text-muted-foreground truncate" title={fileName}>{fileName}</span>
-                        <Button variant="ghost" size="icon" onClick={clearData} className="h-6 w-6">
+                        <Button variant="ghost" size="icon" onClick={clearNfeData} className="h-6 w-6">
                         <FileX className="h-4 w-4 text-destructive" />
                         </Button>
                     </div>
@@ -295,7 +222,7 @@ export default function CostAnalysisCalculator() {
                 <Input 
                     type="file" 
                     ref={fileInputRef} 
-                    onChange={handleImportXml}
+                    onChange={handleFileChange}
                     className="hidden" 
                     accept=".xml"
                 />
@@ -383,10 +310,3 @@ export default function CostAnalysisCalculator() {
         </div>
     );
 }
-    
-
-    
-
-    
-
-    
