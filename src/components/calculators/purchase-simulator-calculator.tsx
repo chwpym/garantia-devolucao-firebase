@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
@@ -17,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import type { NfeInfo, PurchaseSimulation } from "@/lib/types";
 import * as db from '@/lib/db';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "../ui/label";
 import { format as formatDate, parseISO, addDays } from "date-fns";
 import { DatePickerWithRange } from "../ui/date-range-picker";
@@ -180,10 +179,10 @@ export default function PurchaseSimulatorCalculator() {
                         additionalCosts: 0, // Placeholder, will be calculated
                         ipi: parseFloat(imposto?.IPI?.IPITrib?.vIPI) || 0,
                         icmsST: parseFloat(imposto?.ICMS?.ICMSST?.vICMSST) || 0,
-                        frete: itemWeight * totalFrete,
-                        seguro: itemWeight * totalSeguro,
-                        desconto: itemWeight * totalDesconto,
-                        outras: itemWeight * totalOutras,
+                        frete: totalProdValue > 0 ? itemWeight * totalFrete : 0,
+                        seguro: totalProdValue > 0 ? itemWeight * totalSeguro : 0,
+                        desconto: totalProdValue > 0 ? itemWeight * totalDesconto : 0,
+                        outras: totalProdValue > 0 ? itemWeight * totalOutras : 0,
                     };
                     
                     const costs = calculateCosts(baseItem);
@@ -256,8 +255,8 @@ export default function PurchaseSimulatorCalculator() {
             toast({ title: "Erro", description: "Dados insuficientes para salvar a simulação.", variant: "destructive"});
             return;
         }
-    
-        const simulationData: Omit<PurchaseSimulation, 'id' | 'items'> & { items: Omit<PurchaseSimulation['items'][0], 'id'>[] } = {
+
+        const simulationData = {
             simulationName: simulationName,
             nfeInfo: nfeInfo,
             items: items.map(i => ({
@@ -271,10 +270,10 @@ export default function PurchaseSimulatorCalculator() {
             simulatedTotalCost: totals.simulatedTotalCost,
             createdAt: new Date().toISOString(),
         };
-    
+
         try {
             if (editingSimulationId) {
-                await db.updateSimulation({ ...simulationData, id: editingSimulationId, createdAt: new Date().toISOString() });
+                await db.updateSimulation({ ...simulationData, id: editingSimulationId });
                 toast({ title: "Sucesso!", description: `Simulação "${simulationName}" foi atualizada.`});
             } else {
                 await db.addSimulation(simulationData);
@@ -763,4 +762,5 @@ export default function PurchaseSimulatorCalculator() {
 
 
     
+
 
