@@ -15,16 +15,11 @@ interface AppLayoutProps {
 }
 
 export default function AppLayout({ children }: AppLayoutProps) {
-  const { activeView, isMobileMenuOpen, setActiveView, setMobileMenuOpen, openNewLoteModal } = useAppStore();
+  const { activeView, isMobileMenuOpen, setActiveView, setMobileMenuOpen } = useAppStore();
 
   const handleNavClick = (view: string) => {
     setActiveView(view);
     setMobileMenuOpen(false);
-  };
-  
-  const handleNewLoteClick = () => {
-    setActiveView('lotes');
-    openNewLoteModal();
   };
 
   return (
@@ -83,7 +78,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 </SheetContent>
               </Sheet>
             </div>
-            <QuickShortcuts setActiveView={setActiveView} onNewLoteClick={handleNewLoteClick} />
+            <QuickShortcuts />
             <ThemeToggle />
           </div>
         </header>

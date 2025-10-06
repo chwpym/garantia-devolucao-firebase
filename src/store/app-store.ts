@@ -2,7 +2,11 @@
 
 import { create } from 'zustand';
 import type { Warranty } from '@/lib/types';
-import type { RegisterMode } from '@/app/page';
+
+// Define o tipo para o modo de registro, que pode ser 'edit' ou 'clone'.
+// Isso ajuda a determinar se o formulário de garantia deve salvar um novo item ou atualizar um existente.
+export type RegisterMode = 'edit' | 'clone';
+
 
 interface AppState {
   // Navigation and UI

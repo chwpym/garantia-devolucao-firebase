@@ -24,6 +24,8 @@ import ProductReportSection from '@/components/sections/product-report-section';
 import { useAppStore } from '@/store/app-store';
 import type { Warranty } from '@/lib/types';
 
+export type RegisterMode = 'edit' | 'clone';
+
 export default function Home() {
   const {
     activeView,
