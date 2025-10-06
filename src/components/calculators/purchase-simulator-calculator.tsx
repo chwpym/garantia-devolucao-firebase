@@ -14,10 +14,10 @@ import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import type { NfeInfo, PurchaseSimulation, SimulatedItemData } from "@/lib/types";
+import type { NfeInfo, PurchaseSimulation } from "@/lib/types";
 import * as db from '@/lib/db';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Label } from "../ui/label";
 import { format as formatDate, parseISO, addDays } from "date-fns";
 import { DatePickerWithRange } from "../ui/date-range-picker";
@@ -67,6 +67,12 @@ interface InfNFe {
 interface NFeData {
     nfeProc?: { NFe: { infNFe: InfNFe } };
     NFe?: { infNFe: InfNFe };
+}
+
+interface jsPDFWithAutoTable extends jsPDF {
+  lastAutoTable: {
+    finalY: number;
+  };
 }
 
 const formatCnpj = (value?: string | number) => {
@@ -251,7 +257,7 @@ export default function PurchaseSimulatorCalculator() {
             return;
         }
     
-        const simulationData: Omit<PurchaseSimulation, 'id'> = {
+        const simulationData: Omit<PurchaseSimulation, 'id' | 'items'> & { items: Omit<PurchaseSimulation['items'][0], 'id'>[] } = {
             simulationName: simulationName,
             nfeInfo: nfeInfo,
             items: items.map(i => ({
@@ -360,7 +366,7 @@ export default function PurchaseSimulatorCalculator() {
 
 
     const generatePdf = () => {
-        const doc = new jsPDF();
+        const doc = new jsPDF() as jsPDFWithAutoTable;
         doc.setFontSize(18);
         doc.text("Simulação de Compra por NF-e", 14, 22);
 
@@ -391,7 +397,7 @@ export default function PurchaseSimulatorCalculator() {
             footStyles: { fontStyle: 'bold', fillColor: [224, 224, 224], textColor: [0, 0, 0] },
         });
 
-        const finalY = (doc as any).lastAutoTable.finalY + 10;
+        const finalY = doc.lastAutoTable.finalY + 10;
         doc.setFontSize(12);
         doc.text(`Economia Potencial: ${formatCurrency(originalNfeTotalCost - totals.simulatedTotalCost)}`, 14, finalY);
     
@@ -757,3 +763,4 @@ export default function PurchaseSimulatorCalculator() {
 
 
     
+
