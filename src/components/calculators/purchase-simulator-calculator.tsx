@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import type { NfeInfo, PurchaseSimulation, SimulatedItemData } from "@/lib/types";
+import type { NfeInfo, PurchaseSimulation } from "@/lib/types";
 import * as db from '@/lib/db';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose, DialogDescription } from "@/components/ui/dialog";
@@ -143,6 +143,12 @@ export default function PurchaseSimulatorCalculator() {
                 const dets = Array.isArray(infNFe.det) ? infNFe.det : [infNFe.det];
                 const total = infNFe.total.ICMSTot;
                 const totalProdValue = parseFloat(total.vProd);
+                
+                const totalFrete = parseFloat(total.vFrete) || 0;
+                const totalSeguro = parseFloat(total.vSeg) || 0;
+                const totalDesconto = parseFloat(total.vDesc) || 0;
+                const totalOutras = parseFloat(total.vOutro) || 0;
+
 
                 const newNfeInfo = {
                     emitterName: infNFe.emit.xNome,
@@ -168,10 +174,10 @@ export default function PurchaseSimulatorCalculator() {
                         additionalCosts: 0, // Placeholder, will be calculated
                         ipi: parseFloat(imposto?.IPI?.IPITrib?.vIPI) || 0,
                         icmsST: parseFloat(imposto?.ICMS?.ICMSST?.vICMSST) || 0,
-                        frete: itemWeight * (parseFloat(total.vFrete) || 0),
-                        seguro: itemWeight * (parseFloat(total.vSeg) || 0),
-                        desconto: itemWeight * (parseFloat(total.vDesc) || 0),
-                        outras: itemWeight * (parseFloat(total.vOutro) || 0),
+                        frete: itemWeight * totalFrete,
+                        seguro: itemWeight * totalSeguro,
+                        desconto: itemWeight * totalDesconto,
+                        outras: itemWeight * totalOutras,
                     };
                     
                     const costs = calculateCosts(baseItem);
@@ -245,7 +251,7 @@ export default function PurchaseSimulatorCalculator() {
             return;
         }
     
-        const simulationData = {
+        const simulationData: Omit<PurchaseSimulation, 'id'> = {
             simulationName: simulationName,
             nfeInfo: nfeInfo,
             items: items.map(i => ({
@@ -257,6 +263,7 @@ export default function PurchaseSimulatorCalculator() {
             })),
             originalTotalCost: originalNfeTotalCost,
             simulatedTotalCost: totals.simulatedTotalCost,
+            createdAt: new Date().toISOString(),
         };
     
         try {
@@ -264,7 +271,7 @@ export default function PurchaseSimulatorCalculator() {
                 await db.updateSimulation({ ...simulationData, id: editingSimulationId, createdAt: new Date().toISOString() });
                 toast({ title: "Sucesso!", description: `Simulação "${simulationName}" foi atualizada.`});
             } else {
-                await db.addSimulation({ ...simulationData, createdAt: new Date().toISOString() });
+                await db.addSimulation(simulationData);
                 toast({ title: "Sucesso!", description: `Simulação "${simulationName}" foi salva.`});
             }
             loadSimulations();
@@ -588,7 +595,7 @@ export default function PurchaseSimulatorCalculator() {
                                                     <Input
                                                         type="text"
                                                         inputMode="decimal"
-                                                        className="h-8 w-[100px] text-right"
+                                                        className="h-8 w-full text-right"
                                                         value={item.simulatedQuantity}
                                                         onChange={(e) => handleQuantityChange(item.id, e.target.value)}
                                                     />
@@ -747,3 +754,6 @@ export default function PurchaseSimulatorCalculator() {
 
     
 
+
+
+    
