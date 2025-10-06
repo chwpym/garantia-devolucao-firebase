@@ -17,7 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import type { NfeInfo, PurchaseSimulation, SimulatedItemData } from "@/lib/types";
 import * as db from '@/lib/db';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "../ui/label";
 import { format as formatDate, parseISO, addDays } from "date-fns";
 import { DatePickerWithRange } from "../ui/date-range-picker";
@@ -244,8 +244,8 @@ export default function PurchaseSimulatorCalculator() {
             toast({ title: "Erro", description: "Dados insuficientes para salvar a simulação.", variant: "destructive"});
             return;
         }
-
-        const simulationData: Omit<PurchaseSimulation, 'id' | 'createdAt'> = {
+    
+        const simulationData = {
             simulationName: simulationName,
             nfeInfo: nfeInfo,
             items: items.map(i => ({
@@ -258,16 +258,13 @@ export default function PurchaseSimulatorCalculator() {
             originalTotalCost: originalNfeTotalCost,
             simulatedTotalCost: totals.simulatedTotalCost,
         };
-
+    
         try {
             if (editingSimulationId) {
                 await db.updateSimulation({ ...simulationData, id: editingSimulationId, createdAt: new Date().toISOString() });
                 toast({ title: "Sucesso!", description: `Simulação "${simulationName}" foi atualizada.`});
             } else {
-                const { id, ...dataWithoutId } = { ...simulationData, id: editingSimulationId || undefined, createdAt: new Date().toISOString() };
-                if (id === undefined) {
-                    await db.addSimulation(dataWithoutId);
-                }
+                await db.addSimulation({ ...simulationData, createdAt: new Date().toISOString() });
                 toast({ title: "Sucesso!", description: `Simulação "${simulationName}" foi salva.`});
             }
             loadSimulations();
@@ -749,3 +746,4 @@ export default function PurchaseSimulatorCalculator() {
     
 
     
+
