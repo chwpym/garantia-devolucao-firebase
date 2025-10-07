@@ -39,7 +39,6 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
-      // Autentica diretamente com o Firebase no lado do cliente
       await signInWithEmailAndPassword(auth, data.email, data.password);
       
       // O Firebase JS SDK gerencia a sessão no cliente (IndexedDB).
@@ -60,9 +59,10 @@ export default function LoginPage() {
         description: errorMessage,
         variant: 'destructive',
       });
-      // Apenas desativa o loading em caso de erro, 
-      // pois em caso de sucesso, a página será redirecionada.
-      setIsLoading(false);
+    } finally {
+        // Este bloco será executado após o try ou o catch.
+        // Garante que o spinner pare se o redirecionamento falhar ou um erro ocorrer.
+        setIsLoading(false);
     }
   };
 
