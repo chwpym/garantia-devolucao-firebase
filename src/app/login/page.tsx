@@ -60,9 +60,9 @@ export default function LoginPage() {
         description: errorMessage,
         variant: 'destructive',
       });
-    } finally {
-        // Garante que o loading seja desativado em qualquer caso (sucesso ou erro)
-        setIsLoading(false);
+      // Apenas desativa o loading em caso de erro, 
+      // pois em caso de sucesso, a página será redirecionada.
+      setIsLoading(false);
     }
   };
 
