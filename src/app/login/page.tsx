@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -23,7 +22,6 @@ const formSchema = z.object({
 type LoginFormValues = z.infer<typeof formSchema>;
 
 export default function LoginPage() {
-  const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -49,16 +47,12 @@ export default function LoginPage() {
       let errorMessage = 'Ocorreu um erro ao fazer login.';
       if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
           errorMessage = 'Credenciais inválidas. Verifique seu e-mail e senha.';
-      } else if (error.message) {
-          errorMessage = error.message;
       }
       toast({
         title: 'Falha no Login',
         description: errorMessage,
         variant: 'destructive',
       });
-      // Only set loading to false in case of an error.
-      // On success, the page reloads, so we don't need to manage the state.
       setIsLoading(false);
     }
   };
