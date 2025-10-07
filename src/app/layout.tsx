@@ -5,6 +5,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import PwaUpdateAlert from '@/components/pwa-update-alert';
+import { AuthProvider } from '@/components/auth-provider';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -40,11 +41,13 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className={cn('font-sans', inter.variable)}>
       <head />
       <body className="font-body antialiased">
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {children}
-          <Toaster />
-          <PwaUpdateAlert />
-        </ThemeProvider>
+        <AuthProvider>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            {children}
+            <Toaster />
+            <PwaUpdateAlert />
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   );
