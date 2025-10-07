@@ -41,9 +41,9 @@ export default function LoginPage() {
     try {
       await signInWithEmailAndPassword(auth, data.email, data.password);
       
-      // O Firebase JS SDK gerencia a sessão no cliente (IndexedDB).
-      // Apenas redirecionamos em caso de sucesso.
+      // Sucesso! Apenas redirecione.
       router.push('/');
+      return; // Importante: Interrompe a execução para evitar que o 'finally' rode desnecessariamente.
 
     } catch (error: any) {
       console.error('Falha no login:', error);
@@ -58,10 +58,8 @@ export default function LoginPage() {
         description: errorMessage,
         variant: 'destructive',
       });
-    } finally {
-        // Este bloco será executado após o try ou o catch.
-        // Garante que o spinner pare se o redirecionamento falhar ou um erro ocorrer.
-        setIsLoading(false);
+       // Apenas desative o loading em caso de erro.
+       setIsLoading(false);
     }
   };
 
