@@ -12,6 +12,8 @@ import QuickShortcuts from './quick-shortcuts';
 import { useAppStore } from '@/store/app-store';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { signOut } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -29,13 +31,12 @@ export default function AppLayout({ children }: AppLayoutProps) {
   
   const handleLogout = async () => {
     try {
-      await fetch('/api/logout', { method: 'POST' });
+      await signOut(auth);
       toast({
         title: "Logout realizado",
         description: "Você foi desconectado com sucesso."
       })
       router.push('/login');
-      router.refresh();
     } catch {
       toast({
         title: "Erro",
