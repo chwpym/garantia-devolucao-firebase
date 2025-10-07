@@ -44,7 +44,6 @@ export default function LoginPage() {
       // O Firebase JS SDK gerencia a sessão no cliente (IndexedDB).
       // Apenas redirecionamos em caso de sucesso.
       router.push('/');
-      router.refresh(); // Força o recarregamento da página e do estado do servidor
 
     } catch (error: any) {
       console.error('Falha no login:', error);
