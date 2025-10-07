@@ -10,25 +10,25 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
 
   useEffect(() => {
-    if (loading) return; // Espera o AuthProvider terminar
+    // 1. Espera o AuthProvider terminar de carregar o estado de autenticação.
+    if (loading) {
+      return;
+    }
 
     const isPublicRoute = pathname === '/login';
 
+    // 2. Se o usuário não está logado e tenta acessar uma rota privada, redireciona.
     if (!user && !isPublicRoute) {
       router.push('/login');
     }
 
+    // 3. Se o usuário já está logado e tenta acessar a página de login, redireciona.
     if (user && isPublicRoute) {
       router.push('/');
     }
   }, [user, loading, router, pathname]);
 
-  // Enquanto o redirecionamento está pendente, não renderize nada.
-  // O spinner global do AuthProvider já cobre o estado de carregamento inicial.
-  const isPublicRoute = pathname === '/login';
-  if ((!user && !isPublicRoute) || (user && isPublicRoute)) {
-    return null;
-  }
-
+  // 4. Renderiza os filhos incondicionalmente. O useEffect cuidará dos redirecionamentos.
+  // A lógica que retornava 'null' foi removida, pois era a causa da tela branca.
   return <>{children}</>;
 }
