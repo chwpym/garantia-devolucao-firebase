@@ -40,8 +40,9 @@ export default function LoginPage() {
     try {
       await signInWithEmailAndPassword(auth, data.email, data.password);
       
-      // Apenas redirecione. O AuthProvider e o layout cuidarão do resto.
-      router.push('/');
+      // CRUCIAL CHANGE: Force a hard refresh to resolve the race condition.
+      // This ensures the AuthProvider re-evaluates the auth state from scratch on the new page.
+      window.location.href = '/';
 
     } catch (error: any) {
       console.error('Falha no login:', error);
@@ -56,6 +57,8 @@ export default function LoginPage() {
         description: errorMessage,
         variant: 'destructive',
       });
+      // Only set loading to false in case of an error.
+      // On success, the page reloads, so we don't need to manage the state.
       setIsLoading(false);
     }
   };
