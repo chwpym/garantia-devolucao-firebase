@@ -8,14 +8,14 @@ import { initializeApp, getApps, cert } from 'firebase-admin/app';
 const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 let serviceAccount;
 
-if (serviceAccountKey) {
-  try {
-    serviceAccount = JSON.parse(
-      Buffer.from(serviceAccountKey, 'base64').toString('utf-8')
-    );
-  } catch (error) {
+try {
+    if (serviceAccountKey) {
+        serviceAccount = JSON.parse(
+          Buffer.from(serviceAccountKey, 'base64').toString('utf-8')
+        );
+    }
+} catch (error) {
     console.error("Error parsing FIREBASE_SERVICE_ACCOUNT_KEY:", error);
-  }
 }
 
 

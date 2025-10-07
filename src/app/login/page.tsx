@@ -7,7 +7,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -42,8 +41,7 @@ export default function LoginPage() {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
       const idToken = await userCredential.user.getIdToken();
-
-      // Envia o token para uma rota de API que irá configurar o cookie
+      
       const response = await fetch('/api/login', {
         method: 'POST',
         headers: {
@@ -57,7 +55,6 @@ export default function LoginPage() {
           throw new Error(errorData.error || 'Falha ao criar a sessão.');
       }
 
-      // Redireciona para a página principal após o login bem-sucedido
       router.push('/');
       router.refresh(); 
 
