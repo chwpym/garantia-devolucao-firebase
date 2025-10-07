@@ -1,14 +1,17 @@
+
 'use client';
 
 import React from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Settings, Menu, DatabaseBackup } from 'lucide-react';
+import { Settings, Menu, DatabaseBackup, LogOut } from 'lucide-react';
 import { ThemeToggle } from './theme-toggle';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
 import MobileSidebar from './mobile-sidebar';
 import QuickShortcuts from './quick-shortcuts';
 import { useAppStore } from '@/store/app-store';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -16,11 +19,31 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const { activeView, isMobileMenuOpen, setActiveView, setMobileMenuOpen } = useAppStore();
+  const router = useRouter();
+  const { toast } = useToast();
 
   const handleNavClick = (view: string) => {
     setActiveView(view);
     setMobileMenuOpen(false);
   };
+  
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/logout', { method: 'POST' });
+      toast({
+        title: "Logout realizado",
+        description: "Você foi desconectado com sucesso."
+      })
+      router.push('/login');
+      router.refresh();
+    } catch {
+      toast({
+        title: "Erro",
+        description: "Não foi possível realizar o logout.",
+        variant: "destructive"
+      });
+    }
+  }
 
   return (
     <div className="flex h-screen w-full bg-muted/40">
@@ -72,6 +95,14 @@ export default function AppLayout({ children }: AppLayoutProps) {
                       >
                         <Settings className="h-5 w-5 flex-shrink-0" />
                         <span>Configurações</span>
+                      </Button>
+                      <Button
+                        variant='destructive'
+                        className="justify-start gap-3 text-base h-11 w-full mt-2"
+                        onClick={handleLogout}
+                      >
+                        <LogOut className="h-5 w-5 flex-shrink-0" />
+                        <span>Sair</span>
                       </Button>
                     </nav>
                   </div>

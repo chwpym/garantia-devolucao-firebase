@@ -1,0 +1,49 @@
+
+import { NextResponse } from 'next/server';
+import { getAuth } from 'firebase-admin/auth';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+
+// Decodifique a chave de serviço que está em uma variável de ambiente
+// Esta chave deve ser configurada nas variáveis de ambiente do seu provedor de hosting (ex: Vercel, Firebase Hosting)
+const serviceAccount = JSON.parse(
+  Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_KEY!, 'base64').toString('utf-8')
+);
+
+// Inicialize o Firebase Admin SDK se ainda não foi inicializado
+if (!getApps().length) {
+  initializeApp({
+    credential: cert(serviceAccount),
+  });
+}
+
+export async function POST(request: Request) {
+  const { idToken } = await request.json();
+
+  if (!idToken) {
+    return NextResponse.json({ error: 'ID token is required' }, { status: 400 });
+  }
+
+  const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 dias em milissegundos
+
+  try {
+    const sessionCookie = await getAuth().createSessionCookie(idToken, { expiresIn });
+
+    const options = {
+      name: 'session',
+      value: sessionCookie,
+      maxAge: expiresIn / 1000,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+    };
+
+    const response = NextResponse.json({ status: 'success' }, { status: 200 });
+    response.cookies.set(options);
+
+    return response;
+
+  } catch (error) {
+    console.error('Error creating session cookie:', error);
+    return NextResponse.json({ error: 'Failed to create session' }, { status: 401 });
+  }
+}
