@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -41,9 +40,8 @@ export default function LoginPage() {
     try {
       await signInWithEmailAndPassword(auth, data.email, data.password);
       
-      // Sucesso! Apenas redirecione.
+      // Apenas redirecione. O AuthProvider e o layout cuidarão do resto.
       router.push('/');
-      return; // Importante: Interrompe a execução para evitar que o 'finally' rode desnecessariamente.
 
     } catch (error: any) {
       console.error('Falha no login:', error);
@@ -58,8 +56,7 @@ export default function LoginPage() {
         description: errorMessage,
         variant: 'destructive',
       });
-       // Apenas desative o loading em caso de erro.
-       setIsLoading(false);
+      setIsLoading(false);
     }
   };
 
