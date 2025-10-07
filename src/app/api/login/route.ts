@@ -29,7 +29,7 @@ if (!getApps().length && serviceAccount) {
 export async function POST(request: Request) {
   if (!serviceAccount) {
     console.error("FIREBASE_SERVICE_ACCOUNT_KEY is not set or is invalid. Cannot create session cookie.");
-    return NextResponse.json({ error: 'Server not configured for authentication.' }, { status: 500 });
+    return NextResponse.json({ error: 'O servidor não está configurado para autenticação. A chave de serviço do Firebase está ausente.' }, { status: 500 });
   }
 
   const { idToken } = await request.json();
@@ -43,10 +43,10 @@ export async function POST(request: Request) {
   try {
     const decodedIdToken = await getAuth().verifyIdToken(idToken);
     
+    const user = await getAuth().getUser(decodedIdToken.uid);
+
     // Se for a primeira vez que um usuário está logando (ou se não tiver claims), defina-o como admin.
-    // Esta é uma lógica de bootstrap para o primeiro usuário.
-    // REMOVA OU PROTEJA ESTA LÓGICA EM PRODUÇÃO APÓS O PRIMEIRO LOGIN DO ADMIN.
-    if (Object.keys(decodedIdToken.customClaims || {}).length === 0) {
+    if (Object.keys(user.customClaims || {}).length === 0) {
         await getAuth().setCustomUserClaims(decodedIdToken.uid, { admin: true });
     }
 
@@ -68,6 +68,6 @@ export async function POST(request: Request) {
 
   } catch (error) {
     console.error('Error creating session cookie:', error);
-    return NextResponse.json({ error: 'Failed to create session' }, { status: 401 });
+    return NextResponse.json({ error: 'Falha ao criar a sessão no servidor.' }, { status: 401 });
   }
 }

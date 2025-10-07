@@ -43,7 +43,7 @@ export default function LoginPage() {
       const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
       const idToken = await userCredential.user.getIdToken();
 
-      // Envia o token para o backend para criar o cookie de sessão
+      // Envia o token para uma rota de API que irá configurar o cookie
       const response = await fetch('/api/login', {
         method: 'POST',
         headers: {
@@ -53,18 +53,21 @@ export default function LoginPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Falha ao criar a sessão.');
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Falha ao criar a sessão.');
       }
 
       // Redireciona para a página principal após o login bem-sucedido
       router.push('/');
-      router.refresh(); // Força a atualização da página para aplicar o middleware
+      router.refresh(); 
 
     } catch (error: any) {
       console.error('Falha no login:', error);
       let errorMessage = 'Ocorreu um erro ao fazer login.';
       if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
           errorMessage = 'Credenciais inválidas. Verifique seu e-mail e senha.';
+      } else if (error.message) {
+          errorMessage = error.message;
       }
       toast({
         title: 'Falha no Login',
