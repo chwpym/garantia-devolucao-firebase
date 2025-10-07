@@ -39,22 +39,11 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
-      const idToken = await userCredential.user.getIdToken();
+      // Autentica diretamente com o Firebase no lado do cliente
+      await signInWithEmailAndPassword(auth, data.email, data.password);
       
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ idToken }),
-      });
-
-      if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Falha ao criar a sessão.');
-      }
-
+      // O Firebase JS SDK gerencia a sessão no cliente (IndexedDB).
+      // Apenas redirecionamos em caso de sucesso.
       router.push('/');
       router.refresh(); 
 
