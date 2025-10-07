@@ -5,18 +5,33 @@ import { initializeApp, getApps, cert } from 'firebase-admin/app';
 
 // Decodifique a chave de serviço que está em uma variável de ambiente
 // Esta chave deve ser configurada nas variáveis de ambiente do seu provedor de hosting (ex: Vercel, Firebase Hosting)
-const serviceAccount = JSON.parse(
-  Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_KEY!, 'base64').toString('utf-8')
-);
+const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+let serviceAccount;
+
+if (serviceAccountKey) {
+  try {
+    serviceAccount = JSON.parse(
+      Buffer.from(serviceAccountKey, 'base64').toString('utf-8')
+    );
+  } catch (error) {
+    console.error("Error parsing FIREBASE_SERVICE_ACCOUNT_KEY:", error);
+  }
+}
+
 
 // Inicialize o Firebase Admin SDK se ainda não foi inicializado
-if (!getApps().length) {
+if (!getApps().length && serviceAccount) {
   initializeApp({
     credential: cert(serviceAccount),
   });
 }
 
 export async function POST(request: Request) {
+  if (!serviceAccount) {
+    console.error("FIREBASE_SERVICE_ACCOUNT_KEY is not set or is invalid. Cannot create session cookie.");
+    return NextResponse.json({ error: 'Server not configured for authentication.' }, { status: 500 });
+  }
+
   const { idToken } = await request.json();
 
   if (!idToken) {
