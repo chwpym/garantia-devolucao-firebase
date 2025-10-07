@@ -26,6 +26,15 @@ export async function POST(request: Request) {
   const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 dias em milissegundos
 
   try {
+    const decodedIdToken = await getAuth().verifyIdToken(idToken);
+    
+    // Se for a primeira vez que um usuário está logando (ou se não tiver claims), defina-o como admin.
+    // Esta é uma lógica de bootstrap para o primeiro usuário.
+    // REMOVA OU PROTEJA ESTA LÓGICA EM PRODUÇÃO APÓS O PRIMEIRO LOGIN DO ADMIN.
+    if (Object.keys(decodedIdToken.customClaims || {}).length === 0) {
+        await getAuth().setCustomUserClaims(decodedIdToken.uid, { admin: true });
+    }
+
     const sessionCookie = await getAuth().createSessionCookie(idToken, { expiresIn });
 
     const options = {
