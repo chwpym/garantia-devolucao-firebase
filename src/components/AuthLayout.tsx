@@ -29,6 +29,6 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   }, [user, loading, router, pathname]);
 
   // 4. Renderiza os filhos incondicionalmente. O useEffect cuidará dos redirecionamentos.
-  // A lógica que retornava 'null' foi removida, pois era a causa da tela branca.
+  // A lógica que retornava 'null' foi removida.
   return <>{children}</>;
 }

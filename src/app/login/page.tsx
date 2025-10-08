@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -14,6 +14,8 @@ import { Input } from '@/components/ui/input';
 import { Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
+import { useAuth } from '@/components/auth-provider';
+import { useRouter } from 'next/navigation';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Por favor, insira um e-mail válido.' }),
@@ -26,6 +28,15 @@ export default function LoginPage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  
+  useEffect(() => {
+    if (!loading && user) {
+        router.push('/');
+    }
+  }, [user, loading, router]);
+
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(formSchema),
@@ -39,11 +50,7 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, data.email, data.password);
-      
-      // CRUCIAL CHANGE: Force a hard refresh to resolve the race condition.
-      // This ensures the AuthProvider re-evaluates the auth state from scratch on the new page.
-      window.location.href = '/';
-
+      // O redirecionamento agora é tratado pelo AuthLayout
     } catch (error: any) {
       console.error('Falha no login:', error);
       let errorMessage = 'Ocorreu um erro ao fazer login.';
@@ -55,7 +62,8 @@ export default function LoginPage() {
         description: errorMessage,
         variant: 'destructive',
       });
-      setIsLoading(false);
+    } finally {
+        setIsLoading(false);
     }
   };
 
@@ -63,10 +71,7 @@ export default function LoginPage() {
     setIsGoogleLoading(true);
     try {
       await signInWithPopup(auth, googleProvider);
-      
-      // CRUCIAL CHANGE: Force a hard refresh to resolve the race condition.
-      window.location.href = '/';
-
+      // O redirecionamento agora é tratado pelo AuthLayout
     } catch (error: any) {
        console.error('Falha no login com Google:', error);
        toast({
@@ -74,9 +79,18 @@ export default function LoginPage() {
         description: 'Não foi possível autenticar com o Google. Tente novamente.',
         variant: 'destructive',
       });
-      setIsGoogleLoading(false);
+    } finally {
+        setIsGoogleLoading(false);
     }
   };
+
+  if (loading || user) {
+      return (
+          <div className="flex h-screen w-screen items-center justify-center bg-background">
+              <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          </div>
+      )
+  }
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
