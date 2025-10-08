@@ -63,7 +63,10 @@ export default function LoginPage() {
     setIsGoogleLoading(true);
     try {
       await signInWithPopup(auth, googleProvider);
+      
+      // CRUCIAL CHANGE: Force a hard refresh to resolve the race condition.
       window.location.href = '/';
+
     } catch (error: any) {
        console.error('Falha no login com Google:', error);
        toast({
