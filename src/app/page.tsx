@@ -25,7 +25,7 @@ import ProductsSection from '@/components/sections/products-section';
 import ProductReportSection from '@/components/sections/product-report-section';
 import { useAppStore } from '@/store/app-store';
 // Placeholder for the new section, will be created later
-// import UsersSection from '@/components/sections/users-section';
+import UsersSection from '@/components/sections/users-section';
 
 export type RegisterMode = 'edit' | 'clone';
 
@@ -84,9 +84,7 @@ export default function Home() {
       case 'settings':
         return <SettingsSection />;
       case 'users': // New view for user management
-        // Placeholder until the component is created
-        return <div><h1>Gerenciar Usuários</h1><p>Em breve...</p></div>;
-        // return <UsersSection />;
+        return <UsersSection />;
       case 'devolucao-register':
         return <DevolucaoRegisterSection editingId={editingDevolucaoId} onSave={handleDevolucaoSaved} />;
       case 'devolucao-query':

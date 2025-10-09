@@ -147,6 +147,20 @@ export const getUserProfile = (uid: string): Promise<UserProfile | undefined> =>
   });
 };
 
+export const getAllUserProfiles = (): Promise<UserProfile[]> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+        const store = await getStore(USERS_STORE_NAME, 'readonly');
+        const request = store.getAll();
+        request.onsuccess = () => resolve(request.result as UserProfile[]);
+        request.onerror = () => reject(request.error);
+    } catch (err) {
+        reject(err);
+    }
+  });
+};
+
+
 export const upsertUserProfile = (profile: UserProfile): Promise<string> => {
   return new Promise(async (resolve, reject) => {
     try {

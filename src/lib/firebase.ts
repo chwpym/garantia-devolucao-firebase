@@ -4,7 +4,6 @@
 import { initializeApp, getApps, getApp, type FirebaseOptions } from 'firebase/app';
 import { getStorage } from 'firebase/storage';
 import { getAuth, GoogleAuthProvider, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig: FirebaseOptions = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -19,7 +18,6 @@ const firebaseConfig: FirebaseOptions = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 const storage = getStorage(app);
 const auth = getAuth(app);
-const db = getFirestore(app); // Initialize Firestore
 const googleProvider = new GoogleAuthProvider();
 
-export { app, storage, auth, db, googleProvider, createUserWithEmailAndPassword, updateProfile };
+export { app, storage, auth, googleProvider, createUserWithEmailAndPassword, updateProfile };
