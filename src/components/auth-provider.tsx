@@ -26,14 +26,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = { user, loading };
 
-  if (loading) {
-    return (
-        <div className="flex h-screen w-screen items-center justify-center bg-background">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        </div>
-    );
-  }
-
+  // Lógica de autenticação temporariamente desativada.
+  // Renderiza diretamente os filhos para permitir o desenvolvimento do app.
   return (
     <AuthContext.Provider value={value}>
       {children}
