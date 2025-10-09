@@ -51,7 +51,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
-import { createUserWithEmailAndPassword, updateProfile } from '@/lib/firebase';
+import { auth, createUserWithEmailAndPassword, updateProfile } from '@/lib/firebase';
 
 const newUserSchema = z.object({
   displayName: z.string().min(2, { message: 'O nome é obrigatório.' }),
@@ -109,6 +109,7 @@ export default function UsersSection() {
       // NOTE: Client-side user creation is not recommended for production.
       // This should be moved to a secure Firebase Function.
       const userCredential = await createUserWithEmailAndPassword(
+        auth,
         data.email,
         data.password
       );
