@@ -1,10 +1,11 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup, type AuthError } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -56,10 +57,11 @@ export default function LoginPage() {
       await signInWithEmailAndPassword(auth, data.email, data.password);
       // FORÇA O RECARREGAMENTO DA PÁGINA - ESTA É A CORREÇÃO
       window.location.href = '/';
-    } catch (error: any) {
+    } catch (error) {
       console.error('Falha no login:', error);
       let errorMessage = 'Ocorreu um erro ao fazer login.';
-      if (error.code === 'auth/invalid-credential') {
+      const firebaseError = error as AuthError;
+      if (firebaseError.code === 'auth/invalid-credential') {
           errorMessage = 'Credenciais inválidas. Verifique seu e-mail e senha.';
       }
       toast({
@@ -80,7 +82,7 @@ export default function LoginPage() {
       await signInWithPopup(auth, googleProvider);
       // FORÇA O RECARREGAMENTO DA PÁGINA - ESTA É A CORREÇÃO
       window.location.href = '/';
-    } catch (error: any) {
+    } catch (error) {
        console.error('Falha no login com Google:', error);
        toast({
         title: 'Falha no Login com Google',

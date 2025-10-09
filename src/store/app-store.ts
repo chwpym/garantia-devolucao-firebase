@@ -1,3 +1,4 @@
+
 'use client';
 
 import { create } from 'zustand';
@@ -43,7 +44,7 @@ interface AppState {
   openNewLoteModal: () => void;
 }
 
-export const useAppStore = create<AppState>((set, get) => ({
+export const useAppStore = create<AppState>((set) => ({
   // Initial state
   activeView: 'dashboard',
   isMobileMenuOpen: false,

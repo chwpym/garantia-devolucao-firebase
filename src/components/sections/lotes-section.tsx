@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
@@ -49,6 +50,10 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
   const isNewLoteModalOpen = useAppStore(state => state.isNewLoteModalOpen);
   const setNewLoteModalOpen = useAppStore(state => state.setNewLoteModalOpen);
 
+  const handleOpenModal = useCallback(() => {
+    setEditingLote(null);
+    setNewLoteModalOpen(true);
+  }, [setNewLoteModalOpen]);
 
   const loadData = useCallback(async () => {
     try {
@@ -80,7 +85,7 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
     if(isNewLoteModalOpen) {
       handleOpenModal();
     }
-  }, [isNewLoteModalOpen]);
+  }, [isNewLoteModalOpen, handleOpenModal]);
 
   useEffect(() => {
     loadData();
@@ -118,10 +123,6 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
     }
   };
   
-  const handleOpenModal = () => {
-    setEditingLote(null);
-    setNewLoteModalOpen(true);
-  };
 
   const getStatusVariant = (status: Lote['status']) => {
     switch (status) {

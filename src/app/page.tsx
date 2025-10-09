@@ -1,3 +1,4 @@
+
 'use client';
 
 import AppLayout from '@/components/app-layout';
@@ -22,7 +23,6 @@ import { cn } from '@/lib/utils';
 import ProductsSection from '@/components/sections/products-section';
 import ProductReportSection from '@/components/sections/product-report-section';
 import { useAppStore } from '@/store/app-store';
-import type { Warranty } from '@/lib/types';
 
 export type RegisterMode = 'edit' | 'clone';
 
