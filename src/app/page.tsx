@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils';
 import ProductsSection from '@/components/sections/products-section';
 import ProductReportSection from '@/components/sections/product-report-section';
 import { useAppStore } from '@/store/app-store';
+import AuthLayout from '@/components/AuthLayout';
 
 export type RegisterMode = 'edit' | 'clone';
 
@@ -99,10 +100,12 @@ export default function Home() {
 
 
   return (
-      <AppLayout>
-        <div className={cn(activeView === 'batch-register' ? "" : "max-w-7xl mx-auto w-full")}>
-            {renderContent()}
-        </div>
-      </AppLayout>
+      <AuthLayout>
+        <AppLayout>
+          <div className={cn(activeView === 'batch-register' ? "" : "max-w-7xl mx-auto w-full")}>
+              {renderContent()}
+          </div>
+        </AppLayout>
+      </AuthLayout>
   );
 }
