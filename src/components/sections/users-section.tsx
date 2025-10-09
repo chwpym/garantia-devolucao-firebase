@@ -50,7 +50,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
-import { auth, createUserWithEmailAndPassword, updateProfile } from '@/lib/firebase';
+import { Alert, AlertTitle, AlertDescription } from '../ui/alert';
+import { Info } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../ui/dropdown-menu';
 
 const userFormSchema = z.object({
@@ -59,10 +60,6 @@ const userFormSchema = z.object({
   email: z
     .string()
     .email({ message: 'Por favor, insira um e-mail válido.' }),
-  password: z
-    .string()
-    .min(6, { message: 'A senha deve ter no mínimo 6 caracteres.' })
-    .optional(),
   role: z.enum(['admin', 'user'], {
     required_error: 'Selecione um nível de permissão.',
   }),
@@ -99,6 +96,9 @@ export default function UsersSection() {
 
   useEffect(() => {
     loadUsers();
+     const handleDataChanged = () => loadUsers();
+    window.addEventListener('datachanged', handleDataChanged);
+    return () => window.removeEventListener('datachanged', handleDataChanged);
   }, [loadUsers]);
   
   useEffect(() => {
@@ -108,103 +108,40 @@ export default function UsersSection() {
             displayName: editingUser.displayName,
             email: editingUser.email,
             role: editingUser.role,
-            password: '',
-        });
-    } else {
-        form.reset({
-            displayName: '',
-            email: '',
-            password: '',
-            role: 'user',
         });
     }
   }, [isFormModalOpen, editingUser, form]);
 
 
   const handleFormSubmit = async (data: UserFormValues) => {
-    if (editingUser) {
-        // Update existing user
-        const updatedProfile: UserProfile = {
-            ...editingUser,
-            displayName: data.displayName,
-            role: data.role as UserRole,
-        };
+    if (!editingUser) return; // Should not happen, but as a safeguard
 
-        try {
-            await db.upsertUserProfile(updatedProfile);
-            toast({
-                title: 'Sucesso!',
-                description: `Usuário ${data.displayName} atualizado.`,
-            });
-            setIsFormModalOpen(false);
-            setEditingUser(null);
-            loadUsers();
-        } catch (error) {
-             toast({
-                title: 'Erro ao Atualizar',
-                description: 'Não foi possível atualizar o perfil do usuário.',
-                variant: 'destructive',
-            });
-        }
-    } else {
-        // Create new user
-        if (!data.password) {
-            form.setError('password', { type: 'manual', message: 'A senha é obrigatória para novos usuários.' });
-            return;
-        }
+    const updatedProfile: UserProfile = {
+        ...editingUser,
+        displayName: data.displayName,
+        role: data.role as UserRole,
+    };
 
-        try {
-            const userCredential = await createUserWithEmailAndPassword(
-                auth,
-                data.email,
-                data.password
-            );
-            const firebaseUser = userCredential.user;
-
-            await updateProfile(firebaseUser, {
-                displayName: data.displayName,
-            });
-
-            const newUserProfile: UserProfile = {
-                uid: firebaseUser.uid,
-                email: firebaseUser.email!,
-                displayName: data.displayName,
-                role: data.role as UserRole,
-            };
-
-            await db.upsertUserProfile(newUserProfile);
-
-            toast({
-                title: 'Sucesso!',
-                description: `Usuário ${data.displayName} criado com sucesso.`,
-            });
-
-            form.reset();
-            setIsFormModalOpen(false);
-            loadUsers();
-        } catch (error: any) {
-            console.error('Failed to create user:', error);
-            let description =
-                'Não foi possível criar o usuário. Verifique o console para mais detalhes.';
-            if (error.code === 'auth/email-already-in-use') {
-                description = 'Este e-mail já está sendo utilizado por outra conta.';
-            }
-            toast({
-                title: 'Erro ao Criar Usuário',
-                description,
-                variant: 'destructive',
-            });
-        }
+    try {
+        await db.upsertUserProfile(updatedProfile);
+        toast({
+            title: 'Sucesso!',
+            description: `Usuário ${data.displayName} atualizado.`,
+        });
+        setIsFormModalOpen(false);
+        setEditingUser(null);
+        loadUsers();
+    } catch (error) {
+         toast({
+            title: 'Erro ao Atualizar',
+            description: 'Não foi possível atualizar o perfil do usuário.',
+            variant: 'destructive',
+        });
     }
   };
   
   const openEditModal = (user: UserProfile) => {
     setEditingUser(user);
-    setIsFormModalOpen(true);
-  }
-  
-  const openNewModal = () => {
-    setEditingUser(null);
     setIsFormModalOpen(true);
   }
 
@@ -216,21 +153,25 @@ export default function UsersSection() {
             Gerenciar Usuários
           </h1>
           <p className="text-lg text-muted-foreground">
-            Adicione, visualize e gerencie os usuários do sistema.
+            Visualize e edite o nível de acesso dos usuários do sistema.
           </p>
         </div>
-        <Button onClick={openNewModal}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Cadastrar Usuário
-        </Button>
       </div>
+
+       <Alert>
+          <Info className="h-4 w-4" />
+          <AlertTitle>Como Adicionar Novos Usuários</AlertTitle>
+          <AlertDescription>
+            Para garantir a segurança, novos usuários devem ser adicionados diretamente no Console do Firebase (na seção Authentication). Após serem criados lá, eles aparecerão nesta lista para que você possa editar seu nome e nível de acesso.
+          </AlertDescription>
+        </Alert>
 
       <Dialog open={isFormModalOpen} onOpenChange={setIsFormModalOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{editingUser ? 'Editar Usuário' : 'Cadastrar Novo Usuário'}</DialogTitle>
+              <DialogTitle>Editar Usuário</DialogTitle>
               <DialogDescription>
-                {editingUser ? 'Altere o nome ou nível de acesso do usuário.' : 'Preencha os dados abaixo para criar um novo acesso ao sistema.'}
+                Altere o nome ou nível de acesso do usuário.
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
@@ -260,32 +201,13 @@ export default function UsersSection() {
                             type="email"
                             placeholder="usuario@email.com"
                             {...field}
-                            disabled={!!editingUser} // Disable email editing
+                            disabled={true}
                           />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  {!editingUser && (
-                     <FormField
-                        control={form.control}
-                        name="password"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Senha</FormLabel>
-                            <FormControl>
-                            <Input
-                                type="password"
-                                placeholder="Senha de acesso"
-                                {...field}
-                            />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                  )}
                   <FormField
                     control={form.control}
                     name="role"
@@ -319,7 +241,7 @@ export default function UsersSection() {
                     {form.formState.isSubmitting && (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     )}
-                    {editingUser ? 'Salvar Alterações' : 'Criar Usuário'}
+                    Salvar Alterações
                   </Button>
                 </DialogFooter>
               </form>
