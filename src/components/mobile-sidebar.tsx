@@ -1,9 +1,11 @@
+
 'use client'
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { navConfig, type NavItem } from "@/config/nav-config";
+import { useAuth } from "@/hooks/use-auth";
 
 
 interface MobileSidebarProps {
@@ -13,8 +15,14 @@ interface MobileSidebarProps {
 }
 
 export default function MobileSidebar({ activeView, onNavigate, className }: MobileSidebarProps) {
+    const { user } = useAuth();
+    const isAdmin = user?.profile?.role === 'admin';
 
-    const renderNavItem = (item: NavItem) => (
+    const renderNavItem = (item: NavItem) => {
+        if (item.adminOnly && !isAdmin) {
+            return null;
+        }
+        return (
          <Button
             key={item.id}
             variant={activeView === item.id ? 'secondary' : 'ghost'}
@@ -25,12 +33,20 @@ export default function MobileSidebar({ activeView, onNavigate, className }: Mob
             <item.icon className="h-5 w-5 flex-shrink-0" />
             <span className="truncate">{item.label}</span>
         </Button>
-    )
+        );
+    }
 
     const renderAccordionItem = (item: NavItem) => {
-        if (!item.items) return null;
+        if (!item.items || (item.adminOnly && !isAdmin)) {
+            return null;
+        }
 
-        const isGroupActive = item.items.some(subItem => subItem.id === activeView);
+        const visibleSubItems = item.items.filter(subItem => !subItem.adminOnly || isAdmin);
+        if (visibleSubItems.length === 0) {
+            return null;
+        }
+
+        const isGroupActive = visibleSubItems.some(subItem => subItem.id === activeView);
 
         return (
             <AccordionItem value={item.id} className="border-b-0" key={item.id}>
@@ -48,7 +64,7 @@ export default function MobileSidebar({ activeView, onNavigate, className }: Mob
                 </AccordionTrigger>
                 <AccordionContent className="pb-1">
                     <div className="flex flex-col gap-1 pl-4 pt-1">
-                         {item.items.map(subItem => (
+                         {visibleSubItems.map(subItem => (
                             <Button
                                 key={subItem.id}
                                 variant={activeView === subItem.id ? 'secondary' : 'ghost'}

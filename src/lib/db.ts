@@ -2,10 +2,10 @@
 
 'use client';
 
-import type { Warranty, Person, Supplier, Lote, LoteItem, CompanyData, Devolucao, ItemDevolucao, Product, PurchaseSimulation } from './types';
+import type { Warranty, Person, Supplier, Lote, LoteItem, CompanyData, Devolucao, ItemDevolucao, Product, PurchaseSimulation, UserProfile } from './types';
 
 const DB_NAME = 'GarantiasDB';
-const DB_VERSION = 7; // Incremented version
+const DB_VERSION = 8; // Incremented version
 
 const GARANTIAS_STORE_NAME = 'garantias';
 const PERSONS_STORE_NAME = 'persons';
@@ -17,6 +17,7 @@ const DEVOLUCOES_STORE_NAME = 'devolucoes';
 const ITENS_DEVOLUCAO_STORE_NAME = 'itens_devolucao';
 const PRODUCTS_STORE_NAME = 'products';
 const SIMULATIONS_STORE_NAME = 'simulations';
+const USERS_STORE_NAME = 'users'; // New store for user profiles/roles
 
 
 let dbPromise: Promise<IDBDatabase> | null = null;
@@ -82,6 +83,11 @@ const getDB = (): Promise<IDBDatabase> => {
             simulationStore.createIndex('nfeNumber', 'nfeInfo.nfeNumber', { unique: false });
             simulationStore.createIndex('emitterName', 'nfeInfo.emitterName', { unique: false });
         }
+        // Create user profile store
+        if (!dbInstance.objectStoreNames.contains(USERS_STORE_NAME)) {
+            const userStore = dbInstance.createObjectStore(USERS_STORE_NAME, { keyPath: 'uid' });
+            userStore.createIndex('email', 'email', { unique: true });
+        }
       };
 
       request.onsuccess = (event) => {
@@ -125,6 +131,35 @@ const clearStore = (storeName: string): Promise<void> => {
     }
   });
 };
+
+// --- User Profile Functions ---
+
+export const getUserProfile = (uid: string): Promise<UserProfile | undefined> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(USERS_STORE_NAME, 'readonly');
+      const request = store.get(uid);
+      request.onsuccess = () => resolve(request.result as UserProfile | undefined);
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+export const upsertUserProfile = (profile: UserProfile): Promise<string> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(USERS_STORE_NAME, 'readwrite');
+      const request = store.put(profile);
+      request.onsuccess = () => resolve(request.result as string);
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
 
 // --- Warranty Functions ---
 
@@ -833,3 +868,7 @@ export const deleteSimulation = (id: number): Promise<void> => {
 };
 
 export const clearSimulations = (): Promise<void> => clearStore(SIMULATIONS_STORE_NAME);
+
+// --- General Purpose ---
+// Note: clearUsers is not exported because it should be handled carefully
+export const clearUsers = (): Promise<void> => clearStore(USERS_STORE_NAME);

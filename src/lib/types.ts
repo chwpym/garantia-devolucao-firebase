@@ -146,6 +146,12 @@ export interface PurchaseSimulation {
     createdAt: string;
 }
 
-    
+// --- User Profile ---
+export type UserRole = 'admin' | 'user';
 
-    
+export interface UserProfile {
+  uid: string;
+  email: string;
+  role: UserRole;
+  displayName?: string;
+}
