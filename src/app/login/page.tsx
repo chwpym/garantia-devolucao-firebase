@@ -14,9 +14,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, Eraser } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import Image from 'next/image';
-import { clearUsers } from '@/lib/db-utils';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Por favor, insira um e-mail válido.' }),
@@ -71,22 +70,6 @@ export default function LoginPage() {
         variant: 'destructive',
       });
       setIsGoogleLoading(false);
-    }
-  };
-
-  const handleClearUsers = async () => {
-    try {
-      await clearUsers();
-      toast({
-        title: 'Perfis Limpos',
-        description: 'Os perfis de usuários locais foram removidos. Por favor, faça login novamente para recriar o seu como administrador.'
-      });
-    } catch (error) {
-       toast({
-        title: 'Erro',
-        description: 'Não foi possível limpar os perfis de usuário.',
-        variant: 'destructive',
-      });
     }
   };
 
@@ -146,12 +129,6 @@ export default function LoginPage() {
                )}
               Entrar com o Google
             </Button>
-            <div className="mt-4 pt-4 border-t border-dashed">
-                <Button variant="destructive" className="w-full" onClick={handleClearUsers}>
-                    <Eraser className="mr-2 h-4 w-4" />
-                    Limpar Perfis de Usuários Locais (DEV)
-                </Button>
-            </div>
         </CardContent>
       </Card>
     </main>
