@@ -10,9 +10,12 @@ interface AuthGuardProps {
   children: ReactNode;
 }
 
+const PUBLIC_ROUTES = ['/login', '/signup'];
+
 export function AuthGuard({ children }: AuthGuardProps) {
   const { isLoading, isAuthenticated } = useAuthGuard();
   const pathname = usePathname();
+  const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
 
   if (isLoading) {
     return (
@@ -23,13 +26,13 @@ export function AuthGuard({ children }: AuthGuardProps) {
     );
   }
 
-  // Se estiver autenticado, ou se estiver na página de login, mostre o conteúdo.
+  // Se estiver autenticado, ou se estiver em uma rota pública, mostre o conteúdo.
   // O hook `useAuthGuard` cuidará do redirecionamento se necessário.
-  if (isAuthenticated || pathname === '/login') {
+  if (isAuthenticated || isPublicRoute) {
       return <>{children}</>;
   }
 
-  // Enquanto o redirecionamento não acontece (para usuários não autenticados fora do login),
+  // Enquanto o redirecionamento não acontece (para usuários não autenticados fora das rotas públicas),
   // mostre o spinner para evitar uma tela em branco.
   return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">

@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { signInWithPopup, signInWithEmailAndPassword, type AuthError } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -129,6 +130,12 @@ export default function LoginPage() {
                )}
               Entrar com o Google
             </Button>
+            <div className="mt-4 text-center text-sm">
+                Não tem uma conta?{' '}
+                <Link href="/signup" className="underline">
+                    Cadastre-se
+                </Link>
+            </div>
         </CardContent>
       </Card>
     </main>

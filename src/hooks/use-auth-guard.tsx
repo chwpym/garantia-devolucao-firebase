@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from './use-auth';
 
-const PUBLIC_ROUTES = ['/login'];
+const PUBLIC_ROUTES = ['/login', '/signup'];
 
 export function useAuthGuard() {
   const { user, loading } = useAuth();
