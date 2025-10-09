@@ -2,11 +2,12 @@
 'use client';
 
 import { createContext, useEffect, useState, ReactNode } from 'react';
-import { onAuthStateChanged, type User } from 'firebase/auth';
+import { onAuthStateChanged, type User, signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { type UserProfile } from '@/lib/types';
 import * as db from '@/lib/db';
 import { countUsers } from '@/lib/db-utils';
+import { useToast } from '@/hooks/use-toast';
 
 
 // This new type combines Firebase Auth user with our custom profile data
@@ -22,6 +23,7 @@ export const AuthContext = createContext<AuthContextType>({ user: null, loading:
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (authUser) => {
@@ -34,7 +36,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             if (!profile) {
               // Profile doesn't exist, create it.
-              // This is where we determine if they are the first user.
               const userCount = await countUsers();
               const newRole = userCount === 0 ? 'admin' : 'user';
 
@@ -45,8 +46,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 email: authUser.email!,
                 displayName: authUser.displayName || authUser.email?.split('@')[0] || 'Novo Usuário',
                 role: newRole,
+                status: 'active',
               };
               await db.upsertUserProfile(profile);
+            }
+
+            // ** SECURITY CHECK: Blocked users should not be able to log in **
+            if (profile.status === 'blocked') {
+              toast({
+                title: 'Acesso Negado',
+                description: 'Sua conta foi desativada por um administrador.',
+                variant: 'destructive',
+                duration: 10000,
+              });
+              await signOut(auth);
+              setUser(null);
+              setLoading(false);
+              return;
             }
             
             setUser({ ...authUser, profile });
@@ -70,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Cleanup subscription on unmount
     return () => unsubscribe();
-  }, []);
+  }, [toast]);
 
   const value = { user, loading };
 

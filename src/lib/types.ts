@@ -148,10 +148,12 @@ export interface PurchaseSimulation {
 
 // --- User Profile ---
 export type UserRole = 'admin' | 'user';
+export type UserStatus = 'active' | 'blocked';
 
 export interface UserProfile {
   uid: string;
   email: string;
   role: UserRole;
   displayName?: string;
+  status: UserStatus;
 }

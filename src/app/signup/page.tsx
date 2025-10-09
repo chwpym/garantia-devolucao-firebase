@@ -54,6 +54,7 @@ export default function SignupPage() {
         email: data.email,
         displayName: data.displayName,
         role: 'user' as const,
+        status: 'active' as const,
       };
       await db.upsertUserProfile(profile);
 

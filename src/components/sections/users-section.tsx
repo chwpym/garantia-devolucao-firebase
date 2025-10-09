@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -28,7 +28,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Loader2, MoreHorizontal, Pencil } from 'lucide-react';
+import { Loader2, MoreHorizontal, Pencil, Ban, CheckCircle, Search } from 'lucide-react';
 import * as db from '@/lib/db';
 import { type UserProfile, type UserRole } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -52,7 +52,9 @@ import {
 } from '../ui/select';
 import { Alert, AlertTitle, AlertDescription } from '../ui/alert';
 import { Info } from 'lucide-react';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '../ui/dropdown-menu';
+import { Checkbox } from '../ui/checkbox';
+import { Label } from '../ui/label';
 
 const userFormSchema = z.object({
   uid: z.string().optional(),
@@ -72,6 +74,7 @@ export default function UsersSection() {
   const [isLoading, setIsLoading] = useState(true);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
+  const [showBlocked, setShowBlocked] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<UserFormValues>({
@@ -114,12 +117,13 @@ export default function UsersSection() {
 
 
   const handleFormSubmit = async (data: UserFormValues) => {
-    if (!editingUser) return; // Should not happen, but as a safeguard
+    if (!editingUser) return;
 
     const updatedProfile: UserProfile = {
         ...editingUser,
         displayName: data.displayName,
         role: data.role as UserRole,
+        status: editingUser.status || 'active',
     };
 
     try {
@@ -145,6 +149,36 @@ export default function UsersSection() {
     setIsFormModalOpen(true);
   }
 
+  const handleToggleBlockUser = async (user: UserProfile) => {
+    const newStatus = user.status === 'blocked' ? 'active' : 'blocked';
+    const updatedProfile: UserProfile = { ...user, status: newStatus };
+
+    try {
+      await db.upsertUserProfile(updatedProfile);
+      toast({
+        title: 'Sucesso!',
+        description: `Usuário ${user.displayName} foi ${newStatus === 'blocked' ? 'bloqueado' : 'desbloqueado'}.`,
+      });
+      loadUsers();
+    } catch (error) {
+       toast({
+        title: 'Erro',
+        description: 'Não foi possível alterar o status do usuário.',
+        variant: 'destructive',
+      });
+    }
+  };
+  
+  const filteredUsers = useMemo(() => {
+    return users.filter(user => {
+        if (showBlocked) {
+            return user.status === 'blocked';
+        }
+        return user.status !== 'blocked';
+    });
+  }, [users, showBlocked]);
+
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -153,7 +187,7 @@ export default function UsersSection() {
             Gerenciar Usuários
           </h1>
           <p className="text-lg text-muted-foreground">
-            Visualize e edite o nível de acesso dos usuários do sistema.
+            Visualize, edite e gerencie o acesso dos usuários do sistema.
           </p>
         </div>
       </div>
@@ -162,7 +196,7 @@ export default function UsersSection() {
           <Info className="h-4 w-4" />
           <AlertTitle>Como Adicionar Novos Usuários</AlertTitle>
           <AlertDescription>
-            Para garantir a segurança, novos usuários devem ser adicionados diretamente no Console do Firebase (na seção Authentication). Após serem criados lá, eles aparecerão nesta lista para que você possa editar seu nome e nível de acesso.
+            Para garantir a segurança, novos usuários devem se cadastrar pela página de <a href="/signup" className='underline'>cadastro público</a>. Após se registrarem, eles aparecerão nesta lista com o nível "Usuário Padrão" e você poderá editar suas permissões ou status.
           </AlertDescription>
         </Alert>
 
@@ -257,6 +291,14 @@ export default function UsersSection() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+            <div className="flex items-center space-x-2 mb-4">
+                <Checkbox
+                    id="show-blocked"
+                    checked={showBlocked}
+                    onCheckedChange={(checked) => setShowBlocked(Boolean(checked))}
+                />
+                <Label htmlFor="show-blocked">Mostrar usuários bloqueados</Label>
+            </div>
           <div className="border rounded-md">
             <Table>
               <TableHeader>
@@ -264,19 +306,20 @@ export default function UsersSection() {
                   <TableHead>Nome</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Nível</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead className='text-right'>Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="h-24 text-center">
+                    <TableCell colSpan={5} className="h-24 text-center">
                       <Loader2 className="mx-auto h-6 w-6 animate-spin" />
                     </TableCell>
                   </TableRow>
-                ) : users.length > 0 ? (
-                  users.map((user) => (
-                    <TableRow key={user.uid}>
+                ) : filteredUsers.length > 0 ? (
+                  filteredUsers.map((user) => (
+                    <TableRow key={user.uid} className={user.status === 'blocked' ? 'bg-muted/50 text-muted-foreground' : ''}>
                       <TableCell className="font-medium">
                         {user.displayName}
                       </TableCell>
@@ -286,6 +329,13 @@ export default function UsersSection() {
                           variant={user.role === 'admin' ? 'default' : 'secondary'}
                         >
                           {user.role === 'admin' ? 'Admin' : 'Usuário'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                         <Badge
+                          variant={user.status === 'blocked' ? 'destructive' : 'outline'}
+                        >
+                          {user.status === 'blocked' ? 'Bloqueado' : 'Ativo'}
                         </Badge>
                       </TableCell>
                       <TableCell className='text-right'>
@@ -301,6 +351,16 @@ export default function UsersSection() {
                                 <Pencil className="mr-2 h-4 w-4" />
                                 Editar
                               </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                               <DropdownMenuItem 
+                                onClick={() => handleToggleBlockUser(user)} 
+                                className={user.status === 'blocked' ? 'text-green-600 focus:text-green-700' : 'text-destructive focus:text-destructive'}>
+                                {user.status === 'blocked' ? (
+                                    <><CheckCircle className="mr-2 h-4 w-4" /> Desbloquear</>
+                                ) : (
+                                    <><Ban className="mr-2 h-4 w-4" /> Bloquear</>
+                                )}
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                       </TableCell>
@@ -308,7 +368,7 @@ export default function UsersSection() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={4} className="h-24 text-center">
+                    <TableCell colSpan={5} className="h-24 text-center">
                       Nenhum usuário encontrado.
                     </TableCell>
                   </TableRow>
