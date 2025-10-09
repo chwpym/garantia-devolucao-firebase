@@ -26,15 +26,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = { user, loading };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {loading ? (
+  if (loading) {
+    return (
         <div className="flex h-screen w-screen items-center justify-center bg-background">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </div>
-      ) : (
-        children
-      )}
+    );
+  }
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
     </AuthContext.Provider>
   );
 }

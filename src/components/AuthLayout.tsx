@@ -1,34 +1,37 @@
-'use client';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-import { useAuth } from './auth-provider';
-import { usePathname, useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+const PROTECTED_ROUTES = ['/'];
+const PUBLIC_ROUTES = ['/login'];
 
-export default function AuthLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
-  const router = useRouter();
-  const pathname = usePathname();
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  
+  // O Firebase Auth no cliente usa um cookie com um nome complexo
+  // que geralmente começa com "firebase:authUser".
+  // Em vez de procurar um cookie 'session' específico, vamos verificar
+  // se *qualquer* cookie que indique um usuário do Firebase existe.
+  const hasAuthCookie = request.cookies.getAll().some(cookie => cookie.name.includes('firebase:authUser'));
 
-  useEffect(() => {
-    // 1. Espera o AuthProvider terminar de carregar o estado de autenticação.
-    if (loading) {
-      return;
-    }
+  const isProtectedRoute = PROTECTED_ROUTES.some(route => pathname.startsWith(route)) && !PUBLIC_ROUTES.includes(pathname);
+  const isPublicRoute = PUBLIC_ROUTES.some(route => pathname.startsWith(route));
 
-    const isPublicRoute = pathname === '/login';
+  // Se não há cookie de autenticação e a rota é protegida, redireciona para o login
+  if (!hasAuthCookie && isProtectedRoute) {
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+  
+  // Se há cookie de autenticação e o usuário tenta acessar uma rota pública (como /login), redireciona para a home
+  if (hasAuthCookie && isPublicRoute) {
+    return NextResponse.redirect(new URL('/', request.url));
+  }
 
-    // 2. Se o usuário não está logado e tenta acessar uma rota privada, redireciona.
-    if (!user && !isPublicRoute) {
-      router.push('/login');
-    }
-
-    // 3. Se o usuário já está logado e tenta acessar a página de login, redireciona.
-    if (user && isPublicRoute) {
-      router.push('/');
-    }
-  }, [user, loading, router, pathname]);
-
-  // 4. Renderiza os filhos incondicionalmente. O useEffect cuidará dos redirecionamentos.
-  // A lógica que retornava 'null' foi removida, pois era a causa da tela branca/spinner infinito.
-  return <>{children}</>;
+  return NextResponse.next();
 }
+
+export const config = {
+  matcher: [
+    // Aplica o middleware a todas as rotas, exceto arquivos estáticos e rotas de API
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.png$).*)',
+  ],
+};

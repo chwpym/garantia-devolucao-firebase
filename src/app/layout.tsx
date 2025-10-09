@@ -6,7 +6,6 @@ import './globals.css';
 import { cn } from '@/lib/utils';
 import PwaUpdateAlert from '@/components/pwa-update-alert';
 import { AuthProvider } from '@/components/auth-provider';
-import AuthLayout from '@/components/AuthLayout';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -44,9 +43,7 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <AuthProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            <AuthLayout>
               {children}
-            </AuthLayout>
             <Toaster />
             <PwaUpdateAlert />
           </ThemeProvider>
