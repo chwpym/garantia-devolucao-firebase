@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export async function middleware() {
+export async function middleware(_request: NextRequest) {
   // A lógica de autenticação foi temporariamente desativada para permitir o desenvolvimento.
   // Para reativar, descomente o bloco abaixo.
   /*
