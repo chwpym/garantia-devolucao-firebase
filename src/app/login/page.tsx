@@ -2,27 +2,68 @@
 'use client';
 
 import { useState } from 'react';
-import { signInWithPopup, type AuthError } from 'firebase/auth';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { signInWithPopup, signInWithEmailAndPassword, type AuthError } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import { Loader2 } from 'lucide-react';
 import Image from 'next/image';
 
+const loginSchema = z.object({
+  email: z.string().email({ message: 'Por favor, insira um e-mail válido.' }),
+  password: z.string().min(1, { message: 'A senha é obrigatória.' }),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
+
 export default function LoginPage() {
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const onSubmit = async (data: LoginFormValues) => {
+    setIsLoading(true);
+    try {
+      await signInWithEmailAndPassword(auth, data.email, data.password);
+      // Força um recarregamento completo para a página inicial.
+      // Isso resolve a condição de corrida e garante que o AuthProvider
+      // leia o novo estado de login corretamente.
+      window.location.href = '/';
+
+    } catch (error: unknown) {
+      const authError = error as AuthError;
+      console.error('Falha no login:', authError);
+      let errorMessage = 'Ocorreu um erro ao fazer login.';
+      if (authError.code === 'auth/invalid-credential') {
+          errorMessage = 'Credenciais inválidas. Verifique seu e-mail e senha.';
+      }
+      toast({
+        title: 'Falha no Login',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      setIsLoading(false);
+    }
+  };
+  
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     try {
       await signInWithPopup(auth, googleProvider);
       // O AuthGuard cuidará do redirecionamento após o estado de autenticação mudar.
-      toast({
-        title: 'Login realizado com sucesso!',
-        description: 'Você será redirecionado em breve.',
-      });
+      window.location.href = '/';
     } catch (error) {
        const authError = error as AuthError;
        console.error('Falha no login com Google:', authError);
@@ -37,18 +78,53 @@ export default function LoginPage() {
     }
   };
 
-  // A página de login agora renderiza seu conteúdo diretamente.
-  // O AuthGuard é o único responsável por mostrar o spinner ou redirecionar.
   return (
     <main className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
             <Image src="/logo.png" alt="Synergia OS Logo" width={64} height={64} className="mx-auto mb-4 rounded-lg" />
           <CardTitle className="text-2xl">Acesso ao Sistema</CardTitle>
-          <CardDescription>Use sua conta do Google para entrar.</CardDescription>
+          <CardDescription>Use sua conta para entrar.</CardDescription>
         </CardHeader>
         <CardContent>
-             <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isGoogleLoading}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="seu@email.com"
+                {...form.register('email')}
+                disabled={isLoading || isGoogleLoading}
+              />
+              {form.formState.errors.email && (
+                <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Senha</Label>
+              <Input
+                id="password"
+                type="password"
+                {...form.register('password')}
+                disabled={isLoading || isGoogleLoading}
+              />
+               {form.formState.errors.password && (
+                <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>
+              )}
+            </div>
+            <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Entrar
+            </Button>
+          </form>
+          <div className="relative my-4">
+            <Separator />
+            <span className="absolute left-1/2 -translate-x-1/2 -top-2.5 bg-background px-2 text-xs text-muted-foreground">
+              OU
+            </span>
+          </div>
+            <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading || isGoogleLoading}>
               {isGoogleLoading ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
