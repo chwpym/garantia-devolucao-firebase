@@ -31,6 +31,7 @@ export default function LoginPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   
+  // Este useEffect é bom para redirecionar usuários que já têm uma sessão ativa.
   useEffect(() => {
     if (!loading && user) {
         router.push('/');
@@ -46,15 +47,19 @@ export default function LoginPage() {
     },
   });
 
+  // ==================================================================
+  // FUNÇÃO onSubmit CORRIGIDA
+  // ==================================================================
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, data.email, data.password);
-      // O redirecionamento agora é tratado pelo AuthLayout
+      // FORÇA O RECARREGAMENTO DA PÁGINA - ESTA É A CORREÇÃO
+      window.location.href = '/';
     } catch (error: any) {
       console.error('Falha no login:', error);
       let errorMessage = 'Ocorreu um erro ao fazer login.';
-      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+      if (error.code === 'auth/invalid-credential') {
           errorMessage = 'Credenciais inválidas. Verifique seu e-mail e senha.';
       }
       toast({
@@ -62,16 +67,19 @@ export default function LoginPage() {
         description: errorMessage,
         variant: 'destructive',
       });
-    } finally {
-        setIsLoading(false);
+      setIsLoading(false); // Desliga o spinner apenas em caso de erro
     }
   };
 
+  // ==================================================================
+  // FUNÇÃO handleGoogleSignIn CORRIGIDA
+  // ==================================================================
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     try {
       await signInWithPopup(auth, googleProvider);
-      // O redirecionamento agora é tratado pelo AuthLayout
+      // FORÇA O RECARREGAMENTO DA PÁGINA - ESTA É A CORREÇÃO
+      window.location.href = '/';
     } catch (error: any) {
        console.error('Falha no login com Google:', error);
        toast({
@@ -79,11 +87,12 @@ export default function LoginPage() {
         description: 'Não foi possível autenticar com o Google. Tente novamente.',
         variant: 'destructive',
       });
-    } finally {
-        setIsGoogleLoading(false);
+      setIsGoogleLoading(false); // Desliga o spinner apenas em caso de erro
     }
   };
 
+  // Se o AuthProvider ainda está carregando ou se o usuário já existe, mostre um spinner.
+  // Isso evita que a tela de login "pisque" para um usuário já logado.
   if (loading || user) {
       return (
           <div className="flex h-screen w-screen items-center justify-center bg-background">
@@ -92,6 +101,7 @@ export default function LoginPage() {
       )
   }
 
+  // Se não está carregando e não há usuário, mostra a página de login.
   return (
     <main className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-sm">
@@ -153,7 +163,7 @@ export default function LoginPage() {
                 <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
                   <path fill="currentColor" d="M488 261.8C488 403.3 381.5 512 244 512 109.8 512 0 402.2 0 261.8S109.8 11.8 244 11.8c70.3 0 132.3 32.4 174.5 84.2l-64.8 49.5C320.5 102.7 284.5 84 244 84c-100.3 0-181.5 78.9-181.5 177.8s81.2 177.8 181.5 177.8c108.9 0 160.1-81.1 164.8-124.3H244v-71.4h239.5c4.7 26.6 7.5 55.8 7.5 85.5z"></path>
                 </svg>
-              )}
+               )}
               Entrar com Google
             </Button>
           </div>

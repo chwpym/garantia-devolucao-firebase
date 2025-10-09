@@ -35,4 +35,15 @@ const pwaConfig = withPWA({
   disable: process.env.NODE_ENV === 'development',
 });
 
-export default pwaConfig(nextConfig);
+// A configuração env é necessária para o Next.js carregar as variáveis de ambiente
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { parsed: localEnv } = require('dotenv').config();
+
+const configWithEnv = {
+    ...pwaConfig(nextConfig),
+    env: {
+        ...localEnv,
+    },
+};
+
+export default configWithEnv;
