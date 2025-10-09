@@ -15,8 +15,8 @@ import { Input } from '@/components/ui/input';
 import { Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
-import { useAuth } from '@/components/auth-provider';
-import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/use-auth';
+import { useRouter, usePathname } from 'next/navigation';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Por favor, insira um e-mail válido.' }),
@@ -29,16 +29,16 @@ export default function LoginPage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   
-  // Este useEffect é bom para redirecionar usuários que já têm uma sessão ativa.
   useEffect(() => {
-    if (!loading && user) {
+    // Redireciona se o usuário já estiver logado
+    if (user && pathname === '/login') {
         router.push('/');
     }
-  }, [user, loading, router]);
-
+  }, [user, router, pathname]);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(formSchema),
@@ -48,15 +48,16 @@ export default function LoginPage() {
     },
   });
 
-  // ==================================================================
-  // FUNÇÃO onSubmit CORRIGIDA
-  // ==================================================================
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, data.email, data.password);
-      // FORÇA O RECARREGAMENTO DA PÁGINA - ESTA É A CORREÇÃO
-      window.location.href = '/';
+      // O useAuthGuard vai lidar com o redirecionamento.
+      // Não precisamos mais forçar o reload.
+      toast({
+        title: 'Login realizado com sucesso!',
+        description: 'Você será redirecionado em breve.',
+      });
     } catch (error) {
       console.error('Falha no login:', error);
       let errorMessage = 'Ocorreu um erro ao fazer login.';
@@ -69,19 +70,19 @@ export default function LoginPage() {
         description: errorMessage,
         variant: 'destructive',
       });
-      setIsLoading(false); // Desliga o spinner apenas em caso de erro
+      setIsLoading(false);
     }
   };
 
-  // ==================================================================
-  // FUNÇÃO handleGoogleSignIn CORRIGIDA
-  // ==================================================================
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     try {
       await signInWithPopup(auth, googleProvider);
-      // FORÇA O RECARREGAMENTO DA PÁGINA - ESTA É A CORREÇÃO
-      window.location.href = '/';
+      // O useAuthGuard vai lidar com o redirecionamento.
+      toast({
+        title: 'Login realizado com sucesso!',
+        description: 'Você será redirecionado em breve.',
+      });
     } catch (error) {
        console.error('Falha no login com Google:', error);
        toast({
@@ -89,21 +90,17 @@ export default function LoginPage() {
         description: 'Não foi possível autenticar com o Google. Tente novamente.',
         variant: 'destructive',
       });
-      setIsGoogleLoading(false); // Desliga o spinner apenas em caso de erro
+      setIsGoogleLoading(false);
     }
   };
 
-  // Se o AuthProvider ainda está carregando ou se o usuário já existe, mostre um spinner.
-  // Isso evita que a tela de login "pisque" para um usuário já logado.
-  if (loading || user) {
-      return (
-          <div className="flex h-screen w-screen items-center justify-center bg-background">
-              <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          </div>
-      )
+  // AuthGuard já está mostrando um spinner, então não precisamos de um aqui
+  // a menos que queiramos um placeholder específico para a página de login
+  // enquanto o usuário é redirecionado. Por simplicidade, podemos retornar null.
+  if (user) {
+    return null;
   }
 
-  // Se não está carregando e não há usuário, mostra a página de login.
   return (
     <main className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-sm">

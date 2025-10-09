@@ -7,6 +7,7 @@ import './globals.css';
 import { cn } from '@/lib/utils';
 import PwaUpdateAlert from '@/components/pwa-update-alert';
 import { AuthProvider } from '@/components/auth-provider';
+import { AuthGuard } from '@/components/auth-guard';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -21,7 +22,6 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   icons: {
     icon: [
-      //{ url: '/favicon.ico', sizes: 'any' },
       { url: '/icon-192x192.png', type: 'image/png', sizes: '192x192' },
       { url: '/icon-512x512.png', type: 'image/png', sizes: '512x512' },
     ],
@@ -42,13 +42,15 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className={cn('font-sans', inter.variable)}>
       <head />
       <body className="font-body antialiased">
-        <AuthProvider>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <AuthProvider>
+            <AuthGuard>
               {children}
-            <Toaster />
-            <PwaUpdateAlert />
-          </ThemeProvider>
-        </AuthProvider>
+            </AuthGuard>
+          </AuthProvider>
+          <Toaster />
+          <PwaUpdateAlert />
+        </ThemeProvider>
       </body>
     </html>
   );
