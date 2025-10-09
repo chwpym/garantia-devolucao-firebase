@@ -28,7 +28,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Loader2, MoreHorizontal, Pencil, Ban, CheckCircle, Search } from 'lucide-react';
+import { Loader2, MoreHorizontal, Pencil, Ban, CheckCircle } from 'lucide-react';
 import * as db from '@/lib/db';
 import { type UserProfile, type UserRole } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -55,6 +55,7 @@ import { Info } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '../ui/dropdown-menu';
 import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
+import { useAuth } from '@/hooks/use-auth';
 
 const userFormSchema = z.object({
   uid: z.string().optional(),
@@ -76,6 +77,7 @@ export default function UsersSection() {
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
   const [showBlocked, setShowBlocked] = useState(false);
   const { toast } = useToast();
+  const { user: currentUser } = useAuth();
 
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userFormSchema),
@@ -354,7 +356,8 @@ export default function UsersSection() {
                               <DropdownMenuSeparator />
                                <DropdownMenuItem 
                                 onClick={() => handleToggleBlockUser(user)} 
-                                className={user.status === 'blocked' ? 'text-green-600 focus:text-green-700' : 'text-destructive focus:text-destructive'}>
+                                className={user.status === 'blocked' ? 'text-green-600 focus:text-green-700' : 'text-destructive focus:text-destructive'}
+                                disabled={user.uid === currentUser?.uid}>
                                 {user.status === 'blocked' ? (
                                     <><CheckCircle className="mr-2 h-4 w-4" /> Desbloquear</>
                                 ) : (
