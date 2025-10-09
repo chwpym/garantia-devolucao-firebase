@@ -46,5 +46,5 @@ export function useAuthGuard() {
 
   // Retorna o status de carregamento e se o usuário está autenticado para a rota atual.
   // A verificação só é considerada "não carregando" após a checagem inicial do firebase.
-  return { isLoading: !isInitialCheckComplete, isAuth };
+  return { isLoading: loading || !isInitialCheckComplete, isAuth };
 }
