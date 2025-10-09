@@ -26,7 +26,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Loader2, MoreHorizontal, Pencil } from 'lucide-react';
