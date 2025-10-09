@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from './use-auth';
 
@@ -11,40 +11,21 @@ export function useAuthGuard() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const [isAuth, setIsAuth] = useState(false);
-  const [isInitialCheckComplete, setIsInitialCheckComplete] = useState(false);
 
   useEffect(() => {
-    // Não faça nada até que a verificação inicial do Firebase termine.
     if (loading) {
       return;
     }
 
-    // Marca que a checagem inicial terminou
-    setIsInitialCheckComplete(true); 
-
     const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
 
-    // Se o usuário NÃO está logado...
-    if (!user) {
-      setIsAuth(false);
-      // E está tentando acessar uma rota que não é pública, redirecione para o login.
-      if (!isPublicRoute) {
-        router.push('/login');
-      }
-    } 
-    // Se o usuário ESTÁ logado...
-    else {
-      setIsAuth(true);
-      // E está na página de login, redirecione para a página inicial.
-      if (isPublicRoute) {
-        router.push('/');
-      }
+    if (!user && !isPublicRoute) {
+      router.push('/login');
+    } else if (user && isPublicRoute) {
+      router.push('/');
     }
-
   }, [user, loading, router, pathname]);
 
-  // Retorna o status de carregamento e se o usuário está autenticado para a rota atual.
-  // A verificação só é considerada "não carregando" após a checagem inicial do firebase.
-  return { isLoading: loading || !isInitialCheckComplete, isAuth };
+  // A decisão de renderizar ou não será do AuthGuard, o hook apenas informa o estado.
+  return { isLoading: loading, isAuthenticated: !!user };
 }
