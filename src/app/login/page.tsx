@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { signInWithPopup, type AuthError } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
@@ -9,24 +9,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import Image from 'next/image';
-import { useAuth } from '@/hooks/use-auth';
-import { useRouter, usePathname } from 'next/navigation';
-
 
 export default function LoginPage() {
   const { toast } = useToast();
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const { user } = useAuth();
-  const router = useRouter();
-  const pathname = usePathname();
-  
-  useEffect(() => {
-    // Redireciona se o usuário já estiver logado
-    if (user && pathname === '/login') {
-        router.push('/');
-    }
-  }, [user, router, pathname]);
-
 
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
@@ -51,12 +37,8 @@ export default function LoginPage() {
     }
   };
 
-  // AuthGuard já está mostrando um spinner, então não precisamos de um aqui.
-  // Retornamos null para não renderizar nada enquanto o usuário é redirecionado.
-  if (user) {
-    return null;
-  }
-
+  // A página de login agora renderiza seu conteúdo diretamente.
+  // O AuthGuard é o único responsável por mostrar o spinner ou redirecionar.
   return (
     <main className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-sm">
