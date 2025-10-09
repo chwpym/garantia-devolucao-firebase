@@ -12,12 +12,16 @@ export function useAuthGuard() {
   const router = useRouter();
   const pathname = usePathname();
   const [isAuth, setIsAuth] = useState(false);
+  const [isInitialCheckComplete, setIsInitialCheckComplete] = useState(false);
 
   useEffect(() => {
     // Não faça nada até que a verificação inicial do Firebase termine.
     if (loading) {
       return;
     }
+
+    // Marca que a checagem inicial terminou
+    setIsInitialCheckComplete(true); 
 
     const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
 
@@ -41,5 +45,6 @@ export function useAuthGuard() {
   }, [user, loading, router, pathname]);
 
   // Retorna o status de carregamento e se o usuário está autenticado para a rota atual.
-  return { isLoading: loading, isAuth };
+  // A verificação só é considerada "não carregando" após a checagem inicial do firebase.
+  return { isLoading: !isInitialCheckComplete, isAuth };
 }
