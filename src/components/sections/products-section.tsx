@@ -47,9 +47,12 @@ import {
 } from '@/components/ui/dialog';
 
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Pencil, Trash2, PlusCircle, Search } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, PlusCircle, Search, ArrowUpDown } from 'lucide-react';
 import ProductForm from '../product-form';
 import { Input } from '../ui/input';
+
+type SortableKeys = keyof Product;
+
 
 export default function ProductsSection() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -58,12 +61,13 @@ export default function ProductsSection() {
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDbReady, setIsDbReady] = useState(false);
+  const [sortConfig, setSortConfig] = useState<{ key: SortableKeys, direction: 'ascending' | 'descending' } | null>({ key: 'descricao', direction: 'ascending' });
   const { toast } = useToast();
 
   const loadProducts = useCallback(async () => {
     try {
       const allProducts = await db.getAllProducts();
-      setProducts(allProducts.sort((a, b) => a.descricao.localeCompare(b.descricao)));
+      setProducts(allProducts);
     } catch (error) {
       console.error('Failed to load products:', error);
       toast({
@@ -113,6 +117,29 @@ export default function ProductsSection() {
     );
   }, [products, searchTerm]);
 
+  const sortedProducts = useMemo(() => {
+    let sortableItems = [...filteredProducts];
+    if (sortConfig !== null) {
+      sortableItems.sort((a, b) => {
+        const valA = a[sortConfig.key];
+        const valB = b[sortConfig.key];
+
+        if (valA === undefined || valA === null) return 1;
+        if (valB === undefined || valB === null) return -1;
+
+        if (typeof valA === 'string' && typeof valB === 'string') {
+          return valA.localeCompare(valB, 'pt-BR') * (sortConfig.direction === 'ascending' ? 1 : -1);
+        }
+        if (typeof valA === 'number' && typeof valB === 'number') {
+          return (valA - valB) * (sortConfig.direction === 'ascending' ? 1 : -1);
+        }
+        
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [filteredProducts, sortConfig]);
+
   const handleSave = () => {
     setEditingProduct(null);
     setIsFormModalOpen(false);
@@ -147,6 +174,30 @@ export default function ProductsSection() {
     }
     setDeleteTarget(null);
   };
+
+  const requestSort = (key: SortableKeys) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+        direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const getSortIcon = (key: SortableKeys) => {
+    if (!sortConfig || sortConfig.key !== key) {
+        return <ArrowUpDown className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-50" />;
+    }
+    return sortConfig.direction === 'ascending' ? '▲' : '▼';
+  };
+  
+  const SortableHeader = ({ sortKey, children }: { sortKey: SortableKeys, children: React.ReactNode }) => (
+    <TableHead>
+        <Button variant="ghost" onClick={() => requestSort(sortKey)} className="group px-2">
+            {children}
+            {getSortIcon(sortKey)}
+        </Button>
+    </TableHead>
+  );
 
   return (
     <div className='space-y-8'>
@@ -204,16 +255,16 @@ export default function ProductsSection() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Código</TableHead>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead>Marca</TableHead>
-                    <TableHead>Referência</TableHead>
+                    <SortableHeader sortKey='codigo'>Código</SortableHeader>
+                    <SortableHeader sortKey='descricao'>Descrição</SortableHeader>
+                    <SortableHeader sortKey='marca'>Marca</SortableHeader>
+                    <SortableHeader sortKey='referencia'>Referência</SortableHeader>
                     <TableHead className="w-[50px] text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredProducts.length > 0 ? (
-                    filteredProducts.map(product => (
+                  {sortedProducts.length > 0 ? (
+                    sortedProducts.map(product => (
                       <TableRow key={product.id}>
                         <TableCell className="font-medium">{product.codigo}</TableCell>
                         <TableCell>{product.descricao}</TableCell>
@@ -273,5 +324,3 @@ export default function ProductsSection() {
     </div>
   );
 }
-
-    
