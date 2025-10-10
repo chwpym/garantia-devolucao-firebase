@@ -51,7 +51,8 @@ export default function Home() {
   const fullWidthViews: string[] = [
     'batch-register',
     'query',
-    'devolucao-query'
+    'devolucao-query',
+    'loteDetail',
   ];
 
   const renderContent = () => {
