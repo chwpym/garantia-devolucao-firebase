@@ -231,7 +231,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
 
     return (
         <>
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-5xl mx-auto">
                 <Card>
                     <CardHeader>
                         <CardTitle>{editingId ? 'Editar Devolução' : 'Cadastro de Devolução'}</CardTitle>
