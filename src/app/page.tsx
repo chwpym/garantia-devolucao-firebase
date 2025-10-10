@@ -53,6 +53,7 @@ export default function Home() {
     'query',
     'devolucao-query',
     'loteDetail',
+    'persons',
   ];
 
   const renderContent = () => {

@@ -125,6 +125,7 @@ export default function PersonsSection() {
 
     return persons.filter(person => 
         person.nome.toLowerCase().includes(lowercasedTerm) ||
+        (person.nomeFantasia && person.nomeFantasia.toLowerCase().includes(lowercasedTerm)) ||
         (person.cpfCnpj && person.cpfCnpj.replace(/\D/g, '').includes(lowercasedTerm.replace(/\D/g, ''))) ||
         (person.telefone && person.telefone.toLowerCase().includes(lowercasedTerm))
     );
@@ -320,7 +321,8 @@ export default function PersonsSection() {
                 <TableHeader>
                   <TableRow>
                     <SortableHeader sortKey='id'>ID</SortableHeader>
-                    <SortableHeader sortKey='nome'>Nome</SortableHeader>
+                    <SortableHeader sortKey='nome'>Razão Social</SortableHeader>
+                    <SortableHeader sortKey='nomeFantasia'>Nome Fantasia</SortableHeader>
                     <SortableHeader sortKey='cpfCnpj'>CPF/CNPJ</SortableHeader>
                     <SortableHeader sortKey='telefone'>Telefone</SortableHeader>
                     <SortableHeader sortKey='tipo'>Tipo</SortableHeader>
@@ -333,6 +335,7 @@ export default function PersonsSection() {
                       <TableRow key={person.id}>
                         <TableCell className="font-medium text-muted-foreground">{person.id}</TableCell>
                         <TableCell className="font-medium">{person.nome}</TableCell>
+                        <TableCell>{person.nomeFantasia || '-'}</TableCell>
                         <TableCell>{formatCpfCnpj(person.cpfCnpj)}</TableCell>
                         <TableCell>{person.telefone || '-'}</TableCell>
                         <TableCell>
@@ -362,7 +365,7 @@ export default function PersonsSection() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} className="h-24 text-center">
+                      <TableCell colSpan={7} className="h-24 text-center">
                         Nenhum registro encontrado para a busca realizada.
                       </TableCell>
                     </TableRow>
