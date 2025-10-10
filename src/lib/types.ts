@@ -160,6 +160,4 @@ export interface UserProfile {
   role: UserRole;
   displayName?: string;
   status: UserStatus;
-  photoURL?: string;
 }
-
