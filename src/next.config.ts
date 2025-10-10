@@ -1,3 +1,4 @@
+
 import type {NextConfig} from 'next';
 import withPWA from 'next-pwa';
 
@@ -23,6 +24,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'firebasestorage.googleapis.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };
@@ -35,6 +42,15 @@ const pwaConfig = withPWA({
   disable: process.env.NODE_ENV === 'development',
 });
 
-// A forma correta de exportar a configuração é simplesmente passando o nextConfig para a função do PWA.
-// A manipulação de .env é feita automaticamente pelo Next.js.
-export default pwaConfig(nextConfig);
+// A configuração env é necessária para o Next.js carregar as variáveis de ambiente
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { parsed: localEnv } = require('dotenv').config();
+
+const configWithEnv = {
+    ...pwaConfig(nextConfig),
+    env: {
+        ...localEnv,
+    },
+};
+
+export default configWithEnv;
