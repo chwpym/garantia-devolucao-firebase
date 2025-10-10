@@ -228,7 +228,7 @@ export default function SuppliersSection() {
                       Cadastrar Fornecedor
                   </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-w-2xl">
                   <DialogHeader>
                       <DialogTitle>{editingSupplier ? 'Editar Fornecedor' : 'Novo Fornecedor'}</DialogTitle>
                       <DialogDescription>Preencha os dados do fornecedor abaixo.</DialogDescription>

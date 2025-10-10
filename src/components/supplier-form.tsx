@@ -14,7 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { CardContent, CardFooter } from '@/components/ui/card';
-import { DialogFooter } from './ui/dialog';
+import { DialogClose, DialogFooter } from './ui/dialog';
 
 const formSchema = z.object({
   razaoSocial: z.string().min(2, { message: 'A razão social deve ter pelo menos 2 caracteres.' }),
@@ -228,6 +228,13 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
         {isModal ? FormContent : <CardContent>{FormContent}</CardContent>}
         
         <FooterComponent {...footerProps}>
+           {isModal && (
+            <DialogClose asChild>
+                <Button type="button" variant="outline">
+                    Cancelar
+                </Button>
+            </DialogClose>
+           )}
           {onClear && <Button type="button" variant="outline" onClick={onClear}>Limpar</Button>}
           <Button type="submit" disabled={isSubmitting || isFetching}>
             {isSubmitting || isFetching ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

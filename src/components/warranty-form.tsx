@@ -348,7 +348,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                                                     <PlusCircle className="h-4 w-4" />
                                                 </Button>
                                             </DialogTrigger>
-                                            <DialogContent>
+                                            <DialogContent className="max-w-2xl">
                                                 <DialogHeader>
                                                     <DialogTitle>Cadastrar Novo Fornecedor</DialogTitle>
                                                 </DialogHeader>
