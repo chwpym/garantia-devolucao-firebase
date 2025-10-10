@@ -28,7 +28,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Loader2, MoreHorizontal, Pencil, Ban, CheckCircle } from 'lucide-react';
+import { Loader2, MoreHorizontal, Pencil, Ban, CheckCircle, ArrowUpDown } from 'lucide-react';
 import * as db from '@/lib/db';
 import { type UserProfile, type UserRole } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -70,12 +70,15 @@ const userFormSchema = z.object({
 
 type UserFormValues = z.infer<typeof userFormSchema>;
 
+type SortableKeys = keyof UserProfile;
+
 export default function UsersSection() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
   const [showBlocked, setShowBlocked] = useState(false);
+  const [sortConfig, setSortConfig] = useState<{ key: SortableKeys, direction: 'ascending' | 'descending' } | null>({ key: 'displayName', direction: 'ascending' });
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
 
@@ -180,6 +183,52 @@ export default function UsersSection() {
     });
   }, [users, showBlocked]);
 
+  const sortedUsers = useMemo(() => {
+    let sortableItems = [...filteredUsers];
+    if (sortConfig !== null) {
+        sortableItems.sort((a, b) => {
+            const valA = a[sortConfig.key];
+            const valB = b[sortConfig.key];
+
+            if (valA === undefined || valA === null) return 1;
+            if (valB === undefined || valB === null) return -1;
+            
+            let comparison = 0;
+            if (typeof valA === 'string' && typeof valB === 'string') {
+                comparison = valA.localeCompare(valB, 'pt-BR', { sensitivity: 'base' });
+            } else if (typeof valA === 'number' && typeof valB === 'number') {
+                comparison = valA - valB;
+            }
+
+            return sortConfig.direction === 'ascending' ? comparison : -comparison;
+        });
+    }
+    return sortableItems;
+  }, [filteredUsers, sortConfig]);
+
+  const requestSort = (key: SortableKeys) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+        direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+  
+  const getSortIcon = (key: SortableKeys) => {
+    if (!sortConfig || sortConfig.key !== key) {
+        return <ArrowUpDown className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-50" />;
+    }
+    return sortConfig.direction === 'ascending' ? '▲' : '▼';
+  };
+
+  const SortableHeader = ({ sortKey, children }: { sortKey: SortableKeys, children: React.ReactNode }) => (
+    <TableHead>
+        <Button variant="ghost" onClick={() => requestSort(sortKey)} className="group px-2">
+            {children}
+            {getSortIcon(sortKey)}
+        </Button>
+    </TableHead>
+  );
 
   return (
     <div className="space-y-8">
@@ -305,10 +354,10 @@ export default function UsersSection() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Nível</TableHead>
-                  <TableHead>Status</TableHead>
+                  <SortableHeader sortKey='displayName'>Nome</SortableHeader>
+                  <SortableHeader sortKey='email'>Email</SortableHeader>
+                  <SortableHeader sortKey='role'>Nível</SortableHeader>
+                  <SortableHeader sortKey='status'>Status</SortableHeader>
                   <TableHead className='text-right'>Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -319,8 +368,8 @@ export default function UsersSection() {
                       <Loader2 className="mx-auto h-6 w-6 animate-spin" />
                     </TableCell>
                   </TableRow>
-                ) : filteredUsers.length > 0 ? (
-                  filteredUsers.map((user) => (
+                ) : sortedUsers.length > 0 ? (
+                  sortedUsers.map((user) => (
                     <TableRow key={user.uid} className={user.status === 'blocked' ? 'bg-muted/50 text-muted-foreground' : ''}>
                       <TableCell className="font-medium">
                         {user.displayName}
