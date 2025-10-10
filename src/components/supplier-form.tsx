@@ -76,6 +76,9 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
   const { isSubmitting } = form.formState;
 
   const handleCnpjBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
+    // A condição para executar a busca: apenas se não estiver editando.
+    if (editingSupplier) return;
+
     const cnpj = e.target.value.replace(/\D/g, '');
     if (cnpj.length !== 14) return;
 
