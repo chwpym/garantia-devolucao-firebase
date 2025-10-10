@@ -308,7 +308,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                                                             />
                                                                             <CommandList>
                                                                                 <CommandEmpty>
-                                                                                    <div className='p-4 text-sm text-center'>
+                                                                                    <div className='p-4 text-sm'>
                                                                                         <p>Nenhum produto encontrado.</p>
                                                                                         <Button variant="link" type="button" onClick={() => setProductModalOpen(true)}>Cadastrar Novo Produto</Button>
                                                                                     </div>
@@ -480,5 +480,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
         </>
     );
 }
+
+    
 
     
