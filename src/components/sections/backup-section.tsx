@@ -10,6 +10,7 @@ import { ImportButton } from '@/components/import-button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CsvExporter from '../csv-exporter';
 import { uploadFile } from '@/lib/storage';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 interface FullBackupData {
   warranties: Awaited<ReturnType<typeof db.getAllWarranties>>;
@@ -87,6 +88,17 @@ export default function BackupSection() {
 
   const handleCloudExport = async () => {
     setIsUploading(true);
+    // Temporarily disabled to avoid CORS issues on Spark plan
+    toast({
+        title: 'Funcionalidade Indisponível no Plano Gratuito',
+        description: 'O backup na nuvem requer o plano pago (Blaze) do Firebase para remover as restrições de rede.',
+        variant: 'destructive',
+        duration: 8000,
+    });
+    setIsUploading(false);
+    return;
+    
+    /*
     try {
       const fullBackup = await gatherDataForBackup();
       const dataStr = JSON.stringify(fullBackup, null, 2);
@@ -113,6 +125,7 @@ export default function BackupSection() {
     } finally {
       setIsUploading(false);
     }
+    */
   }
 
 
@@ -144,7 +157,7 @@ export default function BackupSection() {
                     <CardHeader>
                         <CardTitle>Backup e Restauração Completa</CardTitle>
                         <CardDescription>
-                            Faça o backup (exportação) de <span className='font-bold'>todos os dados</span> do sistema para um único arquivo JSON, salvando-o localmente ou na nuvem (Firebase Storage).
+                            Faça o backup (exportação) de <span className='font-bold'>todos os dados</span> do sistema para um único arquivo JSON, salvando-o localmente.
                             A importação <span className='font-bold text-destructive'>substituirá todos os dados existentes</span>. Use com cuidado.
                         </CardDescription>
                     </CardHeader>
@@ -153,14 +166,22 @@ export default function BackupSection() {
                             <Download className="mr-2 h-4 w-4" />
                             Baixar Backup Local
                         </Button>
-                        <Button onClick={handleCloudExport} variant="secondary" disabled={isUploading}>
-                          {isUploading ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          ) : (
-                            <UploadCloud className="mr-2 h-4 w-4" />
-                          )}
-                          Salvar Backup na Nuvem
-                        </Button>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span tabIndex={0}>
+                                <Button variant="secondary" disabled={true}>
+                                  <UploadCloud className="mr-2 h-4 w-4" />
+                                  Salvar Backup na Nuvem
+                                </Button>
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Requer o plano Blaze (pago) do Firebase.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+
                         <ImportButton onDataImported={handleDataImported} />
                     </CardContent>
                 </Card>
