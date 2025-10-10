@@ -49,9 +49,11 @@ import {
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MoreHorizontal, Pencil, Trash2, PlusCircle, Download, Search } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, PlusCircle, Download, Search, ArrowUpDown } from 'lucide-react';
 import PersonForm from '../person-form';
 import { Input } from '../ui/input';
+
+type SortableKeys = keyof Person;
 
 const formatCpfCnpj = (value?: string) => {
     if (!value) return '-';
@@ -73,12 +75,13 @@ export default function PersonsSection() {
   const [deleteTarget, setDeleteTarget] = useState<Person | null>(null);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDbReady, setIsDbReady] = useState(false);
+  const [sortConfig, setSortConfig] = useState<{ key: SortableKeys, direction: 'ascending' | 'descending' } | null>({ key: 'nome', direction: 'ascending' });
   const { toast } = useToast();
 
   const loadPersons = useCallback(async () => {
     try {
       const allPersons = await db.getAllPersons();
-      setPersons(allPersons.sort((a, b) => (a.nome || '').localeCompare(b.nome || '')));
+      setPersons(allPersons);
     } catch (error) {
       console.error('Failed to load persons:', error);
       toast({
@@ -126,6 +129,29 @@ export default function PersonsSection() {
         (person.telefone && person.telefone.toLowerCase().includes(lowercasedTerm))
     );
   }, [persons, searchTerm]);
+  
+  const sortedPersons = useMemo(() => {
+    let sortableItems = [...filteredPersons];
+    if (sortConfig !== null) {
+        sortableItems.sort((a, b) => {
+            const valA = a[sortConfig.key];
+            const valB = b[sortConfig.key];
+
+            if (valA === undefined || valA === null) return 1;
+            if (valB === undefined || valB === null) return -1;
+            
+            let comparison = 0;
+            if (typeof valA === 'string' && typeof valB === 'string') {
+                comparison = valA.localeCompare(valB, 'pt-BR', { sensitivity: 'base' });
+            } else if (typeof valA === 'number' && typeof valB === 'number') {
+                comparison = valA - valB;
+            }
+
+            return sortConfig.direction === 'ascending' ? comparison : -comparison;
+        });
+    }
+    return sortableItems;
+  }, [filteredPersons, sortConfig]);
 
 
   const handleSave = () => {
@@ -203,6 +229,30 @@ export default function PersonsSection() {
         return 'secondary';
     }
   };
+  
+  const requestSort = (key: SortableKeys) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+        direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const getSortIcon = (key: SortableKeys) => {
+    if (!sortConfig || sortConfig.key !== key) {
+        return <ArrowUpDown className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-50" />;
+    }
+    return sortConfig.direction === 'ascending' ? '▲' : '▼';
+  };
+  
+  const SortableHeader = ({ sortKey, children }: { sortKey: SortableKeys, children: React.ReactNode }) => (
+    <TableHead>
+        <Button variant="ghost" onClick={() => requestSort(sortKey)} className="group px-2">
+            {children}
+            {getSortIcon(sortKey)}
+        </Button>
+    </TableHead>
+  );
 
 
   return (
@@ -269,17 +319,17 @@ export default function PersonsSection() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className='w-[80px]'>ID</TableHead>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>CPF/CNPJ</TableHead>
-                    <TableHead>Telefone</TableHead>
-                    <TableHead>Tipo</TableHead>
+                    <SortableHeader sortKey='id'>ID</SortableHeader>
+                    <SortableHeader sortKey='nome'>Nome</SortableHeader>
+                    <SortableHeader sortKey='cpfCnpj'>CPF/CNPJ</SortableHeader>
+                    <SortableHeader sortKey='telefone'>Telefone</SortableHeader>
+                    <SortableHeader sortKey='tipo'>Tipo</SortableHeader>
                     <TableHead className="w-[50px] text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredPersons.length > 0 ? (
-                    filteredPersons.map(person => (
+                  {sortedPersons.length > 0 ? (
+                    sortedPersons.map(person => (
                       <TableRow key={person.id}>
                         <TableCell className="font-medium text-muted-foreground">{person.id}</TableCell>
                         <TableCell className="font-medium">{person.nome}</TableCell>
