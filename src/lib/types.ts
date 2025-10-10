@@ -48,6 +48,9 @@ export interface Supplier {
   nomeFantasia: string;
   cnpj: string;
   cidade: string;
+  cep?: string;
+  endereco?: string;
+  bairro?: string;
 }
 
 export type LoteStatus = 'Aberto' | 'Enviado' | 'Aprovado Parcialmente' | 'Aprovado Totalmente' | 'Recusado';

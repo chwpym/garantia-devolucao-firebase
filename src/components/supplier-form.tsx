@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -20,6 +20,9 @@ const formSchema = z.object({
   razaoSocial: z.string().min(2, { message: 'A razão social deve ter pelo menos 2 caracteres.' }),
   nomeFantasia: z.string().min(2, { message: 'O nome fantasia deve ter pelo menos 2 caracteres.' }),
   cnpj: z.string().optional(),
+  cep: z.string().optional(),
+  endereco: z.string().optional(),
+  bairro: z.string().optional(),
   cidade: z.string().optional(),
 });
 
@@ -36,6 +39,9 @@ const defaultFormValues: SupplierFormValues = {
   razaoSocial: '',
   nomeFantasia: '',
   cnpj: '',
+  cep: '',
+  endereco: '',
+  bairro: '',
   cidade: ''
 };
 
@@ -52,6 +58,8 @@ const formatCNPJ = (value: string) => {
 
 export default function SupplierForm({ onSave, editingSupplier, onClear, isModal = false }: SupplierFormProps) {
   const { toast } = useToast();
+  const [isFetching, setIsFetching] = useState(false);
+
   const form = useForm<SupplierFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: editingSupplier || defaultFormValues,
@@ -67,12 +75,40 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
 
   const { isSubmitting } = form.formState;
 
+  const handleCnpjBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
+    const cnpj = e.target.value.replace(/\D/g, '');
+    if (cnpj.length !== 14) return;
+
+    setIsFetching(true);
+    try {
+      const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpj}`);
+      if (!response.ok) throw new Error('CNPJ não encontrado ou API indisponível.');
+      
+      const data = await response.json();
+      
+      form.setValue('razaoSocial', data.razao_social || '');
+      form.setValue('nomeFantasia', data.nome_fantasia || data.razao_social || '');
+      form.setValue('cep', data.cep || '');
+      form.setValue('endereco', `${data.logradouro || ''}, ${data.numero || ''}`);
+      form.setValue('bairro', data.bairro || '');
+      form.setValue('cidade', `${data.municipio || ''} - ${data.uf || ''}`);
+      toast({ title: "Sucesso", description: "Dados do fornecedor preenchidos automaticamente." });
+    } catch (err) {
+      toast({
+          title: "Erro ao Buscar CNPJ",
+          description: err instanceof Error ? err.message : "Não foi possível buscar os dados do fornecedor.",
+          variant: "destructive"
+      });
+    } finally {
+        setIsFetching(false);
+    }
+  };
+
   const handleSave = async (data: SupplierFormValues) => {
     try {
       const dataToSave = {
         ...data,
         cnpj: data.cnpj?.replace(/[^\d]/g, '') || '',
-        cidade: data.cidade || ''
       };
 
       if (editingSupplier?.id) {
@@ -101,6 +137,27 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
   const FormContent = (
       <div className="space-y-4 pt-4">
         <FormField
+          name="cnpj"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>CNPJ</FormLabel>
+              <FormControl>
+                <div className="relative">
+                  <Input
+                    placeholder="00.000.000/0000-00"
+                    {...field}
+                    onChange={(e) => field.onChange(formatCNPJ(e.target.value))}
+                    onBlur={handleCnpjBlur}
+                  />
+                  {isFetching && <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin" />}
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
           name="nomeFantasia"
           control={form.control}
           render={({ field }) => (
@@ -126,36 +183,38 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
             </FormItem>
           )}
         />
-        <FormField
-          name="cnpj"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>CNPJ</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="00.000.000/0000-00"
-                  {...field}
-                  onChange={(e) => field.onChange(formatCNPJ(e.target.value))}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          name="cidade"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Cidade</FormLabel>
-              <FormControl>
-                <Input placeholder="Cidade - UF" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+          <FormField name="cep" control={form.control} render={({ field }) => (
+              <FormItem className="md:col-span-1">
+                  <FormLabel>CEP</FormLabel>
+                  <FormControl><Input placeholder="00000-000" {...field} /></FormControl>
+                  <FormMessage />
+              </FormItem>
+          )} />
+          <FormField name="endereco" control={form.control} render={({ field }) => (
+              <FormItem className="md:col-span-2">
+                  <FormLabel>Endereço</FormLabel>
+                  <FormControl><Input placeholder="Rua Exemplo, 123" {...field} /></FormControl>
+                  <FormMessage />
+              </FormItem>
+          )} />
+        </div>
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <FormField name="bairro" control={form.control} render={({ field }) => (
+              <FormItem>
+                  <FormLabel>Bairro</FormLabel>
+                  <FormControl><Input placeholder="Centro" {...field} /></FormControl>
+                  <FormMessage />
+              </FormItem>
+            )} />
+            <FormField name="cidade" control={form.control} render={({ field }) => (
+              <FormItem>
+                  <FormLabel>Cidade/UF</FormLabel>
+                  <FormControl><Input placeholder="São Paulo - SP" {...field} /></FormControl>
+                  <FormMessage />
+              </FormItem>
+            )} />
+        </div>
       </div>
   )
 
@@ -170,8 +229,8 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
         
         <FooterComponent {...footerProps}>
           {onClear && <Button type="button" variant="outline" onClick={onClear}>Limpar</Button>}
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          <Button type="submit" disabled={isSubmitting || isFetching}>
+            {isSubmitting || isFetching ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             {editingSupplier ? 'Atualizar' : 'Salvar'}
           </Button>
         </FooterComponent>

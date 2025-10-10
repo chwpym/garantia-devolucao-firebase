@@ -74,6 +74,7 @@ const formatCpfCnpj = (value: string) => {
 export default function PersonForm({ onSave, editingPerson, onClear }: PersonFormProps) {
   const { toast } = useToast();
   const [isFetchingCep, setIsFetchingCep] = useState(false);
+  const [isFetchingCnpj, setIsFetchingCnpj] = useState(false);
   
   const form = useForm<PersonFormValues>({
     resolver: zodResolver(formSchema),
@@ -122,6 +123,34 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
       });
     }
   };
+
+  const handleCpfCnpjBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
+    const cnpj = e.target.value.replace(/\D/g, '');
+    if (cnpj.length !== 14) return; // Only fetch for CNPJ
+
+    setIsFetchingCnpj(true);
+    try {
+      const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpj}`);
+      if (!response.ok) throw new Error('CNPJ não encontrado ou API indisponível');
+      
+      const data = await response.json();
+      
+      form.setValue('nome', data.razao_social || '');
+      form.setValue('cep', data.cep || '');
+      form.setValue('endereco', `${data.logradouro || ''}, ${data.numero || ''}`);
+      form.setValue('bairro', data.bairro || '');
+      form.setValue('cidade', `${data.municipio || ''} - ${data.uf || ''}`);
+      toast({ title: "Sucesso", description: "Dados do CNPJ preenchidos automaticamente." });
+    } catch (err) {
+      toast({
+          title: "Erro ao Buscar CNPJ",
+          description: err instanceof Error ? err.message : "Não foi possível buscar os dados.",
+          variant: "destructive"
+      });
+    } finally {
+        setIsFetchingCnpj(false);
+    }
+  }
 
   const handleCepBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
     const cep = e.target.value.replace(/\D/g, '');
@@ -207,11 +236,15 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
               <FormItem>
                 <FormLabel>CPF / CNPJ</FormLabel>
                 <FormControl>
-                  <Input 
-                    placeholder="000.000.000-00 ou 00.000.000/0000-00" 
-                    {...field} 
-                    onChange={(e) => field.onChange(formatCpfCnpj(e.target.value))}
-                  />
+                  <div className="relative">
+                    <Input 
+                      placeholder="000.000.000-00 ou 00.000.000/0000-00" 
+                      {...field} 
+                      onChange={(e) => field.onChange(formatCpfCnpj(e.target.value))}
+                      onBlur={handleCpfCnpjBlur}
+                    />
+                    {isFetchingCnpj && <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin" />}
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -314,8 +347,8 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
         </div>
         <DialogFooter className="pt-6">
           {onClear && <Button type="button" variant="outline" onClick={onClear}>Limpar</Button>}
-          <Button type="submit" disabled={isSubmitting || isFetchingCep}>
-            {isSubmitting || isFetchingCep ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          <Button type="submit" disabled={isSubmitting || isFetchingCep || isFetchingCnpj}>
+            {isSubmitting || isFetchingCep || isFetchingCnpj ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             {editingPerson ? 'Atualizar Registro' : 'Salvar Registro'}
           </Button>
         </DialogFooter>
