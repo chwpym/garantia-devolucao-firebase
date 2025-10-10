@@ -46,7 +46,7 @@ import {
 } from '@/components/ui/dialog';
 
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Pencil, Trash2, PlusCircle, Search } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, PlusCircle, Search, ArrowUpDown } from 'lucide-react';
 import SupplierForm from '../supplier-form';
 import { Input } from '../ui/input';
 
@@ -60,6 +60,7 @@ const formatCnpj = (value?: string) => {
     return value;
 };
 
+type SortableKeys = keyof Supplier;
 
 export default function SuppliersSection() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -68,12 +69,13 @@ export default function SuppliersSection() {
   const [deleteTarget, setDeleteTarget] = useState<Supplier | null>(null);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDbReady, setIsDbReady] = useState(false);
+  const [sortConfig, setSortConfig] = useState<{ key: SortableKeys, direction: 'ascending' | 'descending' } | null>({ key: 'nomeFantasia', direction: 'ascending' });
   const { toast } = useToast();
 
   const loadSuppliers = useCallback(async () => {
     try {
       const allSuppliers = await db.getAllSuppliers();
-      setSuppliers(allSuppliers.sort((a, b) => a.nomeFantasia.localeCompare(b.nomeFantasia)));
+      setSuppliers(allSuppliers);
     } catch (error) {
       console.error('Failed to load suppliers:', error);
       toast({
@@ -121,6 +123,29 @@ export default function SuppliersSection() {
         (supplier.cnpj && supplier.cnpj.replace(/\D/g, '').includes(lowercasedTerm.replace(/\D/g, '')))
     );
   }, [suppliers, searchTerm]);
+
+  const sortedSuppliers = useMemo(() => {
+    let sortableItems = [...filteredSuppliers];
+    if (sortConfig !== null) {
+        sortableItems.sort((a, b) => {
+            const valA = a[sortConfig.key];
+            const valB = b[sortConfig.key];
+
+            if (valA === undefined || valA === null) return 1;
+            if (valB === undefined || valB === null) return -1;
+            
+            if (typeof valA === 'string' && typeof valB === 'string') {
+                return valA.localeCompare(valB, 'pt-BR') * (sortConfig.direction === 'ascending' ? 1 : -1);
+            }
+            if (typeof valA === 'number' && typeof valB === 'number') {
+                return (valA - valB) * (sortConfig.direction === 'ascending' ? 1 : -1);
+            }
+
+            return 0;
+        });
+    }
+    return sortableItems;
+  }, [filteredSuppliers, sortConfig]);
   
 
   const handleSave = () => {
@@ -157,6 +182,30 @@ export default function SuppliersSection() {
     }
     setDeleteTarget(null);
   };
+  
+  const requestSort = (key: SortableKeys) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+        direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const getSortIcon = (key: SortableKeys) => {
+    if (!sortConfig || sortConfig.key !== key) {
+        return <ArrowUpDown className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-50" />;
+    }
+    return sortConfig.direction === 'ascending' ? '▲' : '▼';
+  };
+  
+  const SortableHeader = ({ sortKey, children }: { sortKey: SortableKeys, children: React.ReactNode }) => (
+    <TableHead>
+        <Button variant="ghost" onClick={() => requestSort(sortKey)} className="group px-2">
+            {children}
+            {getSortIcon(sortKey)}
+        </Button>
+    </TableHead>
+  );
 
   return (
     <div className='space-y-8'>
@@ -215,17 +264,17 @@ export default function SuppliersSection() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className='w-[80px]'>ID</TableHead>
-                  <TableHead>Nome Fantasia</TableHead>
-                  <TableHead>Razão Social</TableHead>
-                  <TableHead>CNPJ</TableHead>
-                  <TableHead>Cidade</TableHead>
+                  <SortableHeader sortKey='id'>ID</SortableHeader>
+                  <SortableHeader sortKey='nomeFantasia'>Nome Fantasia</SortableHeader>
+                  <SortableHeader sortKey='razaoSocial'>Razão Social</SortableHeader>
+                  <SortableHeader sortKey='cnpj'>CNPJ</SortableHeader>
+                  <SortableHeader sortKey='cidade'>Cidade</SortableHeader>
                   <TableHead className="w-[50px] text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredSuppliers.length > 0 ? (
-                  filteredSuppliers.map(supplier => (
+                {sortedSuppliers.length > 0 ? (
+                  sortedSuppliers.map(supplier => (
                     <TableRow key={supplier.id}>
                       <TableCell className="font-medium text-muted-foreground">{supplier.id}</TableCell>
                       <TableCell className="font-medium">{supplier.nomeFantasia}</TableCell>
