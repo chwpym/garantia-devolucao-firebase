@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import type { Lote, Warranty, Supplier, WarrantyStatus } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '../ui/button';
-import { ArrowLeft, Package, Calendar, Building, FileText, MoreHorizontal, Pencil, Trash2, CheckSquare, FileDown, Camera, Image as ImageIcon, Link as LinkIcon, Download } from 'lucide-react';
+import { ArrowLeft, Package, Calendar, Building, FileText, MoreHorizontal, Pencil, Trash2, CheckSquare, FileDown, Camera, Image as ImageIcon, Link as LinkIcon, Download, ArrowUpDown } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { format, parseISO } from 'date-fns';
@@ -46,6 +46,7 @@ interface LoteDetailSectionProps {
   onBack: () => void;
 }
 
+type SortableKeys = keyof Warranty;
 const warrantyStatuses: WarrantyStatus[] = ['Em análise', 'Aprovada', 'Recusada', 'Paga'];
 
 const LOTE_PDF_DEFAULT_FIELDS = [
@@ -112,6 +113,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const [galleryPhotos, setGalleryPhotos] = useState<string[]>([]);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [sortConfig, setSortConfig] = useState<{ key: SortableKeys, direction: 'ascending' | 'descending' } | null>({ key: 'id', direction: 'descending' });
   const { toast } = useToast();
 
   const loadLoteDetails = useCallback(async () => {
@@ -159,6 +161,33 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
       window.removeEventListener('datachanged', handleDataChanged);
     };
   }, [loadLoteDetails]);
+
+  const sortedWarranties = useMemo(() => {
+    let sortableItems = [...warranties];
+    if (sortConfig !== null) {
+        sortableItems.sort((a, b) => {
+            const valA = a[sortConfig.key];
+            const valB = b[sortConfig.key];
+
+            if (valA === undefined || valA === null) return 1;
+            if (valB === undefined || valB === null) return -1;
+            
+            let comparison = 0;
+            if (typeof valA === 'string' && typeof valB === 'string') {
+                 if (sortConfig.key === 'dataRegistro') {
+                     comparison = parseISO(valA).getTime() - parseISO(valB).getTime();
+                } else {
+                    comparison = valA.localeCompare(valB, 'pt-BR', { sensitivity: 'base' });
+                }
+            } else if (typeof valA === 'number' && typeof valB === 'number') {
+                comparison = valA - valB;
+            }
+
+            return sortConfig.direction === 'ascending' ? comparison : -comparison;
+        });
+    }
+    return sortableItems;
+  }, [warranties, sortConfig]);
 
   const handleEditClick = (warranty: Warranty) => {
     setEditingWarranty(warranty);
@@ -380,6 +409,30 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
     }
   }
 
+  const requestSort = (key: SortableKeys) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+        direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+  
+  const getSortIcon = (key: SortableKeys) => {
+    if (!sortConfig || sortConfig.key !== key) {
+        return <ArrowUpDown className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-50" />;
+    }
+    return sortConfig.direction === 'ascending' ? '▲' : '▼';
+  };
+
+  const SortableHeader = ({ sortKey, children, className }: { sortKey: SortableKeys, children: React.ReactNode, className?: string }) => (
+    <TableHead className={className}>
+        <Button variant="ghost" onClick={() => requestSort(sortKey)} className="group px-2">
+            {children}
+            {getSortIcon(sortKey)}
+        </Button>
+    </TableHead>
+  );
+
   const isAllSelected = warranties.length > 0 && selectedWarrantyIds.size === warranties.length;
 
   if (isLoading) {
@@ -585,20 +638,20 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                             aria-label="Selecionar todos"
                         />
                     </TableHead>
-                    <TableHead className="w-16">Fotos</TableHead>
-                    <TableHead>Código</TableHead>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead>Defeito</TableHead>
-                    <TableHead className="w-[300px]">Observação de Retorno</TableHead>
-                    <TableHead>NF Saída</TableHead>
-                    <TableHead>NF Retorno</TableHead>
-                    <TableHead>Status</TableHead>
+                    <SortableHeader sortKey='id' className="w-16">Fotos</SortableHeader>
+                    <SortableHeader sortKey='codigo'>Código</SortableHeader>
+                    <SortableHeader sortKey='descricao'>Descrição</SortableHeader>
+                    <SortableHeader sortKey='defeito'>Defeito</SortableHeader>
+                    <SortableHeader sortKey='observacao' className="w-[300px]">Observação de Retorno</SortableHeader>
+                    <SortableHeader sortKey='notaFiscalSaida'>NF Saída</SortableHeader>
+                    <SortableHeader sortKey='notaFiscalRetorno'>NF Retorno</SortableHeader>
+                    <SortableHeader sortKey='status'>Status</SortableHeader>
                     <TableHead className="w-[50px] text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {warranties.length > 0 ? (
-                    warranties.map(warranty => (
+                  {sortedWarranties.length > 0 ? (
+                    sortedWarranties.map(warranty => (
                       <TableRow key={warranty.id} data-state={selectedWarrantyIds.has(warranty.id!) ? "selected" : ""}>
                         <TableCell className="text-center">
                             <Checkbox
