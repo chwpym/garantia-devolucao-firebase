@@ -52,7 +52,12 @@ export default function ProductForm({ onSave, editingProduct, onClear }: Product
   const handleSave = async (data: ProductFormValues) => {
     try {
       if (editingProduct?.id) {
-        const updatedProduct = { ...editingProduct, ...data };
+        // Ao editar, não alteramos o código. Usamos o código original.
+        const updatedProduct = { 
+            ...editingProduct, 
+            ...data, 
+            codigo: editingProduct.codigo 
+        };
         await db.updateProduct(updatedProduct);
         toast({ title: 'Sucesso', description: 'Produto atualizado com sucesso.' });
         onSave(updatedProduct);
@@ -90,7 +95,8 @@ export default function ProductForm({ onSave, editingProduct, onClear }: Product
                 <Input 
                     placeholder="Código principal do produto" 
                     {...field} 
-                    disabled={!!editingProduct} 
+                    // O campo agora é sempre habilitado, a lógica de bloqueio está no 'handleSave'.
+                    disabled={false} 
                 />
               </FormControl>
               <FormMessage />
