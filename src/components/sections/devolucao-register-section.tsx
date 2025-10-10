@@ -54,7 +54,10 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
     const [persons, setPersons] = useState<Person[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
     const [isProductModalOpen, setProductModalOpen] = useState(false);
-    const [activeProductSearch, setActiveProductSearch] = useState<{ index: number; query: string } | null>(null);
+    
+    const [productSearchQuery, setProductSearchQuery] = useState('');
+    const [activeInputIndex, setActiveInputIndex] = useState<number | null>(null);
+
     const { toast } = useToast();
 
     const form = useForm<DevolucaoFormValues>({
@@ -199,21 +202,21 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
     const handleProductSaved = (newProduct: Product) => {
         setProducts(prev => [...prev, newProduct]);
         setProductModalOpen(false);
-        if (activeProductSearch) {
-            handleProductSelect(newProduct, activeProductSearch.index);
+        if (activeInputIndex !== null) {
+            handleProductSelect(newProduct, activeInputIndex);
         }
     };
 
     const handleProductSelect = (product: Product, index: number) => {
         form.setValue(`itens.${index}.codigoPeca`, product.codigo);
         form.setValue(`itens.${index}.descricaoPeca`, product.descricao);
-        setActiveProductSearch(null);
+        setActiveInputIndex(null);
     };
 
-    const filteredProducts = activeProductSearch?.query
+    const filteredProducts = productSearchQuery
         ? products.filter(p =>
-            p.codigo.toLowerCase().includes(activeProductSearch.query.toLowerCase()) ||
-            p.descricao.toLowerCase().includes(activeProductSearch.query.toLowerCase())
+            p.codigo.toLowerCase().includes(productSearchQuery.toLowerCase()) ||
+            p.descricao.toLowerCase().includes(productSearchQuery.toLowerCase())
         ).slice(0, 5)
         : [];
 
@@ -273,45 +276,35 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                                             <FormItem className="md:col-span-3">
                                                                 <FormLabel>Código <span className='text-destructive'>*</span></FormLabel>
                                                                 <Popover
-                                                                    open={activeProductSearch?.index === index && activeProductSearch?.query.length > 0}
+                                                                    open={activeInputIndex === index}
                                                                     onOpenChange={(isOpen) => {
                                                                         if (!isOpen) {
-                                                                            setActiveProductSearch(null);
+                                                                            setActiveInputIndex(null);
                                                                         }
-                                                                    }}>
+                                                                    }}
+                                                                >
                                                                     <PopoverTrigger asChild>
                                                                         <FormControl>
                                                                             <Input
                                                                                 {...field}
+                                                                                autoComplete="off"
+                                                                                onFocus={() => {
+                                                                                    setActiveInputIndex(index);
+                                                                                    setProductSearchQuery(field.value || '');
+                                                                                }}
                                                                                 onChange={(e) => {
                                                                                     field.onChange(e);
-                                                                                    const query = e.target.value;
-                                                                                    // A chave é definir o estado independentemente de o campo estar vazio ou não.
-                                                                                    // O Popover usará essa informação para decidir se deve abrir.
-                                                                                    setActiveProductSearch({ index, query: query });
-                                                                                }}
-                                                                                onBlur={() => {
-                                                                                    // Adicionamos um pequeno atraso para permitir que um clique no popover seja registrado
-                                                                                    // antes de fechá-lo.
-                                                                                    setTimeout(() => {
-                                                                                        if (activeProductSearch?.index === index) {
-                                                                                            // Não feche se o usuário ainda estiver interagindo com a busca
-                                                                                        }
-                                                                                    }, 150);
+                                                                                    setProductSearchQuery(e.target.value);
                                                                                 }}
                                                                             />
                                                                         </FormControl>
                                                                     </PopoverTrigger>
-                                                                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                                                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                                                                         <Command>
                                                                             <CommandInput
                                                                                 placeholder="Buscar produto..."
-                                                                                value={activeProductSearch?.query || ''}
-                                                                                onValueChange={(q) => {
-                                                                                    // Atualiza o estado da busca E o valor do campo do formulário
-                                                                                    setActiveProductSearch({ index, query: q });
-                                                                                    form.setValue(`itens.${index}.codigoPeca`, q);
-                                                                                }}
+                                                                                value={productSearchQuery}
+                                                                                onValueChange={setProductSearchQuery}
                                                                             />
                                                                             <CommandList>
                                                                                 <CommandEmpty>
@@ -324,7 +317,10 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                                                                     {filteredProducts.map((product) => (
                                                                                         <CommandItem
                                                                                             key={product.id}
-                                                                                            onSelect={() => handleProductSelect(product, index)}
+                                                                                            onSelect={() => {
+                                                                                                handleProductSelect(product, index);
+                                                                                                setActiveInputIndex(null); 
+                                                                                            }}
                                                                                         >
                                                                                             {product.codigo} - {product.descricao}
                                                                                         </CommandItem>
