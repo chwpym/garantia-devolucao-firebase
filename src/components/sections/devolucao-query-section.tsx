@@ -13,14 +13,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Pencil, Trash2, Search, FileDown } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, Search, FileDown, ArrowUpDown } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 import { Input } from '../ui/input';
 import { DatePickerWithRange } from '../ui/date-range-picker';
+import { cn } from '@/lib/utils';
 
 type DevolucaoFlat = Omit<Devolucao, 'itens' | 'id'> & Partial<ItemDevolucao> & { id: number, itemId?: number };
+type SortableKeys = keyof DevolucaoFlat;
 
 interface DevolucaoQuerySectionProps {
     onEdit: (devolucaoId: number) => void;
@@ -32,6 +34,7 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
   const [searchTerm, setSearchTerm] = useState('');
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [deleteTarget, setDeleteTarget] = useState<DevolucaoFlat | null>(null);
+  const [sortConfig, setSortConfig] = useState<{ key: SortableKeys, direction: 'ascending' | 'descending' } | null>({ key: 'dataDevolucao', direction: 'descending' });
   const { toast } = useToast();
 
   const loadData = useCallback(async () => {
@@ -55,7 +58,7 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
         }));
       });
 
-      setDevolucoes(flatData.sort((a,b) => (b.dataDevolucao && a.dataDevolucao) ? (parseISO(b.dataDevolucao).getTime() - parseISO(a.dataDevolucao).getTime()) : 0));
+      setDevolucoes(flatData);
       
     } catch (error) {
       console.error('Failed to load devolutions:', error);
@@ -84,31 +87,74 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
   const filteredDevolucoes = useMemo(() => {
     const lowercasedTerm = searchTerm.toLowerCase();
     
-    return devolucoes.filter(item => {
-      // Date filter
-      const { from, to } = dateRange || {};
-      if (from && item.dataDevolucao) {
-        if (parseISO(item.dataDevolucao) < from) return false;
-      }
-      if (to && item.dataDevolucao) {
-        const toDate = addDays(to, 1);
-        if (parseISO(item.dataDevolucao) >= toDate) return false;
-      }
+    let filtered = devolucoes;
+
+    if (dateRange?.from || dateRange?.to) {
+        filtered = filtered.filter(item => {
+            if (!item.dataDevolucao) return false;
+            const itemDate = parseISO(item.dataDevolucao);
+            if (dateRange.from && itemDate < dateRange.from) return false;
+            const toDate = dateRange.to ? addDays(dateRange.to, 1) : null;
+            if (toDate && itemDate >= toDate) return false;
+            return true;
+        });
+    }
       
-      // Search term filter
-      if (!lowercasedTerm) {
-        return true;
-      }
-      return (
-        item.cliente?.toLowerCase().includes(lowercasedTerm) ||
-        item.mecanico?.toLowerCase().includes(lowercasedTerm) ||
-        item.requisicaoVenda?.toLowerCase().includes(lowercasedTerm) ||
-        item.codigoPeca?.toLowerCase().includes(lowercasedTerm) ||
-        item.descricaoPeca?.toLowerCase().includes(lowercasedTerm) ||
-        item.status?.toLowerCase().includes(lowercasedTerm)
-      );
-    });
+    if (lowercasedTerm) {
+        filtered = filtered.filter(item =>
+            item.cliente?.toLowerCase().includes(lowercasedTerm) ||
+            item.mecanico?.toLowerCase().includes(lowercasedTerm) ||
+            item.requisicaoVenda?.toLowerCase().includes(lowercasedTerm) ||
+            item.codigoPeca?.toLowerCase().includes(lowercasedTerm) ||
+            item.descricaoPeca?.toLowerCase().includes(lowercasedTerm) ||
+            item.status?.toLowerCase().includes(lowercasedTerm)
+        );
+    }
+    
+    return filtered;
   }, [searchTerm, devolucoes, dateRange]);
+
+  const sortedDevolucoes = useMemo(() => {
+    let sortableItems = [...filteredDevolucoes];
+    if (sortConfig !== null) {
+        sortableItems.sort((a, b) => {
+            const valA = a[sortConfig.key];
+            const valB = b[sortConfig.key];
+
+            if (valA === undefined || valA === null) return 1;
+            if (valB === undefined || valB === null) return -1;
+            
+            let comparison = 0;
+            if (typeof valA === 'string' && typeof valB === 'string') {
+                if (sortConfig.key === 'dataDevolucao' || sortConfig.key === 'dataVenda') {
+                     comparison = parseISO(valA).getTime() - parseISO(valB).getTime();
+                } else {
+                    comparison = valA.localeCompare(valB, 'pt-BR', { sensitivity: 'base' });
+                }
+            } else if (typeof valA === 'number' && typeof valB === 'number') {
+                comparison = valA - valB;
+            }
+
+            return sortConfig.direction === 'ascending' ? comparison : -comparison;
+        });
+    }
+    return sortableItems;
+  }, [filteredDevolucoes, sortConfig]);
+
+  const requestSort = (key: SortableKeys) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+        direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+  
+  const getSortIcon = (key: SortableKeys) => {
+    if (!sortConfig || sortConfig.key !== key) {
+        return <ArrowUpDown className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-50" />;
+    }
+    return sortConfig.direction === 'ascending' ? '▲' : '▼';
+  };
 
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
@@ -131,14 +177,14 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
   };
 
   const handleExportPdf = async () => {
-    if (filteredDevolucoes.length === 0) {
+    if (sortedDevolucoes.length === 0) {
         toast({ title: 'Aviso', description: 'Não há dados para exportar.'});
         return;
     }
     try {
         const companyData = await db.getCompanyData();
         const pdfDataUri = generateDevolucoesPdf({
-            devolucoes: filteredDevolucoes,
+            devolucoes: sortedDevolucoes,
             companyData,
         });
         const link = document.createElement('a');
@@ -163,12 +209,12 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
   };
 
   const handleExportCsv = () => {
-    if (filteredDevolucoes.length === 0) {
+    if (sortedDevolucoes.length === 0) {
         toast({ title: 'Aviso', description: 'Não há dados para exportar.'});
         return;
     }
     const headers = ['ID Dev.','Data Dev.', 'Cliente', 'Requisição', 'Código Peça', 'Descrição Peça', 'Qtd.', 'Ação Req.', 'Status'];
-    const rows = filteredDevolucoes.map(item => [
+    const rows = sortedDevolucoes.map(item => [
       item.id,
       item.dataDevolucao ? format(parseISO(item.dataDevolucao), 'dd/MM/yyyy') : '',
       `"${item.cliente || ''}"`,
@@ -204,6 +250,15 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
       </div>
     );
   }
+  
+  const SortableHeader = ({ sortKey, children }: { sortKey: SortableKeys, children: React.ReactNode }) => (
+    <TableHead>
+        <Button variant="ghost" onClick={() => requestSort(sortKey)} className="group px-2">
+            {children}
+            {getSortIcon(sortKey)}
+        </Button>
+    </TableHead>
+  );
 
   return (
     <div className='space-y-8'>
@@ -235,11 +290,11 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
                     <DatePickerWithRange date={dateRange} setDate={setDateRange} />
                 </div>
                 <div className="flex gap-2 mb-4">
-                    <Button onClick={handleExportPdf} variant="outline" disabled={filteredDevolucoes.length === 0}>
+                    <Button onClick={handleExportPdf} variant="outline" disabled={sortedDevolucoes.length === 0}>
                         <FileDown className="mr-2 h-4 w-4" />
                         Exportar para PDF
                     </Button>
-                     <Button onClick={handleExportCsv} variant="outline" disabled={filteredDevolucoes.length === 0}>
+                     <Button onClick={handleExportCsv} variant="outline" disabled={sortedDevolucoes.length === 0}>
                         <FileDown className="mr-2 h-4 w-4" />
                         Exportar para CSV
                     </Button>
@@ -248,21 +303,21 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-[80px]">ID Dev.</TableHead>
-                            <TableHead>Data Dev.</TableHead>
-                            <TableHead>Cliente</TableHead>
-                            <TableHead>Requisição</TableHead>
-                            <TableHead>Código Peça</TableHead>
-                            <TableHead>Descrição Peça</TableHead>
-                            <TableHead>Qtd.</TableHead>
-                            <TableHead>Ação Req.</TableHead>
-                            <TableHead>Status</TableHead>
+                            <SortableHeader sortKey="id">ID Dev.</SortableHeader>
+                            <SortableHeader sortKey="dataDevolucao">Data Dev.</SortableHeader>
+                            <SortableHeader sortKey="cliente">Cliente</SortableHeader>
+                            <SortableHeader sortKey="requisicaoVenda">Requisição</SortableHeader>
+                            <SortableHeader sortKey="codigoPeca">Código Peça</SortableHeader>
+                            <SortableHeader sortKey="descricaoPeca">Descrição Peça</SortableHeader>
+                            <SortableHeader sortKey="quantidade">Qtd.</SortableHeader>
+                            <SortableHeader sortKey="acaoRequisicao">Ação Req.</SortableHeader>
+                            <SortableHeader sortKey="status">Status</SortableHeader>
                             <TableHead className="w-[50px] text-right">Ações</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {filteredDevolucoes.length > 0 ? (
-                            filteredDevolucoes.map(item => (
+                        {sortedDevolucoes.length > 0 ? (
+                            sortedDevolucoes.map(item => (
                                 <TableRow key={`${item.id}-${item.itemId || 'no-item'}`}>
                                     <TableCell className="font-medium text-muted-foreground">{item.id}</TableCell>
                                     <TableCell>{item.dataDevolucao ? format(parseISO(item.dataDevolucao), 'dd/MM/yyyy') : '-'}</TableCell>
