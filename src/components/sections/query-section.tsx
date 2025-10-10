@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
@@ -29,6 +30,7 @@ interface QuerySectionProps {
   onClone: (warranty: Warranty) => void;
 }
 
+type SortableKeys = keyof Warranty;
 
 export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySectionProps) {
   const [warranties, setWarranties] = useState<Warranty[]>([]);
@@ -41,6 +43,7 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
     from: addDays(new Date(), -90),
     to: new Date(),
   });
+  const [sortConfig, setSortConfig] = useState<{ key: SortableKeys, direction: 'ascending' | 'descending' } | null>({ key: 'id', direction: 'descending' });
   const { toast } = useToast();
 
   const loadData = useCallback(async () => {
@@ -50,7 +53,7 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
           db.getAllLotes()
       ]);
       // Filter out warranties that are already in a lote
-      setWarranties(allWarranties.filter(w => !w.loteId).sort((a, b) => (b.id ?? 0) - (a.id ?? 0)));
+      setWarranties(allWarranties.filter(w => !w.loteId));
       setOpenLotes(allLotes.filter(l => l.status === 'Aberto'));
     } catch (error) {
       console.error('Failed to load data:', error);
@@ -147,6 +150,33 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
       );
     });
   }, [searchTerm, warranties, dateRange]);
+  
+  const sortedWarranties = useMemo(() => {
+    let sortableItems = [...filteredWarranties];
+    if (sortConfig !== null) {
+        sortableItems.sort((a, b) => {
+            const valA = a[sortConfig.key];
+            const valB = b[sortConfig.key];
+
+            if (valA === undefined || valA === null) return 1;
+            if (valB === undefined || valB === null) return -1;
+            
+            let comparison = 0;
+            if (typeof valA === 'string' && typeof valB === 'string') {
+                if (sortConfig.key === 'dataRegistro') {
+                     comparison = parseISO(valA).getTime() - parseISO(valB).getTime();
+                } else {
+                    comparison = valA.localeCompare(valB, 'pt-BR', { sensitivity: 'base' });
+                }
+            } else if (typeof valA === 'number' && typeof valB === 'number') {
+                comparison = valA - valB;
+            }
+
+            return sortConfig.direction === 'ascending' ? comparison : -comparison;
+        });
+    }
+    return sortableItems;
+  }, [filteredWarranties, sortConfig]);
 
 
   const handleAddToLote = async (loteId: number) => {
@@ -221,12 +251,14 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
                 </Button>
             </div>
             <WarrantyTable
-              warranties={filteredWarranties}
+              warranties={sortedWarranties}
               selectedIds={selectedIds}
               onSelectionChange={setSelectedIds}
               onEdit={onEdit}
               onClone={onClone}
               onDelete={handleDelete}
+              sortConfig={sortConfig}
+              onSort={setSortConfig}
             />
         </CardContent>
         </Card>

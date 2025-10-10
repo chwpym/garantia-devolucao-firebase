@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -7,9 +8,11 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Pencil, Trash2, Copy } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, Copy, ArrowUpDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from './ui/checkbox';
+
+type SortableKeys = keyof Warranty;
 
 interface WarrantyTableProps {
   warranties: Warranty[];
@@ -18,9 +21,11 @@ interface WarrantyTableProps {
   onEdit: (warranty: Warranty) => void;
   onClone: (warranty: Warranty) => void;
   onDelete: (id: number) => Promise<void>;
+  sortConfig: { key: SortableKeys, direction: 'ascending' | 'descending' } | null;
+  onSort: (config: { key: SortableKeys, direction: 'ascending' | 'descending' } | null) => void;
 }
 
-export default function WarrantyTable({ warranties, selectedIds, onSelectionChange, onEdit, onClone, onDelete }: WarrantyTableProps) {
+export default function WarrantyTable({ warranties, selectedIds, onSelectionChange, onEdit, onClone, onDelete, sortConfig, onSort }: WarrantyTableProps) {
   const [deleteTarget, setDeleteTarget] = useState<Warranty | null>(null);
 
   const handleDeleteClick = () => {
@@ -64,6 +69,30 @@ export default function WarrantyTable({ warranties, selectedIds, onSelectionChan
   
   const isAllSelected = warranties.length > 0 && selectedIds.size === warranties.length;
 
+  const requestSort = (key: SortableKeys) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+        direction = 'descending';
+    }
+    onSort({ key, direction });
+  };
+  
+  const getSortIcon = (key: SortableKeys) => {
+    if (!sortConfig || sortConfig.key !== key) {
+        return <ArrowUpDown className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-50" />;
+    }
+    return sortConfig.direction === 'ascending' ? '▲' : '▼';
+  };
+  
+  const SortableHeader = ({ sortKey, children, className }: { sortKey: SortableKeys, children: React.ReactNode, className?: string }) => (
+    <TableHead className={className}>
+        <Button variant="ghost" onClick={() => requestSort(sortKey)} className="group px-2">
+            {children}
+            {getSortIcon(sortKey)}
+        </Button>
+    </TableHead>
+  );
+
   return (
     <>
       <div className="border rounded-md">
@@ -77,14 +106,14 @@ export default function WarrantyTable({ warranties, selectedIds, onSelectionChan
                     aria-label="Selecionar todos"
                 />
               </TableHead>
-              <TableHead>Data</TableHead>
-              <TableHead>Código</TableHead>
-              <TableHead>Descrição</TableHead>
-              <TableHead>Qtd.</TableHead>
-              <TableHead>Fornecedor</TableHead>
-              <TableHead>Cliente</TableHead>
-              <TableHead>NF Retorno</TableHead>
-              <TableHead>Status</TableHead>
+              <SortableHeader sortKey="dataRegistro">Data</SortableHeader>
+              <SortableHeader sortKey="codigo">Código</SortableHeader>
+              <SortableHeader sortKey="descricao">Descrição</SortableHeader>
+              <SortableHeader sortKey="quantidade">Qtd.</SortableHeader>
+              <SortableHeader sortKey="fornecedor">Fornecedor</SortableHeader>
+              <SortableHeader sortKey="cliente">Cliente</SortableHeader>
+              <SortableHeader sortKey="notaFiscalRetorno">NF Retorno</SortableHeader>
+              <SortableHeader sortKey="status">Status</SortableHeader>
               <TableHead className="w-[50px] text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
