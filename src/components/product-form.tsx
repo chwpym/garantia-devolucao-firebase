@@ -87,7 +87,11 @@ export default function ProductForm({ onSave, editingProduct, onClear }: Product
             <FormItem>
               <FormLabel>Código</FormLabel>
               <FormControl>
-                <Input placeholder="Código principal do produto" {...field} />
+                <Input 
+                    placeholder="Código principal do produto" 
+                    {...field} 
+                    disabled={!!editingProduct} 
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -153,5 +157,3 @@ export default function ProductForm({ onSave, editingProduct, onClear }: Product
     </Form>
   );
 }
-
-    
