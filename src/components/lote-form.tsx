@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
@@ -95,6 +96,19 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
   };
   
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    // Temporariamente desativado para evitar problemas com CORS e plano Spark
+    toast({
+        title: 'Funcionalidade Temporariamente Desativada',
+        description: 'O upload de anexos para o Firebase Storage requer um plano pago. Esta função está desativada.',
+        variant: 'destructive',
+        duration: 8000,
+    });
+    if (event.target) {
+        event.target.value = '';
+    }
+    return;
+
+    /*
     const files = event.target.files;
     if (!files || !editingLote?.id) {
         if (!editingLote?.id) {
@@ -136,6 +150,7 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
         setIsUploading(false);
         if(event.target) event.target.value = '';
     }
+    */
   };
 
   const removeAttachment = (index: number) => {
@@ -273,6 +288,7 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
                         </div>
                     </FormControl>
                     {!editingLote && <FormDescription>Salve o lote para poder anexar arquivos.</FormDescription>}
+                     <FormDescription>Upload para nuvem temporariamente desativado no plano gratuito.</FormDescription>
                     <FormMessage />
                     {attachments && attachments.length > 0 && (
                         <div className="space-y-2 pt-2">
