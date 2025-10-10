@@ -14,11 +14,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { DialogFooter } from '@/components/ui/dialog';
+import { DialogClose, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from './ui/textarea';
 
 const formSchema = z.object({
   nome: z.string().min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' }),
+  nomeFantasia: z.string().optional(),
   tipo: z.enum(['Cliente', 'Mecânico', 'Ambos'], { required_error: 'Selecione um tipo.' }),
   cpfCnpj: z.string().optional(),
   telefone: z.string().optional(),
@@ -40,6 +41,7 @@ interface PersonFormProps {
 
 const defaultFormValues: PersonFormValues = { 
   nome: '', 
+  nomeFantasia: '',
   tipo: 'Cliente',
   cpfCnpj: '',
   telefone: '',
@@ -136,6 +138,7 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
       const data = await response.json();
       
       form.setValue('nome', data.razao_social || '');
+      form.setValue('nomeFantasia', data.nome_fantasia || '');
       form.setValue('cep', data.cep || '');
       form.setValue('endereco', `${data.logradouro || ''}, ${data.numero || ''}`);
       form.setValue('bairro', data.bairro || '');
@@ -193,6 +196,19 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
                 <FormLabel>Nome Completo / Razão Social</FormLabel>
                 <FormControl>
                   <Input placeholder="John Doe" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+           <FormField
+            name="nomeFantasia"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nome Fantasia</FormLabel>
+                <FormControl>
+                  <Input placeholder="Nome popular da empresa" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -346,6 +362,9 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
             />
         </div>
         <DialogFooter className="pt-6">
+            <DialogClose asChild>
+                <Button type="button" variant="outline">Cancelar</Button>
+            </DialogClose>
           {onClear && <Button type="button" variant="outline" onClick={onClear}>Limpar</Button>}
           <Button type="submit" disabled={isSubmitting || isFetchingCep || isFetchingCnpj}>
             {isSubmitting || isFetchingCep || isFetchingCnpj ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

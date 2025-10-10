@@ -31,6 +31,7 @@ export type PersonType = 'Cliente' | 'Mecânico' | 'Ambos';
 export interface Person {
   id?: number;
   nome: string;
+  nomeFantasia?: string;
   tipo: PersonType;
   cpfCnpj?: string;
   telefone?: string;
