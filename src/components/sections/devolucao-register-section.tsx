@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
@@ -281,6 +282,11 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                                                 onChange={(e) => {
                                                                     field.onChange(e);
                                                                     setActiveProductSearch({ index, query: e.target.value });
+                                                                    if (e.target.value) {
+                                                                        setActiveProductSearch({ index, query: e.target.value });
+                                                                    } else {
+                                                                        setActiveProductSearch(null);
+                                                                    }
                                                                 }}
                                                             />
                                                         </FormControl>
