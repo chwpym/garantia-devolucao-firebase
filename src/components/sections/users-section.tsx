@@ -312,15 +312,15 @@ export default function UsersSection() {
                         render={({ field }) => (
                             <FormItem className="flex flex-col items-center">
                                 <FormControl>
-                                    <>
-                                    <input type="file" ref={fileInputRef} className='hidden' onChange={handleProfilePictureUpload} accept="image/*"/>
-                                    <Avatar className="h-24 w-24 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                                        <AvatarImage src={field.value ?? ''} />
-                                        <AvatarFallback>
-                                             {isUploading ? <Loader2 className="h-6 w-6 animate-spin"/> : getInitials(editingUser?.displayName)}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    </>
+                                    <div>
+                                        <input type="file" ref={fileInputRef} className='hidden' onChange={handleProfilePictureUpload} accept="image/*"/>
+                                        <Avatar className="h-24 w-24 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                                            <AvatarImage src={field.value ?? ''} />
+                                            <AvatarFallback>
+                                                {isUploading ? <Loader2 className="h-6 w-6 animate-spin"/> : getInitials(editingUser?.displayName)}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                    </div>
                                 </FormControl>
                                 <Button type="button" variant="link" onClick={() => fileInputRef.current?.click()}>
                                     <Upload className="mr-2 h-4 w-4"/>
