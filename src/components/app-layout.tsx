@@ -10,6 +10,7 @@ import MobileSidebar from './mobile-sidebar';
 import QuickShortcuts from './quick-shortcuts';
 import { useAppStore } from '@/store/app-store';
 import { UserNav } from './user-nav';
+import { ThemeToggle } from './theme-toggle';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -80,7 +81,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
               </Sheet>
             </div>
             <QuickShortcuts />
-            <UserNav />
+            <div className='flex items-center gap-2'>
+              <ThemeToggle />
+              <UserNav />
+            </div>
           </div>
         </header>
         <main className="flex-1 p-4 md:p-8 overflow-auto">
