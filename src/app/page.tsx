@@ -48,6 +48,12 @@ export default function Home() {
 
   const isMobile = useIsMobile();
 
+  const fullWidthViews: string[] = [
+    'batch-register',
+    'query',
+    'devolucao-query'
+  ];
+
   const renderContent = () => {
     switch (activeView) {
       case 'dashboard':
@@ -105,7 +111,7 @@ export default function Home() {
 
   return (
     <AppLayout>
-      <div className={cn(activeView === 'batch-register' ? "" : "max-w-7xl mx-auto w-full")}>
+      <div className={cn(fullWidthViews.includes(activeView) ? "" : "max-w-7xl mx-auto w-full")}>
           {renderContent()}
       </div>
     </AppLayout>
