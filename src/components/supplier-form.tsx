@@ -58,7 +58,8 @@ const formatCNPJ = (value: string) => {
 
 export default function SupplierForm({ onSave, editingSupplier, onClear, isModal = false }: SupplierFormProps) {
   const { toast } = useToast();
-  const [isFetching, setIsFetching] = useState(false);
+  const [isFetchingCnpj, setIsFetchingCnpj] = useState(false);
+  const [isFetchingCep, setIsFetchingCep] = useState(false);
 
   const form = useForm<SupplierFormValues>({
     resolver: zodResolver(formSchema),
@@ -82,7 +83,7 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
     const cnpj = e.target.value.replace(/\D/g, '');
     if (cnpj.length !== 14) return;
 
-    setIsFetching(true);
+    setIsFetchingCnpj(true);
     try {
       const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpj}`);
       if (!response.ok) throw new Error('CNPJ não encontrado ou API indisponível.');
@@ -103,7 +104,36 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
           variant: "destructive"
       });
     } finally {
-        setIsFetching(false);
+        setIsFetchingCnpj(false);
+    }
+  };
+
+  const handleCepBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
+    const cep = e.target.value.replace(/\D/g, '');
+    if (cep.length !== 8) return;
+
+    setIsFetchingCep(true);
+    try {
+        const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+        if (!response.ok) throw new Error('CEP não encontrado');
+        
+        const data = await response.json();
+        if (data.erro) {
+            throw new Error('CEP não encontrado');
+        }
+
+        form.setValue('endereco', data.logradouro);
+        form.setValue('bairro', data.bairro);
+        form.setValue('cidade', `${data.localidade} - ${data.uf}`);
+        toast({ title: "Sucesso", description: "Endereço preenchido automaticamente." });
+    } catch (err) {
+        toast({
+            title: "Erro ao Buscar CEP",
+            description: err instanceof Error ? err.message : "Não foi possível buscar o endereço.",
+            variant: "destructive"
+        });
+    } finally {
+        setIsFetchingCep(false);
     }
   };
 
@@ -153,7 +183,7 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
                     onChange={(e) => field.onChange(formatCNPJ(e.target.value))}
                     onBlur={handleCnpjBlur}
                   />
-                  {isFetching && <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin" />}
+                  {isFetchingCnpj && <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin" />}
                 </div>
               </FormControl>
               <FormMessage />
@@ -190,7 +220,12 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
           <FormField name="cep" control={form.control} render={({ field }) => (
               <FormItem className="md:col-span-1">
                   <FormLabel>CEP</FormLabel>
-                  <FormControl><Input placeholder="00000-000" {...field} /></FormControl>
+                  <FormControl>
+                    <div className="relative">
+                        <Input placeholder="00000-000" {...field} onBlur={handleCepBlur} />
+                        {isFetchingCep && <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin" />}
+                    </div>
+                  </FormControl>
                   <FormMessage />
               </FormItem>
           )} />
@@ -239,8 +274,8 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
             </DialogClose>
            )}
           {onClear && <Button type="button" variant="outline" onClick={onClear}>Limpar</Button>}
-          <Button type="submit" disabled={isSubmitting || isFetching}>
-            {isSubmitting || isFetching ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          <Button type="submit" disabled={isSubmitting || isFetchingCnpj || isFetchingCep}>
+            {(isSubmitting || isFetchingCnpj || isFetchingCep) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             {editingSupplier ? 'Atualizar' : 'Salvar'}
           </Button>
         </FooterComponent>
