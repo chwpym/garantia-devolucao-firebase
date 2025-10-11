@@ -62,10 +62,13 @@ export function UserNav() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-          <Avatar className="h-9 w-9">
-            <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
-          </Avatar>
+        <Button variant="ghost" className="relative h-10 rounded-full px-2">
+            <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-foreground hidden sm:inline-block">{user.displayName}</span>
+                <Avatar className="h-9 w-9">
+                    <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+                </Avatar>
+            </div>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
