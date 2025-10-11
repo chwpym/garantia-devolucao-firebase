@@ -38,7 +38,8 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, data.email, data.password);
-      window.location.href = '/';
+      // O AuthGuard cuidará do redirecionamento. Não é mais necessário aqui.
+      // window.location.href = '/'; 
     } catch (error: unknown) {
       const authError = error as AuthError;
       console.error('Falha no login:', authError);
@@ -59,7 +60,8 @@ export default function LoginPage() {
     setIsGoogleLoading(true);
     try {
       await signInWithPopup(auth, googleProvider);
-      window.location.href = '/';
+      // O AuthGuard cuidará do redirecionamento. Não é mais necessário aqui.
+      // window.location.href = '/';
     } catch (error) {
        const authError = error as AuthError;
        console.error('Falha no login com Google:', authError);

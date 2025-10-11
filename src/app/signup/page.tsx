@@ -60,10 +60,11 @@ export default function SignupPage() {
 
       toast({
         title: 'Cadastro realizado com sucesso!',
-        description: 'Você já pode fazer login com suas novas credenciais.',
+        description: 'Você será redirecionado para o sistema.',
       });
 
-      router.push('/login');
+      // O AuthGuard cuidará do redirecionamento para '/', não precisamos ir para o login primeiro.
+      // router.push('/login');
 
     } catch (error: unknown) {
       const authError = error as AuthError;
