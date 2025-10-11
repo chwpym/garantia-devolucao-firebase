@@ -1,8 +1,17 @@
 # Synergia OS - Sistema de Gestão Integrada
 
-Um sistema web completo e moderno para gerenciamento de garantias, devoluções de peças e outras ferramentas, desenvolvido como um Progressive Web App (PWA) com funcionalidades offline e capacidade de instalação nativa.
+Um sistema web completo e moderno para gerenciamento de garantias, devoluções de peças e outras ferramentas, desenvolvido como um Progressive Web App (PWA) com funcionalidades offline, capacidade de instalação nativa e um sistema de autenticação seguro.
 
 ## 🚀 Funcionalidades Principais
+
+### 🔐 Segurança e Gestão de Usuários
+- **Sistema de Autenticação Completo**: Login com E-mail/Senha ou Google.
+- **Cadastro de Usuários**: Novos usuários podem se cadastrar e começar a usar o sistema imediatamente.
+- **Gerenciamento de Permissões**: O primeiro usuário registrado se torna **administrador** e pode gerenciar os demais.
+- **Níveis de Acesso**:
+    - **Administrador**: Acesso a todas as funcionalidades, incluindo a capacidade de editar e bloquear outros usuários.
+    - **Usuário Padrão**: Acesso às funcionalidades operacionais do dia a dia.
+- **Proteção de Rotas**: Seções administrativas são protegidas e acessíveis apenas por administradores.
 
 ### 🔧 Módulo de Garantias
 - **Cadastro Detalhado**: Registre garantias com informações de produto, defeito, cliente, fornecedor, notas fiscais e anexo de fotos.
@@ -70,42 +79,26 @@ O sistema foi projetado para funcionar diretamente no navegador, sem a necessida
 
 ## 📖 Guia de Uso Rápido
 
-### 1. Primeiros Passos: Cadastros
+### 1. Primeiro Acesso
+- **Cadastre-se**: Crie sua conta usando um e-mail e senha. O primeiro usuário a se registrar será o **administrador**.
+- **Login**: Acesse o sistema com suas credenciais.
+
+### 2. Primeiros Passos: Cadastros
 - Acesse a seção **Cadastros** no menu lateral.
 - Cadastre seus **Produtos**, **Clientes/Mecânicos** e **Fornecedores**. Estes dados serão usados para agilizar os lançamentos.
 - Em **Configurações**, preencha os dados da sua empresa para que apareçam nos relatórios em PDF.
 
-### 2. Registrando uma Garantia
+### 3. Registrando uma Garantia
 - Vá para **Garantias → Cadastro de Garantia**.
 - No campo **Código**, digite o código do produto. A descrição será preenchida automaticamente se o produto já estiver cadastrado.
 - Se o produto não for encontrado, um aviso aparecerá e você poderá cadastrá-lo em uma janela, sem sair da tela.
 - Preencha o restante das informações e clique em "Salvar".
 
-### 3. Registrando Garantias em Lote
-- Use o atalho **Garantia em Lote** no cabeçalho.
-- Selecione um **Fornecedor** para todo o lote.
-- Preencha os detalhes de cada garantia na tabela. A busca automática por código também funciona aqui.
-- Clique em "Salvar Tudo" para registrar todas as garantias de uma vez.
+### 4. Gerenciando Usuários (Apenas Administradores)
+- Acesse **Administração → Gerenciar Usuários**.
+- Nesta tela, você pode visualizar todos os usuários, editar seus nomes, alterar seus níveis de acesso (Admin/Usuário) e bloquear/desbloquear suas contas.
 
-### 4. Gerenciando Lotes de Garantia
-- Vá para **Garantias → Consulta de Garantias**. Marque as garantias que deseja agrupar e clique em "Adicionar ao Lote".
-- Em **Garantias → Lotes de Garantia**, você pode criar novos lotes ou visualizar os existentes.
-- Ao clicar em um lote, você pode gerenciar os itens, aplicar NFs de saída/retorno em massa e alterar o status das garantias.
-
-### 5. Registrando uma Devolução
-- Vá para **Devoluções → Cadastro de Devolução**.
-- Ao adicionar uma peça, digite o código do produto para que a descrição seja preenchida automaticamente.
-- Preencha as informações gerais e clique em "Salvar Devolução".
-
-### 6. Usando as Ferramentas e Calculadoras
-- Acesse a seção **Ferramentas → Calculadoras** no menu lateral ou use o atalho **Calculadoras** no cabeçalho.
-- Escolha a ferramenta desejada e siga as instruções na tela.
-
-### 7. Gerando Relatórios
-- Acesse a seção **Relatórios** no menu lateral.
-- Escolha o tipo de relatório desejado (Garantias ou Devoluções) e use os filtros para gerar os PDFs.
-
-### 8. Backup
+### 5. Backup
 - Em **Backup**, você pode exportar todos os seus dados para um arquivo JSON para segurança.
 - Use a função "Restaurar" para importar dados de um arquivo de backup. **Atenção: a restauração substitui todos os dados existentes.**
 
@@ -113,8 +106,10 @@ O sistema foi projetado para funcionar diretamente no navegador, sem a necessida
 - **Next.js & React**: Para uma interface de usuário moderna e reativa.
 - **TypeScript**: Para um código mais seguro e robusto.
 - **Tailwind CSS & Shadcn/ui**: Para um design consistente, responsivo e profissional.
+- **Firebase Authentication**: Para um sistema de login e gerenciamento de usuários seguro.
 - **IndexedDB**: Para armazenamento de todos os dados de forma segura e offline no seu navegador.
 - **Next-PWA**: Para transformar o sistema em um Progressive Web App instalável.
+- **Zustand**: Para gerenciamento de estado global de forma simples e eficiente.
 - **Lucide-React**: Para ícones limpos e modernos.
 - **jsPDF & jspdf-autotable**: Para a geração de relatórios em PDF.
 - **fast-xml-parser**: Para a análise de arquivos XML de NF-e nas calculadoras.
