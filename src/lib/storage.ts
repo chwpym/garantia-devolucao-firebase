@@ -10,6 +10,8 @@ import { storage } from './firebase';
  * @returns A promise that resolves with the public download URL of the file.
  */
 export const uploadFile = async (file: File | Blob, path: string): Promise<string> => {
+    // A inicialização do storage já acontece em firebase.ts, que é client-side.
+    // Apenas usamos a instância exportada.
     const storageRef = ref(storage, path);
     const snapshot = await uploadBytes(storageRef, file);
     const downloadURL = await getDownloadURL(snapshot.ref);
