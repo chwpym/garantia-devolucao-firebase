@@ -77,6 +77,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
                       </Button>
                     </nav>
                   </div>
+                  <div className="text-center text-xs text-muted-foreground pb-2">
+                    Versão {process.env.APP_VERSION || '0.1.0'}
+                  </div>
                 </SheetContent>
               </Sheet>
             </div>

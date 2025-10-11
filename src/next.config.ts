@@ -2,6 +2,9 @@
 import type {NextConfig} from 'next';
 import withPWA from 'next-pwa';
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { version } = require('./package.json');
+
 const nextConfig: NextConfig = {
   /* config options here */
   typescript: {
@@ -24,7 +27,16 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'firebasestorage.googleapis.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
+  },
+  env: {
+    APP_VERSION: version,
   },
 };
 
@@ -32,7 +44,6 @@ const pwaConfig = withPWA({
   dest: 'public',
   register: true,
   skipWaiting: true, // Garante que o novo Service Worker ative imediatamente
-  // runtimeCaching, // Descomente para configurar estratégias de cache
   disable: process.env.NODE_ENV === 'development',
 });
 
@@ -44,6 +55,7 @@ const configWithEnv = {
     ...pwaConfig(nextConfig),
     env: {
         ...localEnv,
+        ...nextConfig.env, // Adiciona a versão do app às variáveis
     },
 };
 
