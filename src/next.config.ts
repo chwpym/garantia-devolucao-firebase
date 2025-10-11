@@ -53,9 +53,11 @@ const { parsed: localEnv } = require('dotenv').config();
 
 const configWithEnv = {
     ...pwaConfig(nextConfig),
+    // A Vercel já expõe as variáveis de ambiente do projeto, não precisamos injetá-las aqui durante o build.
+    // Manter o 'env' local é útil apenas para o ambiente de desenvolvimento.
     env: {
-        ...localEnv,
-        ...nextConfig.env, // Adiciona a versão do app às variáveis
+      ...localEnv,
+      ...nextConfig.env
     },
 };
 
