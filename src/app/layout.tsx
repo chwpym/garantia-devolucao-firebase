@@ -1,20 +1,22 @@
 
 import type { Metadata, Viewport } from 'next';
+import dynamic from 'next/dynamic';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import PwaUpdateAlert from '@/components/pwa-update-alert';
+import { Skeleton } from '@/components/ui/skeleton';
 import { AuthProvider } from '@/components/auth-provider';
 import { AuthGuard } from '@/components/auth-guard';
+
 
 const inter = Inter({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-inter',
 });
-
 
 export const metadata: Metadata = {
   title: 'Synergia OS',

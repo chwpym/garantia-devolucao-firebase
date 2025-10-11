@@ -1,9 +1,10 @@
 
 'use client';
 
-import { createContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { onAuthStateChanged, type User, signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { getAuth } from "firebase/auth";
+import { getFirebaseApp } from '@/lib/firebase';
 import { type UserProfile } from '@/lib/types';
 import * as db from '@/lib/db';
 import { countUsers } from '@/lib/db-utils';
@@ -26,6 +27,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
+    const app = getFirebaseApp();
+    const auth = getAuth(app);
+    
     const unsubscribe = onAuthStateChanged(auth, (authUser) => {
       if (authUser) {
         // User is signed in, now fetch or create profile
@@ -96,3 +100,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     </AuthContext.Provider>
   );
 }
+
+export const useAuth = (): AuthContextType => {
+    const context = useContext(AuthContext);
+    if (context === undefined) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
+};

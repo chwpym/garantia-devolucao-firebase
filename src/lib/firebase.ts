@@ -14,7 +14,7 @@ const firebaseConfig: FirebaseOptions = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Singleton pattern to initialize Firebase only once
+// Singleton pattern to initialize Firebase only once on the client
 function getFirebaseApp(): FirebaseApp {
     if (getApps().length === 0) {
         return initializeApp(firebaseConfig);
@@ -23,8 +23,8 @@ function getFirebaseApp(): FirebaseApp {
 }
 
 const app = getFirebaseApp();
-const storage = getStorage(app);
 const auth = getAuth(app);
+const storage = getStorage(app);
 const googleProvider = new GoogleAuthProvider();
 
-export { app, storage, auth, googleProvider, createUserWithEmailAndPassword, updateProfile };
+export { app, auth, storage, googleProvider, createUserWithEmailAndPassword, updateProfile, getFirebaseApp };
