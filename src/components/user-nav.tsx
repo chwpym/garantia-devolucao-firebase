@@ -66,6 +66,7 @@ export function UserNav() {
             <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-foreground hidden sm:inline-block">{user.displayName}</span>
                 <Avatar className="h-9 w-9">
+                    <AvatarImage src={user.profile.photoURL || ''} alt={user.displayName || 'Avatar'} />
                     <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
                 </Avatar>
             </div>

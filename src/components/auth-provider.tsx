@@ -49,6 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 uid: authUser.uid,
                 email: authUser.email!,
                 displayName: authUser.displayName || authUser.email?.split('@')[0] || 'Novo Usuário',
+                photoURL: authUser.photoURL || undefined, // Save the photoURL if it exists
                 role: newRole,
                 status: 'active',
               };
