@@ -7,9 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { createUserWithEmailAndPassword, updateProfile, type AuthError } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
@@ -29,7 +27,6 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 
 export default function SignupPage() {
   const { toast } = useToast();
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<SignupFormValues>({
@@ -47,24 +44,15 @@ export default function SignupPage() {
         displayName: data.displayName,
       });
 
-      // 3. Create user profile in local DB with default 'user' role
-      await db.initDB();
-      const profile = {
-        uid: userCredential.user.uid,
-        email: data.email,
-        displayName: data.displayName,
-        role: 'user' as const,
-        status: 'active' as const,
-      };
-      await db.upsertUserProfile(profile);
-
+      // A LÓGICA DE CRIAÇÃO DO PERFIL LOCAL FOI MOVIDA PARA O AuthProvider
+      // para garantir que a verificação de 'primeiro usuário' seja feita corretamente.
+      
       toast({
         title: 'Cadastro realizado com sucesso!',
         description: 'Você será redirecionado para o sistema.',
       });
 
-      // O AuthGuard cuidará do redirecionamento para '/', não precisamos ir para o login primeiro.
-      // router.push('/login');
+      // O AuthGuard cuidará do redirecionamento automático para a página principal.
 
     } catch (error: unknown) {
       const authError = error as AuthError;
