@@ -47,18 +47,14 @@ const pwaConfig = withPWA({
   disable: process.env.NODE_ENV === 'development',
 });
 
+
 // A configuração env é necessária para o Next.js carregar as variáveis de ambiente
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { parsed: localEnv } = require('dotenv').config();
+// A Vercel já expõe as variáveis de ambiente do projeto, não precisamos injetá-las aqui durante o build.
+// Manter o 'dotenv' é útil apenas para o ambiente de desenvolvimento local.
+if (process.env.NODE_ENV === 'development') {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    require('dotenv').config();
+}
 
-const configWithEnv = {
-    ...pwaConfig(nextConfig),
-    // A Vercel já expõe as variáveis de ambiente do projeto, não precisamos injetá-las aqui durante o build.
-    // Manter o 'env' local é útil apenas para o ambiente de desenvolvimento.
-    env: {
-      ...localEnv,
-      ...nextConfig.env
-    },
-};
 
-export default configWithEnv;
+export default pwaConfig(nextConfig);
