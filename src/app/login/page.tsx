@@ -1,11 +1,11 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { signInWithPopup, signInWithEmailAndPassword, type AuthError } from 'firebase/auth';
+import { signInWithPopup, signInWithEmailAndPassword, type AuthError, onAuthStateChanged } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
@@ -34,12 +34,23 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
+  // Listener para resetar o estado de loading caso o usuário seja deslogado (ex: bloqueado)
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        setIsLoading(false);
+        setIsGoogleLoading(false);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, data.email, data.password);
-      // O AuthGuard cuidará do redirecionamento. Não é mais necessário aqui.
-      // window.location.href = '/'; 
+      // O AuthGuard cuidará do redirecionamento.
     } catch (error: unknown) {
       const authError = error as AuthError;
       console.error('Falha no login:', authError);
@@ -60,8 +71,7 @@ export default function LoginPage() {
     setIsGoogleLoading(true);
     try {
       await signInWithPopup(auth, googleProvider);
-      // O AuthGuard cuidará do redirecionamento. Não é mais necessário aqui.
-      // window.location.href = '/';
+      // O AuthGuard cuidará do redirecionamento.
     } catch (error) {
        const authError = error as AuthError;
        console.error('Falha no login com Google:', authError);
