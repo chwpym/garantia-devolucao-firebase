@@ -2,67 +2,90 @@
 
 Este documento descreve o roteiro para refatorar e melhorar a arquitetura do código do aplicativo Synergia OS. As mudanças serão aplicadas em fases para garantir estabilidade e segurança.
 
-## Fase 1: Centralizar a Lógica de NF-e com o Hook `useNfeParser`
+## Fase 1: Fundações de UI e Navegação
 
-**Objetivo:** Eliminar a repetição de código nas calculadoras que processam XML de NF-e, centralizando a lógica de importação e processamento.
+**Objetivo:** Implementar uma navegação em abas para permitir a troca rápida entre funcionalidades e adicionar um sistema de navegação "Voltar" mais intuitivo.
 
 **Roteiro:**
 
-1.  **Criação do Hook:**
-    *   Criar um novo arquivo: `src/hooks/use-nfe-parser.ts`.
-    *   Mover a lógica de `FileReader`, `fast-xml-parser` e extração de dados da NF-e para este hook.
-    *   O hook retornará o estado da importação (`isLoading`, `fileName`), os dados extraídos (`nfeData`) e uma função para iniciar a importação (`handleFileImport`).
+1.  **Implementar Navegação em Abas:**
+    *   Refatorar o `AppLayout` e o `page.tsx` para suportar um sistema de abas dinâmicas.
+    *   Cada item de menu principal abrirá em uma nova aba, mantendo o estado da anterior.
+    *   Utilizar o Zustand para gerenciar as abas ativas e seus estados.
 
-2.  **Refatoração Gradual das Calculadoras:**
-    *   Substituir a lógica de importação duplicada em cada calculadora (`CostAnalysisCalculator`, `AdvancedCostAnalysisCalculator`, etc.) por uma chamada ao novo hook `useNfeParser`.
+2.  **Adicionar Botão "Voltar" Inteligente:**
+    *   Integrar ao gerenciador de estado um histórico de navegação simples.
+    *   Adicionar um componente de "Voltar" no `AppLayout` que utilize esse histórico para retornar à "view" anterior, evitando o uso constante do menu lateral.
 
 **Benefícios:**
-*   **Código mais Limpo e Conciso:** Componentes focados em seus cálculos específicos.
-*   **Manutenção Simplificada:** Alterações na lógica de parsing de NF-e são feitas em um único lugar.
-*   **Redução de Bugs:** Menor risco de erros por código duplicado.
+*   **Multitarefa Real:** Usuários poderão alternar entre o cadastro de uma garantia e a consulta de um produto sem perder dados.
+*   **Navegação Fluida:** Reduz o número de cliques necessários para navegar entre seções relacionadas.
 
 ---
 
-## Fase 2: Implementar o Gerenciamento de Estado Global com Zustand
+## Fase 2: Melhorias de Usabilidade nas Garantias
 
-**Objetivo:** Criar um "cérebro" central para o estado da aplicação, simplificando o `page.tsx` e preparando o terreno para a Fase 3.
+**Objetivo:** Enriquecer as telas de "Lotes" e "Consulta" com mais informações e funcionalidades de gerenciamento em massa.
 
 **Roteiro:**
 
-1.  **Instalação e Configuração do Zustand:**
-    *   Adicionar a biblioteca `zustand` ao `package.json`.
-    *   Criar um novo arquivo para o nosso "store" global: `src/store/app-store.ts`.
+1.  **Cards de Lote Informativos:**
+    *   Na `LotesSection.tsx`, calcular e exibir contadores para cada lote: total de itens, itens aprovados, recusados, pagos e pendentes.
 
-2.  **Criação do Store:**
-    *   Definir o estado inicial, incluindo `activeView`, `isMobileMenuOpen`, e IDs de itens em edição.
-    *   Criar as "ações" para modificar esse estado, como `setActiveView` e `toggleMobileMenu`.
+2.  **Gerenciamento em Massa nos Detalhes do Lote:**
+    *   No `LoteDetailSection.tsx`, adicionar checkboxes para selecionar múltiplos itens.
+    *   Criar um menu de ação para "Alterar Status em Massa" para os itens selecionados.
+    *   Adicionar um destaque visual (cor de fundo) nas linhas da tabela de acordo com o status da garantia.
 
-3.  **Integração com a Aplicação:**
-    *   No `src/app/page.tsx`, substituir o uso do `useState` pela chamada ao novo store do Zustand (`useAppStore`).
-    *   A lógica de navegação e manipulação de estado será movida de `page.tsx` para os componentes relevantes ou para o próprio store.
-    *   Componentes como `AppLayout` e `MobileSidebar` passarão a consumir o estado diretamente do store, em vez de receber props.
+3.  **Novos Status e Filtros:**
+    *   Adicionar os status "Aguardando Envio" e "Enviado para Análise".
+    *   Atualizar a tela `QuerySection.tsx` para permitir a filtragem por cliente e um modo de visualização "Todas as Garantias" (incluindo as que já estão em lotes).
 
 **Benefícios:**
-*   **Componentes Desacoplados:** Cada parte do sistema pode acessar e modificar o estado de forma independente.
-*   **Melhor Performance:** Evita re-renderizações desnecessárias em cascata.
-*   **Código Organizado:** A lógica de estado é separada da lógica de apresentação.
+*   **Visão Rápida:** O usuário saberá o estado de um lote sem precisar abri-lo.
+*   **Produtividade:** Ações em massa economizam tempo e reduzem cliques repetitivos.
+*   **Clareza no Fluxo:** Os novos status e filtros tornam o processo de garantia mais transparente.
 
 ---
 
-## Fase 3: Desacoplar os Atalhos Rápidos
+## Fase 3: Melhorias de Fluxo de Cadastro e Consulta
 
-**Objetivo:** Fazer com que o `AppLayout` e seus componentes filhos (como `QuickShortcuts`) não precisem saber os detalhes de implementação de outras seções.
+**Objetivo:** Otimizar a performance e o fluxo de trabalho nas telas de cadastro e consulta.
 
 **Roteiro:**
 
-1.  **Expandir o Store:**
-    *   Adicionar um novo estado ao store criado na Fase 2 para controlar a visibilidade de janelas modais (ex: `isNewLoteModalOpen: false`).
-    *   Criar ações para controlar esses novos estados (ex: `openNewLoteModal()`).
+1.  **Manter na Tela de Cadastro:**
+    *   Modificar a lógica no `AppStore` e nos componentes `RegisterSection`/`DevolucaoRegisterSection` para que, após salvar, o formulário seja limpo, mas o usuário permaneça na mesma tela.
+    *   Criar um novo componente lateral que exibirá uma lista simples dos itens cadastrados na sessão atual (ou no dia).
 
-2.  **Atualizar os Componentes:**
-    *   **`QuickShortcuts.tsx`:** O botão "Novo Lote" deixará de usar uma prop e passará a chamar a ação correspondente no store (`openNewLoteModal()`).
-    *   **`LotesSection.tsx`:** Este componente vai "escutar" a mudança no estado `isNewLoteModalOpen` do store e, quando for `true`, se encarregará de abrir sua própria janela modal.
+2.  **Otimizar Telas de Consulta:**
+    *   Alterar as seções `QuerySection` e `DevolucaoQuerySection` para que, por padrão, carreguem apenas os registros dos últimos 7 ou 30 dias.
+    *   Manter os filtros de data para que o usuário possa buscar períodos mais antigos se necessário.
 
 **Benefícios:**
-*   **Maior Desacoplamento:** O layout apenas sinaliza uma intenção, e o componente responsável reage a ela.
-*   **Escalabilidade:** Adicionar novos atalhos e modais no futuro se torna uma tarefa muito mais simples e segura.
+*   **Lançamento Rápido:** O usuário pode cadastrar dezenas de itens em sequência sem interrupções.
+*   **Performance Aprimorada:** As telas de consulta carregarão quase que instantaneamente.
+
+---
+
+## Fase 4: Busca Inteligente e Melhorias de UI
+
+**Objetivo:** Implementar uma busca mais flexível em todo o sistema e aplicar a paleta de cores para enriquecer a interface.
+
+**Roteiro:**
+
+1.  **Busca Aprimorada nas Telas de Consulta:**
+    *   **Produtos (`ProductsSection`):** Modificar a lógica para que a busca verifique o termo no `código` e na `descrição`.
+    *   **Clientes/Mecânicos (`PersonsSection`):** Atualizar a busca para funcionar para o campo `nome` (Razão Social) e também para o `nomeFantasia`.
+
+2.  **Busca Inteligente nos Formulários de Cadastro:**
+    *   **Garantias (`RegisterSection`):** Aprimorar a busca de produto para permitir encontrar um item pela descrição, não apenas pelo código.
+    *   **Devoluções (`DevolucaoRegisterSection`):** Aplicar a mesma melhoria na busca de produtos da tela de devoluções.
+
+3.  **Cards Coloridos:**
+    *   Aplicar a paleta de cores do sistema (primária, azul, verde, laranja) aos cards de resumo no **Dashboard** e aos cards de **Lotes de Garantia**.
+    *   As cores serão usadas para destacar o status ou a categoria, tornando a identificação visual mais rápida e intuitiva.
+
+**Benefícios:**
+*   **Busca Flexível e Rápida:** Encontrar registros se torna mais fácil em todo o sistema, agilizando o fluxo de trabalho.
+*   **Interface mais Rica:** O uso estratégico de cores melhora a experiência do usuário e a leitura rápida das informações.
