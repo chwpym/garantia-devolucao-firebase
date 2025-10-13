@@ -80,16 +80,21 @@ Este documento descreve o roteiro para refatorar e melhorar a arquitetura do có
 
 2.  **Busca Inteligente nos Formulários de Cadastro:**
     *   **Garantias (`RegisterSection`):**
-        *   **Produtos:** Aprimorar a busca para permitir encontrar um item pela descrição, não apenas pelo código.
-        *   **Clientes/Mecânicos:** Melhorar o componente `Combobox` para que a busca filtre melhor pelos nomes.
+        *   **Produtos:** Aprimorar a busca para permitir encontrar um item pela descrição ou pelo código.
+        *   **Clientes/Mecânicos:** Melhorar o componente `Combobox` para que a busca filtre melhor pelos nomes (Razão Social e Nome Fantasia).
     *   **Devoluções (`DevolucaoRegisterSection`):**
         *   **Produtos:** Aplicar a mesma melhoria na busca de produtos.
         *   **Clientes/Mecânicos:** Aplicar a mesma melhoria na busca de pessoas.
 
-3.  **Cards Coloridos:**
-    *   Aplicar a paleta de cores do sistema (primária, azul, verde, laranja) aos cards de resumo no **Dashboard** e aos cards de **Lotes de Garantia**.
-    *   As cores serão usadas para destacar o status ou a categoria, tornando a identificação visual mais rápida e intuitiva.
+3.  **Cards Coloridos e Visualmente Informativos:**
+    *   **Dashboard (`DashboardSection`):**
+        *   Aplicar a paleta de cores do sistema aos cards de resumo de Garantias (Total, Pendentes, Aprovadas, Recusadas, etc.). As cores devem ter um significado (ex: verde para aprovado, vermelho para recusado, amarelo para pendente).
+        *   Fazer o mesmo para os cards de resumo de Devoluções.
+    *   **Lotes de Garantia (`LotesSection`):**
+        *   Mudar a cor da borda ou do fundo do card de cada lote de acordo com seu `status` (ex: `Aberto`, `Enviado`, `Finalizado`).
+    *   **Calculadoras (`CalculatorsSection`):**
+        *   Utilizar as cores de destaque (azul, verde, laranja) para diferenciar os cards de cada calculadora, tornando a seção mais visual e fácil de navegar.
 
 **Benefícios:**
 *   **Busca Flexível e Rápida:** Encontrar registros se torna mais fácil em todo o sistema, agilizando o fluxo de trabalho.
-*   **Interface mais Rica:** O uso estratégico de cores melhora a experiência do usuário e a leitura rápida das informações.
+*   **Interface mais Rica:** O uso estratégico de cores melhora a experiência do usuário e a leitura rápida das informações, tornando o sistema mais agradável e profissional.
