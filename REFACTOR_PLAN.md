@@ -79,8 +79,12 @@ Este documento descreve o roteiro para refatorar e melhorar a arquitetura do có
     *   **Clientes/Mecânicos (`PersonsSection`):** Atualizar a busca para funcionar para o campo `nome` (Razão Social) e também para o `nomeFantasia`.
 
 2.  **Busca Inteligente nos Formulários de Cadastro:**
-    *   **Garantias (`RegisterSection`):** Aprimorar a busca de produto para permitir encontrar um item pela descrição, não apenas pelo código.
-    *   **Devoluções (`DevolucaoRegisterSection`):** Aplicar a mesma melhoria na busca de produtos da tela de devoluções.
+    *   **Garantias (`RegisterSection`):**
+        *   **Produtos:** Aprimorar a busca para permitir encontrar um item pela descrição, não apenas pelo código.
+        *   **Clientes/Mecânicos:** Melhorar o componente `Combobox` para que a busca filtre melhor pelos nomes.
+    *   **Devoluções (`DevolucaoRegisterSection`):**
+        *   **Produtos:** Aplicar a mesma melhoria na busca de produtos.
+        *   **Clientes/Mecânicos:** Aplicar a mesma melhoria na busca de pessoas.
 
 3.  **Cards Coloridos:**
     *   Aplicar a paleta de cores do sistema (primária, azul, verde, laranja) aos cards de resumo no **Dashboard** e aos cards de **Lotes de Garantia**.
