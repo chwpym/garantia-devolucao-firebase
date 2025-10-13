@@ -68,4 +68,20 @@ Este documento descreve o roteiro para refatorar e melhorar a arquitetura do có
 
 ---
 
-*Observação: A sugestão de adicionar foto de perfil do usuário foi removida por conta de complexidades e custos associados ao armazenamento de arquivos no Firebase Storage no plano gratuito.*
+## Fase 4: Melhorias de UI e Busca
+
+**Objetivo:** Aumentar a clareza visual da interface e a eficiência das ferramentas de busca.
+
+**Roteiro:**
+
+1.  **Cards Coloridos:**
+    *   Aplicar a paleta de cores do sistema (primária, azul, verde, laranja) aos cards de resumo no **Dashboard** e aos cards de **Lotes de Garantia**.
+    *   As cores serão usadas para destacar o status ou a categoria, tornando a identificação visual mais rápida e intuitiva.
+
+2.  **Busca Aprimorada:**
+    *   **Consulta de Produtos:** Modificar a lógica de busca na `ProductsSection.tsx` para que o termo pesquisado seja verificado tanto no campo `código` quanto no campo `descrição`.
+    *   **Consulta de Clientes/Mecânicos:** Atualizar a `PersonsSection.tsx` para que a busca funcione para o campo `nome` (Razão Social) e também para o `nomeFantasia`.
+
+**Benefícios:**
+*   **Interface mais Rica:** O uso estratégico de cores melhora a experiência do usuário e a leitura rápida das informações.
+*   **Busca Flexível:** Encontrar registros se torna mais rápido e fácil, pois o usuário não precisa saber o termo exato ou em qual campo a informação está.
