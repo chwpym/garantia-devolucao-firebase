@@ -68,20 +68,24 @@ Este documento descreve o roteiro para refatorar e melhorar a arquitetura do có
 
 ---
 
-## Fase 4: Melhorias de UI e Busca
+## Fase 4: Busca Inteligente e Melhorias de UI
 
-**Objetivo:** Aumentar a clareza visual da interface e a eficiência das ferramentas de busca.
+**Objetivo:** Implementar uma busca mais flexível em todo o sistema e aplicar a paleta de cores para enriquecer a interface.
 
 **Roteiro:**
 
-1.  **Cards Coloridos:**
+1.  **Busca Aprimorada nas Telas de Consulta:**
+    *   **Produtos (`ProductsSection`):** Modificar a lógica para que a busca verifique o termo no `código` e na `descrição`.
+    *   **Clientes/Mecânicos (`PersonsSection`):** Atualizar a busca para funcionar para o campo `nome` (Razão Social) e também para o `nomeFantasia`.
+
+2.  **Busca Inteligente nos Formulários de Cadastro:**
+    *   **Garantias (`RegisterSection`):** Aprimorar a busca de produto para permitir encontrar um item pela descrição, não apenas pelo código.
+    *   **Devoluções (`DevolucaoRegisterSection`):** Aplicar a mesma melhoria na busca de produtos da tela de devoluções.
+
+3.  **Cards Coloridos:**
     *   Aplicar a paleta de cores do sistema (primária, azul, verde, laranja) aos cards de resumo no **Dashboard** e aos cards de **Lotes de Garantia**.
     *   As cores serão usadas para destacar o status ou a categoria, tornando a identificação visual mais rápida e intuitiva.
 
-2.  **Busca Aprimorada:**
-    *   **Consulta de Produtos:** Modificar a lógica de busca na `ProductsSection.tsx` para que o termo pesquisado seja verificado tanto no campo `código` quanto no campo `descrição`.
-    *   **Consulta de Clientes/Mecânicos:** Atualizar a `PersonsSection.tsx` para que a busca funcione para o campo `nome` (Razão Social) e também para o `nomeFantasia`.
-
 **Benefícios:**
+*   **Busca Flexível e Rápida:** Encontrar registros se torna mais fácil em todo o sistema, agilizando o fluxo de trabalho.
 *   **Interface mais Rica:** O uso estratégico de cores melhora a experiência do usuário e a leitura rápida das informações.
-*   **Busca Flexível:** Encontrar registros se torna mais rápido e fácil, pois o usuário não precisa saber o termo exato ou em qual campo a informação está.
