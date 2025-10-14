@@ -127,7 +127,8 @@ export default function PersonsSection() {
         person.nome.toLowerCase().includes(lowercasedTerm) ||
         (person.nomeFantasia && person.nomeFantasia.toLowerCase().includes(lowercasedTerm)) ||
         (person.cpfCnpj && person.cpfCnpj.replace(/\D/g, '').includes(lowercasedTerm.replace(/\D/g, ''))) ||
-        (person.telefone && person.telefone.toLowerCase().includes(lowercasedTerm))
+        (person.telefone && person.telefone.toLowerCase().includes(lowercasedTerm)) ||
+        (person.cidade && person.cidade.toLowerCase().includes(lowercasedTerm))
     );
   }, [persons, searchTerm]);
   
@@ -309,7 +310,7 @@ export default function PersonsSection() {
                  <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                        placeholder="Buscar por nome, nome fantasia, CPF/CNPJ ou telefone..."
+                        placeholder="Buscar por nome, nome fantasia, CPF/CNPJ, telefone ou cidade..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-10"

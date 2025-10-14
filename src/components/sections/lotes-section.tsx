@@ -29,6 +29,7 @@ import {
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { useAppStore } from '@/store/app-store';
+import { cn } from '@/lib/utils';
 
 
 interface LotesSectionProps {
@@ -77,7 +78,7 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
               'Aprovada': loteWarranties.filter(w => w.status === 'Aprovada').length,
               'Recusada': loteWarranties.filter(w => w.status === 'Recusada').length,
               'Paga': loteWarranties.filter(w => w.status === 'Paga').length,
-              'Pendente': loteWarranties.filter(w => w.status === 'Em análise' || w.status === 'Enviado para Análise').length,
+              'Pendente': loteWarranties.filter(w => w.status === 'Em análise' || w.status === 'Enviado para Análise' || w.status === 'Aguardando Envio').length,
           };
           return { ...lote, itemCount, statusCounts };
       })
@@ -165,7 +166,13 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
           {lotes.map((lote) => (
             <Card 
                 key={lote.id} 
-                className="flex flex-col shadow-md hover:border-primary transition-colors cursor-pointer"
+                className={cn(
+                    "flex flex-col shadow-md hover:border-primary transition-colors cursor-pointer border-2",
+                    lote.status === 'Enviado' ? 'border-primary' :
+                    lote.status === 'Recusado' ? 'border-destructive' :
+                    lote.status === 'Aprovado Totalmente' ? 'border-accent-green' :
+                    'border-transparent'
+                )}
                 onClick={() => onNavigateToLote(lote.id!)}
             >
               <CardHeader className="flex flex-row items-start justify-between">

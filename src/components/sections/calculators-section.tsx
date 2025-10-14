@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -15,6 +16,7 @@ import AdvancedCostAnalysisCalculator from '../calculators/advanced-cost-analysi
 import NfeComparator from '../calculators/nfe-comparator';
 import TaxAnalysisCalculator from '../calculators/tax-analysis-calculator';
 import PurchaseSimulatorCalculator from '../calculators/purchase-simulator-calculator';
+import { cn } from '@/lib/utils';
 
 
 const calculators = [
@@ -24,6 +26,7 @@ const calculators = [
     title: 'Simulador de Compra por NF-e',
     description: 'Simule compras alterando quantidades e itens de um XML.',
     component: PurchaseSimulatorCalculator,
+    color: 'border-primary'
   },
   {
     id: 'tax-analysis',
@@ -31,6 +34,7 @@ const calculators = [
     title: 'Análise de Impostos da NF-e',
     description: 'Extrai todos os impostos (ICMS, IPI, PIS/COFINS) de uma NF-e.',
     component: TaxAnalysisCalculator,
+    color: 'border-accent-blue'
   },
   {
     id: 'advanced-cost-analysis',
@@ -38,6 +42,7 @@ const calculators = [
     title: 'Análise de Custo Avançada',
     description: 'Análise detalhada de NF-e com crédito de PIS/COFINS.',
     component: AdvancedCostAnalysisCalculator,
+    color: 'border-accent-green'
   },
   {
     id: 'cost-analysis',
@@ -45,6 +50,7 @@ const calculators = [
     title: 'Análise de Custo por NF-e',
     description: 'Importe uma NF-e para calcular o custo real dos produtos.',
     component: CostAnalysisCalculator,
+    color: 'border-primary'
   },
   {
     id: 'compare-nfe',
@@ -52,6 +58,7 @@ const calculators = [
     title: 'Comparador de NF-e',
     description: 'Compare produtos entre múltiplos arquivos XML de NF-e.',
     component: NfeComparator,
+    color: 'border-accent-blue'
   },
   {
     id: 'batch-pricing',
@@ -59,6 +66,7 @@ const calculators = [
     title: 'Precificação em Lote',
     description: 'Defina preços de venda para múltiplos produtos em lote.',
     component: BatchPricingCalculator,
+    color: 'border-accent-green'
   },
   {
     id: 'calculate-sale',
@@ -66,6 +74,7 @@ const calculators = [
     title: 'Calcular Venda',
     description: 'Calcule o preço de venda a partir do custo e margem.',
     component: CalculateSaleCalculator,
+    color: 'border-primary'
   },
   {
     id: 'average-price',
@@ -73,6 +82,7 @@ const calculators = [
     title: 'Preço Médio',
     description: 'Calcule o preço médio de suas compras de ativos.',
     component: AveragePriceCalculator,
+    color: 'border-accent-blue'
   },
   {
     id: 'unit-cost',
@@ -80,6 +90,7 @@ const calculators = [
     title: 'Custo Unitário',
     description: 'Encontre o custo por item a partir do total e quantidade.',
     component: UnitCostCalculator,
+    color: 'border-accent-green'
   },
   {
     id: 'calculate-percent',
@@ -87,6 +98,7 @@ const calculators = [
     title: 'Calcular Porcentagem',
     description: 'Encontre o valor de uma porcentagem de um número.',
     component: CalculatePercentCalculator,
+    color: 'border-primary'
   },
   {
     id: 'sum-percent',
@@ -94,6 +106,7 @@ const calculators = [
     title: 'Somar com Porcentagem',
     description: 'Adicione uma porcentagem a um valor inicial.',
     component: SumPercentCalculator,
+    color: 'border-accent-blue'
   },
 ];
 
@@ -134,7 +147,7 @@ export default function CalculatorsSection() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {calculators.map((calc) => (
-            <Card key={calc.id} className="flex flex-col">
+            <Card key={calc.id} className={cn("flex flex-col border-2 transition-colors hover:border-foreground/20", calc.color)}>
                 <CardHeader>
                 <div className="flex items-start justify-between">
                     <div>

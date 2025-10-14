@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
@@ -231,7 +232,7 @@ export default function DashboardSection({ setActiveView }: DashboardSectionProp
             </TabsList>
             <TabsContent value="garantias" className="mt-6">
                  <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
-                    <Card className="shadow-md hover:border-primary transition-colors">
+                    <Card className="shadow-md hover:border-primary transition-colors border-2 border-transparent">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Total de Garantias</CardTitle>
                             <BarChart3 className="h-4 w-4 text-primary" />
@@ -243,10 +244,10 @@ export default function DashboardSection({ setActiveView }: DashboardSectionProp
                             </p>
                         </CardContent>
                     </Card>
-                    <Card className="shadow-md hover:border-amber-500 transition-colors">
+                    <Card className="shadow-md hover:border-[hsl(var(--chart-2))] transition-colors border-2 border-transparent">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Garantias Pendentes</CardTitle>
-                            <Hourglass className="h-4 w-4 text-amber-500" />
+                            <Hourglass className="h-4 w-4 text-[hsl(var(--chart-2))]" />
                         </CardHeader>
                         <CardContent>
                             {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.pendentes}</div>}
@@ -255,10 +256,10 @@ export default function DashboardSection({ setActiveView }: DashboardSectionProp
                             </p>
                         </CardContent>
                     </Card>
-                    <Card className="shadow-md hover:border-green-500 transition-colors">
+                    <Card className="shadow-md hover:border-[hsl(var(--chart-1))] transition-colors border-2 border-transparent">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Garantias Aprovadas</CardTitle>
-                            <ShieldCheck className="h-4 w-4 text-green-500" />
+                            <ShieldCheck className="h-4 w-4 text-[hsl(var(--chart-1))]" />
                         </CardHeader>
                         <CardContent>
                             {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.aprovadas}</div>}
@@ -267,10 +268,10 @@ export default function DashboardSection({ setActiveView }: DashboardSectionProp
                             </p>
                         </CardContent>
                     </Card>
-                    <Card className="shadow-md hover:border-blue-500 transition-colors">
+                    <Card className="shadow-md hover:border-[hsl(var(--chart-3))] transition-colors border-2 border-transparent">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Garantias Pagas</CardTitle>
-                            <DollarSign className="h-4 w-4 text-blue-500" />
+                            <DollarSign className="h-4 w-4 text-[hsl(var(--chart-3))]" />
                         </CardHeader>
                         <CardContent>
                             {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.pagas}</div>}
@@ -279,7 +280,7 @@ export default function DashboardSection({ setActiveView }: DashboardSectionProp
                             </p>
                         </CardContent>
                     </Card>
-                    <Card className="shadow-md hover:border-destructive transition-colors">
+                    <Card className="shadow-md hover:border-destructive transition-colors border-2 border-transparent">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Garantias Recusadas</CardTitle>
                             <ShieldX className="h-4 w-4 text-destructive" />
@@ -291,10 +292,10 @@ export default function DashboardSection({ setActiveView }: DashboardSectionProp
                             </p>
                         </CardContent>
                     </Card>
-                    <Card className="shadow-md hover:border-red-500 transition-colors">
+                    <Card className="shadow-md hover:border-[hsl(var(--chart-5))] transition-colors border-2 border-transparent">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Itens com Defeito</CardTitle>
-                            <Wrench className="h-4 w-4 text-red-500" />
+                            <Wrench className="h-4 w-4 text-[hsl(var(--chart-5))]" />
                         </CardHeader>
                         <CardContent>
                             {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.totalDefeitos}</div>}
@@ -401,7 +402,7 @@ export default function DashboardSection({ setActiveView }: DashboardSectionProp
             </TabsContent>
             <TabsContent value="devolucoes" className="mt-6">
                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <Card className="shadow-md hover:border-primary transition-colors">
+                    <Card className="shadow-md hover:border-primary transition-colors border-2 border-transparent">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Total de Devoluções</CardTitle>
                             <Undo className="h-4 w-4 text-primary" />
@@ -411,30 +412,30 @@ export default function DashboardSection({ setActiveView }: DashboardSectionProp
                             <p className="text-xs text-muted-foreground">Total de registros</p>
                         </CardContent>
                     </Card>
-                    <Card className="shadow-md hover:border-blue-500 transition-colors">
+                    <Card className="shadow-md hover:border-accent-blue transition-colors border-2 border-transparent">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Total de Peças</CardTitle>
-                            <Package className="h-4 w-4 text-blue-500" />
+                            <Package className="h-4 w-4 text-accent-blue" />
                         </CardHeader>
                         <CardContent>
                             {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{devolucaoStats?.totalPecas}</div>}
                             <p className="text-xs text-muted-foreground">Itens devolvidos</p>
                         </CardContent>
                     </Card>
-                    <Card className="shadow-md hover:border-green-500 transition-colors">
+                    <Card className="shadow-md hover:border-accent-green transition-colors border-2 border-transparent">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Clientes Únicos</CardTitle>
-                            <Users className="h-4 w-4 text-green-500" />
+                            <Users className="h-4 w-4 text-accent-green" />
                         </CardHeader>
                         <CardContent>
                             {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{devolucaoStats?.clientesUnicos}</div>}
                              <p className="text-xs text-muted-foreground">Que fizeram devoluções</p>
                         </CardContent>
                     </Card>
-                    <Card className="shadow-md hover:border-amber-500 transition-colors">
+                    <Card className="shadow-md hover:border-[hsl(var(--third))] transition-colors border-2 border-transparent">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Mecânicos Únicos</CardTitle>
-                            <Building className="h-4 w-4 text-amber-500" />
+                            <Building className="h-4 w-4 text-[hsl(var(--third))]" />
                         </CardHeader>
                         <CardContent>
                             {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{devolucaoStats?.mecanicosUnicos}</div>}
