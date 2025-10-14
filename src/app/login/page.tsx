@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { signInWithPopup, signInWithEmailAndPassword, type AuthError, onAuthStateChanged } from 'firebase/auth';
+import { signInWithPopup, signInWithEmailAndPassword, type AuthError, onAuthStateChanged, setPersistence, browserSessionPersistence, localPersistence } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Loader2 } from 'lucide-react';
 import Image from 'next/image';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Por favor, insira um e-mail válido.' }),
@@ -29,6 +30,7 @@ export default function LoginPage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true); // Estado para "Lembrar de mim"
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -49,6 +51,9 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
+      // Define a persistência ANTES de fazer o login
+      const persistence = rememberMe ? localPersistence : browserSessionPersistence;
+      await setPersistence(auth, persistence);
       await signInWithEmailAndPassword(auth, data.email, data.password);
       // O AuthGuard cuidará do redirecionamento.
     } catch (error: unknown) {
@@ -70,6 +75,9 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     try {
+      // Define a persistência ANTES de fazer o login com popup
+      const persistence = rememberMe ? localPersistence : browserSessionPersistence;
+      await setPersistence(auth, persistence);
       await signInWithPopup(auth, googleProvider);
       // O AuthGuard cuidará do redirecionamento.
     } catch (error) {
@@ -120,6 +128,20 @@ export default function LoginPage() {
                {form.formState.errors.password && (
                 <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>
               )}
+            </div>
+             <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="remember-me" 
+                  checked={rememberMe}
+                  onCheckedChange={(checked) => setRememberMe(Boolean(checked))}
+                  disabled={isLoading || isGoogleLoading}
+                />
+                <label
+                  htmlFor="remember-me"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Lembrar de mim
+                </label>
             </div>
             <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
