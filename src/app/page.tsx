@@ -38,7 +38,7 @@ export default function Home() {
     registerMode,
     setActiveView,
     handleNavigateToLote,
-    handleBackToList,
+    goBack,
     handleEditDevolucao,
     handleDevolucaoSaved,
     handleEditWarranty,
@@ -78,7 +78,7 @@ export default function Home() {
       case 'lotes':
         return <LotesSection onNavigateToLote={handleNavigateToLote} />;
       case 'loteDetail':
-        return <LoteDetailSection loteId={selectedLoteId!} onBack={handleBackToList} />;
+        return <LoteDetailSection loteId={selectedLoteId!} onBack={goBack} />;
       case 'reports':
         return <ReportSection />;
       case 'persons':

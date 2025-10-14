@@ -12,6 +12,7 @@ export type RegisterMode = 'edit' | 'clone';
 interface AppState {
   // Navigation and UI
   activeView: string;
+  navigationHistory: string[]; // Histórico de navegação
   isMobileMenuOpen: boolean;
   isNewLoteModalOpen: boolean;
 
@@ -22,7 +23,8 @@ interface AppState {
   registerMode: RegisterMode;
 
   // Actions
-  setActiveView: (view: string) => void;
+  setActiveView: (view: string, fromHistory?: boolean) => void;
+  goBack: () => void;
   setMobileMenuOpen: (isOpen: boolean) => void;
   setNewLoteModalOpen: (isOpen: boolean) => void;
   
@@ -44,9 +46,10 @@ interface AppState {
   openNewLoteModal: () => void;
 }
 
-export const useAppStore = create<AppState>((set) => ({
+export const useAppStore = create<AppState>((set, get) => ({
   // Initial state
   activeView: 'dashboard',
+  navigationHistory: [],
   isMobileMenuOpen: false,
   isNewLoteModalOpen: false,
   selectedLoteId: null,
@@ -55,7 +58,14 @@ export const useAppStore = create<AppState>((set) => ({
   registerMode: 'edit',
 
   // Actions
-  setActiveView: (view) => {
+  setActiveView: (view, fromHistory = false) => {
+    const { activeView, navigationHistory } = get();
+    // Só adiciona ao histórico se a navegação não for para a mesma view
+    // e não for uma navegação de "volta"
+    if (view !== activeView && !fromHistory) {
+      set({ navigationHistory: [...navigationHistory, activeView] });
+    }
+
     // Reset editing states when changing main views
     if (view !== 'register') {
       set({ editingWarrantyId: null });
@@ -65,36 +75,55 @@ export const useAppStore = create<AppState>((set) => ({
     }
     set({ activeView: view });
   },
+
+  goBack: () => {
+    const { navigationHistory } = get();
+    if (navigationHistory.length > 0) {
+        const previousView = navigationHistory[navigationHistory.length - 1];
+        set({ 
+            navigationHistory: navigationHistory.slice(0, -1),
+        });
+        // Chama setActiveView com o flag 'fromHistory' para não adicionar ao histórico novamente
+        get().setActiveView(previousView, true);
+    }
+  },
   
   setMobileMenuOpen: (isOpen) => set({ isMobileMenuOpen: isOpen }),
   setNewLoteModalOpen: (isOpen) => set({ isNewLoteModalOpen: isOpen }),
 
   handleNavigateToLote: (loteId) => {
-    set({ selectedLoteId: loteId, activeView: 'loteDetail' });
+    get().setActiveView('loteDetail');
+    set({ selectedLoteId: loteId });
   },
 
   handleBackToList: () => {
-    set({ selectedLoteId: null, activeView: 'lotes' });
+    get().setActiveView('lotes');
+    set({ selectedLoteId: null });
   },
 
   handleEditDevolucao: (devolucaoId) => {
-    set({ editingDevolucaoId: devolucaoId, activeView: 'devolucao-register' });
+    get().setActiveView('devolucao-register');
+    set({ editingDevolucaoId: devolucaoId });
   },
 
   handleDevolucaoSaved: () => {
-    set({ editingDevolucaoId: null, activeView: 'devolucao-query' });
+    get().setActiveView('devolucao-query');
+    set({ editingDevolucaoId: null });
   },
 
   handleEditWarranty: (warranty) => {
-    set({ editingWarrantyId: warranty.id!, registerMode: 'edit', activeView: 'register' });
+    get().setActiveView('register');
+    set({ editingWarrantyId: warranty.id!, registerMode: 'edit' });
   },
 
   handleCloneWarranty: (warranty) => {
-    set({ editingWarrantyId: warranty.id!, registerMode: 'clone', activeView: 'register' });
+    get().setActiveView('register');
+    set({ editingWarrantyId: warranty.id!, registerMode: 'clone' });
   },
 
   handleWarrantySave: () => {
-    set({ editingWarrantyId: null, activeView: 'query' });
+    get().setActiveView('query');
+    set({ editingWarrantyId: null });
   },
 
   clearEditingWarranty: () => {

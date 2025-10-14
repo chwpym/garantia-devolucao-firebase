@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
@@ -463,10 +464,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
     <div className="space-y-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-                <Button variant="ghost" onClick={onBack} className="mb-2 -ml-4">
-                <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para a Lista de Lotes
-                </Button>
-                <h1 className="text-3xl font-bold tracking-tight">Detalhes do Lote: {lote.nome}</h1>
+                {/* O botão voltar foi movido para o layout principal */}
             </div>
             <div className='flex gap-2'>
                 <Button onClick={handleEditLoteClick}><Pencil className="mr-2 h-4 w-4"/> Editar Informações do Lote</Button>
@@ -477,7 +475,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
         <div className="lg:col-span-2 space-y-6">
           <Card>
             <CardHeader>
-                <CardTitle>Informações do Lote</CardTitle>
+                <CardTitle>Informações do Lote: {lote.nome}</CardTitle>
             </CardHeader>
             <CardContent className='grid md:grid-cols-2 lg:grid-cols-4 gap-6'>
                 <div className="flex items-center gap-3">

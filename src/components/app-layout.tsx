@@ -4,7 +4,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Settings, Menu, DatabaseBackup, LogOut } from 'lucide-react';
+import { Settings, Menu, DatabaseBackup, Undo2 } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
 import MobileSidebar from './mobile-sidebar';
 import QuickShortcuts from './quick-shortcuts';
@@ -17,7 +17,14 @@ interface AppLayoutProps {
 }
 
 export default function AppLayout({ children }: AppLayoutProps) {
-  const { activeView, isMobileMenuOpen, setActiveView, setMobileMenuOpen } = useAppStore();
+  const { 
+    activeView, 
+    isMobileMenuOpen, 
+    setActiveView, 
+    setMobileMenuOpen,
+    navigationHistory,
+    goBack,
+  } = useAppStore();
 
   const handleNavClick = (view: string) => {
     setActiveView(view);
@@ -29,7 +36,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       <div className="flex flex-1 flex-col overflow-hidden">
         <header className="p-4 border-b bg-background shadow-sm sticky top-0 z-10 flex flex-col gap-2">
           <div className='flex items-center justify-between w-full h-12'>
-            <div className='flex items-center gap-4'>
+            <div className='flex items-center gap-2'>
               <Sheet open={isMobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild>
                   <Button variant="ghost" size="icon">
@@ -82,6 +89,14 @@ export default function AppLayout({ children }: AppLayoutProps) {
                   </div>
                 </SheetContent>
               </Sheet>
+
+              {navigationHistory.length > 0 && (
+                  <Button variant="outline" size="icon" onClick={goBack}>
+                      <Undo2 className="h-5 w-5" />
+                      <span className="sr-only">Voltar</span>
+                  </Button>
+              )}
+
             </div>
             <QuickShortcuts />
             <div className='flex items-center gap-2'>
