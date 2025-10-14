@@ -12,6 +12,7 @@ import { useAppStore } from '@/store/app-store';
 import { UserNav } from './user-nav';
 import { ThemeToggle } from './theme-toggle';
 import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
+import { cn } from '@/lib/utils';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -105,21 +106,27 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <Tabs value={activeTabId || ''} onValueChange={(value) => setActiveTabId(value)} className="w-full">
               <TabsList className="h-auto justify-start overflow-x-auto">
                 {tabs.map(tab => (
-                  <TabsTrigger key={tab.id} value={tab.id} className="relative pr-8">
+                  <TabsTrigger key={tab.id} value={tab.id} className="relative pr-8 data-[state=active]:shadow-sm">
                     <tab.icon className="h-4 w-4 mr-2" />
                     {tab.label}
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="absolute right-0 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full"
+                    <span
+                      role="button"
+                      aria-label={`Fechar aba ${tab.label}`}
                       onClick={(e) => {
                         e.stopPropagation();
-                        closeTab(tab.id);
+                        if (tab.id !== 'dashboard') {
+                          closeTab(tab.id);
+                        }
                       }}
-                      disabled={tab.id === 'dashboard'} // Dashboard não pode ser fechado
+                      className={cn(
+                        "absolute right-1 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full flex items-center justify-center transition-colors",
+                        tab.id !== 'dashboard' 
+                          ? "hover:bg-muted-foreground/20" 
+                          : "cursor-not-allowed opacity-50"
+                      )}
                     >
                       <X className="h-3 w-3" />
-                    </Button>
+                    </span>
                   </TabsTrigger>
                 ))}
               </TabsList>
