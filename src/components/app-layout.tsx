@@ -4,42 +4,30 @@
 import React from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Settings, Menu, DatabaseBackup, X, ArrowLeft } from 'lucide-react';
+import { Settings, Menu, DatabaseBackup, ArrowLeft } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
 import MobileSidebar from './mobile-sidebar';
 import QuickShortcuts from './quick-shortcuts';
 import { useAppStore } from '@/store/app-store';
 import { UserNav } from './user-nav';
 import { ThemeToggle } from './theme-toggle';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { cn } from '@/lib/utils';
-import type { NavItem } from '@/config/nav-config';
-
-interface TabContentItem {
-    id: string;
-    content: React.ReactNode;
-}
 
 interface AppLayoutProps {
   children: React.ReactNode;
-  tabs: NavItem[];
-  activeTabId: string | null;
-  allTabsContent: TabContentItem[];
 }
 
-export default function AppLayout({ children, tabs: tabsFromProps, activeTabId: activeTabIdFromProps, allTabsContent }: AppLayoutProps) {
+export default function AppLayout({ children }: AppLayoutProps) {
   const { 
+    activeView,
     isMobileMenuOpen, 
     setMobileMenuOpen,
-    openTab,
-    closeTab,
-    setActiveTabId,
+    setActiveView,
     navigationHistory,
     goBack,
   } = useAppStore();
 
   const handleNavClick = (view: string) => {
-    openTab(view);
+    setActiveView(view);
     setMobileMenuOpen(false);
   };
   
@@ -72,7 +60,7 @@ export default function AppLayout({ children, tabs: tabsFromProps, activeTabId: 
                     </SheetTitle>
                   </SheetHeader>
                   <MobileSidebar
-                    activeView={activeTabIdFromProps || ''}
+                    activeView={activeView}
                     onNavigate={handleNavClick}
                     className="flex-1 overflow-auto py-2"
                   />
@@ -80,7 +68,7 @@ export default function AppLayout({ children, tabs: tabsFromProps, activeTabId: 
                     <nav className='flex flex-col gap-1'>
                       <Button
                         key="backup"
-                        variant={activeTabIdFromProps === 'backup' ? 'secondary' : 'ghost'}
+                        variant={activeView === 'backup' ? 'secondary' : 'ghost'}
                         className="justify-start gap-3 text-base h-11 w-full"
                         onClick={() => handleNavClick('backup')}
                       >
@@ -89,7 +77,7 @@ export default function AppLayout({ children, tabs: tabsFromProps, activeTabId: 
                       </Button>
                       <Button
                         key="settings"
-                        variant={activeTabIdFromProps === 'settings' ? 'secondary' : 'ghost'}
+                        variant={activeView === 'settings' ? 'secondary' : 'ghost'}
                         className="justify-start gap-3 text-base h-11 w-full"
                         onClick={() => handleNavClick('settings')}
                       >
@@ -118,47 +106,9 @@ export default function AppLayout({ children, tabs: tabsFromProps, activeTabId: 
             </div>
           </div>
         </header>
-        <Tabs value={activeTabIdFromProps || ''} onValueChange={(value) => setActiveTabId(value)} className="flex flex-col flex-1 overflow-hidden">
-          {tabsFromProps.length > 0 && (
-            <div className='p-4 border-b'>
-              <TabsList className="h-auto justify-start overflow-x-auto">
-                {tabsFromProps.map(tab => (
-                  <TabsTrigger key={tab.id} value={tab.id} className="relative pr-8 data-[state=active]:shadow-sm">
-                    <tab.icon className="h-4 w-4 mr-2" />
-                    {tab.label}
-                     <span
-                      role="button"
-                      aria-label={`Fechar aba ${tab.label}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (tab.id !== 'dashboard') {
-                          closeTab(tab.id);
-                        }
-                      }}
-                      onMouseDown={(e) => e.preventDefault()}
-                      className={cn(
-                        "absolute right-1 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full flex items-center justify-center transition-colors",
-                        tab.id !== 'dashboard' 
-                          ? "hover:bg-muted-foreground/20" 
-                          : "cursor-not-allowed opacity-50"
-                      )}
-                    >
-                      <X className="h-3 w-3" />
-                    </span>
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </div>
-          )}
-           <main className="flex-1 p-4 md:p-8 overflow-auto">
-            {allTabsContent.map(tabContent => (
-                <TabsContent key={tabContent.id} value={tabContent.id} forceMount={true} hidden={activeTabIdFromProps !== tabContent.id} className="h-full">
-                    {tabContent.content}
-                </TabsContent>
-            ))}
+        <main className="flex-1 p-4 md:p-8 overflow-auto">
             {children}
-          </main>
-        </Tabs>
+        </main>
       </div>
     </div>
   );

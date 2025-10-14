@@ -49,13 +49,12 @@ const viewComponents: { [key: string]: React.ComponentType<any> } = {
 
 export default function Home() {
   const {
-    tabs,
-    activeTabId,
+    activeView,
     selectedLoteId,
     editingDevolucaoId,
     editingWarrantyId,
     registerMode,
-    openTab,
+    setActiveView,
     goBack,
     handleEditDevolucao,
     handleDevolucaoSaved,
@@ -66,14 +65,13 @@ export default function Home() {
 
   const isMobile = useIsMobile();
 
-  const renderContent = (viewId: string) => {
-    const Component = viewComponents[viewId];
-    if (!Component) return <DashboardSection openTab={openTab} />;
+  const renderContent = () => {
+    const Component = viewComponents[activeView];
+    if (!Component) return <DashboardSection openTab={setActiveView} />;
 
-    // This switch handles components that need specific props
-    switch (viewId) {
+    switch (activeView) {
       case 'dashboard':
-        return <DashboardSection openTab={openTab} />;
+        return <DashboardSection openTab={setActiveView} />;
       case 'register':
         return <RegisterSection 
                     editingId={editingWarrantyId} 
@@ -83,7 +81,7 @@ export default function Home() {
                 />;
       case 'query':
         return <QuerySection 
-                    setActiveView={openTab}
+                    setActiveView={setActiveView}
                     onEdit={handleEditWarranty} 
                     onClone={handleCloneWarranty}
                 />;
@@ -96,29 +94,16 @@ export default function Home() {
       case 'lotes':
           return <LotesSection onNavigateToLote={(loteId) => useAppStore.getState().handleNavigateToLote(loteId)} />;
       default:
-        // Render generic components that don't need special props
         return <Component />;
     }
   };
   
   if (isMobile === undefined) return null;
 
-  const contentToRender = tabs.map(tab => {
-    return {
-        id: tab.id,
-        content: renderContent(tab.id)
-    }
-  });
-  
-  const noTabsMessage = (
-    <div className="flex items-center justify-center h-full text-muted-foreground">
-      <p>Nenhuma aba aberta. Selecione um item no menu para começar.</p>
-    </div>
-  );
-
   return (
-    <AppLayout tabs={tabs} activeTabId={activeTabId} allTabsContent={contentToRender}>
-      {tabs.length === 0 && noTabsMessage}
+    <AppLayout>
+      {renderContent()}
     </AppLayout>
   );
 }
+
