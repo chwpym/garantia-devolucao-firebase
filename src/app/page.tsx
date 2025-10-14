@@ -2,7 +2,6 @@
 'use client';
 
 import AppLayout from '@/components/app-layout';
-
 import DashboardSection from '@/components/sections/dashboard-section';
 import RegisterSection from '@/components/sections/register-section';
 import QuerySection from '@/components/sections/query-section';
@@ -22,7 +21,6 @@ import ProductsSection from '@/components/sections/products-section';
 import ProductReportSection from '@/components/sections/product-report-section';
 import { useAppStore } from '@/store/app-store';
 import UsersSection from '@/components/sections/users-section';
-import { TabsContent } from '@/components/ui/tabs';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 
@@ -72,6 +70,7 @@ export default function Home() {
     const Component = viewComponents[viewId];
     if (!Component) return <DashboardSection openTab={openTab} />;
 
+    // This switch handles components that need specific props
     switch (viewId) {
       case 'dashboard':
         return <DashboardSection openTab={openTab} />;
@@ -97,24 +96,27 @@ export default function Home() {
       case 'lotes':
           return <LotesSection onNavigateToLote={(loteId) => useAppStore.getState().handleNavigateToLote(loteId)} />;
       default:
+        // Render generic components that don't need special props
         return <Component />;
     }
   };
   
   if (isMobile === undefined) return null;
 
+  const contentToRender = tabs.map(tab => ({
+    id: tab.id,
+    content: renderContent(tab.id)
+  }));
+  
+  const noTabsMessage = (
+    <div className="flex items-center justify-center h-full text-muted-foreground">
+      <p>Nenhuma aba aberta. Selecione um item no menu para começar.</p>
+    </div>
+  );
+
   return (
-    <AppLayout>
-      {tabs.map(tab => (
-        <TabsContent key={tab.id} value={tab.id} forceMount={true} hidden={activeTabId !== tab.id} className="flex-1">
-           {renderContent(tab.id)}
-        </TabsContent>
-      ))}
-       {tabs.length === 0 && (
-         <div className="flex items-center justify-center h-full text-muted-foreground">
-           <p>Nenhuma aba aberta. Selecione um item no menu para começar.</p>
-         </div>
-      )}
+    <AppLayout tabs={tabs} activeTabId={activeTabId}>
+      {tabs.length > 0 ? contentToRender : noTabsMessage}
     </AppLayout>
   );
 }

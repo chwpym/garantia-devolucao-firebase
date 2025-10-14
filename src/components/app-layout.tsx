@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React from 'react';
@@ -12,19 +11,20 @@ import QuickShortcuts from './quick-shortcuts';
 import { useAppStore } from '@/store/app-store';
 import { UserNav } from './user-nav';
 import { ThemeToggle } from './theme-toggle';
-import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { cn } from '@/lib/utils';
+import type { NavItem } from '@/config/nav-config';
 
 interface AppLayoutProps {
   children: React.ReactNode;
+  tabs: NavItem[];
+  activeTabId: string | null;
 }
 
-export default function AppLayout({ children }: AppLayoutProps) {
+export default function AppLayout({ children, tabs: tabsFromProps, activeTabId: activeTabIdFromProps }: AppLayoutProps) {
   const { 
     isMobileMenuOpen, 
     setMobileMenuOpen,
-    tabs,
-    activeTabId,
     openTab,
     closeTab,
     setActiveTabId,
@@ -66,7 +66,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                     </SheetTitle>
                   </SheetHeader>
                   <MobileSidebar
-                    activeView={activeTabId || ''}
+                    activeView={activeTabIdFromProps || ''}
                     onNavigate={handleNavClick}
                     className="flex-1 overflow-auto py-2"
                   />
@@ -74,7 +74,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                     <nav className='flex flex-col gap-1'>
                       <Button
                         key="backup"
-                        variant={activeTabId === 'backup' ? 'secondary' : 'ghost'}
+                        variant={activeTabIdFromProps === 'backup' ? 'secondary' : 'ghost'}
                         className="justify-start gap-3 text-base h-11 w-full"
                         onClick={() => handleNavClick('backup')}
                       >
@@ -83,7 +83,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                       </Button>
                       <Button
                         key="settings"
-                        variant={activeTabId === 'settings' ? 'secondary' : 'ghost'}
+                        variant={activeTabIdFromProps === 'settings' ? 'secondary' : 'ghost'}
                         className="justify-start gap-3 text-base h-11 w-full"
                         onClick={() => handleNavClick('settings')}
                       >
@@ -112,15 +112,15 @@ export default function AppLayout({ children }: AppLayoutProps) {
             </div>
           </div>
         </header>
-        <Tabs value={activeTabId || ''} onValueChange={(value) => setActiveTabId(value)} className="flex flex-col flex-1 overflow-hidden">
-          {tabs.length > 0 && (
+        <Tabs value={activeTabIdFromProps || ''} onValueChange={(value) => setActiveTabId(value)} className="flex flex-col flex-1 overflow-hidden">
+          {tabsFromProps.length > 0 && (
             <div className='p-4 border-b'>
               <TabsList className="h-auto justify-start overflow-x-auto">
-                {tabs.map(tab => (
+                {tabsFromProps.map(tab => (
                   <TabsTrigger key={tab.id} value={tab.id} className="relative pr-8 data-[state=active]:shadow-sm">
                     <tab.icon className="h-4 w-4 mr-2" />
                     {tab.label}
-                    <span
+                     <span
                       role="button"
                       aria-label={`Fechar aba ${tab.label}`}
                       onClick={(e) => {
@@ -129,6 +129,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                           closeTab(tab.id);
                         }
                       }}
+                      onMouseDown={(e) => e.preventDefault()}
                       className={cn(
                         "absolute right-1 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full flex items-center justify-center transition-colors",
                         tab.id !== 'dashboard' 
@@ -144,7 +145,15 @@ export default function AppLayout({ children }: AppLayoutProps) {
             </div>
           )}
            <main className="flex-1 p-4 md:p-8 overflow-auto">
-            {children}
+             {Array.isArray(children) ? children.map(child => (
+                <TabsContent key={child.props.value} value={child.props.value} forceMount={true} hidden={activeTabIdFromProps !== child.props.value} className="flex-1">
+                    {child.props.children}
+                </TabsContent>
+            )) : React.isValidElement(children) ? (
+                 <TabsContent value={activeTabIdFromProps || ''} forceMount={true} hidden={false} className="flex-1">
+                    {children}
+                </TabsContent>
+            ) : null}
           </main>
         </Tabs>
       </div>
