@@ -15,13 +15,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { cn } from '@/lib/utils';
 import type { NavItem } from '@/config/nav-config';
 
+interface TabContentItem {
+    id: string;
+    content: React.ReactNode;
+}
+
 interface AppLayoutProps {
   children: React.ReactNode;
   tabs: NavItem[];
   activeTabId: string | null;
+  allTabsContent: TabContentItem[];
 }
 
-export default function AppLayout({ children, tabs: tabsFromProps, activeTabId: activeTabIdFromProps }: AppLayoutProps) {
+export default function AppLayout({ children, tabs: tabsFromProps, activeTabId: activeTabIdFromProps, allTabsContent }: AppLayoutProps) {
   const { 
     isMobileMenuOpen, 
     setMobileMenuOpen,
@@ -145,15 +151,12 @@ export default function AppLayout({ children, tabs: tabsFromProps, activeTabId: 
             </div>
           )}
            <main className="flex-1 p-4 md:p-8 overflow-auto">
-             {Array.isArray(children) ? children.map(child => (
-                <TabsContent key={child.props.value} value={child.props.value} forceMount={true} hidden={activeTabIdFromProps !== child.props.value} className="flex-1">
-                    {child.props.children}
+            {allTabsContent.map(tabContent => (
+                <TabsContent key={tabContent.id} value={tabContent.id} forceMount={true} hidden={activeTabIdFromProps !== tabContent.id} className="h-full">
+                    {tabContent.content}
                 </TabsContent>
-            )) : React.isValidElement(children) ? (
-                 <TabsContent value={activeTabIdFromProps || ''} forceMount={true} hidden={false} className="flex-1">
-                    {children}
-                </TabsContent>
-            ) : null}
+            ))}
+            {children}
           </main>
         </Tabs>
       </div>

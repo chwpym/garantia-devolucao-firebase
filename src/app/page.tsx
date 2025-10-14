@@ -103,10 +103,12 @@ export default function Home() {
   
   if (isMobile === undefined) return null;
 
-  const contentToRender = tabs.map(tab => ({
-    id: tab.id,
-    content: renderContent(tab.id)
-  }));
+  const contentToRender = tabs.map(tab => {
+    return {
+        id: tab.id,
+        content: renderContent(tab.id)
+    }
+  });
   
   const noTabsMessage = (
     <div className="flex items-center justify-center h-full text-muted-foreground">
@@ -115,8 +117,8 @@ export default function Home() {
   );
 
   return (
-    <AppLayout tabs={tabs} activeTabId={activeTabId}>
-      {tabs.length > 0 ? contentToRender : noTabsMessage}
+    <AppLayout tabs={tabs} activeTabId={activeTabId} allTabsContent={contentToRender}>
+      {tabs.length === 0 && noTabsMessage}
     </AppLayout>
   );
 }
