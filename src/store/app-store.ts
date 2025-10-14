@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { create } from 'zustand';
@@ -35,7 +36,7 @@ interface AppState {
   registerMode: RegisterMode;
 
   // Actions
-  openTab: (viewId: string) => void;
+  openTab: (viewId: string, shouldAddToHistory?: boolean) => void;
   closeTab: (tabId: string) => void;
   setActiveTabId: (tabId: string | null) => void;
   goBack: () => void;
@@ -71,8 +72,15 @@ export const useAppStore = create<AppState>((set, get) => ({
   registerMode: 'edit',
 
   // Actions
-  openTab: (viewId) => {
-    const { tabs } = get();
+  openTab: (viewId, shouldAddToHistory = false) => {
+    const { tabs, activeTabId } = get();
+    
+    if (shouldAddToHistory && activeTabId) {
+        set(state => ({
+            navigationHistory: [...state.navigationHistory, activeTabId],
+        }));
+    }
+
     const existingTab = tabs.find(tab => tab.id === viewId);
 
     if (existingTab) {
@@ -95,9 +103,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const newTabs = tabs.filter(tab => tab.id !== tabId);
     let newActiveTabId = activeTabId;
 
-    // Se a aba fechada era a ativa, decida qual será a próxima aba ativa
     if (activeTabId === tabId) {
-      // Tenta ativar a aba anterior, se não, a próxima, se não, a última
       if (tabs[tabIndex - 1]) {
         newActiveTabId = tabs[tabIndex - 1].id;
       } else if (newTabs[tabIndex]) {
@@ -112,27 +118,33 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setActiveTabId: (tabId) => set({ activeTabId: tabId }),
   
-  // O goBack continua útil para navegação interna de uma aba, como no LoteDetail
   goBack: () => {
-    const { navigationHistory } = get();
+    const { navigationHistory, activeTabId } = get();
     if (navigationHistory.length > 0) {
-        const previousView = navigationHistory[navigationHistory.length - 1];
-        set({ navigationHistory: navigationHistory.slice(0, -1) });
-        // Aqui, em vez de mudar a view, talvez a lógica precise ser repensada
-        // Por agora, vamos manter, mas ele pode se tornar obsoleto com as abas.
-        get().openTab(previousView);
+      const previousViewId = navigationHistory[navigationHistory.length - 1];
+      if (activeTabId) {
+        get().closeTab(activeTabId);
+      }
+      set({
+        navigationHistory: navigationHistory.slice(0, -1),
+        activeTabId: previousViewId,
+      });
     }
   },
   
   setMobileMenuOpen: (isOpen) => set({ isMobileMenuOpen: isOpen }),
 
   handleNavigateToLote: (loteId) => {
+    // Adiciona a view atual ('lotes') ao histórico antes de navegar
+    set(state => ({
+        selectedLoteId: loteId,
+        navigationHistory: [...state.navigationHistory, 'lotes'],
+    }));
     get().openTab('loteDetail');
-    set({ selectedLoteId: loteId });
   },
 
   handleEditDevolucao: (devolucaoId) => {
-    get().openTab('devolucao-register');
+    get().openTab('devolucao-register', true);
     set({ editingDevolucaoId: devolucaoId });
   },
 
@@ -142,19 +154,23 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   handleEditWarranty: (warranty) => {
-    get().openTab('register');
+    get().openTab('register', true);
     set({ editingWarrantyId: warranty.id!, registerMode: 'edit' });
   },
 
   handleCloneWarranty: (warranty) => {
-    get().openTab('register');
+    get().openTab('register', true);
     set({ editingWarrantyId: warranty.id!, registerMode: 'clone' });
   },
 
   handleWarrantySave: (shouldNavigate) => {
     if (shouldNavigate) {
       get().closeTab('register');
-      get().openTab('query');
+      const previousView = get().navigationHistory.at(-1) || 'query';
+      set(state => ({
+          activeTabId: previousView,
+          navigationHistory: state.navigationHistory.slice(0, -1)
+      }))
     }
     set({ editingWarrantyId: null });
     window.dispatchEvent(new CustomEvent('datachanged'));

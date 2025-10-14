@@ -1,10 +1,11 @@
 
+
 'use client';
 
 import React from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Settings, Menu, DatabaseBackup, X } from 'lucide-react';
+import { Settings, Menu, DatabaseBackup, X, ArrowLeft } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
 import MobileSidebar from './mobile-sidebar';
 import QuickShortcuts from './quick-shortcuts';
@@ -27,6 +28,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
     openTab,
     closeTab,
     setActiveTabId,
+    navigationHistory,
+    goBack,
   } = useAppStore();
 
   const handleNavClick = (view: string) => {
@@ -34,13 +37,15 @@ export default function AppLayout({ children }: AppLayoutProps) {
     setMobileMenuOpen(false);
   };
   
+  const showBackButton = navigationHistory.length > 0;
+
   return (
     <div className="flex h-screen w-full bg-muted/40">
       <div className="flex flex-1 flex-col overflow-hidden">
         <header className="p-4 border-b bg-background shadow-sm sticky top-0 z-20 flex flex-col gap-2">
           <div className='flex items-center justify-between w-full h-12'>
             <div className='flex items-center gap-2'>
-              <Sheet open={isMobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+               <Sheet open={isMobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild>
                   <Button variant="ghost" size="icon">
                     <Menu className="h-6 w-6" />
@@ -93,6 +98,12 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 </SheetContent>
               </Sheet>
 
+              {showBackButton && (
+                <Button variant="ghost" size="icon" onClick={goBack}>
+                  <ArrowLeft className="h-6 w-6" />
+                  <span className="sr-only">Voltar</span>
+                </Button>
+              )}
             </div>
             <QuickShortcuts />
             <div className='flex items-center gap-2'>
