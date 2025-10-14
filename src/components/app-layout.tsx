@@ -93,8 +93,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 </SheetContent>
               </Sheet>
 
-              {/* O botão de voltar foi removido para dar lugar à navegação por abas */}
-
             </div>
             <QuickShortcuts />
             <div className='flex items-center gap-2'>
@@ -102,8 +100,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
               <UserNav />
             </div>
           </div>
+        </header>
+        <Tabs value={activeTabId || ''} onValueChange={(value) => setActiveTabId(value)} className="flex flex-col flex-1 overflow-hidden">
           {tabs.length > 0 && (
-            <Tabs value={activeTabId || ''} onValueChange={(value) => setActiveTabId(value)} className="w-full">
+            <div className='p-4 border-b'>
               <TabsList className="h-auto justify-start overflow-x-auto">
                 {tabs.map(tab => (
                   <TabsTrigger key={tab.id} value={tab.id} className="relative pr-8 data-[state=active]:shadow-sm">
@@ -130,12 +130,12 @@ export default function AppLayout({ children }: AppLayoutProps) {
                   </TabsTrigger>
                 ))}
               </TabsList>
-            </Tabs>
+            </div>
           )}
-        </header>
-        <main className="flex-1 p-4 md:p-8 overflow-auto">
-          {children}
-        </main>
+           <main className="flex-1 p-4 md:p-8 overflow-auto">
+            {children}
+          </main>
+        </Tabs>
       </div>
     </div>
   );

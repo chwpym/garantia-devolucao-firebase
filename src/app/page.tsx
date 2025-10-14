@@ -84,7 +84,7 @@ export default function Home() {
                 />;
       case 'query':
         return <QuerySection 
-                    setActiveView={openTab} // Manter consistência, mas agora é openTab
+                    setActiveView={openTab}
                     onEdit={handleEditWarranty} 
                     onClone={handleCloneWarranty}
                 />;
@@ -94,6 +94,8 @@ export default function Home() {
         return <DevolucaoRegisterSection editingId={editingDevolucaoId} onSave={handleDevolucaoSaved} />;
       case 'devolucao-query':
         return <DevolucaoQuerySection onEdit={handleEditDevolucao} />;
+      case 'lotes':
+          return <LotesSection onNavigateToLote={(loteId) => useAppStore.getState().handleNavigateToLote(loteId)} />;
       default:
         return <Component />;
     }
@@ -104,7 +106,7 @@ export default function Home() {
   return (
     <AppLayout>
       {tabs.map(tab => (
-        <TabsContent key={tab.id} value={tab.id} forceMount={true} hidden={activeTabId !== tab.id}>
+        <TabsContent key={tab.id} value={tab.id} forceMount={true} hidden={activeTabId !== tab.id} className="flex-1">
            {renderContent(tab.id)}
         </TabsContent>
       ))}
