@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
@@ -5,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { Devolucao, ItemDevolucao } from '@/lib/types';
 import * as db from '@/lib/db';
 import { generateDevolucoesPdf } from '@/lib/pdf-generator';
-import { format, parseISO, addDays } from 'date-fns';
+import { format, parseISO, addDays, startOfMonth } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 
 import { Skeleton } from '@/components/ui/skeleton';
@@ -32,7 +33,7 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
   const [devolucoes, setDevolucoes] = useState<DevolucaoFlat[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({ from: startOfMonth(new Date()), to: new Date() });
   const [deleteTarget, setDeleteTarget] = useState<DevolucaoFlat | null>(null);
   const [sortConfig, setSortConfig] = useState<{ key: SortableKeys, direction: 'ascending' | 'descending' } | null>({ key: 'dataDevolucao', direction: 'descending' });
   const { toast } = useToast();
@@ -265,7 +266,7 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
         <div>
             <h1 className="text-3xl font-bold tracking-tight">Consulta de Devoluções</h1>
             <p className="text-lg text-muted-foreground">
-                Visualize, filtre e gerencie as devoluções registradas.
+                Visualize, filtre e gerencie as devoluções registradas. Por padrão, são exibidos os últimos 30 dias.
             </p>
         </div>
 

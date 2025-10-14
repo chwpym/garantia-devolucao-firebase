@@ -43,7 +43,7 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
   const [isLoteDialogOpen, setIsLoteDialogOpen] = useState(false);
   const [isDbReady, setIsDbReady] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({ from: new Date(new Date().setDate(new Date().getDate() - 30)), to: new Date() });
   const [clientFilter, setClientFilter] = useState('');
   const [showInLote, setShowInLote] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: SortableKeys, direction: 'ascending' | 'descending' } | null>({ key: 'id', direction: 'descending' });
@@ -250,7 +250,7 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
         <CardHeader>
             <CardTitle>Garantias Registradas</CardTitle>
             <CardDescription>
-                Visualize, edite, exclua e adicione garantias a um lote.
+                Visualize, edite, exclua e adicione garantias a um lote. Por padrão, são exibidos os últimos 30 dias.
             </CardDescription>
         </CardHeader>
         <CardContent>

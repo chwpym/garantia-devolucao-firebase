@@ -13,7 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 interface RegisterSectionProps {
     editingId: number | null;
     mode: RegisterMode;
-    onSave: () => void;
+    onSave: (shouldNavigate: boolean) => void;
     onClear: () => void;
 }
 
@@ -83,7 +83,7 @@ export default function RegisterSection({ editingId, mode, onSave, onClear }: Re
   }, [isDbReady, editingId, loadWarranty]);
 
 
-  const handleSave = async (data: Warranty) => {
+  const handleSave = async (data: Warranty, shouldNavigate: boolean) => {
     try {
       const isCloning = mode === 'clone';
       
@@ -96,7 +96,7 @@ export default function RegisterSection({ editingId, mode, onSave, onClear }: Re
         await db.addWarranty(dataWithoutId);
         toast({ title: 'Sucesso', description: `Garantia ${isCloning ? 'clonada' : 'salva'} com sucesso.` });
       }
-      onSave(); // Navigates back
+      onSave(shouldNavigate); // Passa a informação se deve navegar ou não
     } catch (error) {
       console.error('Failed to save warranty:', error);
       toast({

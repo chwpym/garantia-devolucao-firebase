@@ -39,7 +39,7 @@ interface AppState {
   // Warranty editing
   handleEditWarranty: (warranty: Warranty) => void;
   handleCloneWarranty: (warranty: Warranty) => void;
-  handleWarrantySave: () => void;
+  handleWarrantySave: (shouldNavigate: boolean) => void;
   clearEditingWarranty: () => void;
 
   // Modal actions
@@ -107,8 +107,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   handleDevolucaoSaved: () => {
-    get().setActiveView('devolucao-query');
+    // Não navega mais automaticamente. A navegação será feita pelo botão "Cancelar" se o usuário desejar.
     set({ editingDevolucaoId: null });
+    window.dispatchEvent(new CustomEvent('datachanged')); // Notifica outras partes da UI
   },
 
   handleEditWarranty: (warranty) => {
@@ -121,9 +122,12 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ editingWarrantyId: warranty.id!, registerMode: 'clone' });
   },
 
-  handleWarrantySave: () => {
-    get().setActiveView('query');
+  handleWarrantySave: (shouldNavigate) => {
+    if (shouldNavigate) {
+      get().setActiveView('query');
+    }
     set({ editingWarrantyId: null });
+    window.dispatchEvent(new CustomEvent('datachanged')); // Notifica outras partes da UI
   },
 
   clearEditingWarranty: () => {

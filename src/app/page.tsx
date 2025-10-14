@@ -64,7 +64,7 @@ export default function Home() {
         return <RegisterSection 
                     editingId={editingWarrantyId} 
                     mode={registerMode} 
-                    onSave={handleWarrantySave} 
+                    onSave={(shouldNavigate) => handleWarrantySave(shouldNavigate)} 
                     onClear={() => useAppStore.getState().clearEditingWarranty()}
                 />;
       case 'batch-register':

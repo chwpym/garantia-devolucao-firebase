@@ -49,6 +49,18 @@ interface DevolucaoRegisterSectionProps {
     onSave: () => void;
 }
 
+const defaultFormValues: DevolucaoFormValues = {
+  cliente: '',
+  mecanico: '',
+  requisicaoVenda: '',
+  acaoRequisicao: 'Alterada', // Default value
+  dataDevolucao: new Date(),
+  dataVenda: new Date(),
+  observacaoGeral: '',
+  itens: [{ codigoPeca: '', descricaoPeca: '', quantidade: 1 }],
+};
+
+
 export default function DevolucaoRegisterSection({ editingId, onSave }: DevolucaoRegisterSectionProps) {
     const [isDbReady, setIsDbReady] = useState(false);
     const [persons, setPersons] = useState<Person[]>([]);
@@ -62,14 +74,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
 
     const form = useForm<DevolucaoFormValues>({
         resolver: zodResolver(devolucaoSchema),
-        defaultValues: {
-            cliente: '',
-            mecanico: '',
-            requisicaoVenda: '',
-            dataDevolucao: new Date(),
-            observacaoGeral: '',
-            itens: [{ codigoPeca: '', descricaoPeca: '', quantidade: 1 }],
-        },
+        defaultValues: defaultFormValues,
     });
 
     const { fields, append, remove, replace } = useFieldArray({
@@ -166,6 +171,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                     title: 'Sucesso!',
                     description: 'Devolução atualizada com sucesso.'
                 });
+                onSave();
 
             } else {
                 const devolucaoData: Omit<Devolucao, 'id'> = {
@@ -181,10 +187,9 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                     title: 'Sucesso!',
                     description: 'Devolução registrada com sucesso.'
                 });
+                form.reset(defaultFormValues); // Limpa o formulário
+                onSave(); // Apenas notifica, não navega mais
             }
-
-            onSave(); // Navigate back to the query list
-
         } catch (error) {
             console.error('Failed to save devolution:', error);
             toast({
@@ -196,7 +201,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
     };
 
     const handleCancel = () => {
-        onSave(); // Simply navigates back without saving
+        onSave(); // Usa onSave para navegar de volta para a lista, conforme o store agora faz
     }
 
     const handleProductSaved = (newProduct: Product) => {
@@ -459,7 +464,9 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
 
                             </CardContent>
                             <CardFooter className="flex justify-end gap-2">
-                                <Button type="button" variant="outline" onClick={handleCancel}>Cancelar</Button>
+                                <Button type="button" variant="outline" onClick={handleCancel}>
+                                    {editingId ? "Voltar para Consulta" : "Cancelar"}
+                                </Button>
                                 <Button type="submit" disabled={form.formState.isSubmitting}>
                                     {form.formState.isSubmitting ? "Salvando..." : (editingId ? 'Atualizar Devolução' : 'Salvar Devolução')}
                                 </Button>
@@ -480,7 +487,3 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
         </>
     );
 }
-
-    
-
-    

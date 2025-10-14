@@ -56,7 +56,7 @@ type WarrantyFormValues = z.infer<typeof formSchema>;
 
 interface WarrantyFormProps {
   selectedWarranty: Warranty | null;
-  onSave: (data: Warranty) => Promise<void>;
+  onSave: (data: Warranty, shouldNavigate: boolean) => Promise<void>;
   onClear: () => void;
   isModal?: boolean;
   isClone?: boolean;
@@ -147,9 +147,9 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
             photos: values.photos ?? [],
             dataRegistro: selectedWarranty?.dataRegistro && !isClone ? selectedWarranty.dataRegistro : new Date().toISOString(),
         };
-
-        await onSave(dataToSave);
-        if (!isModal && !selectedWarranty) {
+        const shouldNavigate = !!selectedWarranty; // Navega apenas se estiver editando/clonando
+        await onSave(dataToSave, shouldNavigate);
+        if (!shouldNavigate) { // Limpa o form apenas se for um novo cadastro
             form.reset(defaultValues);
         }
     };
