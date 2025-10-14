@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { signInWithPopup, signInWithEmailAndPassword, type AuthError, onAuthStateChanged, setPersistence, browserSessionPersistence, localPersistence } from 'firebase/auth';
+import { signInWithPopup, signInWithEmailAndPassword, type AuthError, onAuthStateChanged, setPersistence, browserSessionPersistence, indexedDBLocalPersistence } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
@@ -52,7 +52,7 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       // Define a persistência ANTES de fazer o login
-      const persistence = rememberMe ? localPersistence : browserSessionPersistence;
+      const persistence = rememberMe ? indexedDBLocalPersistence : browserSessionPersistence;
       await setPersistence(auth, persistence);
       await signInWithEmailAndPassword(auth, data.email, data.password);
       // O AuthGuard cuidará do redirecionamento.
@@ -76,7 +76,7 @@ export default function LoginPage() {
     setIsGoogleLoading(true);
     try {
       // Define a persistência ANTES de fazer o login com popup
-      const persistence = rememberMe ? localPersistence : browserSessionPersistence;
+      const persistence = rememberMe ? indexedDBLocalPersistence : browserSessionPersistence;
       await setPersistence(auth, persistence);
       await signInWithPopup(auth, googleProvider);
       // O AuthGuard cuidará do redirecionamento.
