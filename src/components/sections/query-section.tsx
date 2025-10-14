@@ -3,9 +3,9 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import type { Warranty, Lote } from '@/lib/types';
+import type { Warranty, Lote, Person } from '@/lib/types';
 import * as db from '@/lib/db';
-import { Search, PlusCircle } from 'lucide-react';
+import { Search, PlusCircle, FilterX } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
 import { addDays, parseISO } from 'date-fns';
 
@@ -22,6 +22,9 @@ import {
 import { DatePickerWithRange } from '@/components/ui/date-range-picker';
 import { Button } from '../ui/button';
 import AddToLoteDialog from '../add-to-lote-dialog';
+import { Combobox } from '../ui/combobox';
+import { Checkbox } from '../ui/checkbox';
+import { Label } from '../ui/label';
 
 
 interface QuerySectionProps {
@@ -34,27 +37,28 @@ type SortableKeys = keyof Warranty;
 
 export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySectionProps) {
   const [warranties, setWarranties] = useState<Warranty[]>([]);
+  const [persons, setPersons] = useState<Person[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [openLotes, setOpenLotes] = useState<Lote[]>([]);
   const [isLoteDialogOpen, setIsLoteDialogOpen] = useState(false);
   const [isDbReady, setIsDbReady] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: addDays(new Date(), -90),
-    to: new Date(),
-  });
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [clientFilter, setClientFilter] = useState('');
+  const [showInLote, setShowInLote] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: SortableKeys, direction: 'ascending' | 'descending' } | null>({ key: 'id', direction: 'descending' });
   const { toast } = useToast();
 
   const loadData = useCallback(async () => {
     try {
-      const [allWarranties, allLotes] = await Promise.all([
+      const [allWarranties, allLotes, allPersons] = await Promise.all([
           db.getAllWarranties(),
-          db.getAllLotes()
+          db.getAllLotes(),
+          db.getAllPersons()
       ]);
-      // Filter out warranties that are already in a lote
-      setWarranties(allWarranties.filter(w => !w.loteId));
+      setWarranties(allWarranties);
       setOpenLotes(allLotes.filter(l => l.status === 'Aberto'));
+      setPersons(allPersons);
     } catch (error) {
       console.error('Failed to load data:', error);
       toast({
@@ -67,7 +71,6 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
   
   const refreshData = useCallback(() => {
     loadData();
-    // Also clear selection
     setSelectedIds(new Set());
     window.dispatchEvent(new CustomEvent('datachanged'));
   }, [loadData]);
@@ -123,6 +126,16 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
     const lowercasedTerm = searchTerm.toLowerCase();
     
     return warranties.filter(warranty => {
+      // Show in Lote filter
+      if (!showInLote && warranty.loteId) {
+        return false;
+      }
+
+      // Client filter
+      if (clientFilter && warranty.cliente !== clientFilter) {
+          return false;
+      }
+
       // Date filter
       const { from, to } = dateRange || {};
       if (from && warranty.dataRegistro) {
@@ -149,7 +162,7 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
         warranty.notaFiscalRetorno?.toLowerCase().includes(lowercasedTerm)
       );
     });
-  }, [searchTerm, warranties, dateRange]);
+  }, [searchTerm, warranties, dateRange, clientFilter, showInLote]);
   
   const sortedWarranties = useMemo(() => {
     let sortableItems = [...filteredWarranties];
@@ -178,6 +191,18 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
     return sortableItems;
   }, [filteredWarranties, sortConfig]);
 
+  const clientOptions = useMemo(() => persons
+    .filter(p => p.tipo === 'Cliente' || p.tipo === 'Ambos')
+    .map(c => ({ value: c.nome, label: c.nome })),
+    [persons]
+  );
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setDateRange(undefined);
+    setClientFilter('');
+    setShowInLote(false);
+  }
 
   const handleAddToLote = async (loteId: number) => {
     try {
@@ -225,11 +250,11 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
         <CardHeader>
             <CardTitle>Garantias Registradas</CardTitle>
             <CardDescription>
-                Visualize, edite, exclua e adicione garantias a um lote. Itens já em um lote não são exibidos aqui.
+                Visualize, edite, exclua e adicione garantias a um lote.
             </CardDescription>
         </CardHeader>
         <CardContent>
-            <div className="flex flex-col md:flex-row gap-4 mb-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -239,7 +264,32 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
                         className="w-full pl-10"
                     />
                 </div>
-                <DatePickerWithRange date={dateRange} setDate={setDateRange} />
+                 <div className='flex flex-col md:flex-row gap-4'>
+                    <Combobox
+                        options={clientOptions}
+                        value={clientFilter}
+                        onChange={setClientFilter}
+                        placeholder="Filtrar por cliente..."
+                        searchPlaceholder='Buscar cliente...'
+                        notFoundMessage='Nenhum cliente encontrado.'
+                        className='w-full'
+                    />
+                    <DatePickerWithRange date={dateRange} setDate={setDateRange} />
+                </div>
+            </div>
+             <div className="flex flex-wrap gap-4 items-center mb-4">
+                <div className="flex items-center space-x-2">
+                    <Checkbox
+                        id="showInLote"
+                        checked={showInLote}
+                        onCheckedChange={(checked) => setShowInLote(Boolean(checked))}
+                    />
+                    <Label htmlFor="showInLote">Mostrar garantias que já estão em lotes</Label>
+                </div>
+                <Button variant="ghost" onClick={clearFilters}>
+                    <FilterX className="mr-2 h-4 w-4" />
+                    Limpar Filtros
+                </Button>
             </div>
              <div className="mb-4">
                 <Button 
@@ -274,4 +324,3 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
     </div>
   );
 }
-    

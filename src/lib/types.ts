@@ -2,7 +2,7 @@
 
 'use client';
 
-export type WarrantyStatus = 'Em análise' | 'Aprovada' | 'Recusada' | 'Paga';
+export type WarrantyStatus = 'Aguardando Envio' | 'Enviado para Análise' | 'Aprovada' | 'Recusada' | 'Paga' | 'Em análise';
 
 export interface Warranty {
   id?: number;

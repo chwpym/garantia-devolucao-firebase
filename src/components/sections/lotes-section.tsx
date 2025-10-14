@@ -3,10 +3,10 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import type { Lote, Supplier } from '@/lib/types';
+import type { Lote, Supplier, Warranty } from '@/lib/types';
 import * as db from '@/lib/db';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Pencil, Trash2, Package, Calendar, Building, FileText } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, Package, Calendar, Building, FileText, CheckCircle, ShieldX, Hourglass, DollarSign } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import LoteForm from '../lote-form';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,13 +35,19 @@ interface LotesSectionProps {
     onNavigateToLote: (loteId: number) => void;
 }
 
-interface LoteWithItemCount extends Lote {
+interface LoteWithStats extends Lote {
     itemCount: number;
+    statusCounts: {
+        'Aprovada': number;
+        'Recusada': number;
+        'Paga': number;
+        'Pendente': number;
+    };
 }
 
 
 export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
-  const [lotes, setLotes] = useState<LoteWithItemCount[]>([]);
+  const [lotes, setLotes] = useState<LoteWithStats[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [editingLote, setEditingLote] = useState<Lote | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Lote | null>(null);
@@ -65,8 +71,15 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
       ]);
 
       const lotesWithCounts = allLotes.map(lote => {
-          const itemCount = allWarranties.filter(w => w.loteId === lote.id).length;
-          return { ...lote, itemCount };
+          const loteWarranties = allWarranties.filter(w => w.loteId === lote.id);
+          const itemCount = loteWarranties.length;
+          const statusCounts = {
+              'Aprovada': loteWarranties.filter(w => w.status === 'Aprovada').length,
+              'Recusada': loteWarranties.filter(w => w.status === 'Recusada').length,
+              'Paga': loteWarranties.filter(w => w.status === 'Paga').length,
+              'Pendente': loteWarranties.filter(w => w.status === 'Em análise' || w.status === 'Enviado para Análise').length,
+          };
+          return { ...lote, itemCount, statusCounts };
       })
 
       setLotes(lotesWithCounts.sort((a, b) => parseISO(b.dataCriacao).getTime() - parseISO(a.dataCriacao).getTime()));
@@ -199,7 +212,12 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
                      <FileText className="h-4 w-4" />
                      <span>NF de Retorno: {lote.notasFiscaisRetorno || 'N/D'}</span>
                   </div>
-
+                    <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t">
+                        <div className='flex items-center gap-1.5'><CheckCircle className='h-3 w-3 text-green-500' /> Aprovados: <span className='font-bold'>{lote.statusCounts.Aprovada}</span></div>
+                        <div className='flex items-center gap-1.5'><ShieldX className='h-3 w-3 text-red-500' /> Recusados: <span className='font-bold'>{lote.statusCounts.Recusada}</span></div>
+                        <div className='flex items-center gap-1.5'><DollarSign className='h-3 w-3 text-blue-500' /> Pagos: <span className='font-bold'>{lote.statusCounts.Paga}</span></div>
+                        <div className='flex items-center gap-1.5'><Hourglass className='h-3 w-3 text-amber-500' /> Pendentes: <span className='font-bold'>{lote.statusCounts.Pendente}</span></div>
+                    </div>
               </CardContent>
               <CardFooter>
                  <Badge variant={getStatusVariant(lote.status)}>{lote.status}</Badge>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
@@ -36,7 +37,7 @@ export default function RegisterSection({ editingId, mode, onSave, onClear }: Re
           const { id, dataRegistro, ...clonedData } = data;
           setWarrantyToLoad({
             ...clonedData,
-            status: 'Em análise' // Reset status for the new cloned item
+            status: 'Aguardando Envio' // Reset status for the new cloned item
           });
         } else {
           setWarrantyToLoad(data);

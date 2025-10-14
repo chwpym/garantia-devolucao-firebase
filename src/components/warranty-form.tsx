@@ -44,7 +44,7 @@ const formSchema = z.object({
   notaFiscalSaida: z.string().optional(),
   notaFiscalRetorno: z.string().optional(),
   observacao: z.string().optional(),
-  status: z.enum(['Em análise', 'Aprovada', 'Recusada', 'Paga']).optional(),
+  status: z.enum(['Aguardando Envio', 'Enviado para Análise', 'Aprovada', 'Recusada', 'Paga', 'Em análise']).optional(),
   loteId: z.number().nullable().optional(),
   photos: z.array(z.string()).optional(),
   dataRegistro: z.string().optional(),
@@ -77,7 +77,7 @@ const defaultValues: WarrantyFormValues = {
   notaFiscalSaida: '',
   notaFiscalRetorno: '',
   observacao: '',
-  status: 'Em análise',
+  status: 'Aguardando Envio',
   loteId: null,
   photos: [],
   marca: '',
@@ -108,7 +108,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
         defaultValues: selectedWarranty ? {
             ...selectedWarranty,
             quantidade: selectedWarranty.quantidade ?? 1,
-            status: selectedWarranty.status ?? 'Em análise',
+            status: selectedWarranty.status ?? 'Aguardando Envio',
             photos: selectedWarranty.photos ?? [],
         } : defaultValues,
     });
@@ -143,7 +143,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
             ...values,
             id: isClone ? undefined : selectedWarranty?.id,
             quantidade: values.quantidade ?? 1,
-            status: values.status ?? 'Em análise',
+            status: values.status ?? 'Aguardando Envio',
             photos: values.photos ?? [],
             dataRegistro: selectedWarranty?.dataRegistro && !isClone ? selectedWarranty.dataRegistro : new Date().toISOString(),
         };
@@ -535,7 +535,8 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                                         </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            <SelectItem value="Em análise">Em análise</SelectItem>
+                                            <SelectItem value="Aguardando Envio">Aguardando Envio</SelectItem>
+                                            <SelectItem value="Enviado para Análise">Enviado para Análise</SelectItem>
                                             <SelectItem value="Aprovada">Aprovada</SelectItem>
                                             <SelectItem value="Recusada">Recusada</SelectItem>
                                             <SelectItem value="Paga">Paga</SelectItem>
@@ -591,7 +592,3 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
       </Card>
     );
 }
-
-    
-
-    
