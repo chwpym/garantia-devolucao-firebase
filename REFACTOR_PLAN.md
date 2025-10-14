@@ -82,7 +82,7 @@ Este documento descreve o roteiro para refatorar e melhorar a arquitetura do có
     *   **UI:** Criar um novo componente (ex: `RecentItemsList.tsx`) que será renderizado em uma barra lateral ou em um card na tela de cadastro. Este componente buscará e exibirá uma lista simples (ex: "Código: 123, Cliente: ABC") dos itens cadastrados no dia.
 
 2.  **Otimizar Telas de Consulta:**
-    *   **Arquivo:** `src/components/sections/query-section.tsx` e `devolucao-query-section.tsx`
+    *   **Arquivo:** `src/components/sections/query-section.tsx` e `src/components/sections/devolucao-query-section.tsx`
     *   **Lógica:** Na função `loadData`, modificar a busca inicial no `useEffect` para que, por padrão, o `dateRange` inicial seja dos últimos 30 dias.
     *   **UI:** Manter os filtros de data (`DatePickerWithRange`) visíveis para que o usuário possa limpar o filtro ou selecionar um período mais antigo se desejar.
 
@@ -100,14 +100,17 @@ Este documento descreve o roteiro para refatorar e melhorar a arquitetura do có
 
 1.  **Busca Aprimorada nas Telas de Consulta:**
     *   **Arquivo:** `src/components/sections/products-section.tsx`
-        *   **Lógica:** Na função `useMemo` que calcula `filteredProducts`, modificar a lógica de `filter` para que a busca verifique o termo no `código` e na `descrição`.
+        *   **Lógica:** Na função `useMemo` que calcula `filteredProducts`, modificar a lógica de `filter` para que a busca verifique o termo no `codigo` e na `descricao`.
     *   **Arquivo:** `src/components/sections/persons-section.tsx`
         *   **Lógica:** Na função `useMemo` de `filteredPersons`, atualizar a busca para funcionar para o campo `nome` (Razão Social) e também para o `nomeFantasia`.
 
 2.  **Busca Inteligente nos Formulários de Cadastro:**
-    *   **Arquivo:** `src/components/warranty-form.tsx` (Garantias) e `src/components/sections/devolucao-register-section.tsx` (Devoluções)
-        *   **Produtos:** Na lógica do `Popover` ou `Command` de busca de produtos, alterar a função de filtro para que ela busque o termo digitado tanto no `codigo` quanto na `descricao` da lista de produtos.
+    *   **Arquivo:** `src/components/warranty-form.tsx` (Garantias)
+        *   **Produtos:** Na lógica do `Popover` de busca de produtos, alterar a função de filtro para que ela busque o termo digitado tanto no `codigo` quanto na `descricao` da lista de produtos.
         *   **Clientes/Mecânicos:** Na lógica do componente `Combobox`, aprimorar o filtro para que ele verifique o `nome` e o `nomeFantasia` ao buscar na lista de pessoas.
+    *   **Arquivo:** `src/components/sections/devolucao-register-section.tsx` (Devoluções)
+        *   **Produtos:** Aplicar a mesma melhoria de busca por código e descrição.
+        *   **Clientes/Mecânicos:** Aplicar a mesma melhoria na busca de clientes e mecânicos.
     *   **Arquivo:** `src/components/sections/batch-register-section.tsx` (Garantia em Lote)
         *   **Lógica:** Aplicar a mesma melhoria de busca de clientes/mecânicos no `Combobox` usado nesta tela.
 
@@ -122,3 +125,31 @@ Este documento descreve o roteiro para refatorar e melhorar a arquitetura do có
 **Benefícios:**
 *   **Busca Flexível e Rápida:** Encontrar registros se torna mais fácil em todo o sistema, agilizando o fluxo de trabalho.
 *   **Interface mais Rica:** O uso estratégico de cores melhora a experiência do usuário e a leitura rápida das informações, tornando o sistema mais agradável e profissional.
+
+---
+
+## Fase 5: Aprimoramento de Segurança da Sessão
+
+**Objetivo:** Aumentar a segurança do sistema, dando ao usuário o controle sobre a persistência de sua sessão de login.
+
+**Roteiro Detalhado:**
+
+1.  **Adicionar Opção "Lembrar de mim":**
+    *   **Arquivo:** `src/app/login/page.tsx`
+    *   **UI:** Adicionar um componente `Checkbox` com o label "Lembrar de mim" na tela de login, logo acima do botão "Entrar".
+    *   **Estado:** Gerenciar o estado do checkbox (marcado/desmarcado) com um `useState`.
+
+2.  **Implementar Lógica de Persistência:**
+    *   **Arquivo:** `src/app/login/page.tsx`
+    *   **Lógica:** Importar a função `setPersistence` e os tipos `browserSessionPersistence` e `localPersistence` do Firebase.
+    *   **Ações:**
+        *   Dentro das funções `onSubmit` (login com e-mail) e `handleGoogleSignIn` (login com Google):
+        *   **Antes** de chamar a função de login (`signInWith...`):
+            *   Verificar o estado do checkbox "Lembrar de mim".
+            *   Se estiver **marcado**, chamar `setPersistence(auth, localPersistence)`. A sessão persistirá após fechar o navegador (comportamento atual).
+            *   Se estiver **desmarcado**, chamar `setPersistence(auth, browserSessionPersistence)`. A sessão será encerrada ao fechar o navegador.
+
+**Benefícios:**
+*   **Segurança Aprimorada:** Por padrão (ou quando o usuário desejar), o sistema se tornará mais seguro, exigindo um novo login a cada sessão do navegador.
+*   **Controle do Usuário:** Oferece a flexibilidade para o usuário escolher entre conveniência e segurança, um padrão em aplicações web modernas.
+*   **Conformidade:** Alinha o comportamento do sistema com as expectativas de segurança para aplicações de gestão.
