@@ -4,13 +4,14 @@
 import React from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Settings, Menu, DatabaseBackup, Undo2 } from 'lucide-react';
+import { Settings, Menu, DatabaseBackup, X } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
 import MobileSidebar from './mobile-sidebar';
 import QuickShortcuts from './quick-shortcuts';
 import { useAppStore } from '@/store/app-store';
 import { UserNav } from './user-nav';
 import { ThemeToggle } from './theme-toggle';
+import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -18,23 +19,24 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const { 
-    activeView, 
     isMobileMenuOpen, 
-    setActiveView, 
     setMobileMenuOpen,
-    navigationHistory,
-    goBack,
+    tabs,
+    activeTabId,
+    openTab,
+    closeTab,
+    setActiveTabId,
   } = useAppStore();
 
   const handleNavClick = (view: string) => {
-    setActiveView(view);
+    openTab(view);
     setMobileMenuOpen(false);
   };
   
   return (
     <div className="flex h-screen w-full bg-muted/40">
       <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="p-4 border-b bg-background shadow-sm sticky top-0 z-10 flex flex-col gap-2">
+        <header className="p-4 border-b bg-background shadow-sm sticky top-0 z-20 flex flex-col gap-2">
           <div className='flex items-center justify-between w-full h-12'>
             <div className='flex items-center gap-2'>
               <Sheet open={isMobileMenuOpen} onOpenChange={setMobileMenuOpen}>
@@ -58,7 +60,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                     </SheetTitle>
                   </SheetHeader>
                   <MobileSidebar
-                    activeView={activeView}
+                    activeView={activeTabId || ''}
                     onNavigate={handleNavClick}
                     className="flex-1 overflow-auto py-2"
                   />
@@ -66,7 +68,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                     <nav className='flex flex-col gap-1'>
                       <Button
                         key="backup"
-                        variant={activeView === 'backup' ? 'secondary' : 'ghost'}
+                        variant={activeTabId === 'backup' ? 'secondary' : 'ghost'}
                         className="justify-start gap-3 text-base h-11 w-full"
                         onClick={() => handleNavClick('backup')}
                       >
@@ -75,7 +77,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                       </Button>
                       <Button
                         key="settings"
-                        variant={activeView === 'settings' ? 'secondary' : 'ghost'}
+                        variant={activeTabId === 'settings' ? 'secondary' : 'ghost'}
                         className="justify-start gap-3 text-base h-11 w-full"
                         onClick={() => handleNavClick('settings')}
                       >
@@ -90,12 +92,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 </SheetContent>
               </Sheet>
 
-              {navigationHistory.length > 0 && (
-                  <Button variant="outline" size="icon" onClick={goBack}>
-                      <Undo2 className="h-5 w-5" />
-                      <span className="sr-only">Voltar</span>
-                  </Button>
-              )}
+              {/* O botão de voltar foi removido para dar lugar à navegação por abas */}
 
             </div>
             <QuickShortcuts />
@@ -104,6 +101,30 @@ export default function AppLayout({ children }: AppLayoutProps) {
               <UserNav />
             </div>
           </div>
+          {tabs.length > 0 && (
+            <Tabs value={activeTabId || ''} onValueChange={(value) => setActiveTabId(value)} className="w-full">
+              <TabsList className="h-auto justify-start overflow-x-auto">
+                {tabs.map(tab => (
+                  <TabsTrigger key={tab.id} value={tab.id} className="relative pr-8">
+                    <tab.icon className="h-4 w-4 mr-2" />
+                    {tab.label}
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="absolute right-0 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        closeTab(tab.id);
+                      }}
+                      disabled={tab.id === 'dashboard'} // Dashboard não pode ser fechado
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+          )}
         </header>
         <main className="flex-1 p-4 md:p-8 overflow-auto">
           {children}

@@ -3,16 +3,28 @@
 
 import { create } from 'zustand';
 import type { Warranty } from '@/lib/types';
+import { navConfig, type NavItem } from '@/config/nav-config';
 
-// Define o tipo para o modo de registro, que pode ser 'edit' ou 'clone'.
-// Isso ajuda a determinar se o formulário de garantia deve salvar um novo item ou atualizar um existente.
 export type RegisterMode = 'edit' | 'clone';
+
+// Helper para encontrar um NavItem no navConfig
+const findNavItem = (viewId: string): NavItem | undefined => {
+  for (const item of navConfig) {
+    if (item.id === viewId) return item;
+    if (item.items) {
+      const found = item.items.find(subItem => subItem.id === viewId);
+      if (found) return found;
+    }
+  }
+  return undefined;
+};
 
 
 interface AppState {
   // Navigation and UI
-  activeView: string;
-  navigationHistory: string[]; // Histórico de navegação
+  activeTabId: string | null;
+  tabs: NavItem[];
+  navigationHistory: string[];
   isMobileMenuOpen: boolean;
   isNewLoteModalOpen: boolean;
 
@@ -23,14 +35,14 @@ interface AppState {
   registerMode: RegisterMode;
 
   // Actions
-  setActiveView: (view: string, fromHistory?: boolean) => void;
+  openTab: (viewId: string) => void;
+  closeTab: (tabId: string) => void;
+  setActiveTabId: (tabId: string | null) => void;
   goBack: () => void;
   setMobileMenuOpen: (isOpen: boolean) => void;
-  setNewLoteModalOpen: (isOpen: boolean) => void;
   
   // Lote Navigation
   handleNavigateToLote: (loteId: number) => void;
-  handleBackToList: () => void;
 
   // Devolucao editing
   handleEditDevolucao: (devolucaoId: number) => void;
@@ -48,7 +60,8 @@ interface AppState {
 
 export const useAppStore = create<AppState>((set, get) => ({
   // Initial state
-  activeView: 'dashboard',
+  activeTabId: 'dashboard',
+  tabs: [findNavItem('dashboard')!].filter(Boolean),
   navigationHistory: [],
   isMobileMenuOpen: false,
   isNewLoteModalOpen: false,
@@ -58,81 +71,101 @@ export const useAppStore = create<AppState>((set, get) => ({
   registerMode: 'edit',
 
   // Actions
-  setActiveView: (view, fromHistory = false) => {
-    const { activeView, navigationHistory } = get();
-    // Só adiciona ao histórico se a navegação não for para a mesma view
-    // e não for uma navegação de "volta"
-    if (view !== activeView && !fromHistory) {
-      set({ navigationHistory: [...navigationHistory, activeView] });
-    }
+  openTab: (viewId) => {
+    const { tabs } = get();
+    const existingTab = tabs.find(tab => tab.id === viewId);
 
-    // Reset editing states when changing main views
-    if (view !== 'register') {
-      set({ editingWarrantyId: null });
+    if (existingTab) {
+      set({ activeTabId: viewId });
+    } else {
+      const newTab = findNavItem(viewId);
+      if (newTab) {
+        set({ tabs: [...tabs, newTab], activeTabId: viewId });
+      }
     }
-    if (view !== 'devolucao-register') {
-      set({ editingDevolucaoId: null });
-    }
-    set({ activeView: view });
+    set({ isMobileMenuOpen: false }); // Sempre fecha o menu ao abrir uma aba
   },
 
+  closeTab: (tabId) => {
+    const { tabs, activeTabId } = get();
+    const tabIndex = tabs.findIndex(tab => tab.id === tabId);
+
+    if (tabIndex === -1) return;
+
+    const newTabs = tabs.filter(tab => tab.id !== tabId);
+    let newActiveTabId = activeTabId;
+
+    // Se a aba fechada era a ativa, decida qual será a próxima aba ativa
+    if (activeTabId === tabId) {
+      // Tenta ativar a aba anterior, se não, a próxima, se não, a última
+      if (tabs[tabIndex - 1]) {
+        newActiveTabId = tabs[tabIndex - 1].id;
+      } else if (newTabs[tabIndex]) {
+        newActiveTabId = newTabs[tabIndex].id;
+      } else {
+        newActiveTabId = newTabs[newTabs.length - 1]?.id || null;
+      }
+    }
+    
+    set({ tabs: newTabs, activeTabId: newActiveTabId });
+  },
+
+  setActiveTabId: (tabId) => set({ activeTabId: tabId }),
+  
+  // O goBack continua útil para navegação interna de uma aba, como no LoteDetail
   goBack: () => {
     const { navigationHistory } = get();
     if (navigationHistory.length > 0) {
         const previousView = navigationHistory[navigationHistory.length - 1];
-        set({ 
-            navigationHistory: navigationHistory.slice(0, -1),
-        });
-        // Chama setActiveView com o flag 'fromHistory' para não adicionar ao histórico novamente
-        get().setActiveView(previousView, true);
+        set({ navigationHistory: navigationHistory.slice(0, -1) });
+        // Aqui, em vez de mudar a view, talvez a lógica precise ser repensada
+        // Por agora, vamos manter, mas ele pode se tornar obsoleto com as abas.
+        get().openTab(previousView);
     }
   },
   
   setMobileMenuOpen: (isOpen) => set({ isMobileMenuOpen: isOpen }),
-  setNewLoteModalOpen: (isOpen) => set({ isNewLoteModalOpen: isOpen }),
 
   handleNavigateToLote: (loteId) => {
-    get().setActiveView('loteDetail');
+    get().openTab('loteDetail');
     set({ selectedLoteId: loteId });
   },
 
-  handleBackToList: () => {
-    get().setActiveView('lotes');
-    set({ selectedLoteId: null });
-  },
-
   handleEditDevolucao: (devolucaoId) => {
-    get().setActiveView('devolucao-register');
+    get().openTab('devolucao-register');
     set({ editingDevolucaoId: devolucaoId });
   },
 
   handleDevolucaoSaved: () => {
-    // Não navega mais automaticamente. A navegação será feita pelo botão "Cancelar" se o usuário desejar.
     set({ editingDevolucaoId: null });
-    window.dispatchEvent(new CustomEvent('datachanged')); // Notifica outras partes da UI
+    window.dispatchEvent(new CustomEvent('datachanged'));
   },
 
   handleEditWarranty: (warranty) => {
-    get().setActiveView('register');
+    get().openTab('register');
     set({ editingWarrantyId: warranty.id!, registerMode: 'edit' });
   },
 
   handleCloneWarranty: (warranty) => {
-    get().setActiveView('register');
+    get().openTab('register');
     set({ editingWarrantyId: warranty.id!, registerMode: 'clone' });
   },
 
   handleWarrantySave: (shouldNavigate) => {
     if (shouldNavigate) {
-      get().setActiveView('query');
+      get().closeTab('register');
+      get().openTab('query');
     }
     set({ editingWarrantyId: null });
-    window.dispatchEvent(new CustomEvent('datachanged')); // Notifica outras partes da UI
+    window.dispatchEvent(new CustomEvent('datachanged'));
   },
 
   clearEditingWarranty: () => {
     set({ editingWarrantyId: null });
   },
 
-  openNewLoteModal: () => set({ isNewLoteModalOpen: true }),
+  openNewLoteModal: () => {
+    get().openTab('lotes');
+    set({ isNewLoteModalOpen: true });
+  },
 }));

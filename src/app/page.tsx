@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import AppLayout from '@/components/app-layout';
@@ -14,30 +13,51 @@ import SuppliersSection from '@/components/sections/suppliers-section';
 import BackupSection from '@/components/sections/backup-section';
 import LoteDetailSection from '@/components/sections/lote-detail-section';
 import SettingsSection from '@/components/sections/settings-section';
-import { useIsMobile } from '@/hooks/use-mobile';
 import DevolucaoRegisterSection from '@/components/sections/devolucao-register-section';
 import DevolucaoQuerySection from '@/components/sections/devolucao-query-section';
 import DevolucaoReportSection from '@/components/sections/devolucao-report-section';
 import CalculatorsSection from '@/components/sections/calculators-section';
 import BatchRegisterSection from '@/components/sections/batch-register-section';
-import { cn } from '@/lib/utils';
 import ProductsSection from '@/components/sections/products-section';
 import ProductReportSection from '@/components/sections/product-report-section';
 import { useAppStore } from '@/store/app-store';
-// Placeholder for the new section, will be created later
 import UsersSection from '@/components/sections/users-section';
+import { TabsContent } from '@/components/ui/tabs';
+import { useIsMobile } from '@/hooks/use-mobile';
+
 
 export type RegisterMode = 'edit' | 'clone';
 
+const viewComponents: { [key: string]: React.ComponentType<any> } = {
+  dashboard: DashboardSection,
+  register: RegisterSection,
+  'batch-register': BatchRegisterSection,
+  query: QuerySection,
+  lotes: LotesSection,
+  loteDetail: LoteDetailSection,
+  reports: ReportSection,
+  persons: PersonsSection,
+  suppliers: SuppliersSection,
+  products: ProductsSection,
+  backup: BackupSection,
+  settings: SettingsSection,
+  users: UsersSection,
+  'devolucao-register': DevolucaoRegisterSection,
+  'devolucao-query': DevolucaoQuerySection,
+  'devolucao-reports': DevolucaoReportSection,
+  'product-reports': ProductReportSection,
+  calculators: CalculatorsSection,
+};
+
 export default function Home() {
   const {
-    activeView,
+    tabs,
+    activeTabId,
     selectedLoteId,
     editingDevolucaoId,
     editingWarrantyId,
     registerMode,
-    setActiveView,
-    handleNavigateToLote,
+    openTab,
     goBack,
     handleEditDevolucao,
     handleDevolucaoSaved,
@@ -48,74 +68,51 @@ export default function Home() {
 
   const isMobile = useIsMobile();
 
-  const fullWidthViews: string[] = [
-    'batch-register',
-    'query',
-    'devolucao-query',
-    'loteDetail',
-    'persons',
-  ];
+  const renderContent = (viewId: string) => {
+    const Component = viewComponents[viewId];
+    if (!Component) return <DashboardSection openTab={openTab} />;
 
-  const renderContent = () => {
-    switch (activeView) {
+    switch (viewId) {
       case 'dashboard':
-        return <DashboardSection setActiveView={setActiveView} />;
+        return <DashboardSection openTab={openTab} />;
       case 'register':
         return <RegisterSection 
                     editingId={editingWarrantyId} 
                     mode={registerMode} 
-                    onSave={(shouldNavigate) => handleWarrantySave(shouldNavigate)} 
+                    onSave={(shouldNavigate: boolean) => handleWarrantySave(shouldNavigate)} 
                     onClear={() => useAppStore.getState().clearEditingWarranty()}
                 />;
-      case 'batch-register':
-        return <BatchRegisterSection />;
       case 'query':
         return <QuerySection 
-                    setActiveView={setActiveView} 
+                    setActiveView={openTab} // Manter consistência, mas agora é openTab
                     onEdit={handleEditWarranty} 
                     onClone={handleCloneWarranty}
                 />;
-      case 'lotes':
-        return <LotesSection onNavigateToLote={handleNavigateToLote} />;
       case 'loteDetail':
         return <LoteDetailSection loteId={selectedLoteId!} onBack={goBack} />;
-      case 'reports':
-        return <ReportSection />;
-      case 'persons':
-        return <PersonsSection />;
-      case 'suppliers':
-        return <SuppliersSection />;
-      case 'products':
-        return <ProductsSection />;
-      case 'backup':
-        return <BackupSection />;
-      case 'settings':
-        return <SettingsSection />;
-      case 'users': // New view for user management
-        return <UsersSection />;
       case 'devolucao-register':
         return <DevolucaoRegisterSection editingId={editingDevolucaoId} onSave={handleDevolucaoSaved} />;
       case 'devolucao-query':
         return <DevolucaoQuerySection onEdit={handleEditDevolucao} />;
-      case 'devolucao-reports':
-        return <DevolucaoReportSection />;
-      case 'product-reports':
-        return <ProductReportSection />;
-      case 'calculators':
-        return <CalculatorsSection />;
       default:
-        return <DashboardSection setActiveView={setActiveView} />;
+        return <Component />;
     }
   };
   
   if (isMobile === undefined) return null;
 
-
   return (
     <AppLayout>
-      <div className={cn(fullWidthViews.includes(activeView) ? "" : "max-w-7xl mx-auto w-full")}>
-          {renderContent()}
-      </div>
+      {tabs.map(tab => (
+        <TabsContent key={tab.id} value={tab.id} forceMount={true} hidden={activeTabId !== tab.id}>
+           {renderContent(tab.id)}
+        </TabsContent>
+      ))}
+       {tabs.length === 0 && (
+         <div className="flex items-center justify-center h-full text-muted-foreground">
+           <p>Nenhuma aba aberta. Selecione um item no menu para começar.</p>
+         </div>
+      )}
     </AppLayout>
   );
 }

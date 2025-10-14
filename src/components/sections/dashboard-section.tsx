@@ -56,7 +56,7 @@ interface DevolucaoStats {
 }
 
 interface DashboardSectionProps {
-    setActiveView: (view: string) => void;
+    openTab: (view: string) => void;
 }
 
 
@@ -89,7 +89,7 @@ const COLORS = {
     'Paga': 'hsl(var(--primary))',
 };
 
-export default function DashboardSection({ setActiveView }: DashboardSectionProps) {
+export default function DashboardSection({ openTab }: DashboardSectionProps) {
   // Estado para Garantias
   const [stats, setStats] = useState<DashboardStats>({ total: 0, totalDefeitos: 0, pendentes: 0, aprovadas: 0, recusadas: 0, pagas: 0 });
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
@@ -449,7 +449,7 @@ export default function DashboardSection({ setActiveView }: DashboardSectionProp
                             <CardTitle>Devoluções Recentes</CardTitle>
                             <CardDescription>As 5 devoluções mais recentes registradas no sistema.</CardDescription>
                         </div>
-                        <Button variant="outline" size="sm" onClick={() => setActiveView('devolucao-query')}>
+                        <Button variant="outline" size="sm" onClick={() => openTab('devolucao-query')}>
                             Ver Todas
                             <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
