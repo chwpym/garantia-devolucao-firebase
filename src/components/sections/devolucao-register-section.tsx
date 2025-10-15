@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
@@ -23,6 +24,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import ProductForm from '../product-form';
+import { useAppStore } from '@/store/app-store';
 
 const itemDevolucaoSchema = z.object({
     id: z.number().optional(),
@@ -71,6 +73,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
     const [activeInputIndex, setActiveInputIndex] = useState<number | null>(null);
 
     const { toast } = useToast();
+    const goBack = useAppStore(state => state.goBack);
 
     const form = useForm<DevolucaoFormValues>({
         resolver: zodResolver(devolucaoSchema),
@@ -201,7 +204,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
     };
 
     const handleCancel = () => {
-        onSave(); // Usa onSave para navegar de volta para a lista, conforme o store agora faz
+        goBack(); // Usa a ação do store para voltar
     }
 
     const handleProductSaved = (newProduct: Product) => {
@@ -465,7 +468,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                             </CardContent>
                             <CardFooter className="flex justify-end gap-2">
                                 <Button type="button" variant="outline" onClick={handleCancel}>
-                                    {editingId ? "Voltar para Consulta" : "Cancelar"}
+                                    Cancelar
                                 </Button>
                                 <Button type="submit" disabled={form.formState.isSubmitting}>
                                     {form.formState.isSubmitting ? "Salvando..." : (editingId ? 'Atualizar Devolução' : 'Salvar Devolução')}

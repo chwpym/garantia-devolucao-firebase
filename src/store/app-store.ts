@@ -41,6 +41,7 @@ interface AppState {
 
   // Modal actions
   openNewLoteModal: () => void;
+  setNewLoteModalOpen: (isOpen: boolean) => void;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -56,11 +57,8 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   // Actions
   setActiveView: (viewId, shouldAddToHistory = false) => {
-    const { activeView } = get();
     if (shouldAddToHistory) {
-        set(state => ({
-            navigationHistory: [...state.navigationHistory, activeView],
-        }));
+      set(state => ({ navigationHistory: [...state.navigationHistory, state.activeView] }));
     }
     set({ activeView: viewId, isMobileMenuOpen: false });
   },
@@ -90,7 +88,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   handleDevolucaoSaved: () => {
     set({ editingDevolucaoId: null });
-    get().setActiveView('devolucao-query');
+    get().goBack(); // Volta para a tela anterior (consulta)
     window.dispatchEvent(new CustomEvent('datachanged'));
   },
 
@@ -107,17 +105,19 @@ export const useAppStore = create<AppState>((set, get) => ({
   handleWarrantySave: (shouldNavigate) => {
     set({ editingWarrantyId: null });
     if (shouldNavigate) {
-      get().setActiveView('query');
+      get().goBack(); // Volta para a tela anterior (consulta)
     }
     window.dispatchEvent(new CustomEvent('datachanged'));
   },
 
   clearEditingWarranty: () => {
     set({ editingWarrantyId: null });
+    get().goBack(); // Volta para a tela anterior
   },
 
   openNewLoteModal: () => {
-    get().setActiveView('lotes');
+    get().setActiveView('lotes'); // Navega para a seção de lotes antes de abrir o modal
     set({ isNewLoteModalOpen: true });
   },
+  setNewLoteModalOpen: (isOpen: boolean) => set({ isNewLoteModalOpen: isOpen }),
 }));

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
@@ -26,6 +27,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './ui/command';
 import ProductForm from './product-form';
+import { useAppStore } from '@/store/app-store';
 
 
 const formSchema = z.object({
@@ -101,6 +103,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
     const [isProductPopoverOpen, setProductPopoverOpen] = useState(false);
     
     const { toast } = useToast();
+    const goBack = useAppStore(state => state.goBack);
 
 
     const form = useForm<WarrantyFormValues>({
@@ -155,8 +158,12 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
     };
     
     const handleClear = () => {
-        form.reset(defaultValues);
-        onClear();
+      if (selectedWarranty) {
+        goBack(); // If we were editing, go back
+      } else {
+        form.reset(defaultValues); // If it's a new form, just clear it
+      }
+      onClear();
     }
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -560,7 +567,9 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
 
             </CardContent>
             <CardFooter className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={handleClear}>Limpar</Button>
+                <Button type="button" variant="outline" onClick={handleClear}>
+                    {selectedWarranty ? 'Cancelar' : 'Limpar'}
+                </Button>
                 <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                     {selectedWarranty && !isClone ? 'Atualizar' : 'Salvar'}
