@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
@@ -34,7 +35,7 @@ export default function RegisterSection({ editingId, mode, onSave, onClear }: Re
       if (data) {
         if (mode === 'clone') {
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { id, dataRegistro, ...clonedData } = data;
+          const { id, dataRegistro, loteId, status, ...clonedData } = data;
           setWarrantyToLoad({
             ...clonedData,
             status: 'Aguardando Envio' // Reset status for the new cloned item

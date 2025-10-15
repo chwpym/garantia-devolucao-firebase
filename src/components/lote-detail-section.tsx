@@ -213,7 +213,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
   const handleConfirmRemove = async () => {
     if (!warrantyToRemove) return;
     try {
-      const updatedWarranty = { ...warrantyToRemove, loteId: null };
+      const updatedWarranty = { ...warrantyToRemove, loteId: null, status: 'Aguardando Envio' as WarrantyStatus };
       await db.updateWarranty(updatedWarranty);
       toast({
         title: 'Garantia Removida',
@@ -791,7 +791,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
             <AlertDialogTitle>Remover Garantia do Lote?</AlertDialogTitle>
             <AlertDialogDescription>
               Você tem certeza que deseja remover a garantia (Código: <span className="font-bold">{warrantyToRemove?.codigo || 'N/A'}</span>) deste lote? 
-              A garantia não será excluída, apenas desvinculada, e voltará para a tela de Consulta.
+              A garantia não será excluída, apenas desvinculada, e seu status voltará para &quot;Aguardando Envio&quot;.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
