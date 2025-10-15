@@ -147,12 +147,16 @@ export default function CalculatorsSection() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {calculators.map((calc) => (
-            <Card key={calc.id} className={cn("flex flex-col border-2 transition-colors hover:border-foreground/20", calc.color)}>
+            <Card key={calc.id} className="flex flex-col transition-shadow duration-300 hover:shadow-lg">
                 <CardHeader>
                 <div className="flex items-start justify-between">
                     <div>
                     <CardTitle className="flex items-center gap-2">
-                        <calc.icon className="h-6 w-6 text-primary" />
+                        <calc.icon className={cn("h-6 w-6", 
+                            calc.id.includes('cost') || calc.id.includes('pricing') ? 'text-accent-green' :
+                            calc.id.includes('compare') || calc.id.includes('average') ? 'text-accent-blue' :
+                            'text-primary'
+                        )} />
                         {calc.title}
                     </CardTitle>
                     <CardDescription className="mt-2">{calc.description}</CardDescription>
