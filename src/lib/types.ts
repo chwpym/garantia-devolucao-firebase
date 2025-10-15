@@ -3,6 +3,8 @@
 'use client';
 
 export type WarrantyStatus = 'Aguardando Envio' | 'Enviado para Análise' | 'Aprovada - Peça Nova' | 'Aprovada - Crédito NF' | 'Aprovada - Crédito Boleto' | 'Recusada';
+export const WARRANTY_STATUSES: WarrantyStatus[] = ['Aguardando Envio', 'Enviado para Análise', 'Aprovada - Peça Nova', 'Aprovada - Crédito NF', 'Aprovada - Crédito Boleto', 'Recusada'];
+
 
 export interface Warranty {
   id?: number;

@@ -4,6 +4,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import type { Lote, Warranty, Supplier, WarrantyStatus } from '@/lib/types';
+import { WARRANTY_STATUSES } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '../ui/button';
@@ -50,7 +51,7 @@ interface LoteDetailSectionProps {
 }
 
 type SortableKeys = keyof Warranty;
-const warrantyStatuses: WarrantyStatus[] = ['Aguardando Envio', 'Enviado para Análise', 'Aprovada - Peça Nova', 'Aprovada - Crédito NF', 'Aprovada - Crédito Boleto', 'Recusada'];
+
 
 const LOTE_PDF_DEFAULT_FIELDS = [
   'codigo', 'descricao', 'quantidade', 'defeito'
@@ -329,11 +330,6 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
         });
 
         if (type === 'retorno') {
-            toast({
-                title: "Lembrete",
-                description: "Não se esqueça de alterar o status das garantias para 'Aprovada'.",
-                duration: 5000,
-            });
             setNfRetornoValue('');
         } else {
             setNfSaidaValue('');
@@ -628,7 +624,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                        {warrantyStatuses.map(status => (
+                        {WARRANTY_STATUSES.map(status => (
                             <DropdownMenuItem key={status} onSelect={() => handleBulkStatusChange(status)}>
                                 Marcar como {status}
                             </DropdownMenuItem>
@@ -718,7 +714,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                                     </DropdownMenuSubTrigger>
                                     <DropdownMenuPortal>
                                         <DropdownMenuSubContent>
-                                            {warrantyStatuses.map(status => (
+                                            {WARRANTY_STATUSES.map(status => (
                                                 <DropdownMenuItem key={status} onClick={() => handleStatusChange(warranty, status)}>
                                                     <span>{status}</span>
                                                 </DropdownMenuItem>

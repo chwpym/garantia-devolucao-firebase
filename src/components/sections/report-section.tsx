@@ -1,8 +1,10 @@
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import ReportGenerator from '@/components/report-generator';
 import type { Warranty, WarrantyStatus } from '@/lib/types';
+import { WARRANTY_STATUSES } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -15,6 +17,7 @@ import { DateRange } from 'react-day-picker';
 import { addDays, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 export default function ReportSection() {
   const [warranties, setWarranties] = useState<Warranty[]>([]);
@@ -110,17 +113,22 @@ export default function ReportSection() {
     return warranties.filter(w => w.id && selectedIds.has(w.id));
   }, [warranties, selectedIds]);
 
-  const getStatusVariant = (status: Warranty['status']) => {
+  const getWarrantyStatusClass = (status?: WarrantyStatus): string => {
     switch (status) {
-      case 'Aprovada':
-        return 'default';
+      case 'Aprovada - Peça Nova':
+        return 'bg-accent-green text-accent-green-foreground';
+      case 'Aprovada - Crédito Boleto':
+        return 'bg-accent-green-dark text-accent-green-dark-foreground';
+      case 'Aprovada - Crédito NF':
+        return 'bg-primary text-primary-foreground';
       case 'Recusada':
-        return 'destructive';
-      case 'Paga':
-        return 'outline';
-      case 'Em análise':
+        return 'bg-destructive text-destructive-foreground';
+      case 'Enviado para Análise':
+        return 'bg-accent-blue text-accent-blue-foreground';
+      case 'Aguardando Envio':
+        return 'bg-third text-white';
       default:
-        return 'secondary';
+        return 'bg-secondary text-secondary-foreground';
     }
   };
 
@@ -145,15 +153,14 @@ export default function ReportSection() {
                   />
               </div>
                <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as WarrantyStatus | 'Todos')}>
-                    <SelectTrigger className="w-full md:w-[180px]">
+                    <SelectTrigger className="w-full md:w-[280px]">
                         <SelectValue placeholder="Filtrar por status" />
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="Todos">Todos Status</SelectItem>
-                        <SelectItem value="Em análise">Em análise</SelectItem>
-                        <SelectItem value="Aprovada">Aprovada</SelectItem>
-                        <SelectItem value="Recusada">Recusada</SelectItem>
-                        <SelectItem value="Paga">Paga</SelectItem>
+                        {WARRANTY_STATUSES.map(status => (
+                          <SelectItem key={status} value={status}>{status}</SelectItem>
+                        ))}
                     </SelectContent>
                 </Select>
               <DatePickerWithRange date={dateRange} setDate={setDateRange} />
@@ -193,7 +200,7 @@ export default function ReportSection() {
                       <TableCell>{warranty.cliente || '-'}</TableCell>
                       <TableCell>
                         {warranty.status ? (
-                            <Badge variant={getStatusVariant(warranty.status)}>{warranty.status}</Badge>
+                            <Badge className={cn(getWarrantyStatusClass(warranty.status))}>{warranty.status}</Badge>
                         ) : (
                             <Badge variant="secondary">N/A</Badge>
                         )}
