@@ -1,8 +1,9 @@
 
+
 'use client';
 
 import { useState } from 'react';
-import type { Warranty } from '@/lib/types';
+import type { Warranty, WarrantyStatus } from '@/lib/types';
 import { format, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -11,6 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { MoreHorizontal, Pencil, Trash2, Copy, ArrowUpDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from './ui/checkbox';
+import { cn } from '@/lib/utils';
 
 type SortableKeys = keyof Warranty;
 
@@ -35,17 +37,22 @@ export default function WarrantyTable({ warranties, selectedIds, onSelectionChan
     setDeleteTarget(null);
   };
 
-  const getStatusVariant = (status: Warranty['status']) => {
+  const getWarrantyStatusClass = (status?: WarrantyStatus): string => {
     switch (status) {
-      case 'Aprovada':
-        return 'default';
+      case 'Aprovada - Peça Nova':
+        return 'bg-accent-green text-accent-green-foreground';
+      case 'Aprovada - Crédito Boleto':
+        return 'bg-accent-green-dark text-accent-green-dark-foreground';
+      case 'Aprovada - Crédito NF':
+        return 'bg-primary text-primary-foreground';
       case 'Recusada':
-        return 'destructive';
-      case 'Paga':
-        return 'outline';
-      case 'Em análise':
+        return 'bg-destructive text-destructive-foreground';
+      case 'Enviado para Análise':
+        return 'bg-accent-blue text-accent-blue-foreground';
+      case 'Aguardando Envio':
+        return 'bg-amber-500 text-white';
       default:
-        return 'secondary';
+        return 'bg-secondary text-secondary-foreground';
     }
   };
 
@@ -139,7 +146,7 @@ export default function WarrantyTable({ warranties, selectedIds, onSelectionChan
                   <TableCell>{warranty.notaFiscalRetorno || '-'}</TableCell>
                   <TableCell>
                     {warranty.status ? (
-                        <Badge variant={getStatusVariant(warranty.status)}>{warranty.status}</Badge>
+                        <Badge className={cn(getWarrantyStatusClass(warranty.status))}>{warranty.status}</Badge>
                     ) : (
                         <Badge variant="secondary">N/A</Badge>
                     )}

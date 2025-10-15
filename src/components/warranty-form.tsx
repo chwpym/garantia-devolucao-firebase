@@ -46,7 +46,7 @@ const formSchema = z.object({
   notaFiscalSaida: z.string().optional(),
   notaFiscalRetorno: z.string().optional(),
   observacao: z.string().optional(),
-  status: z.enum(['Aguardando Envio', 'Enviado para Análise', 'Aprovada', 'Recusada', 'Paga', 'Em análise']).optional(),
+  status: z.enum(['Aguardando Envio', 'Enviado para Análise', 'Aprovada - Peça Nova', 'Aprovada - Crédito NF', 'Aprovada - Crédito Boleto', 'Recusada']).optional(),
   loteId: z.number().nullable().optional(),
   photos: z.array(z.string()).optional(),
   dataRegistro: z.string().optional(),
@@ -544,9 +544,10 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                                         <SelectContent>
                                             <SelectItem value="Aguardando Envio">Aguardando Envio</SelectItem>
                                             <SelectItem value="Enviado para Análise">Enviado para Análise</SelectItem>
-                                            <SelectItem value="Aprovada">Aprovada</SelectItem>
+                                            <SelectItem value="Aprovada - Peça Nova">Aprovada - Peça Nova</SelectItem>
+                                            <SelectItem value="Aprovada - Crédito NF">Aprovada - Crédito NF</SelectItem>
+                                            <SelectItem value="Aprovada - Crédito Boleto">Aprovada - Crédito Boleto</SelectItem>
                                             <SelectItem value="Recusada">Recusada</SelectItem>
-                                            <SelectItem value="Paga">Paga</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <FormMessage />

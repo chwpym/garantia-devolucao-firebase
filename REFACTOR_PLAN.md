@@ -153,3 +153,44 @@ Este documento descreve o roteiro para refatorar e melhorar a arquitetura do có
 *   **Segurança Aprimorada:** Por padrão (ou quando o usuário desejar), o sistema se tornará mais seguro, exigindo um novo login a cada sessão do navegador.
 *   **Controle do Usuário:** Oferece a flexibilidade para o usuário escolher entre conveniência e segurança, um padrão em aplicações web modernas.
 *   **Conformidade:** Alinha o comportamento do sistema com as expectativas de segurança para aplicações de gestão.
+
+---
+
+## Fase 6: Refinamento do Fluxo de Status de Garantia
+
+**Objetivo:** Substituir o sistema de status de garantia por um fluxo mais detalhado e visualmente intuitivo, alinhado ao processo de negócio real.
+
+**Roteiro Detalhado:**
+
+1.  **Atualizar Definição de Status:**
+    *   **Arquivo:** `src/lib/types.ts`
+    *   **Lógica:** Modificar o tipo `WarrantyStatus` para refletir o novo fluxo.
+        *   **Remover:** `Em análise`, `Aprovada`, `Paga`.
+        *   **Adicionar:** `Aguardando Envio`, `Enviado para Análise`, `Aprovada - Peça Nova`, `Aprovada - Crédito NF`, `Aprovada - Crédito Boleto`, `Recusada`.
+
+2.  **Ajustar Status Padrão:**
+    *   **Arquivo:** `src/components/warranty-form.tsx`
+    *   **Lógica:** Definir o `status` inicial para novas garantias como `'Aguardando Envio'`.
+
+3.  **Atualizar Componentes de UI:**
+    *   **Arquivo:** `src/components/warranty-form.tsx`
+        *   **UI:** Atualizar o `Select` de status no formulário para exibir as novas opções.
+    *   **Arquivo:** `src/components/lote-detail-section.tsx`
+        *   **UI:** Atualizar o menu de `Dropdown` para alteração de status (individual e em massa) para conter os novos status.
+
+4.  **Implementar Cores Visuais:**
+    *   **Arquivo:** `src/app/globals.css`
+        *   **UI:** Adicionar uma nova variável de cor (`--accent-green-dark`) para diferenciar os tipos de crédito.
+    *   **Arquivos:** `src/components/warranty-table.tsx`, `src/components/lote-detail-section.tsx`
+        *   **UI:** Implementar uma função (`getWarrantyStatusClass`) que aplica classes de cor específicas ao componente `Badge` com base em cada novo status, melhorando a identificação visual:
+            *   **Amarelo/Laranja:** `Aguardando Envio`
+            *   **Azul:** `Enviado para Análise`
+            *   **Verde Claro:** `Aprovada - Peça Nova`
+            *   **Roxo:** `Aprovada - Crédito NF`
+            *   **Verde Escuro:** `Aprovada - Crédito Boleto`
+            *   **Vermelho:** `Recusada`
+
+**Benefícios:**
+*   **Clareza Operacional:** Os status refletem com precisão cada etapa do processo de garantia, desde o cadastro até a resolução.
+*   **Eficiência Financeira:** A distinção entre os tipos de crédito ("Peça Nova", "Crédito NF", "Crédito Boleto") facilita o controle financeiro e a conciliação.
+*   **Interface Intuitiva:** O uso estratégico de cores permite uma identificação rápida e clara do estado de cada garantia, melhorando a usabilidade.

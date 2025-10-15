@@ -34,6 +34,9 @@
     --accent-green: 142 71% 45%;
     --accent-green-foreground: 142 71% 95%;
 
+    --accent-green-dark: 142 80% 30%;
+    --accent-green-dark-foreground: 142 71% 95%;
+
     --third: 32 95% 62%;
  
     --border: 240 5.9% 90%;
@@ -80,6 +83,9 @@
     --accent-green: 142 71% 35%;
     --accent-green-foreground: 142 71% 95%;
 
+    --accent-green-dark: 142 80% 20%;
+    --accent-green-dark-foreground: 142 71% 95%;
+
     --third: 32 95% 72%;
  
     --border: 217.2 32.6% 17.5%;
@@ -101,4 +107,13 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+@layer components {
+    .bg-accent-green-dark {
+        @apply bg-[hsl(var(--accent-green-dark))];
+    }
+    .text-accent-green-dark-foreground {
+        @apply text-[hsl(var(--accent-green-dark-foreground))];
+    }
 }
