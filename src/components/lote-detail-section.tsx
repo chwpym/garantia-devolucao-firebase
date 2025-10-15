@@ -280,7 +280,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
       case 'Enviado para Análise':
         return 'bg-accent-blue text-accent-blue-foreground';
       case 'Aguardando Envio':
-        return 'bg-amber-500 text-white';
+        return 'bg-third text-white';
       default:
         return 'bg-secondary text-secondary-foreground';
     }
@@ -840,3 +840,5 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
     </div>
   );
 }
+
+    
