@@ -13,7 +13,7 @@ export default function QuickShortcuts() {
     };
 
     return (
-        <div className="flex items-center justify-center flex-wrap gap-2">
+        <div className="hidden md:flex items-center justify-center flex-wrap gap-2">
             <Button variant="default" onClick={() => setActiveView('register')}>
                 <Wrench /> Nova Garantia
             </Button>
