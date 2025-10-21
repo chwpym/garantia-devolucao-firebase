@@ -108,8 +108,8 @@ function RecentDevolutionsList() {
                 <CardDescription>Lista das devoluções registradas no dia selecionado.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-                <div className="space-y-2">
-                    <Label htmlFor="filter-date">Filtro por</Label>
+                 <div className="flex items-center gap-2">
+                    <Label htmlFor="filter-date" className="shrink-0">Filtro por</Label>
                     <DatePicker date={filterDate} setDate={setFilterDate} />
                 </div>
                 {isLoading ? (
