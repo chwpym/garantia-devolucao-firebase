@@ -26,6 +26,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import ProductForm from '../product-form';
 import { useAppStore } from '@/store/app-store';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import { Label } from '../ui/label';
 
 const itemDevolucaoSchema = z.object({
     id: z.number().optional(),
