@@ -27,6 +27,7 @@ interface DashboardStats {
   pendentes: number;
   aprovadas: number;
   recusadas: number;
+  pagas: number;
 }
 
 interface MonthlyData {
@@ -89,7 +90,7 @@ const COLORS: Record<WarrantyStatus, string> = {
 
 export default function DashboardSection({ openTab: setActiveView }: DashboardSectionProps) {
   // Estado para Garantias
-  const [stats, setStats] = useState<DashboardStats>({ total: 0, totalDefeitos: 0, pendentes: 0, aprovadas: 0, recusadas: 0 });
+  const [stats, setStats] = useState<DashboardStats>({ total: 0, totalDefeitos: 0, pendentes: 0, aprovadas: 0, recusadas: 0, pagas: 0 });
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [statusData, setStatusData] = useState<StatusChartData[]>([]);
   const [supplierRanking, setSupplierRanking] = useState<RankingData[]>([]);
@@ -127,6 +128,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
 
       let totalAprovadas = 0;
       let totalPendentes = 0;
+      let totalPagas = 0;
 
       allWarranties.forEach(w => {
         if(w.status && statusCounts[w.status] !== undefined) {
@@ -138,6 +140,12 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
         if(w.status === 'Aguardando Envio' || w.status === 'Enviado para Análise') {
             totalPendentes++;
         }
+        // Assuming "Paga" is a distinct status, it's not in the new flow.
+        // This might need adjustment based on the actual status flow from `types.ts`
+        // For now, let's assume 'Aprovada - Crédito Boleto' means it is paid.
+        if(w.status === 'Aprovada - Crédito Boleto') {
+            totalPagas++;
+        }
       });
       
       setStats({
@@ -146,6 +154,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
         pendentes: totalPendentes,
         aprovadas: totalAprovadas,
         recusadas: statusCounts['Recusada'],
+        pagas: totalPagas,
       });
       
       setStatusData(Object.entries(statusCounts)
@@ -252,7 +261,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                 <TabsTrigger value="devolucoes" className={cn("border-2 border-transparent data-[state=active]:border-[hsl(var(--accent-blue))]")}>Devoluções</TabsTrigger>
             </TabsList>
             <TabsContent value="garantias" className="mt-6">
-                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
                     <Card className="shadow-md hover:border-primary transition-colors border-2 border-transparent">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Total de Garantias</CardTitle>
@@ -286,6 +295,18 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                             {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.aprovadas}</div>}
                             <p className="text-xs text-muted-foreground">
                                 Crédito ou peça nova recebida
+                            </p>
+                        </CardContent>
+                    </Card>
+                    <Card className="shadow-md hover:border-blue-500 transition-colors border-2 border-transparent">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Garantias Pagas</CardTitle>
+                            <DollarSign className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.pagas}</div>}
+                            <p className="text-xs text-muted-foreground">
+                                Finalizadas e pagas ao cliente
                             </p>
                         </CardContent>
                     </Card>
