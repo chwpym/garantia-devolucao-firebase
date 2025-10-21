@@ -300,7 +300,7 @@ export default function AdvancedCostAnalysisCalculator() {
             </div>
             
             {items.length > 0 && nfeInfo && (
-                <div className="flex flex-col md:flex-row gap-4 md:items-center p-4 border rounded-lg bg-muted/50">
+                <div className="flex flex-col md:flex-row gap-4 md:items-center p-4 border rounded-lg bg-muted">
                     <div className="space-y-2 flex-1">
                          <h3 className="text-lg font-medium">Informações da NF-e</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-2 text-sm">

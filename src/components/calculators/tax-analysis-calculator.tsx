@@ -350,7 +350,7 @@ export default function TaxAnalysisCalculator() {
             </div>
             
             {items.length > 0 && nfeInfo && (
-                <div className="p-4 border rounded-lg bg-muted/50">
+                <div className="p-4 border rounded-lg bg-muted">
                      <h3 className="text-lg font-medium mb-2">Informações da NF-e</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-2 text-sm">
                         <div><strong>Emitente:</strong> {nfeInfo.emitterName}</div>

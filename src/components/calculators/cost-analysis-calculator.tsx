@@ -229,7 +229,7 @@ export default function CostAnalysisCalculator() {
             </div>
 
             {nfeInfo && items.length > 0 && (
-                <div className="p-4 border rounded-lg bg-muted/50 space-y-2">
+                <div className="p-4 border rounded-lg bg-muted space-y-2">
                     <h3 className="text-lg font-medium">Informações da NF-e</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2 text-sm">
                         <div><strong>Emitente:</strong> {nfeInfo.emitterName}</div>

@@ -528,7 +528,7 @@ export default function PurchaseSimulatorCalculator() {
                         </div>
 
                         {nfeInfo && items.length > 0 && (
-                            <Card>
+                            <Card className="bg-muted">
                                 <CardHeader>
                                     <CardTitle>Informações do Fornecedor</CardTitle>
                                 </CardHeader>
@@ -762,5 +762,3 @@ export default function PurchaseSimulatorCalculator() {
 
 
     
-
-
