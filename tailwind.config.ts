@@ -18,8 +18,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        body: ['Inter', 'sans-serif'],
-        headline: ['Inter', 'sans-serif'],
+        body: ['var(--font-inter)', 'sans-serif'],
+        headline: ['var(--font-inter)', 'sans-serif'],
         code: ['monospace'],
       },
       colors: {
@@ -41,7 +41,6 @@ export default {
           DEFAULT: 'hsl(var(--secondary))',
           foreground: 'hsl(var(--secondary-foreground))',
         },
-        third: 'hsl(var(--third))',
         muted: {
           DEFAULT: 'hsl(var(--muted))',
           foreground: 'hsl(var(--muted-foreground))',
@@ -54,13 +53,13 @@ export default {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))',
         },
-        "accent-blue": {
-          DEFAULT: "hsl(var(--accent-blue))",
-          foreground: "hsl(var(--accent-blue-foreground))",
+        'accent-blue': {
+          DEFAULT: 'hsl(var(--accent-blue))',
+          foreground: 'hsl(var(--accent-blue-foreground))',
         },
-        "accent-green": {
-            DEFAULT: "hsl(var(--accent-green))",
-            foreground: "hsl(var(--accent-green-foreground))",
+        'accent-green': {
+          DEFAULT: 'hsl(var(--accent-green))',
+          foreground: 'hsl(var(--accent-green-foreground))',
         },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
