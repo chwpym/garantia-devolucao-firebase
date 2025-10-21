@@ -319,7 +319,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                     <div className='space-y-4'>
                                         <div className="flex justify-between items-center">
                                             <h3 className="text-lg font-medium text-foreground">Peças Devolvidas</h3>
-                                            <Button type="button" size="sm" onClick={() => append({ codigoPeca: '', descricaoPeca: '', quantidade: 1 })}>
+                                            <Button type="button" size="sm" variant="default" onClick={() => append({ codigoPeca: '', descricaoPeca: '', quantidade: 1 })}>
                                                 <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Peça
                                             </Button>
                                         </div>
