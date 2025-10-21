@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
@@ -12,7 +13,7 @@ import { Bar, BarChart, CartesianGrid, XAxis, Pie, PieChart as RechartsPieChart,
 import { format, parseISO, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { Devolucao, ItemDevolucao } from '@/lib/types';
+import type { Devolucao, ItemDevolucao, WarrantyStatus } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
@@ -26,7 +27,6 @@ interface DashboardStats {
   pendentes: number;
   aprovadas: number;
   recusadas: number;
-  pagas: number;
 }
 
 interface MonthlyData {
@@ -76,22 +76,20 @@ const chartConfig = {
     label: "Recusadas",
     color: "hsl(var(--chart-5))",
   },
-  pagas: {
-    label: "Pagas",
-    color: "hsl(var(--chart-3))",
-  },
 } satisfies ChartConfig
 
-const COLORS = {
-    'Em análise': 'hsl(var(--chart-2))',
-    'Aprovada': 'hsl(var(--chart-1))',
+const COLORS: Record<WarrantyStatus, string> = {
+    'Aguardando Envio': 'hsl(var(--chart-2))',
+    'Enviado para Análise': 'hsl(var(--accent-blue))',
+    'Aprovada - Peça Nova': 'hsl(var(--accent-green))',
+    'Aprovada - Crédito NF': 'hsl(var(--primary))',
+    'Aprovada - Crédito Boleto': 'hsl(var(--accent-green-dark))',
     'Recusada': 'hsl(var(--chart-5))',
-    'Paga': 'hsl(var(--primary))',
 };
 
 export default function DashboardSection({ openTab: setActiveView }: DashboardSectionProps) {
   // Estado para Garantias
-  const [stats, setStats] = useState<DashboardStats>({ total: 0, totalDefeitos: 0, pendentes: 0, aprovadas: 0, recusadas: 0, pagas: 0 });
+  const [stats, setStats] = useState<DashboardStats>({ total: 0, totalDefeitos: 0, pendentes: 0, aprovadas: 0, recusadas: 0 });
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [statusData, setStatusData] = useState<StatusChartData[]>([]);
   const [supplierRanking, setSupplierRanking] = useState<RankingData[]>([]);
@@ -117,21 +115,44 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
       const totalDefeitos = allWarranties.reduce((acc, warranty) => {
           return acc + (warranty.quantidade ?? 0);
       }, 0);
-      const statusCounts = {
-        'Em análise': allWarranties.filter(w => w.status === 'Em análise').length,
-        'Aprovada': allWarranties.filter(w => w.status === 'Aprovada').length,
-        'Recusada': allWarranties.filter(w => w.status === 'Recusada').length,
-        'Paga': allWarranties.filter(w => w.status === 'Paga').length,
+      
+      const statusCounts: Record<WarrantyStatus, number> = {
+        'Aguardando Envio': 0,
+        'Enviado para Análise': 0,
+        'Aprovada - Peça Nova': 0,
+        'Aprovada - Crédito NF': 0,
+        'Aprovada - Crédito Boleto': 0,
+        'Recusada': 0,
       };
+
+      let totalAprovadas = 0;
+      let totalPendentes = 0;
+
+      allWarranties.forEach(w => {
+        if(w.status && statusCounts[w.status] !== undefined) {
+            statusCounts[w.status]++;
+        }
+        if (w.status?.startsWith('Aprovada')) {
+            totalAprovadas++;
+        }
+        if(w.status === 'Aguardando Envio' || w.status === 'Enviado para Análise') {
+            totalPendentes++;
+        }
+      });
+      
       setStats({
         total: allWarranties.length,
         totalDefeitos: totalDefeitos,
-        pendentes: statusCounts['Em análise'],
-        aprovadas: statusCounts['Aprovada'],
+        pendentes: totalPendentes,
+        aprovadas: totalAprovadas,
         recusadas: statusCounts['Recusada'],
-        pagas: statusCounts['Paga'],
       });
-      setStatusData(Object.entries(statusCounts).map(([name, value]) => ({ name, value, fill: COLORS[name as keyof typeof COLORS] })));
+      
+      setStatusData(Object.entries(statusCounts)
+        .filter(([_, value]) => value > 0)
+        .map(([name, value]) => ({ name, value, fill: COLORS[name as WarrantyStatus] }))
+      );
+      
       const now = new Date();
       const monthlyCounts: { [key: string]: number } = {};
       for (let i = 11; i >= 0; i--) {
@@ -231,11 +252,11 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                 <TabsTrigger value="devolucoes" className={cn("border-2 border-transparent data-[state=active]:border-[hsl(var(--accent-blue))]")}>Devoluções</TabsTrigger>
             </TabsList>
             <TabsContent value="garantias" className="mt-6">
-                 <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
+                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
                     <Card className="shadow-md hover:border-primary transition-colors border-2 border-transparent">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Total de Garantias</CardTitle>
-                            <BarChart3 className="h-4 w-4 text-primary" />
+                            <BarChart3 className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.total}</div>}
@@ -247,19 +268,19 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                     <Card className="shadow-md hover:border-[hsl(var(--chart-2))] transition-colors border-2 border-transparent">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Garantias Pendentes</CardTitle>
-                            <Hourglass className="h-4 w-4 text-[hsl(var(--chart-2))]" />
+                            <Hourglass className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.pendentes}</div>}
                             <p className="text-xs text-muted-foreground">
-                                Aguardando retorno do fornecedor
+                                Aguardando envio ou análise
                             </p>
                         </CardContent>
                     </Card>
-                    <Card className="shadow-md hover:border-[hsl(var(--chart-1))] transition-colors border-2 border-transparent">
+                    <Card className="shadow-md hover:border-accent-green transition-colors border-2 border-transparent">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Garantias Aprovadas</CardTitle>
-                            <ShieldCheck className="h-4 w-4 text-[hsl(var(--chart-1))]" />
+                            <ShieldCheck className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.aprovadas}</div>}
@@ -268,22 +289,10 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                             </p>
                         </CardContent>
                     </Card>
-                    <Card className="shadow-md hover:border-[hsl(var(--chart-3))] transition-colors border-2 border-transparent">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Garantias Pagas</CardTitle>
-                            <DollarSign className="h-4 w-4 text-[hsl(var(--chart-3))]" />
-                        </CardHeader>
-                        <CardContent>
-                            {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.pagas}</div>}
-                            <p className="text-xs text-muted-foreground">
-                                Finalizadas e pagas ao cliente
-                            </p>
-                        </CardContent>
-                    </Card>
                     <Card className="shadow-md hover:border-destructive transition-colors border-2 border-transparent">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Garantias Recusadas</CardTitle>
-                            <ShieldX className="h-4 w-4 text-destructive" />
+                            <ShieldX className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.recusadas}</div>}
@@ -295,7 +304,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                     <Card className="shadow-md hover:border-[hsl(var(--chart-5))] transition-colors border-2 border-transparent">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Itens com Defeito</CardTitle>
-                            <Wrench className="h-4 w-4 text-[hsl(var(--chart-5))]" />
+                            <Wrench className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.totalDefeitos}</div>}
@@ -405,7 +414,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                     <Card className="shadow-md hover:border-primary transition-colors border-2 border-transparent">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Total de Devoluções</CardTitle>
-                            <Undo className="h-4 w-4 text-primary" />
+                            <Undo className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{devolucaoStats?.totalDevolucoes}</div>}
@@ -415,7 +424,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                     <Card className="shadow-md hover:border-accent-blue transition-colors border-2 border-transparent">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Total de Peças</CardTitle>
-                            <Package className="h-4 w-4 text-accent-blue" />
+                            <Package className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{devolucaoStats?.totalPecas}</div>}
@@ -425,7 +434,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                     <Card className="shadow-md hover:border-accent-green transition-colors border-2 border-transparent">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Clientes Únicos</CardTitle>
-                            <Users className="h-4 w-4 text-accent-green" />
+                            <Users className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{devolucaoStats?.clientesUnicos}</div>}
@@ -435,7 +444,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                     <Card className="shadow-md hover:border-[hsl(var(--third))] transition-colors border-2 border-transparent">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Mecânicos Únicos</CardTitle>
-                            <Building className="h-4 w-4 text-[hsl(var(--third))]" />
+                            <Building className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{devolucaoStats?.mecanicosUnicos}</div>}
