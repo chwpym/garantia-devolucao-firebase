@@ -271,14 +271,14 @@ export default function BatchPricingCalculator() {
             
             <div className="overflow-x-auto">
                 <Table>
-                <TableHeader>
+                <TableHeader className="bg-muted/50">
                     <TableRow>
                     <TableHead className="min-w-[250px]">Descrição</TableHead>
                     <TableHead className="w-[80px]">Qtde</TableHead>
                     <TableHead className="w-[120px]">C. Orig. Un.</TableHead>
                     <TableHead className="w-[120px]">Impostos (+)</TableHead>
                     <TableHead className="w-[120px]">Desconto (-)</TableHead>
-                    <TableHead className="w-[120px] bg-muted">C. Final Un.</TableHead>
+                    <TableHead className="w-[120px]">C. Final Un.</TableHead>
                     <TableHead className="w-[120px]">Margem (%)</TableHead>
                     <TableHead className="w-[120px]">Venda Un.</TableHead>
                     <TableHead className="w-[120px]">Venda Total</TableHead>
@@ -314,7 +314,7 @@ export default function BatchPricingCalculator() {
                                 </TableCell>
                                 <TableCell>
                                     <Input type="text" inputMode="decimal" value={item.finalCost}
-                                    onChange={e => handleItemChange(item.id, 'finalCost', e.target.value)} className="bg-muted font-bold" />
+                                    onChange={e => handleItemChange(item.id, 'finalCost', e.target.value)} />
                                 </TableCell>
                                 <TableCell>
                                     <Input type="text" inputMode="decimal" value={item.margin}
@@ -338,7 +338,7 @@ export default function BatchPricingCalculator() {
                         );
                     })}
                 </TableBody>
-                <TableFooter>
+                <TableFooter className="bg-muted">
                     <TableRow>
                         <TableCell colSpan={6} className="text-right font-bold">Totais:</TableCell>
                         <TableCell className="font-bold text-right">
