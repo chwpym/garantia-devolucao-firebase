@@ -373,7 +373,7 @@ export default function TaxAnalysisCalculator() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="min-w-[250px] sticky left-0 bg-background z-10">Descrição</TableHead>
+                                <TableHead className="min-w-[250px] sticky left-0 z-10">Descrição</TableHead>
                                 <TableHead>NCM</TableHead>
                                 <TableHead>CST</TableHead>
                                 <TableHead>CFOP</TableHead>
@@ -393,7 +393,7 @@ export default function TaxAnalysisCalculator() {
                         <TableBody>
                             {items.map(item => (
                                 <TableRow key={item.id}>
-                                    <TableCell className="font-medium text-xs sticky left-0 bg-background z-10">{item.description}</TableCell>
+                                    <TableCell className="font-medium text-xs sticky left-0 z-10">{item.description}</TableCell>
                                     <TableCell>{item.ncm}</TableCell>
                                     <TableCell>{item.cst}</TableCell>
                                     <TableCell>{item.cfop}</TableCell>
