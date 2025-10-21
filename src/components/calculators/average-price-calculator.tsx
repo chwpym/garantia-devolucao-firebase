@@ -53,7 +53,7 @@ function PurchaseCard({ title, purchase, onChange, totalValue }: PurchaseCardPro
         </div>
         <div className="space-y-2">
           <Label>Valor Total</Label>
-          <div className="w-full h-10 px-3 py-2 rounded-md border border-input bg-muted flex items-center text-base">
+          <div className="w-full h-10 px-3 py-2 rounded-md border border-input bg-input flex items-center text-base">
             {formatCurrency(totalValue)}
           </div>
         </div>
