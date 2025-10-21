@@ -222,10 +222,11 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
     };
 
     const filteredProducts = productSearchQuery
-        ? products.filter(p =>
-            p.codigo.toLowerCase().includes(productSearchQuery.toLowerCase()) ||
-            p.descricao.toLowerCase().includes(productSearchQuery.toLowerCase())
-        ).slice(0, 5)
+        ? products.filter(p => {
+            const searchTerm = productSearchQuery.toLowerCase();
+            return p.codigo.toLowerCase().includes(searchTerm) || 
+                   p.descricao.toLowerCase().includes(searchTerm);
+        }).slice(0, 5)
         : [];
 
     const clients = persons.filter(p => p.tipo === 'Cliente' || p.tipo === 'Ambos');

@@ -28,6 +28,7 @@ import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './ui/command';
 import ProductForm from './product-form';
 import { useAppStore } from '@/store/app-store';
+import { WARRANTY_STATUSES } from '@/lib/types';
 
 
 const formSchema = z.object({
@@ -46,7 +47,7 @@ const formSchema = z.object({
   notaFiscalSaida: z.string().optional(),
   notaFiscalRetorno: z.string().optional(),
   observacao: z.string().optional(),
-  status: z.enum(['Aguardando Envio', 'Enviado para Análise', 'Aprovada - Peça Nova', 'Aprovada - Crédito NF', 'Aprovada - Crédito Boleto', 'Recusada']).optional(),
+  status: z.enum(WARRANTY_STATUSES).optional(),
   loteId: z.number().nullable().optional(),
   photos: z.array(z.string()).optional(),
   dataRegistro: z.string().optional(),
@@ -259,12 +260,13 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
         setValue('photos', newPhotos, { shouldValidate: true });
     };
 
-    const filteredProducts = productSearch 
-        ? products.filter(p => 
-            p.codigo.toLowerCase().includes(productSearch.toLowerCase()) || 
-            p.descricao.toLowerCase().includes(productSearch.toLowerCase())
-        ).slice(0, 5) // Limit results for performance
-        : [];
+    const filteredProducts = productSearch
+      ? products.filter(p => {
+          const searchTerm = productSearch.toLowerCase();
+          return p.codigo.toLowerCase().includes(searchTerm) || 
+                 p.descricao.toLowerCase().includes(searchTerm);
+        }).slice(0, 5)
+      : [];
 
     const clients = persons.filter(p => p.tipo === 'Cliente' || p.tipo === 'Ambos');
     const mechanics = persons.filter(p => p.tipo === 'Mecânico' || p.tipo === 'Ambos');
@@ -542,12 +544,9 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                                         </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            <SelectItem value="Aguardando Envio">Aguardando Envio</SelectItem>
-                                            <SelectItem value="Enviado para Análise">Enviado para Análise</SelectItem>
-                                            <SelectItem value="Aprovada - Peça Nova">Aprovada - Peça Nova</SelectItem>
-                                            <SelectItem value="Aprovada - Crédito NF">Aprovada - Crédito NF</SelectItem>
-                                            <SelectItem value="Aprovada - Crédito Boleto">Aprovada - Crédito Boleto</SelectItem>
-                                            <SelectItem value="Recusada">Recusada</SelectItem>
+                                            {WARRANTY_STATUSES.map(status => (
+                                                <SelectItem key={status} value={status}>{status}</SelectItem>
+                                            ))}
                                         </SelectContent>
                                     </Select>
                                     <FormMessage />
