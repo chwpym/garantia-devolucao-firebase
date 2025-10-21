@@ -109,7 +109,7 @@ function RecentDevolutionsList() {
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="space-y-2">
-                    <Label htmlFor="filter-date">Filtrar por Data</Label>
+                    <Label htmlFor="filter-date">Filtro por</Label>
                     <DatePicker date={filterDate} setDate={setFilterDate} />
                 </div>
                 {isLoading ? (
