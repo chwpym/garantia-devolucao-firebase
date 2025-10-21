@@ -254,7 +254,7 @@ export default function BatchPricingCalculator() {
                         placeholder="Ex: 40"
                         value={globalMargin}
                         onChange={(e) => setGlobalMargin(e.target.value)}
-                        className="w-28"
+                        className="w-28 bg-input-calc"
                     />
                     <Button onClick={applyGlobalMargin} size="icon">
                         <ChevronsRight className="h-4 w-4" />
