@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -64,9 +64,7 @@ const defaultFormValues: DevolucaoFormValues = {
 
 
 export default function DevolucaoRegisterSection({ editingId, onSave }: DevolucaoRegisterSectionProps) {
-    const [isDbReady, setIsDbReady] = useState(false);
-    const [persons, setPersons] = useState<Person[]>([]);
-    const [products, setProducts] = useState<Product[]>([]);
+    const { persons, products, isDataLoaded, reloadData } = useAppStore();
     const [isProductModalOpen, setProductModalOpen] = useState(false);
     
     const [productSearchQuery, setProductSearchQuery] = useState('');
@@ -84,15 +82,6 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
         control: form.control,
         name: 'itens',
     });
-
-    const loadDropdownData = async () => {
-        const [allPersons, allProducts] = await Promise.all([
-            db.getAllPersons(),
-            db.getAllProducts()
-        ]);
-        setPersons(allPersons.sort((a, b) => a.nome.localeCompare(b.nome)));
-        setProducts(allProducts);
-    }
 
     const loadEditingData = async (id: number) => {
         const data = await db.getDevolucaoById(id);
@@ -117,30 +106,11 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
 
 
     useEffect(() => {
-        async function initialize() {
-            try {
-                await db.initDB();
-                setIsDbReady(true);
-                await loadDropdownData();
-                if (editingId) {
-                    await loadEditingData(editingId);
-                }
-            } catch (error) {
-                console.error('Failed to initialize:', error);
-                toast({
-                    title: 'Erro de Banco de Dados',
-                    description: 'Não foi possível carregar os dados necessários.',
-                    variant: 'destructive',
-                });
-            }
+        if (isDataLoaded && editingId) {
+            loadEditingData(editingId);
         }
-        initialize();
-
-        const handleDataChanged = () => loadDropdownData();
-        window.addEventListener('datachanged', handleDataChanged);
-        return () => window.removeEventListener('datachanged', handleDataChanged);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [editingId, toast]);
+    }, [editingId, isDataLoaded]);
 
     const onSubmit = async (data: DevolucaoFormValues) => {
         try {
@@ -208,7 +178,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
     }
 
     const handleProductSaved = (newProduct: Product) => {
-        setProducts(prev => [...prev, newProduct]);
+        reloadData('products');
         setProductModalOpen(false);
         if (activeInputIndex !== null) {
             handleProductSelect(newProduct, activeInputIndex);
@@ -221,20 +191,23 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
         setActiveInputIndex(null);
     };
 
-    const filteredProducts = productSearchQuery
-        ? products.filter(p => {
+    const filteredProducts = useMemo(() => {
+        if (!productSearchQuery) return [];
+        return products.filter(p => {
             const searchTerm = productSearchQuery.toLowerCase();
-            return p.codigo.toLowerCase().includes(searchTerm) || 
-                   p.descricao.toLowerCase().includes(searchTerm);
-        }).slice(0, 5)
-        : [];
+            const productCode = p.codigo || '';
+            const productDesc = p.descricao || '';
+            return productCode.toLowerCase().includes(searchTerm) || 
+                   productDesc.toLowerCase().includes(searchTerm);
+        }).slice(0, 5);
+    }, [products, productSearchQuery]);
 
-    const clients = persons.filter(p => p.tipo === 'Cliente' || p.tipo === 'Ambos');
-    const mechanics = persons.filter(p => p.tipo === 'Mecânico' || p.tipo === 'Ambos');
-    const clientOptions = clients.map(c => ({ value: c.nome, label: c.nome }));
-    const mechanicOptions = mechanics.map(m => ({ value: m.nome, label: m.nome }));
+    const clients = useMemo(() => persons.filter(p => p.tipo === 'Cliente' || p.tipo === 'Ambos'), [persons]);
+    const mechanics = useMemo(() => persons.filter(p => p.tipo === 'Mecânico' || p.tipo === 'Ambos'), [persons]);
+    const clientOptions = useMemo(() => clients.map(c => ({ value: c.nome, label: c.nome })), [clients]);
+    const mechanicOptions = useMemo(() => mechanics.map(m => ({ value: m.nome, label: m.nome })), [mechanics]);
 
-    if (!isDbReady) {
+    if (!isDataLoaded) {
         return <Skeleton className="h-[700px] w-full" />;
     }
 

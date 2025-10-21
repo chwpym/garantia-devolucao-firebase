@@ -92,9 +92,7 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModal = false, isClone = false }: WarrantyFormProps) {
     const formRef = useRef<HTMLFormElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [persons, setPersons] = useState<Person[]>([]);
-    const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-    const [products, setProducts] = useState<Product[]>([]);
+    const { products, persons, suppliers, reloadData } = useAppStore();
 
     const [isSupplierModalOpen, setSupplierModalOpen] = useState(false);
     const [isPersonModalOpen, setPersonModalOpen] = useState(false);
@@ -122,25 +120,6 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
 
 
     const { isSubmitting } = form.formState;
-
-    const loadDropdownData = async () => {
-        const [allPersons, allSuppliers, allProducts] = await Promise.all([
-            db.getAllPersons(),
-            db.getAllSuppliers(),
-            db.getAllProducts()
-        ]);
-        setPersons(allPersons.sort((a, b) => a.nome.localeCompare(b.nome)));
-        setSuppliers(allSuppliers.sort((a, b) => a.nomeFantasia.localeCompare(b.nomeFantasia)));
-        setProducts(allProducts);
-    }
-
-    useEffect(() => {
-        loadDropdownData();
-
-        const handleDataChanged = () => loadDropdownData();
-        window.addEventListener('datachanged', handleDataChanged);
-        return () => window.removeEventListener('datachanged', handleDataChanged);
-    }, []);
 
     const handleSubmit = async (values: WarrantyFormValues) => {
         const dataToSave: Warranty = {
@@ -183,15 +162,13 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
     };
     
     const handleSupplierSaved = (newSupplier: Supplier) => {
-        // No need to reload all data, just update the state
-        setSuppliers(prev => [...prev, newSupplier].sort((a, b) => a.nomeFantasia.localeCompare(b.nomeFantasia)));
+        reloadData('suppliers');
         setSupplierModalOpen(false);
         form.setValue('fornecedor', newSupplier.nomeFantasia);
     };
 
     const handlePersonSaved = (newPerson: Person) => {
-        // No need to reload all data, just update the state
-        setPersons(prev => [...prev, newPerson].sort((a, b) => a.nome.localeCompare(b.nome)));
+        reloadData('persons');
         setPersonModalOpen(false);
         if (newPerson.tipo === 'Cliente' || newPerson.tipo === 'Ambos') {
              form.setValue('cliente', newPerson.nome);
@@ -202,7 +179,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
     };
 
     const handleProductSaved = (newProduct: Product) => {
-        setProducts(prev => [...prev, newProduct]);
+        reloadData('products');
         setProductModalOpen(false);
         handleProductSelect(newProduct);
     };
@@ -263,8 +240,10 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
     const filteredProducts = productSearch
       ? products.filter(p => {
           const searchTerm = productSearch.toLowerCase();
-          return p.codigo.toLowerCase().includes(searchTerm) || 
-                 p.descricao.toLowerCase().includes(searchTerm);
+          const productCode = p.codigo || '';
+          const productDesc = p.descricao || '';
+          return productCode.toLowerCase().includes(searchTerm) || 
+                 productDesc.toLowerCase().includes(searchTerm);
         }).slice(0, 5)
       : [];
 
@@ -290,6 +269,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                                         <FormControl>
                                             <Input 
                                                 {...field}
+                                                autoComplete="off"
                                                 onChange={(e) => {
                                                     field.onChange(e);
                                                     setProductSearch(e.target.value);

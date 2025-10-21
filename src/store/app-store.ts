@@ -3,12 +3,19 @@
 'use client';
 
 import { create } from 'zustand';
-import type { Warranty } from '@/lib/types';
+import type { Warranty, Person, Supplier, Product } from '@/lib/types';
 import { navConfig, type NavItem } from '@/config/nav-config';
+import * as db from '@/lib/db';
 
 export type RegisterMode = 'edit' | 'clone';
 
 interface AppState {
+  // Data stores
+  products: Product[];
+  persons: Person[];
+  suppliers: Supplier[];
+  isDataLoaded: boolean;
+  
   // Navigation and UI
   activeView: string;
   navigationHistory: string[];
@@ -22,6 +29,8 @@ interface AppState {
   registerMode: RegisterMode;
 
   // Actions
+  loadInitialData: () => Promise<void>;
+  reloadData: (dataType?: 'products' | 'persons' | 'suppliers') => Promise<void>;
   setActiveView: (viewId: string, shouldAddToHistory?: boolean) => void;
   goBack: () => void;
   setMobileMenuOpen: (isOpen: boolean) => void;
@@ -46,6 +55,10 @@ interface AppState {
 
 export const useAppStore = create<AppState>((set, get) => ({
   // Initial state
+  products: [],
+  persons: [],
+  suppliers: [],
+  isDataLoaded: false,
   activeView: 'dashboard',
   navigationHistory: [],
   isMobileMenuOpen: false,
@@ -55,7 +68,47 @@ export const useAppStore = create<AppState>((set, get) => ({
   editingWarrantyId: null,
   registerMode: 'edit',
 
-  // Actions
+  // --- DATA ACTIONS ---
+  loadInitialData: async () => {
+    if (get().isDataLoaded) return;
+    try {
+      await db.initDB();
+      const [products, persons, suppliers] = await Promise.all([
+        db.getAllProducts(),
+        db.getAllPersons(),
+        db.getAllSuppliers(),
+      ]);
+      set({ 
+        products: products.sort((a, b) => a.descricao.localeCompare(b.descricao)),
+        persons: persons.sort((a, b) => a.nome.localeCompare(b.nome)),
+        suppliers: suppliers.sort((a, b) => a.nomeFantasia.localeCompare(b.nomeFantasia)),
+        isDataLoaded: true 
+      });
+    } catch (error) {
+      console.error("Failed to load initial app data:", error);
+    }
+  },
+
+  reloadData: async (dataType) => {
+    try {
+      if (!dataType || dataType === 'products') {
+        const products = await db.getAllProducts();
+        set({ products: products.sort((a, b) => a.descricao.localeCompare(b.descricao)) });
+      }
+      if (!dataType || dataType === 'persons') {
+        const persons = await db.getAllPersons();
+        set({ persons: persons.sort((a, b) => a.nome.localeCompare(b.nome)) });
+      }
+      if (!dataType || dataType === 'suppliers') {
+        const suppliers = await db.getAllSuppliers();
+        set({ suppliers: suppliers.sort((a, b) => a.nomeFantasia.localeCompare(b.nomeFantasia)) });
+      }
+    } catch (error) {
+       console.error("Failed to reload data:", error);
+    }
+  },
+
+  // --- UI ACTIONS ---
   setActiveView: (viewId, shouldAddToHistory = false) => {
     if (shouldAddToHistory) {
       set(state => ({ navigationHistory: [...state.navigationHistory, state.activeView] }));

@@ -1,7 +1,8 @@
 
+
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Settings, Menu, DatabaseBackup, ArrowLeft } from 'lucide-react';
@@ -24,7 +25,12 @@ export default function AppLayout({ children }: AppLayoutProps) {
     setActiveView,
     navigationHistory,
     goBack,
+    loadInitialData,
   } = useAppStore();
+
+  useEffect(() => {
+    loadInitialData();
+  }, [loadInitialData]);
 
   const handleNavClick = (view: string) => {
     setActiveView(view);
