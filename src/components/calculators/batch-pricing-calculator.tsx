@@ -294,35 +294,35 @@ export default function BatchPricingCalculator() {
                             <TableRow key={item.id}>
                                 <TableCell>
                                     <Input type="text" placeholder="Nome do produto" value={item.description}
-                                    onChange={e => handleItemChange(item.id, 'description', e.target.value)} />
+                                    onChange={e => handleItemChange(item.id, 'description', e.target.value)} className="bg-input-calc" />
                                 </TableCell>
                                 <TableCell>
                                     <Input type="text" inputMode="decimal" value={item.quantity}
-                                    onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} />
+                                    onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} className="bg-input-calc" />
                                 </TableCell>
                                 <TableCell>
                                     <Input type="text" inputMode="decimal" value={item.originalCost}
-                                    onChange={e => handleItemChange(item.id, 'originalCost', e.target.value)} />
+                                    onChange={e => handleItemChange(item.id, 'originalCost', e.target.value)} className="bg-input-calc" />
                                 </TableCell>
                                 <TableCell>
                                     <Input type="text" inputMode="decimal" value={item.impostos}
-                                    onChange={e => handleItemChange(item.id, 'impostos', e.target.value)} />
+                                    onChange={e => handleItemChange(item.id, 'impostos', e.target.value)} className="bg-input-calc" />
                                 </TableCell>
                                 <TableCell>
                                     <Input type="text" inputMode="decimal" value={item.desconto}
-                                    onChange={e => handleItemChange(item.id, 'desconto', e.target.value)} />
+                                    onChange={e => handleItemChange(item.id, 'desconto', e.target.value)} className="bg-input-calc" />
                                 </TableCell>
                                 <TableCell>
                                     <Input type="text" inputMode="decimal" value={item.finalCost}
-                                    onChange={e => handleItemChange(item.id, 'finalCost', e.target.value)} />
+                                    onChange={e => handleItemChange(item.id, 'finalCost', e.target.value)} className="bg-input-calc" />
                                 </TableCell>
                                 <TableCell>
                                     <Input type="text" inputMode="decimal" value={item.margin}
-                                    onChange={e => handleItemChange(item.id, 'margin', e.target.value)} />
+                                    onChange={e => handleItemChange(item.id, 'margin', e.target.value)} className="bg-input-calc" />
                                 </TableCell>
                                 <TableCell>
                                     <Input type="text" inputMode="decimal" value={item.price}
-                                    onChange={e => handleItemChange(item.id, 'price', e.target.value)} />
+                                    onChange={e => handleItemChange(item.id, 'price', e.target.value)} className="bg-input-calc" />
                                 </TableCell>
                                 <TableCell>
                                     <div className="w-full h-10 px-3 py-2 rounded-md border border-input bg-muted flex items-center text-sm">
