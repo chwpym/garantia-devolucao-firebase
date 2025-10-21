@@ -291,8 +291,8 @@ export default function CostAnalysisCalculator() {
                             ))}
                         </TableBody>
                         <TableFooter>
-                            <TableRow className="font-bold bg-muted/50">
-                                <TableCell className="sticky left-0 bg-muted/50 z-10 text-right" colSpan={4}>Totais:</TableCell>
+                            <TableRow className="font-bold bg-muted">
+                                <TableCell className="sticky left-0 bg-muted z-10 text-right" colSpan={4}>Totais:</TableCell>
                                 <TableCell className="text-right">{formatCurrency(totals.totalCost)}</TableCell>
                                 <TableCell className="text-right">{formatCurrency(totals.totalIPI)}</TableCell>
                                 <TableCell className="text-right">{formatCurrency(totals.totalST)}</TableCell>

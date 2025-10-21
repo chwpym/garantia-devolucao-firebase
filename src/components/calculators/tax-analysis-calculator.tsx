@@ -412,8 +412,8 @@ export default function TaxAnalysisCalculator() {
                             ))}
                         </TableBody>
                         <TableFooter>
-                            <TableRow className="font-bold bg-muted/50">
-                                <TableCell className="sticky left-0 bg-muted/50 z-10 text-right" colSpan={5}>Totais:</TableCell>
+                            <TableRow className="font-bold bg-muted">
+                                <TableCell className="sticky left-0 bg-muted z-10 text-right" colSpan={5}>Totais:</TableCell>
                                 <TableCell className="text-right">{formatCurrency(totals.totalCost)}</TableCell>
                                 <TableCell className="text-right">{formatCurrency(totals.totalIcms)}</TableCell>
                                 <TableCell></TableCell>

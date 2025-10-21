@@ -619,7 +619,7 @@ export default function PurchaseSimulatorCalculator() {
                                         ))}
                                     </TableBody>
                                     <TableFooter>
-                                        <TableRow className="font-bold bg-muted/50">
+                                        <TableRow className="font-bold bg-muted">
                                             <TableCell colSpan={7} className="text-right p-2">Totais:</TableCell>
                                             <TableCell className="text-right p-2">{formatCurrency(originalNfeTotalCost)}</TableCell>
                                             <TableCell className="text-right text-primary p-2">{formatCurrency(totals.simulatedTotalCost)}</TableCell>

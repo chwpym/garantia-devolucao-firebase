@@ -304,7 +304,7 @@ export default function NfeComparator() {
                                     <TableCell>
                                         <div className="flex flex-col gap-1">
                                             {result.occurrences.map((occ, index) => (
-                                                <div key={index} className="text-xs p-2 rounded-md bg-muted/50" title={`${occ.emitterName} - NF-e: ${occ.nfeNumber}`}>
+                                                <div key={index} className="text-xs p-2 rounded-md bg-muted" title={`${occ.emitterName} - NF-e: ${occ.nfeNumber}`}>
                                                    <p className="font-semibold">{occ.emitterName}</p>
                                                    <div className="flex justify-between mt-1">
                                                         <span>NF-e: {occ.nfeNumber}</span>
