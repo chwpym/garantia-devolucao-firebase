@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
@@ -109,13 +108,22 @@ export default function ProductsSection() {
     const lowercasedTerm = searchTerm.toLowerCase();
     if (!lowercasedTerm) return products;
 
-    return products.filter(product => 
-        product.codigo.toLowerCase().includes(lowercasedTerm) ||
-        product.descricao.toLowerCase().includes(lowercasedTerm) ||
-        (product.marca && product.marca.toLowerCase().includes(lowercasedTerm)) ||
-        (product.referencia && product.referencia.toLowerCase().includes(lowercasedTerm))
-    );
+    return products.filter(product => {
+        const productCode = product.codigo || '';
+        const productDesc = product.descricao || '';
+        const productBrand = product.marca || '';
+        const productRef = product.referencia || '';
+
+        // Check if any of the fields include the search term.
+        // For 'codigo', we don't use toLowerCase() if the term is purely numeric,
+        // but it's safer to just compare strings case-insensitively.
+        return productCode.toLowerCase().includes(lowercasedTerm) ||
+               productDesc.toLowerCase().includes(lowercasedTerm) ||
+               productBrand.toLowerCase().includes(lowercasedTerm) ||
+               productRef.toLowerCase().includes(lowercasedTerm);
+    });
   }, [products, searchTerm]);
+
 
   const sortedProducts = useMemo(() => {
     let sortableItems = [...filteredProducts];
