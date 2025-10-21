@@ -70,7 +70,8 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   // --- DATA ACTIONS ---
   loadInitialData: async () => {
-    if (get().isDataLoaded) return;
+    // A verificação 'isDataLoaded' foi removida para garantir que os dados sejam
+    // sempre carregados do IndexedDB ao iniciar, corrigindo o bug de sincronização do PWA.
     try {
       await db.initDB();
       const [products, persons, suppliers] = await Promise.all([
