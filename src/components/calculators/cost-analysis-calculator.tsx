@@ -244,7 +244,7 @@ export default function CostAnalysisCalculator() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="min-w-[250px] sticky left-0 bg-background z-10">Descrição</TableHead>
+                                <TableHead className="min-w-[250px] sticky left-0 z-10">Descrição</TableHead>
                                 <TableHead className="text-right">Qtde</TableHead>
                                 <TableHead className="w-[100px]">Fator Conv.</TableHead>
                                 <TableHead className="text-right">Custo Un. Orig.</TableHead>
@@ -263,13 +263,13 @@ export default function CostAnalysisCalculator() {
                         <TableBody>
                             {items.map(item => (
                                 <TableRow key={item.id}>
-                                    <TableCell className="font-medium text-xs sticky left-0 bg-background z-10">{item.description}</TableCell>
+                                    <TableCell className="font-medium text-xs sticky left-0 z-10">{item.description}</TableCell>
                                     <TableCell className="text-right">{formatNumber(item.quantity)}</TableCell>
                                      <TableCell>
                                         <Input
                                             type="text"
                                             inputMode="decimal"
-                                            className="h-8 text-right"
+                                            className="h-8 text-right bg-input-calc"
                                             value={item.conversionFactor}
                                             onChange={(e) => handleConversionFactorChange(item.id, e.target.value)}
                                             placeholder="1"
