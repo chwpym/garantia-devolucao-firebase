@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Settings, Menu, DatabaseBackup, ArrowLeft } from 'lucide-react';
@@ -28,9 +28,23 @@ export default function AppLayout({ children }: AppLayoutProps) {
     loadInitialData,
   } = useAppStore();
 
-  useEffect(() => {
+  const handleDataChanged = useCallback(() => {
     loadInitialData();
   }, [loadInitialData]);
+
+  useEffect(() => {
+    // Initial data load
+    loadInitialData();
+    
+    // Set up a listener for the custom 'datachanged' event
+    // This ensures that data is re-fetched whenever it's updated anywhere in the app
+    window.addEventListener('datachanged', handleDataChanged);
+    
+    // Cleanup the event listener on component unmount
+    return () => {
+      window.removeEventListener('datachanged', handleDataChanged);
+    };
+  }, [handleDataChanged, loadInitialData]);
 
   const handleNavClick = (view: string) => {
     setActiveView(view);
