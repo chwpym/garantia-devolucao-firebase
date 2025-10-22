@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
@@ -257,14 +256,13 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
   }
 
 
-  const getStatusVariant = (status?: Lote['status']) => {
+  const getStatusVariant = (status?: Lote['status']): 'secondary' | 'accent-blue' | 'accent-green' | 'destructive' | 'outline' => {
     switch (status) {
-      case 'Aberto': return 'secondary';
-      case 'Enviado': return 'default';
-      case 'Aprovado Totalmente': return 'default';
-      case 'Aprovado Parcialmente': return 'outline';
+      case 'Enviado': return 'accent-blue';
+      case 'Aprovado Totalmente': return 'accent-green';
+      case 'Aprovado Parcialmente': return 'accent-green';
       case 'Recusado': return 'destructive';
-      default: return 'secondary';
+      case 'Aberto': default: return 'secondary';
     }
   };
 
@@ -837,3 +835,4 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
   );
 }
 
+    
