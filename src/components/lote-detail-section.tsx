@@ -6,14 +6,14 @@ import type { Lote, Warranty, Supplier, WarrantyStatus } from '@/lib/types';
 import { WARRANTY_STATUSES } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
-import { Button } from '../ui/button';
+import { Button } from '@/components/ui/button';
 import { ArrowLeft, Package, Calendar, Building, FileText, MoreHorizontal, Pencil, Trash2, CheckSquare, FileDown, Camera, Image as ImageIcon, Link as LinkIcon, Download, ArrowUpDown } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Badge } from '../ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { format, parseISO } from 'date-fns';
 import Image from 'next/image';
 
-import { Skeleton } from '../ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuPortal, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import {
@@ -27,13 +27,13 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import WarrantyForm from '../warranty-form';
-import LoteForm from '../lote-form';
-import { Checkbox } from '../ui/checkbox';
-import { Input } from '../ui/input';
-import { Textarea } from '../ui/textarea';
-import { Label } from '../ui/label';
-import ReportGenerator from '../report-generator';
+import WarrantyForm from '@/components/warranty-form';
+import LoteForm from '@/components/lote-form';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import ReportGenerator from '@/components/report-generator';
 import {
   Carousel,
   CarouselContent,
@@ -228,6 +228,8 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
         description: 'Não foi possível remover a garantia do lote.',
         variant: 'destructive',
       });
+      setWarrantyToRemove(null);
+      window.dispatchEvent(new CustomEvent('datachanged'));
     }
   };
   
@@ -835,4 +837,3 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
   );
 }
 
-    
