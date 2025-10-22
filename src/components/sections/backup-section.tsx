@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -5,11 +6,10 @@ import { useToast } from '@/hooks/use-toast';
 import * as db from '@/lib/db';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Download, UploadCloud, Loader2 } from 'lucide-react';
+import { Download, UploadCloud } from 'lucide-react';
 import { ImportButton } from '@/components/import-button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CsvExporter from '../csv-exporter';
-import { uploadFile } from '@/lib/storage';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 interface FullBackupData {
@@ -25,7 +25,7 @@ interface FullBackupData {
 
 export default function BackupSection() {
   const { toast } = useToast();
-  const [isUploading, setIsUploading] = useState(false);
+  const [isUploading] = useState(false);
 
   const gatherDataForBackup = async (): Promise<FullBackupData> => {
     await db.initDB();
@@ -85,49 +85,6 @@ export default function BackupSection() {
         });
     }
   };
-
-  const handleCloudExport = async () => {
-    setIsUploading(true);
-    // Temporarily disabled to avoid CORS issues on Spark plan
-    toast({
-        title: 'Funcionalidade Indisponível no Plano Gratuito',
-        description: 'O backup na nuvem requer o plano pago (Blaze) do Firebase para remover as restrições de rede.',
-        variant: 'destructive',
-        duration: 8000,
-    });
-    setIsUploading(false);
-    return;
-    
-    /*
-    try {
-      const fullBackup = await gatherDataForBackup();
-      const dataStr = JSON.stringify(fullBackup, null, 2);
-      const backupBlob = new Blob([dataStr], { type: 'application/json' });
-      
-      const date = new Date().toISOString().split('T')[0];
-      const fileName = `backup_synergia_os_${date}.json`;
-      const filePath = `backups/${fileName}`;
-
-      await uploadFile(backupBlob, filePath);
-
-      toast({
-        title: "Backup na Nuvem Concluído",
-        description: `O arquivo ${fileName} foi salvo com sucesso no Firebase Storage.`,
-      });
-
-    } catch (error) {
-      console.error("Failed to upload backup:", error);
-      toast({
-          title: "Erro no Backup para Nuvem",
-          description: "Não foi possível salvar o backup no Firebase Storage.",
-          variant: "destructive"
-      });
-    } finally {
-      setIsUploading(false);
-    }
-    */
-  }
-
 
   const handleDataImported = () => {
     toast({

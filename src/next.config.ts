@@ -1,11 +1,9 @@
 
-
-// Forçando um novo build para Vercel para pegar as variáveis de ambiente corretas.
 import type {NextConfig} from 'next';
 import withPWA from 'next-pwa';
+import packageJson from '../package.json';
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { version } = require('../package.json');
+const { version } = packageJson;
 
 const nextConfig: NextConfig = {
   /* config options here */

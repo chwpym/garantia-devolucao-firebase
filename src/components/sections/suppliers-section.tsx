@@ -125,7 +125,7 @@ export default function SuppliersSection() {
   }, [suppliers, searchTerm]);
 
   const sortedSuppliers = useMemo(() => {
-    let sortableItems = [...filteredSuppliers];
+    const sortableItems = [...filteredSuppliers];
     if (sortConfig !== null) {
         sortableItems.sort((a, b) => {
             const valA = a[sortConfig.key];

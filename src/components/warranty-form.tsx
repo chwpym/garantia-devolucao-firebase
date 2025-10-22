@@ -1,8 +1,7 @@
 
-
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -10,8 +9,7 @@ import { Loader2, PlusCircle, Upload, X as XIcon, Image as ImageIcon } from 'luc
 import Image from 'next/image';
 
 
-import type { Warranty, Person, Supplier, Product } from '@/lib/types';
-import * as db from '@/lib/db';
+import type { Warranty, Person, Supplier, Product, WarrantyStatus } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -126,7 +124,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
             ...values,
             id: isClone ? undefined : selectedWarranty?.id,
             quantidade: values.quantidade ?? 1,
-            status: values.status,
+            status: values.status as WarrantyStatus,
             photos: values.photos ?? [],
             dataRegistro: selectedWarranty?.dataRegistro && !isClone ? selectedWarranty.dataRegistro : new Date().toISOString(),
         };
@@ -222,7 +220,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
             .catch(error => {
                 toast({
                     title: 'Erro ao carregar imagem',
-                    description: error.message,
+                    description: (error as Error).message,
                     variant: 'destructive',
                 });
             });

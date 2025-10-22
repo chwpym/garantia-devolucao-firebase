@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import * as db from "@/lib/db";
-import type { Person, Supplier, Warranty, WarrantyStatus } from "@/lib/types";
+import type { Person, Supplier, Warranty } from "@/lib/types";
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";

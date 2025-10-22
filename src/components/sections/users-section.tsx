@@ -1,8 +1,7 @@
 
-
 'use client';
 
-import { useCallback, useEffect, useState, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -186,7 +185,7 @@ export default function UsersSection() {
   }, [users, showBlocked]);
 
   const sortedUsers = useMemo(() => {
-    let sortableItems = [...filteredUsers];
+    const sortableItems = [...filteredUsers];
     if (sortConfig !== null) {
         sortableItems.sort((a, b) => {
             const valA = a[sortConfig.key];
@@ -249,7 +248,7 @@ export default function UsersSection() {
           <Info className="h-4 w-4" />
           <AlertTitle>Como Adicionar Novos Usuários</AlertTitle>
           <AlertDescription>
-            Para garantir a segurança, novos usuários devem se cadastrar pela página de <a href="/signup" className='underline'>cadastro público</a>. Após se registrarem, eles aparecerão nesta lista com o nível "Usuário Padrão" e você poderá editar suas permissões ou status.
+            Para garantir a segurança, novos usuários devem se cadastrar pela página de <a href="/signup" className='underline'>cadastro público</a>. Após se registrarem, eles aparecerão nesta lista com o nível &quot;Usuário Padrão&quot; e você poderá editar suas permissões ou status.
           </AlertDescription>
         </Alert>
 

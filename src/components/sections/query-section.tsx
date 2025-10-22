@@ -165,7 +165,7 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
   }, [searchTerm, warranties, dateRange, clientFilter, showInLote]);
   
   const sortedWarranties = useMemo(() => {
-    let sortableItems = [...filteredWarranties];
+    const sortableItems = [...filteredWarranties];
     if (sortConfig !== null) {
         sortableItems.sort((a, b) => {
             const valA = a[sortConfig.key];

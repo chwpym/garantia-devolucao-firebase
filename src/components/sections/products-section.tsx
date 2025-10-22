@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
@@ -126,7 +127,7 @@ export default function ProductsSection() {
 
 
   const sortedProducts = useMemo(() => {
-    let sortableItems = [...filteredProducts];
+    const sortableItems = [...filteredProducts];
     if (sortConfig !== null) {
       sortableItems.sort((a, b) => {
         const valA = a[sortConfig.key];

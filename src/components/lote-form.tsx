@@ -16,7 +16,6 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from './ui/textarea';
-import { uploadFile } from '@/lib/storage';
 
 const loteStatuses: [LoteStatus, ...LoteStatus[]] = ['Aberto', 'Enviado', 'Aprovado Parcialmente', 'Aprovado Totalmente', 'Recusado'];
 
@@ -107,50 +106,6 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
         event.target.value = '';
     }
     return;
-
-    /*
-    const files = event.target.files;
-    if (!files || !editingLote?.id) {
-        if (!editingLote?.id) {
-            toast({
-                title: 'Aviso',
-                description: 'Por favor, salve o lote antes de anexar arquivos.',
-                variant: 'destructive'
-            });
-        }
-        return;
-    }
-
-    setIsUploading(true);
-    const currentAttachments = form.getValues('attachments') || [];
-    
-    try {
-        const uploadPromises = Array.from(files).map(async file => {
-            const filePath = `lotes/${editingLote.id}/${file.name}`;
-            const downloadURL = await uploadFile(file, filePath);
-            return { name: file.name, url: downloadURL };
-        });
-
-        const newAttachments = await Promise.all(uploadPromises);
-        setValue('attachments', [...currentAttachments, ...newAttachments], { shouldValidate: true });
-        
-        toast({
-            title: 'Sucesso',
-            description: `${newAttachments.length} arquivo(s) anexado(s) com sucesso. Clique em 'Atualizar Lote' para salvar.`
-        });
-        
-    } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "Ocorreu um erro desconhecido.";
-         toast({
-            title: 'Erro de Upload',
-            description: message,
-            variant: 'destructive',
-        });
-    } finally {
-        setIsUploading(false);
-        if(event.target) event.target.value = '';
-    }
-    */
   };
 
   const removeAttachment = (index: number) => {

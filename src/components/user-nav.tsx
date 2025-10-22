@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import {
@@ -21,13 +20,11 @@ import { useAuth } from "@/hooks/use-auth";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 
 export function UserNav() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const router = useRouter();
   
   if (!user) {
     return null;

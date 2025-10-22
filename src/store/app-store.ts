@@ -1,10 +1,8 @@
 
-
 'use client';
 
 import { create } from 'zustand';
 import type { Warranty, Person, Supplier, Product, WarrantyStatus } from '@/lib/types';
-import { navConfig, type NavItem } from '@/config/nav-config';
 import * as db from '@/lib/db';
 
 export type RegisterMode = 'edit' | 'clone';
@@ -226,4 +224,3 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   setNewLoteModalOpen: (isOpen: boolean) => set({ isNewLoteModalOpen: isOpen }),
 }));
-

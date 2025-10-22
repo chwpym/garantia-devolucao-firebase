@@ -133,7 +133,7 @@ export default function PersonsSection() {
   }, [persons, searchTerm]);
   
   const sortedPersons = useMemo(() => {
-    let sortableItems = [...filteredPersons];
+    const sortableItems = [...filteredPersons];
     if (sortConfig !== null) {
         sortableItems.sort((a, b) => {
             const valA = a[sortConfig.key];

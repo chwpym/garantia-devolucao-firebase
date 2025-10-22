@@ -20,7 +20,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 
 import { Input } from '../ui/input';
 import { DatePickerWithRange } from '../ui/date-range-picker';
-import { cn } from '@/lib/utils';
 
 type DevolucaoFlat = Omit<Devolucao, 'itens' | 'id'> & Partial<ItemDevolucao> & { id: number, itemId?: number };
 type SortableKeys = keyof DevolucaoFlat;
@@ -116,7 +115,7 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
   }, [searchTerm, devolucoes, dateRange]);
 
   const sortedDevolucoes = useMemo(() => {
-    let sortableItems = [...filteredDevolucoes];
+    const sortableItems = [...filteredDevolucoes];
     if (sortConfig !== null) {
         sortableItems.sort((a, b) => {
             const valA = a[sortConfig.key];

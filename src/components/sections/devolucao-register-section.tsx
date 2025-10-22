@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -13,16 +12,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Trash2, Book, CalendarIcon } from 'lucide-react';
-import type { Person, Devolucao, ReturnStatus, Product, ItemDevolucao } from '@/lib/types';
+import { PlusCircle, Trash2 } from 'lucide-react';
+import type { ReturnStatus, Product, ItemDevolucao } from '@/lib/types';
 import { Combobox } from '../ui/combobox';
 import { DatePicker } from '../ui/date-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '../ui/textarea';
-import { format, parseISO, isToday, isSameDay } from 'date-fns';
+import { parseISO, isSameDay } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import ProductForm from '../product-form';
 import { useAppStore } from '@/store/app-store';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
@@ -64,8 +63,7 @@ const defaultFormValues: DevolucaoFormValues = {
   itens: [{ codigoPeca: '', descricaoPeca: '', quantidade: 1 }],
 };
 
-// --- Componente para a Lista de Devoluções Recentes ---
-type DevolucaoComItem = Devolucao & { item: ItemDevolucao };
+type DevolucaoComItem = Awaited<ReturnType<typeof db.getAllDevolucoes>>[0] & { item: ItemDevolucao };
 
 function RecentDevolutionsList() {
     const [recentItems, setRecentItems] = useState<DevolucaoComItem[]>([]);
@@ -172,7 +170,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
         name: 'itens',
     });
 
-    const loadEditingData = async (id: number) => {
+    const loadEditingData = useCallback(async (id: number) => {
         const data = await db.getDevolucaoById(id);
         if (data) {
             form.reset({
@@ -191,15 +189,14 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
             });
             onSave(); // Volta para a lista
         }
-    };
+    }, [form, onSave, replace, toast]);
 
 
     useEffect(() => {
         if (isDataLoaded && editingId) {
             loadEditingData(editingId);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [editingId, isDataLoaded]);
+    }, [editingId, isDataLoaded, loadEditingData]);
 
     const onSubmit = async (data: DevolucaoFormValues) => {
         try {
@@ -218,7 +215,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
             };
 
             if (editingId) {
-                const devolucaoData: Devolucao = {
+                const devolucaoData = {
                     ...devolucaoBaseData,
                     id: editingId,
                 };
@@ -236,7 +233,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                 onSave();
 
             } else {
-                const devolucaoData: Omit<Devolucao, 'id'> = {
+                const devolucaoData = {
                     ...devolucaoBaseData
                 };
                 const itensData = data.itens.map(item => ({

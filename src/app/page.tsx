@@ -26,7 +26,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 export type RegisterMode = 'edit' | 'clone';
 
-const viewComponents: { [key: string]: React.ComponentType<any> } = {
+const viewComponents: { [key: string]: React.ComponentType<{}> } = {
   dashboard: DashboardSection,
   register: RegisterSection,
   'batch-register': BatchRegisterSection,
@@ -106,4 +106,3 @@ export default function Home() {
     </AppLayout>
   );
 }
-
