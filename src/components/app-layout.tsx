@@ -52,6 +52,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
   };
   
   const showBackButton = navigationHistory.length > 0;
+  
+  // Display the first 7 characters of the commit hash, or the full version string
+  const appVersion = process.env.APP_VERSION || '0.1.0';
+  const displayVersion = appVersion.length > 7 ? appVersion.substring(0, 7) : appVersion;
 
   return (
     <div className="flex h-screen w-full bg-muted/40">
@@ -107,7 +111,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                     </nav>
                   </div>
                   <div className="text-center text-xs text-muted-foreground pb-2">
-                    Versão {process.env.APP_VERSION || '0.1.0'}
+                    Versão {displayVersion}
                   </div>
                 </SheetContent>
               </Sheet>
