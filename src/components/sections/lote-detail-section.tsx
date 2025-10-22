@@ -3,16 +3,17 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import type { Lote, Warranty, Supplier, WarrantyStatus } from '@/lib/types';
+import { WARRANTY_STATUSES } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
-import { Button } from '../ui/button';
+import { Button } from '@/components/ui/button';
 import { ArrowLeft, Package, Calendar, Building, FileText, MoreHorizontal, Pencil, Trash2, CheckSquare, FileDown, Camera, Image as ImageIcon, Link as LinkIcon, Download, ArrowUpDown } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Badge } from '../ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { format, parseISO } from 'date-fns';
 import Image from 'next/image';
 
-import { Skeleton } from '../ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuPortal, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import {
@@ -26,13 +27,13 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import WarrantyForm from '../warranty-form';
-import LoteForm from '../lote-form';
-import { Checkbox } from '../ui/checkbox';
-import { Input } from '../ui/input';
-import { Textarea } from '../ui/textarea';
-import { Label } from '../ui/label';
-import ReportGenerator from '../report-generator';
+import WarrantyForm from '@/components/warranty-form';
+import LoteForm from '@/components/lote-form';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import ReportGenerator from '@/components/report-generator';
 import {
   Carousel,
   CarouselContent,
@@ -40,6 +41,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel"
+import { cn } from '@/lib/utils';
 
 
 interface LoteDetailSectionProps {
@@ -48,7 +50,7 @@ interface LoteDetailSectionProps {
 }
 
 type SortableKeys = keyof Warranty;
-const warrantyStatuses: WarrantyStatus[] = ['Em análise', 'Aprovada', 'Recusada', 'Paga'];
+
 
 const LOTE_PDF_DEFAULT_FIELDS = [
   'codigo', 'descricao', 'quantidade', 'defeito'
@@ -211,7 +213,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
   const handleConfirmRemove = async () => {
     if (!warrantyToRemove) return;
     try {
-      const updatedWarranty = { ...warrantyToRemove, loteId: null };
+      const updatedWarranty = { ...warrantyToRemove, loteId: null, status: 'Aguardando Envio' as WarrantyStatus };
       await db.updateWarranty(updatedWarranty);
       toast({
         title: 'Garantia Removida',
@@ -226,6 +228,8 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
         description: 'Não foi possível remover a garantia do lote.',
         variant: 'destructive',
       });
+      setWarrantyToRemove(null);
+      window.dispatchEvent(new CustomEvent('datachanged'));
     }
   };
   
@@ -254,23 +258,32 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
   }
 
 
-  const getStatusVariant = (status?: Lote['status']) => {
+  const getStatusVariant = (status?: Lote['status']): 'secondary' | 'accent-blue' | 'accent-green' | 'destructive' | 'outline' => {
     switch (status) {
-      case 'Aberto': return 'secondary';
-      case 'Enviado': return 'default';
-      case 'Aprovado Totalmente': return 'default';
-      case 'Aprovado Parcialmente': return 'outline';
+      case 'Enviado': return 'accent-blue';
+      case 'Aprovado Totalmente': return 'accent-green';
+      case 'Aprovado Parcialmente': return 'accent-green';
       case 'Recusado': return 'destructive';
-      default: return 'secondary';
+      case 'Aberto': default: return 'secondary';
     }
   };
 
-  const getWarrantyStatusVariant = (status?: Warranty['status']) => {
+  const getWarrantyStatusClass = (status?: Warranty['status']): string => {
     switch (status) {
-      case 'Aprovada': return 'default';
-      case 'Recusada': return 'destructive';
-      case 'Paga': return 'outline';
-      case 'Em análise': default: return 'secondary';
+      case 'Aprovada - Peça Nova':
+        return 'bg-accent-green text-accent-green-foreground';
+      case 'Aprovada - Crédito Boleto':
+        return 'bg-accent-green-dark text-accent-green-dark-foreground';
+      case 'Aprovada - Crédito NF':
+        return 'bg-primary text-primary-foreground';
+      case 'Recusada':
+        return 'bg-destructive text-destructive-foreground';
+      case 'Enviado para Análise':
+        return 'bg-accent-blue text-accent-blue-foreground';
+      case 'Aguardando Envio':
+        return 'bg-amber-500 text-white';
+      default:
+        return 'bg-secondary text-secondary-foreground';
     }
   };
 
@@ -317,11 +330,6 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
         });
 
         if (type === 'retorno') {
-            toast({
-                title: "Lembrete",
-                description: "Não se esqueça de alterar o status das garantias para 'Aprovada'.",
-                duration: 5000,
-            });
             setNfRetornoValue('');
         } else {
             setNfSaidaValue('');
@@ -616,7 +624,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                        {warrantyStatuses.map(status => (
+                        {WARRANTY_STATUSES.map(status => (
                             <DropdownMenuItem key={status} onSelect={() => handleBulkStatusChange(status)}>
                                 Marcar como {status}
                             </DropdownMenuItem>
@@ -679,7 +687,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                         <TableCell>{warranty.notaFiscalSaida || '-'}</TableCell>
                         <TableCell>{warranty.notaFiscalRetorno || '-'}</TableCell>
                         <TableCell>
-                          <Badge variant={getWarrantyStatusVariant(warranty.status)}>{warranty.status || 'N/A'}</Badge>
+                          <Badge className={cn(getWarrantyStatusClass(warranty.status))}>{warranty.status || 'N/A'}</Badge>
                         </TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
@@ -706,7 +714,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                                     </DropdownMenuSubTrigger>
                                     <DropdownMenuPortal>
                                         <DropdownMenuSubContent>
-                                            {warrantyStatuses.map(status => (
+                                            {WARRANTY_STATUSES.map(status => (
                                                 <DropdownMenuItem key={status} onClick={() => handleStatusChange(warranty, status)}>
                                                     <span>{status}</span>
                                                 </DropdownMenuItem>
@@ -779,7 +787,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
             <AlertDialogTitle>Remover Garantia do Lote?</AlertDialogTitle>
             <AlertDialogDescription>
               Você tem certeza que deseja remover a garantia (Código: <span className="font-bold">{warrantyToRemove?.codigo || 'N/A'}</span>) deste lote? 
-              A garantia não será excluída, apenas desvinculada, e voltará para a tela de Consulta.
+              A garantia não será excluída, apenas desvinculada, e seu status voltará para &quot;Aguardando Envio&quot;.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
