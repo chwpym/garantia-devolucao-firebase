@@ -92,7 +92,7 @@ export default function UsersSection() {
     try {
       const allUsers = await db.getAllUserProfiles();
       setUsers(allUsers);
-    } catch (error) {
+    } catch {
       toast({
         title: 'Erro ao Carregar Usuários',
         description: 'Não foi possível buscar a lista de usuários.',

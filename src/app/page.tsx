@@ -1,6 +1,7 @@
 
 'use client';
 
+import type { ComponentType } from 'react';
 import AppLayout from '@/components/app-layout';
 import DashboardSection from '@/components/sections/dashboard-section';
 import RegisterSection from '@/components/sections/register-section';
@@ -26,7 +27,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 export type RegisterMode = 'edit' | 'clone';
 
-const viewComponents: { [key: string]: React.ComponentType<any> } = {
+const viewComponents: { [key: string]: ComponentType<any> } = {
   dashboard: DashboardSection,
   register: RegisterSection,
   'batch-register': BatchRegisterSection,
