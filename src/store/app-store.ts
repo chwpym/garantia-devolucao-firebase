@@ -53,7 +53,7 @@ interface AppState {
 
 const runDataMigration = async () => {
   const MIGRATION_KEY = 'warranty_status_migration_v1';
-  if (localStorage.getItem(MIGRATION_KEY)) {
+  if (typeof window !== 'undefined' && localStorage.getItem(MIGRATION_KEY)) {
     return; // Migration already performed
   }
 
@@ -64,7 +64,7 @@ const runDataMigration = async () => {
 
     for (const warranty of warranties) {
       let needsUpdate = false;
-      let newStatus = warranty.status;
+      let newStatus: WarrantyStatus | undefined = warranty.status;
 
       switch (warranty.status as any) {
         case 'Em análise':
@@ -81,8 +81,8 @@ const runDataMigration = async () => {
           break;
       }
 
-      if (needsUpdate) {
-        const updatedWarranty = { ...warranty, status: newStatus as WarrantyStatus };
+      if (needsUpdate && newStatus) {
+        const updatedWarranty = { ...warranty, status: newStatus };
         await db.updateWarranty(updatedWarranty);
         updatedCount++;
       }
@@ -94,7 +94,9 @@ const runDataMigration = async () => {
       console.log('Nenhuma garantia precisou de migração.');
     }
 
-    localStorage.setItem(MIGRATION_KEY, 'completed');
+    if (typeof window !== 'undefined') {
+        localStorage.setItem(MIGRATION_KEY, 'completed');
+    }
   } catch (error) {
     console.error('Falha na migração de dados:', error);
   }

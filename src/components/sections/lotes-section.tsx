@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import type { Lote, Supplier, WarrantyStatus } from '@/lib/types';
+import type { Lote, Supplier, Warranty } from '@/lib/types';
 import * as db from '@/lib/db';
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal, Pencil, Trash2, Package, Calendar, Building, FileText, CheckCircle, ShieldX, Hourglass, DollarSign } from 'lucide-react';

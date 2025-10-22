@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -44,7 +44,6 @@ interface LoteFormProps {
 export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isUploading, setIsUploading] = useState(false);
 
   const form = useForm<LoteFormValues>({
     resolver: zodResolver(formSchema),
@@ -225,20 +224,16 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
                             multiple
                             className="hidden"
                             onChange={handleFileChange}
-                            disabled={isUploading || !editingLote}
+                            disabled={!editingLote}
                         />
                         <Button 
                             type="button" 
                             variant="outline"
                             onClick={() => fileInputRef.current?.click()}
-                            disabled={isUploading || !editingLote}
+                            disabled={!editingLote}
                         >
-                            {isUploading ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
-                                <Upload className="mr-2 h-4 w-4" />
-                            )}
-                            {isUploading ? 'Enviando...' : 'Anexar Arquivos'}
+                            <Upload className="mr-2 h-4 w-4" />
+                            Anexar Arquivos
                         </Button>
                         </div>
                     </FormControl>
@@ -271,8 +266,8 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
             />
         </div>
         <DialogFooter>
-          <Button type="submit" disabled={isSubmitting || isUploading}>
-            {isSubmitting || isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             {editingLote ? 'Atualizar Lote' : 'Criar Lote'}
           </Button>
         </DialogFooter>

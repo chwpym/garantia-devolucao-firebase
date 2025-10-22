@@ -150,7 +150,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
       });
       
       setStatusData(Object.entries(statusCounts)
-        .filter(([_, value]) => value > 0)
+        .filter(([, value]) => value > 0)
         .map(([name, value]) => ({ name, value, fill: COLORS[name as WarrantyStatus] }))
       );
       
