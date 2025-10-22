@@ -27,6 +27,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 export type RegisterMode = 'edit' | 'clone';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const viewComponents: { [key: string]: ComponentType<any> } = {
   dashboard: DashboardSection,
   register: RegisterSection,
