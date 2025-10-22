@@ -1,9 +1,9 @@
 
 import type {NextConfig} from 'next';
 import withPWA from 'next-pwa';
+import pkg from './package.json' assert { type: 'json' };
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { version } = require('./package.json');
+const { version } = pkg;
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -36,7 +36,8 @@ const nextConfig: NextConfig = {
     ],
   },
   env: {
-    APP_VERSION: version,
+    // Use Vercel's git commit hash for versioning in production, fallback to package.json version
+    APP_VERSION: process.env.VERCEL_GIT_COMMIT_SHA || version,
   },
 };
 
@@ -47,14 +48,5 @@ const pwaConfig = withPWA({
   disable: process.env.NODE_ENV === 'development',
 });
 
-
-// A configuração env é necessária para o Next.js carregar as variáveis de ambiente
 // A Vercel já expõe as variáveis de ambiente do projeto, não precisamos injetá-las aqui durante o build.
-// Manter o 'dotenv' é útil apenas para o ambiente de desenvolvimento local.
-if (process.env.NODE_ENV === 'development') {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    require('dotenv').config();
-}
-
-
 export default pwaConfig(nextConfig);
