@@ -27,7 +27,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 export type RegisterMode = 'edit' | 'clone';
 
-const viewComponents: { [key: string]: ComponentType<any> } = {
+const viewComponents: { [key: string]: ComponentType<object> } = {
   dashboard: DashboardSection,
   register: RegisterSection,
   'batch-register': BatchRegisterSection,

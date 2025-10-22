@@ -66,7 +66,7 @@ const runDataMigration = async () => {
       let needsUpdate = false;
       let newStatus: WarrantyStatus | undefined = warranty.status;
       
-      const oldStatus: any = warranty.status;
+      const oldStatus = warranty.status as unknown; // Treat as unknown for safe comparison
 
       switch (oldStatus) {
         case 'Em análise':
