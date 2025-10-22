@@ -14,11 +14,13 @@ import { format, parseISO, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Devolucao, ItemDevolucao, WarrantyStatus } from '@/lib/types';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import { Badge } from '../ui/badge';
-import { Button } from '../ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { WARRANTY_STATUSES } from '@/lib/types';
+
 
 // Tipos para Garantias
 interface DashboardStats {
@@ -117,14 +119,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
           return acc + (warranty.quantidade ?? 0);
       }, 0);
       
-      const statusCounts: Record<WarrantyStatus, number> = {
-        'Aguardando Envio': 0,
-        'Enviado para Análise': 0,
-        'Aprovada - Peça Nova': 0,
-        'Aprovada - Crédito NF': 0,
-        'Aprovada - Crédito Boleto': 0,
-        'Recusada': 0,
-      };
+      const statusCounts = Object.fromEntries(WARRANTY_STATUSES.map(s => [s, 0])) as Record<WarrantyStatus, number>;
 
       let totalAprovadas = 0;
       let totalPendentes = 0;
@@ -140,9 +135,6 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
         if(w.status === 'Aguardando Envio' || w.status === 'Enviado para Análise') {
             totalPendentes++;
         }
-        // Assuming "Paga" is a distinct status, it's not in the new flow.
-        // This might need adjustment based on the actual status flow from `types.ts`
-        // For now, let's assume 'Aprovada - Crédito Boleto' means it is paid.
         if(w.status === 'Aprovada - Crédito Boleto') {
             totalPagas++;
         }
@@ -158,7 +150,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
       });
       
       setStatusData(Object.entries(statusCounts)
-        .filter(([_, value]) => value > 0)
+        .filter(([, value]) => value > 0)
         .map(([name, value]) => ({ name, value, fill: COLORS[name as WarrantyStatus] }))
       );
       

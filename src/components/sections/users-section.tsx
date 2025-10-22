@@ -141,7 +141,7 @@ export default function UsersSection() {
         setIsFormModalOpen(false);
         setEditingUser(null);
         window.dispatchEvent(new CustomEvent('datachanged'));
-    } catch (error) {
+    } catch {
          toast({
             title: 'Erro ao Atualizar',
             description: 'Não foi possível atualizar o perfil do usuário.',
@@ -166,7 +166,7 @@ export default function UsersSection() {
         description: `Usuário ${user.displayName} foi ${newStatus === 'blocked' ? 'bloqueado' : 'desbloqueado'}.`,
       });
       loadUsers();
-    } catch (error) {
+    } catch {
        toast({
         title: 'Erro',
         description: 'Não foi possível alterar o status do usuário.',

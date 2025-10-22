@@ -166,7 +166,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
   }, [loadLoteDetails]);
 
   const sortedWarranties = useMemo(() => {
-    let sortableItems = [...warranties];
+    const sortableItems = [...warranties];
     if (sortConfig !== null) {
         sortableItems.sort((a, b) => {
             const valA = a[sortConfig.key];
@@ -836,4 +836,3 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
     </div>
   );
 }
-
