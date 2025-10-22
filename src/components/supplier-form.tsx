@@ -142,6 +142,7 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
       const dataToSave = {
         ...data,
         cnpj: data.cnpj?.replace(/[^\d]/g, '') || '',
+        cidade: data.cidade || '',
       };
 
       if (editingSupplier?.id) {

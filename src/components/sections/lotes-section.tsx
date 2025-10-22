@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import type { Lote, Supplier, Warranty } from '@/lib/types';
+import type { Lote, Supplier, Warranty, WarrantyStatus } from '@/lib/types';
 import * as db from '@/lib/db';
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal, Pencil, Trash2, Package, Calendar, Building, FileText, CheckCircle, ShieldX, Hourglass, DollarSign } from 'lucide-react';
@@ -38,12 +38,7 @@ interface LotesSectionProps {
 
 interface LoteWithStats extends Lote {
     itemCount: number;
-    statusCounts: {
-        'Aprovada': number;
-        'Recusada': number;
-        'Paga': number;
-        'Pendente': number;
-    };
+    statusCounts: Record<WarrantyStatus, number>;
 }
 
 
@@ -71,17 +66,19 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
         db.getAllWarranties()
       ]);
 
-      const lotesWithCounts = allLotes.map(lote => {
+      const lotesWithCounts: LoteWithStats[] = allLotes.map(lote => {
           const loteWarranties = allWarranties.filter(w => w.loteId === lote.id);
           const itemCount = loteWarranties.length;
-          const statusCounts = {
-              'Aprovada': loteWarranties.filter(w => w.status === 'Aprovada').length,
-              'Recusada': loteWarranties.filter(w => w.status === 'Recusada').length,
-              'Paga': loteWarranties.filter(w => w.status === 'Paga').length,
-              'Pendente': loteWarranties.filter(w => w.status === 'Em análise' || w.status === 'Enviado para Análise' || w.status === 'Aguardando Envio').length,
-          };
+          
+          const statusCounts = loteWarranties.reduce((acc, w) => {
+              if (w.status) {
+                  acc[w.status] = (acc[w.status] || 0) + 1;
+              }
+              return acc;
+          }, {} as Record<WarrantyStatus, number>);
+
           return { ...lote, itemCount, statusCounts };
-      })
+      });
 
       setLotes(lotesWithCounts.sort((a, b) => parseISO(b.dataCriacao).getTime() - parseISO(a.dataCriacao).getTime()));
       setSuppliers(allSuppliers);
@@ -140,12 +137,11 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
 
   const getStatusVariant = (status: Lote['status']) => {
     switch (status) {
-      case 'Aberto': return 'secondary';
-      case 'Enviado': return 'default';
-      case 'Aprovado Totalmente': return 'default';
-      case 'Aprovado Parcialmente': return 'outline';
+      case 'Enviado': return 'accent-blue';
+      case 'Aprovado Totalmente': return 'accent-green';
+      case 'Aprovado Parcialmente': return 'accent-green';
       case 'Recusado': return 'destructive';
-      default: return 'secondary';
+      case 'Aberto': default: return 'secondary';
     }
   };
 
@@ -168,9 +164,9 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
                 key={lote.id} 
                 className={cn(
                     "flex flex-col shadow-md hover:border-primary transition-colors cursor-pointer border-2",
-                    lote.status === 'Enviado' ? 'border-primary' :
+                    lote.status === 'Enviado' ? 'border-accent-blue' :
                     lote.status === 'Recusado' ? 'border-destructive' :
-                    lote.status === 'Aprovado Totalmente' ? 'border-accent-green' :
+                    lote.status === 'Aprovado Totalmente' || lote.status === 'Aprovado Parcialmente' ? 'border-accent-green' :
                     'border-transparent'
                 )}
                 onClick={() => onNavigateToLote(lote.id!)}
@@ -220,10 +216,10 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
                      <span>NF de Retorno: {lote.notasFiscaisRetorno || 'N/D'}</span>
                   </div>
                     <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t">
-                        <div className='flex items-center gap-1.5'><CheckCircle className='h-3 w-3 text-green-500' /> Aprovados: <span className='font-bold'>{lote.statusCounts.Aprovada}</span></div>
-                        <div className='flex items-center gap-1.5'><ShieldX className='h-3 w-3 text-red-500' /> Recusados: <span className='font-bold'>{lote.statusCounts.Recusada}</span></div>
-                        <div className='flex items-center gap-1.5'><DollarSign className='h-3 w-3 text-blue-500' /> Pagos: <span className='font-bold'>{lote.statusCounts.Paga}</span></div>
-                        <div className='flex items-center gap-1.5'><Hourglass className='h-3 w-3 text-amber-500' /> Pendentes: <span className='font-bold'>{lote.statusCounts.Pendente}</span></div>
+                        <div className='flex items-center gap-1.5'><CheckCircle className='h-3 w-3 text-green-500' /> Aprovados: <span className='font-bold'>{lote.statusCounts['Aprovada - Peça Nova'] || 0 + (lote.statusCounts['Aprovada - Crédito NF'] || 0) + (lote.statusCounts['Aprovada - Crédito Boleto'] || 0) }</span></div>
+                        <div className='flex items-center gap-1.5'><ShieldX className='h-3 w-3 text-red-500' /> Recusados: <span className='font-bold'>{lote.statusCounts['Recusada'] || 0}</span></div>
+                        <div className='flex items-center gap-1.5'><DollarSign className='h-3 w-3 text-blue-500' /> Pagos (Boleto): <span className='font-bold'>{lote.statusCounts['Aprovada - Crédito Boleto'] || 0}</span></div>
+                        <div className='flex items-center gap-1.5'><Hourglass className='h-3 w-3 text-amber-500' /> Pendentes: <span className='font-bold'>{(lote.statusCounts['Aguardando Envio'] || 0) + (lote.statusCounts['Enviado para Análise'] || 0)}</span></div>
                     </div>
               </CardContent>
               <CardFooter>

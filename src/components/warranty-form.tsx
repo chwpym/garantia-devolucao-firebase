@@ -126,7 +126,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
             ...values,
             id: isClone ? undefined : selectedWarranty?.id,
             quantidade: values.quantidade ?? 1,
-            status: values.status ?? 'Aguardando Envio',
+            status: values.status,
             photos: values.photos ?? [],
             dataRegistro: selectedWarranty?.dataRegistro && !isClone ? selectedWarranty.dataRegistro : new Date().toISOString(),
         };
