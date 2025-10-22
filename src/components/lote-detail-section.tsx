@@ -836,3 +836,4 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
     </div>
   );
 }
+
