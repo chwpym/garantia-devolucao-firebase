@@ -1,10 +1,9 @@
 
 import type {NextConfig} from 'next';
 import withPWA from 'next-pwa';
-import 'dotenv/config'; // Import dotenv config
-import packageJson from '../package.json';
 
-const { version } = packageJson;
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { version } = require('./package.json');
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -53,7 +52,8 @@ const pwaConfig = withPWA({
 // A Vercel já expõe as variáveis de ambiente do projeto, não precisamos injetá-las aqui durante o build.
 // Manter o 'dotenv' é útil apenas para o ambiente de desenvolvimento local.
 if (process.env.NODE_ENV === 'development') {
-    // O dotenv já foi importado no topo do arquivo.
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    require('dotenv').config();
 }
 
 
