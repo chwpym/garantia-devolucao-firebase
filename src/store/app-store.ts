@@ -3,7 +3,7 @@
 'use client';
 
 import { create } from 'zustand';
-import type { Warranty, Person, Supplier, Product } from '@/lib/types';
+import type { Warranty, Person, Supplier, Product, WarrantyStatus } from '@/lib/types';
 import { navConfig, type NavItem } from '@/config/nav-config';
 import * as db from '@/lib/db';
 
@@ -53,6 +53,56 @@ interface AppState {
   setNewLoteModalOpen: (isOpen: boolean) => void;
 }
 
+const runDataMigration = async () => {
+  const MIGRATION_KEY = 'warranty_status_migration_v1';
+  if (localStorage.getItem(MIGRATION_KEY)) {
+    return; // Migration already performed
+  }
+
+  console.log('Iniciando migração de status de garantias...');
+  try {
+    const warranties = await db.getAllWarranties();
+    let updatedCount = 0;
+
+    for (const warranty of warranties) {
+      let needsUpdate = false;
+      let newStatus = warranty.status;
+
+      switch (warranty.status as any) {
+        case 'Em análise':
+          newStatus = 'Enviado para Análise';
+          needsUpdate = true;
+          break;
+        case 'Aprovada':
+          newStatus = 'Aprovada - Peça Nova';
+          needsUpdate = true;
+          break;
+        case 'Paga':
+          newStatus = 'Aprovada - Crédito Boleto';
+          needsUpdate = true;
+          break;
+      }
+
+      if (needsUpdate) {
+        const updatedWarranty = { ...warranty, status: newStatus as WarrantyStatus };
+        await db.updateWarranty(updatedWarranty);
+        updatedCount++;
+      }
+    }
+
+    if (updatedCount > 0) {
+      console.log(`Migração concluída! ${updatedCount} garantias foram atualizadas.`);
+    } else {
+      console.log('Nenhuma garantia precisou de migração.');
+    }
+
+    localStorage.setItem(MIGRATION_KEY, 'completed');
+  } catch (error) {
+    console.error('Falha na migração de dados:', error);
+  }
+};
+
+
 export const useAppStore = create<AppState>((set, get) => ({
   // Initial state
   products: [],
@@ -70,10 +120,11 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   // --- DATA ACTIONS ---
   loadInitialData: async () => {
-    // A verificação 'isDataLoaded' foi removida para garantir que os dados sejam
-    // sempre carregados do IndexedDB ao iniciar, corrigindo o bug de sincronização do PWA.
     try {
       await db.initDB();
+      // Run data migration before loading data
+      await runDataMigration();
+
       const [products, persons, suppliers] = await Promise.all([
         db.getAllProducts(),
         db.getAllPersons(),
@@ -175,3 +226,4 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   setNewLoteModalOpen: (isOpen: boolean) => set({ isNewLoteModalOpen: isOpen }),
 }));
+
