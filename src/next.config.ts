@@ -1,9 +1,9 @@
 
 import type {NextConfig} from 'next';
 import withPWA from 'next-pwa';
-import pkg from './package.json' assert { type: 'json' };
 
-const { version } = pkg;
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { version } = require('./package.json');
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -47,6 +47,7 @@ const pwaConfig = withPWA({
   skipWaiting: true, // Garante que o novo Service Worker ative imediatamente
   disable: process.env.NODE_ENV === 'development',
 });
+
 
 // A Vercel já expõe as variáveis de ambiente do projeto, não precisamos injetá-las aqui durante o build.
 export default pwaConfig(nextConfig);
