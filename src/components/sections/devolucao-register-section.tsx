@@ -278,14 +278,19 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
     };
 
     const filteredProducts = useMemo(() => {
-        if (!productSearchQuery) return [];
-        return products.filter(p => {
-            const searchTerm = productSearchQuery.toLowerCase();
-            const productCode = p.codigo || '';
-            const productDesc = p.descricao || '';
-            return productCode.toLowerCase().includes(searchTerm) || 
-                   productDesc.toLowerCase().includes(searchTerm);
-        }).slice(0, 5);
+        const lowercasedTerm = productSearchQuery.toLowerCase();
+        if (!lowercasedTerm) return [];
+        return products.filter(product => {
+            const productCode = product.codigo || '';
+            const productDesc = product.descricao || '';
+            const productBrand = product.marca || '';
+            const productRef = product.referencia || '';
+            
+            return productCode.toLowerCase().includes(lowercasedTerm) ||
+                   productDesc.toLowerCase().includes(lowercasedTerm) ||
+                   productBrand.toLowerCase().includes(lowercasedTerm) ||
+                   productRef.toLowerCase().includes(lowercasedTerm);
+        }).slice(0, 10);
     }, [products, productSearchQuery]);
 
     const clients = useMemo(() => persons.filter(p => p.tipo === 'Cliente' || p.tipo === 'Ambos'), [persons]);
