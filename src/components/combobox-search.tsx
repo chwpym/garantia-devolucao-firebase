@@ -10,31 +10,34 @@ import { Button } from './ui/button';
 import type { Product } from '@/lib/types';
 import { useAppStore } from '@/store/app-store';
 
-interface ProductSearchProps {
+interface ComboboxSearchProps {
   value: string | undefined;
   onProductSelect: (product: Product) => void;
   onInputChange: (value: string) => void;
-  onAddNewProduct: () => void;
+  onAddNew: () => void;
+  placeholder?: string;
+  searchPlaceholder?: string;
+  addEntityLabel?: string;
 }
 
-export default function ProductSearch({
+export default function ComboboxSearch({
   value,
   onProductSelect,
   onInputChange,
-  onAddNewProduct,
-}: ProductSearchProps) {
+  onAddNew,
+  placeholder = "Digite para buscar...",
+  searchPlaceholder = "Buscar...",
+  addEntityLabel = "Cadastrar Novo"
+}: ComboboxSearchProps) {
   const { products } = useAppStore();
   const [isPopoverOpen, setPopoverOpen] = useState(false);
   
-  // O estado do input de busca é gerenciado internamente pelo CommandInput,
-  // mas podemos usar o `value` recebido para controlar o que é exibido no Input principal.
-
   const filteredProducts = useMemo(() => {
     if (!value) return [];
     
     const lowercasedTerm = value.toLowerCase();
     
-    // A lógica de busca padronizada e correta
+    // Lógica de busca correta e completa, como na tela de consulta de produtos.
     return products.filter(product => {
         const productCode = product.codigo || '';
         const productDesc = product.descricao || '';
@@ -63,14 +66,14 @@ export default function ProductSearch({
                 setPopoverOpen(false);
               }
             }}
-            placeholder="Digite o código ou descrição do produto"
+            placeholder={placeholder}
           />
         </FormControl>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
         <Command>
           <CommandInput
-            placeholder="Buscar produto..."
+            placeholder={searchPlaceholder}
             value={value}
             onValueChange={(search) => {
                 onInputChange(search);
@@ -79,12 +82,12 @@ export default function ProductSearch({
           <CommandList>
             <CommandEmpty>
               <div className='p-4 text-sm text-center'>
-                <p>Nenhum produto encontrado.</p>
+                <p>Nenhum resultado encontrado.</p>
                 <Button variant="link" type="button" onClick={() => {
-                    onAddNewProduct();
+                    onAddNew();
                     setPopoverOpen(false);
                 }}>
-                    Cadastrar Novo Produto
+                    {addEntityLabel}
                 </Button>
               </div>
             </CommandEmpty>
@@ -108,4 +111,3 @@ export default function ProductSearch({
     </Popover>
   );
 }
-
