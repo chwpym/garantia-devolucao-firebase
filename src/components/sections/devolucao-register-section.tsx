@@ -150,7 +150,7 @@ function RecentDevolutionsList() {
 
 
 export default function DevolucaoRegisterSection({ editingId, onSave }: DevolucaoRegisterSectionProps) {
-    const { persons, products, isDataLoaded, reloadData } = useAppStore();
+    const { persons, isDataLoaded, reloadData } = useAppStore();
     const [isProductModalOpen, setProductModalOpen] = useState(false);
     
     const { toast } = useToast();
@@ -259,7 +259,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
         goBack(); // Usa a ação do store para voltar
     }
 
-    const handleProductSaved = (newProduct: Product) => {
+    const handleProductSaved = () => {
         reloadData('products');
         setProductModalOpen(false);
         // We don't have an active index here, so the user has to search again.
@@ -488,7 +488,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                     <DialogHeader>
                         <DialogTitle>Cadastrar Novo Produto</DialogTitle>
                     </DialogHeader>
-                    <ProductForm onSave={handleProductSaved} />
+                    <ProductForm onSave={handleProductSaved} onClear={() => setProductModalOpen(false)}/>
                 </DialogContent>
             </Dialog>
         </>
