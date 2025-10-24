@@ -19,13 +19,12 @@ import { DatePicker } from '../ui/date-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '../ui/textarea';
 import { parseISO, isSameDay } from 'date-fns';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import ProductForm from '../product-form';
 import { useAppStore } from '@/store/app-store';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Label } from '../ui/label';
+import ComboboxSearch from '../combobox-search';
 
 const itemDevolucaoSchema = z.object({
     id: z.number().optional(),
@@ -154,9 +153,6 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
     const { persons, products, isDataLoaded, reloadData } = useAppStore();
     const [isProductModalOpen, setProductModalOpen] = useState(false);
     
-    const [productSearchQuery, setProductSearchQuery] = useState('');
-    const [activeInputIndex, setActiveInputIndex] = useState<number | null>(null);
-
     const { toast } = useToast();
     const goBack = useAppStore(state => state.goBack);
 
@@ -266,32 +262,14 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
     const handleProductSaved = (newProduct: Product) => {
         reloadData('products');
         setProductModalOpen(false);
-        if (activeInputIndex !== null) {
-            handleProductSelect(newProduct, activeInputIndex);
-        }
+        // We don't have an active index here, so the user has to search again.
+        // This could be improved in the future.
     };
 
     const handleProductSelect = (product: Product, index: number) => {
         form.setValue(`itens.${index}.codigoPeca`, product.codigo);
         form.setValue(`itens.${index}.descricaoPeca`, product.descricao);
-        setActiveInputIndex(null);
     };
-
-    const filteredProducts = useMemo(() => {
-        const lowercasedTerm = productSearchQuery.toLowerCase();
-        if (!lowercasedTerm) return [];
-        return products.filter(product => {
-            const productCode = product.codigo || '';
-            const productDesc = product.descricao || '';
-            const productBrand = product.marca || '';
-            const productRef = product.referencia || '';
-            
-            return productCode.toLowerCase().includes(lowercasedTerm) ||
-                   productDesc.toLowerCase().includes(lowercasedTerm) ||
-                   productBrand.toLowerCase().includes(lowercasedTerm) ||
-                   productRef.toLowerCase().includes(lowercasedTerm);
-        }).slice(0, 10);
-    }, [products, productSearchQuery]);
 
     const clients = useMemo(() => persons.filter(p => p.tipo === 'Cliente' || p.tipo === 'Ambos'), [persons]);
     const mechanics = useMemo(() => persons.filter(p => p.tipo === 'Mecânico' || p.tipo === 'Ambos'), [persons]);
@@ -349,61 +327,17 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                                             render={({ field }) => (
                                                                 <FormItem className="md:col-span-3">
                                                                     <FormLabel>Código <span className='text-destructive'>*</span></FormLabel>
-                                                                    <Popover
-                                                                        open={activeInputIndex === index}
-                                                                        onOpenChange={(isOpen) => {
-                                                                            if (!isOpen) {
-                                                                                setActiveInputIndex(null);
-                                                                            }
-                                                                        }}
-                                                                    >
-                                                                        <PopoverTrigger asChild>
-                                                                            <FormControl>
-                                                                                <Input
-                                                                                    {...field}
-                                                                                    autoComplete="off"
-                                                                                    onFocus={() => {
-                                                                                        setActiveInputIndex(index);
-                                                                                        setProductSearchQuery(field.value || '');
-                                                                                    }}
-                                                                                    onChange={(e) => {
-                                                                                        field.onChange(e);
-                                                                                        setProductSearchQuery(e.target.value);
-                                                                                    }}
-                                                                                />
-                                                                            </FormControl>
-                                                                        </PopoverTrigger>
-                                                                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                                                                            <Command>
-                                                                                <CommandInput
-                                                                                    placeholder="Buscar produto..."
-                                                                                    value={productSearchQuery}
-                                                                                    onValueChange={setProductSearchQuery}
-                                                                                />
-                                                                                <CommandList>
-                                                                                    <CommandEmpty>
-                                                                                        <div className='p-4 text-sm'>
-                                                                                            <p>Nenhum produto encontrado.</p>
-                                                                                            <Button variant="link" type="button" onClick={() => setProductModalOpen(true)}>Cadastrar Novo Produto</Button>
-                                                                                        </div>
-                                                                                    </CommandEmpty>
-                                                                                    <CommandGroup>
-                                                                                        {filteredProducts.map((product) => (
-                                                                                            <CommandItem
-                                                                                                key={product.id}
-                                                                                                onSelect={() => {
-                                                                                                    handleProductSelect(product, index);
-                                                                                                    setActiveInputIndex(null); 
-                                                                                                }}
-                                                                                            >
-                                                                                                {product.codigo} - {product.descricao}
-                                                                                            </CommandItem>
-                                                                                        ))}
-                                                                                    </CommandGroup>
-                                                                                </CommandList>
-                                                                            </Command>
-                                                                        </PopoverContent>
-                                                                    </Popover>
+                                                                    <FormControl>
+                                                                        <ComboboxSearch
+                                                                            value={field.value}
+                                                                            onProductSelect={(product) => handleProductSelect(product, index)}
+                                                                            onInputChange={(value) => field.onChange(value)}
+                                                                            onAddNew={() => setProductModalOpen(true)}
+                                                                            placeholder="Código da peça"
+                                                                            searchPlaceholder="Buscar produto..."
+                                                                            addEntityLabel="Cadastrar Novo Produto"
+                                                                        />
+                                                                    </FormControl>
                                                                     <FormMessage />
                                                                 </FormItem>
                                                             )}
