@@ -214,17 +214,18 @@ Este documento descreve o roteiro para refatorar e melhorar a arquitetura do có
 
 ## Fase 12: Máscara Automática para Telefone (Dificuldade: Média)
 
-**Objetivo:** Implementar uma máscara de formatação automática para o campo de telefone, garantindo a padronização dos dados.
+**Objetivo:** Implementar uma máscara de formatação automática para o campo de telefone, garantindo a padronização dos dados e centralizando a lógica.
 
 **Roteiro Detalhado:**
-1.  **Lógica de Formatação:**
+1.  **Criar Função Utilitária Reutilizável:**
+    *   **Arquivo:** `src/lib/utils.ts`.
+    *   **Lógica:** Criar e exportar uma nova função, por exemplo `formatPhoneNumber(value: string)`. A função receberá uma string de números e aplicará a máscara `(XX) XXXXX-XXXX` para celulares ou `(XX) XXXX-XXXX` para fixos, com base no comprimento do número.
+2.  **Aplicar a Função no Formulário:**
     *   **Arquivo:** `src/components/person-form.tsx`.
-    *   **Lógica:** Criar uma função utilitária de formatação. A função receberá uma string de números e aplicará a máscara `(XX) XXXXX-XXXX` para celulares ou `(XX) XXXX-XXXX` para fixos, com base no comprimento do número.
-2.  **Aplicar no Formulário:**
-    *   **Arquivo:** `src/components/person-form.tsx`.
-    *   **Lógica:** No `FormField` do campo `telefone`, modificar o `onChange` para que o valor do input seja sempre passado pela função de formatação antes de ser salvo no estado do formulário.
+    *   **Lógica:** No `FormField` do campo `telefone`, importar a função `formatPhoneNumber` de `utils.ts`. Modificar o `onChange` para que o valor do input seja sempre passado pela função de formatação antes de ser salvo no estado do formulário (`field.onChange(formatPhoneNumber(e.target.value))`).
 
 **Benefícios:**
+*   **Código Limpo e Reutilizável:** A lógica de formatação fica em um único lugar, fácil de manter e de usar em outras partes do sistema no futuro.
 *   **Padronização de Dados:** Todos os números de telefone seguirão o mesmo formato.
 *   **Melhor Usabilidade:** O usuário não precisa se preocupar em formatar o número manualmente.
 
