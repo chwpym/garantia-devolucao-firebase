@@ -274,3 +274,32 @@ Este documento descreve o roteiro para refatorar e melhorar a arquitetura do có
 **Benefícios:**
 *   **Inteligência de Negócio:** Fornece um indicador valioso sobre o comportamento dos clientes, podendo sinalizar problemas ou padrões de compra.
 *   **Análise Preditiva:** Ajuda a prever fluxos de devolução e a gerenciar melhor o estoque.
+
+---
+
+## Fase 15: Múltiplos Contatos para Pessoas e Fornecedores (Dificuldade: Alta)
+
+**Objetivo:** Permitir o cadastro de múltiplos telefones e emails para clientes, mecânicos e fornecedores, com um tipo associado (ex: Comercial, Financeiro).
+
+**Roteiro Detalhado:**
+1.  **Atualizar Tipos de Dados:**
+    *   **Arquivo:** `src/lib/types.ts`.
+    *   **Lógica:**
+        *   Criar uma nova interface `ContactInfo { type: string; value: string; }`.
+        *   Nas interfaces `Person` e `Supplier`, substituir `telefone?: string` por `telefones?: ContactInfo[]` e `email?: string` por `emails?: ContactInfo[]`.
+2.  **Atualizar Formulários com Campos Dinâmicos:**
+    *   **Arquivos:** `src/components/person-form.tsx`, `src/components/supplier-form.tsx`.
+    *   **Lógica:** Usar o hook `useFieldArray` de `react-hook-form` para permitir que o usuário adicione ou remova campos de telefone e email dinamicamente.
+    *   **UI:** Para cada contato, adicionar um campo de `Input` para o `type` (ex: "Comercial") e outro para o `value` (o número ou email). Incluir um botão "Adicionar Telefone" e "Remover".
+    *   **Máscara:** Garantir que a função de máscara de telefone da **Fase 12** seja aplicada a cada campo de telefone adicionado.
+3.  **Atualizar Exibição nas Consultas:**
+    *   **Arquivos:** `src/components/sections/persons-section.tsx`, `src/components/sections/suppliers-section.tsx`.
+    *   **UI:** Modificar a tabela para exibir o primeiro telefone/email. Usar um `<Tooltip>` para mostrar os contatos adicionais quando o usuário passar o mouse sobre o contato principal.
+4.  **Atualizar Lógica de Busca:**
+    *   **Arquivos:** `src/components/sections/persons-section.tsx`, `src/components/sections/suppliers-section.tsx`.
+    *   **Lógica:** Aprimorar a função de filtro da barra de busca para que ela pesquise dentro do array de `telefones` e `emails`.
+
+**Benefícios:**
+*   **Flexibilidade:** Atende à necessidade real de ter múltiplos pontos de contato para uma mesma entidade.
+*   **Organização:** Permite categorizar os contatos, facilitando a comunicação direcionada.
+*   **Rastreabilidade:** Centraliza todas as informações de contato em um único cadastro.
