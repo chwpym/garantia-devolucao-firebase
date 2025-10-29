@@ -100,19 +100,19 @@ Este documento descreve o roteiro para refatorar e melhorar a arquitetura do có
 
 1.  **Busca Aprimorada nas Telas de Consulta:**
     *   **Arquivo:** `src/components/sections/products-section.tsx`
-        *   **Lógica:** Na função `useMemo` que calcula `filteredProducts`, modificar a lógica de `filter` para que a busca verifique o termo no `codigo` e na `descricao`.
+        *   **Lógica:** Na função `useMemo` que calcula `filteredProducts`, modificar a lógica de `filter` para que a busca verifique o termo no `codigo`, na `descricao`, na `marca` e na `referencia`.
     *   **Arquivo:** `src/components/sections/persons-section.tsx`
-        *   **Lógica:** Na função `useMemo` de `filteredPersons`, atualizar a busca para funcionar para o campo `nome` (Razão Social) e também para o `nomeFantasia`.
+        *   **Lógica:** Na função `useMemo` de `filteredPersons`, atualizar a busca para funcionar para o campo `nome` (Razão Social), `nomeFantasia` e também para o novo `codigoExterno`.
 
 2.  **Busca Inteligente nos Formulários de Cadastro:**
     *   **Arquivo:** `src/components/warranty-form.tsx` (Garantias)
-        *   **Produtos:** Na lógica do `Popover` de busca de produtos, alterar a função de filtro para que ela busque o termo digitado tanto no `codigo` quanto na `descricao` da lista de produtos.
-        *   **Clientes/Mecânicos:** Na lógica do componente `Combobox`, aprimorar o filtro para que ele verifique o `nome` e o `nomeFantasia` ao buscar na lista de pessoas.
+        *   **Produtos:** Substituir a busca atual pelo novo componente `ComboboxSearch`, garantindo que a busca seja feita por código e descrição.
+        *   **Clientes/Mecânicos:** Na lógica do componente `Combobox`, aprimorar o filtro para que ele verifique o `nome`, `nomeFantasia` e o novo `codigoExterno` ao buscar na lista de pessoas.
     *   **Arquivo:** `src/components/sections/devolucao-register-section.tsx` (Devoluções)
-        *   **Produtos:** Aplicar a mesma melhoria de busca por código e descrição.
+        *   **Produtos:** Substituir a busca atual pelo novo componente `ComboboxSearch`.
         *   **Clientes/Mecânicos:** Aplicar a mesma melhoria na busca de clientes e mecânicos.
     *   **Arquivo:** `src/components/sections/batch-register-section.tsx` (Garantia em Lote)
-        *   **Lógica:** Aplicar a mesma melhoria de busca de clientes/mecânicos no `Combobox` usado nesta tela.
+        *   **Lógica:** Aplicar a mesma melhoria de busca de clientes/mecânicos (nome, fantasia, código) no `Combobox` usado nesta tela.
 
 3.  **Cards Coloridos e Visualmente Informativos:**
     *   **Arquivo:** `src/components/sections/dashboard-section.tsx`
@@ -136,21 +136,21 @@ Este documento descreve o roteiro para refatorar e melhorar a arquitetura do có
 
 1.  **Adicionar Opção "Lembrar de mim":**
     *   **Arquivo:** `src/app/login/page.tsx`
-    *   **UI:** Adicionar um componente `Checkbox` com o label "Lembrar de mim" na tela de login, logo acima do botão "Entrar".
+    *   **UI:** Adicionar um componente `Checkbox` com o label "Lembrar de mim" na tela de login, logo acima do botão "Entrar". O estado inicial deve ser **desmarcado**.
     *   **Estado:** Gerenciar o estado do checkbox (marcado/desmarcado) com um `useState`.
 
 2.  **Implementar Lógica de Persistência:**
     *   **Arquivo:** `src/app/login/page.tsx`
-    *   **Lógica:** Importar a função `setPersistence` e os tipos `browserSessionPersistence` e `localPersistence` do Firebase.
+    *   **Lógica:** Importar a função `setPersistence` e os tipos `browserSessionPersistence` e `localPersistence` (ou `indexedDBLocalPersistence`) do Firebase.
     *   **Ações:**
         *   Dentro das funções `onSubmit` (login com e-mail) e `handleGoogleSignIn` (login com Google):
         *   **Antes** de chamar a função de login (`signInWith...`):
             *   Verificar o estado do checkbox "Lembrar de mim".
-            *   Se estiver **marcado**, chamar `setPersistence(auth, localPersistence)`. A sessão persistirá após fechar o navegador (comportamento atual).
+            *   Se estiver **marcado**, chamar `setPersistence(auth, localPersistence)`. A sessão persistirá após fechar o navegador.
             *   Se estiver **desmarcado**, chamar `setPersistence(auth, browserSessionPersistence)`. A sessão será encerrada ao fechar o navegador.
 
 **Benefícios:**
-*   **Segurança Aprimorada:** Por padrão (ou quando o usuário desejar), o sistema se tornará mais seguro, exigindo um novo login a cada sessão do navegador.
+*   **Segurança Aprimorada:** O comportamento padrão do sistema se tornará mais seguro, exigindo um novo login a cada sessão do navegador, a menos que o usuário opte ativamente por manter-se conectado.
 *   **Controle do Usuário:** Oferece a flexibilidade para o usuário escolher entre conveniência e segurança, um padrão em aplicações web modernas.
 *   **Conformidade:** Alinha o comportamento do sistema com as expectativas de segurança para aplicações de gestão.
 
@@ -232,12 +232,14 @@ Este documento descreve o roteiro para refatorar e melhorar a arquitetura do có
     *   **UI:** Adicionar um novo `FormField` para o `codigoExterno`. Pode ser posicionado próximo ao campo de nome.
     *   **Arquivo:** `src/components/supplier-form.tsx`.
     *   **UI:** Adicionar um novo `FormField` para o `codigoExterno` no formulário de fornecedor.
-3.  **Atualizar Tabela de Exibição (Opcional, mas recomendado):**
+3.  **Atualizar Tabela de Exibição e Busca (Recomendado):**
     *   **Arquivos:** `src/components/sections/persons-section.tsx`, `src/components/sections/suppliers-section.tsx`.
     *   **UI:** Adicionar uma nova coluna na tabela para exibir o `codigoExterno`.
+    *   **Lógica:** Atualizar a lógica de filtro da barra de busca para que ela também pesquise no campo `codigoExterno`.
 
 **Benefícios:**
 *   **Interoperabilidade:** Facilita a importação/exportação e a sincronização de dados com outros softwares de gestão (ERPs).
+*   **Usabilidade:** Permite ao usuário encontrar um cliente ou fornecedor pelo código que ele já usa em outro sistema.
 
 ---
 
