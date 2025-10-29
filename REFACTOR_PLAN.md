@@ -291,7 +291,7 @@ Este documento descreve o roteiro para refatorar e melhorar a arquitetura do có
     *   **Arquivos:** `src/components/person-form.tsx`, `src/components/supplier-form.tsx`.
     *   **Lógica:** Usar o hook `useFieldArray` de `react-hook-form` para permitir que o usuário adicione ou remova campos de telefone e email dinamicamente.
     *   **UI:** Para cada contato, adicionar um campo de `Input` para o `type` (ex: "Comercial") e outro para o `value` (o número ou email). Incluir um botão "Adicionar Telefone" e "Remover".
-    *   **Máscara:** Garantir que a função de máscara de telefone da **Fase 12** seja aplicada a cada campo de telefone adicionado.
+    *   **Máscara e Validação:** Garantir que a função de máscara de telefone da **Fase 12** seja aplicada a cada campo de telefone. Garantir que a validação de e-mail (`zod.string().email()`) seja aplicada a cada campo de e-mail.
 3.  **Atualizar Exibição nas Consultas:**
     *   **Arquivos:** `src/components/sections/persons-section.tsx`, `src/components/sections/suppliers-section.tsx`.
     *   **UI:** Modificar a tabela para exibir o primeiro telefone/email. Usar um `<Tooltip>` para mostrar os contatos adicionais quando o usuário passar o mouse sobre o contato principal.
@@ -302,4 +302,4 @@ Este documento descreve o roteiro para refatorar e melhorar a arquitetura do có
 **Benefícios:**
 *   **Flexibilidade:** Atende à necessidade real de ter múltiplos pontos de contato para uma mesma entidade.
 *   **Organização:** Permite categorizar os contatos, facilitando a comunicação direcionada.
-*   **Rastreabilidade:** Centraliza todas as informações de contato em um único cadastro.
+*   **Integridade dos Dados:** Garante que todos os e-mails e telefones sejam inseridos em um formato padronizado e válido.
