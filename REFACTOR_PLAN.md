@@ -303,3 +303,18 @@ Este documento descreve o roteiro para refatorar e melhorar a arquitetura do có
 *   **Flexibilidade:** Atende à necessidade real de ter múltiplos pontos de contato para uma mesma entidade.
 *   **Organização:** Permite categorizar os contatos, facilitando a comunicação direcionada.
 *   **Integridade dos Dados:** Garante que todos os e-mails e telefones sejam inseridos em um formato padronizado e válido.
+
+---
+
+## Fase 16: Comportamento Padrão do "Lembrar de mim" (Dificuldade: Baixa)
+
+**Objetivo:** Alterar o estado padrão do checkbox "Lembrar de mim" para desmarcado, tornando a persistência da sessão uma ação explícita do usuário.
+
+**Roteiro Detalhado:**
+1.  **Alterar Estado Inicial:**
+    *   **Arquivo:** `src/app/login/page.tsx`
+    *   **Lógica:** Encontrar a declaração de estado `const [rememberMe, setRememberMe] = useState(true);` e alterá-la para `const [rememberMe, setRememberMe] = useState(false);`.
+
+**Benefícios:**
+*   **Segurança Aprimorada:** O comportamento padrão se torna mais seguro, pois a sessão não persiste a menos que o usuário solicite.
+*   **Melhor Usabilidade:** Alinha o comportamento do sistema com a expectativa comum para essa funcionalidade.
