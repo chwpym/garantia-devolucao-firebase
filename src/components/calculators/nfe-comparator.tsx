@@ -4,7 +4,7 @@
 import { useState, useRef, useCallback, ChangeEvent, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Upload, Trash2, GitCompareArrows, Search, Info } from "lucide-react";
+import { Upload, Trash2, GitCompareArrows, Search, Info, X } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
@@ -306,7 +306,7 @@ export default function NfeComparator() {
                 }))
             };
         });
-    }, [getAllProducts]);
+    }, []);
 
     const handleCompare = useCallback(() => {
         if (loadedNfes.length < 2) {
