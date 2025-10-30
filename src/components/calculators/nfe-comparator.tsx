@@ -4,7 +4,7 @@
 import { useState, useRef, useCallback, ChangeEvent, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Upload, Trash2, GitCompareArrows, Search, Info, X } from "lucide-react";
+import { Upload, Trash2, GitCompareArrows, Search, Info } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
@@ -285,7 +285,7 @@ export default function NfeComparator() {
         );
     }, [loadedNfes]);
     
-    const processResults = useCallback((groupedProducts: Record<string, ReturnType<typeof getAllProducts>>): ComparisonResult[] => {
+    const processResults = useCallback((groupedProducts: Record<string, ReturnType<typeof getAllProducts>>) => {
         return Object.values(groupedProducts).map(group => {
             const first = group[0];
             const minCost = Math.min(...group.map(item => item.unitCost));
