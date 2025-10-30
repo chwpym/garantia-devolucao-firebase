@@ -4,7 +4,7 @@
 import { useState, useRef, useCallback, ChangeEvent, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Upload, Trash2, GitCompareArrows, Search, ChevronsRight, Info } from "lucide-react";
+import { Upload, Trash2, GitCompareArrows, Search, Info } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
@@ -285,7 +285,7 @@ export default function NfeComparator() {
         );
     }, [loadedNfes]);
     
-    const processResults = (groupedProducts: Record<string, ReturnType<typeof getAllProducts>>): ComparisonResult[] => {
+    const processResults = useCallback((groupedProducts: Record<string, ReturnType<typeof getAllProducts>>): ComparisonResult[] => {
         return Object.values(groupedProducts).map(group => {
             const first = group[0];
             const minCost = Math.min(...group.map(item => item.unitCost));
@@ -306,7 +306,7 @@ export default function NfeComparator() {
                 }))
             };
         });
-    }
+    }, [getAllProducts]);
 
     const handleCompare = useCallback(() => {
         if (loadedNfes.length < 2) {
@@ -343,7 +343,7 @@ export default function NfeComparator() {
 
         setIsComparing(false);
 
-    }, [loadedNfes, toast, getAllProducts]);
+    }, [loadedNfes, toast, getAllProducts, processResults]);
 
 
      const handleSearch = useCallback(() => {
@@ -386,7 +386,7 @@ export default function NfeComparator() {
         });
 
         setIsSearching(false);
-    }, [loadedNfes, searchQuery, toast, getAllProducts]);
+    }, [loadedNfes, searchQuery, toast, getAllProducts, processResults]);
 
 
     const clearData = useCallback(() => {
