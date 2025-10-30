@@ -1,10 +1,10 @@
 
 "use client";
 
-import { useState, useRef, useCallback, ChangeEvent } from "react";
+import { useState, useRef, useCallback, ChangeEvent, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Upload, Trash2, GitCompareArrows, Search } from "lucide-react";
+import { Upload, Trash2, GitCompareArrows, Search, ChevronsRight } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatNumber } from "@/lib/utils";
@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "../ui/label";
 import { useNfeParser, type NfeData, type NfeProductDetail } from "@/hooks/use-nfe-parser";
+import { cn } from "@/lib/utils";
 
 interface Product {
     code: string;
@@ -29,19 +30,22 @@ interface LoadedNfe {
     products: Product[];
 }
 
+interface Occurrence {
+    nfeId: string;
+    nfeNumber: string;
+    emitterName: string;
+    quantity: number;
+    unitCost: number;
+    isCheapest: boolean;
+}
+
 interface ComparisonResult {
     code: string;
     description: string;
     totalQuantity: number;
     totalValue: number;
     nfeCount: number;
-    occurrences: Array<{
-        nfeId: string;
-        nfeNumber: string;
-        emitterName: string;
-        quantity: number;
-        unitCost: number;
-    }>;
+    occurrences: Occurrence[];
 }
 
 export default function NfeComparator() {
@@ -135,6 +139,29 @@ export default function NfeComparator() {
             }))
         );
     }, [loadedNfes]);
+    
+    const processResults = (groupedProducts: Record<string, ReturnType<typeof getAllProducts>>): ComparisonResult[] => {
+        return Object.values(groupedProducts).map(group => {
+            const first = group[0];
+            const minCost = Math.min(...group.map(item => item.unitCost));
+
+            return {
+                code: first.code,
+                description: first.description,
+                totalQuantity: group.reduce((sum, item) => sum + item.quantity, 0),
+                totalValue: group.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0),
+                nfeCount: new Set(group.map(item => item.nfeId)).size,
+                occurrences: group.map(item => ({
+                    nfeId: item.nfeId,
+                    nfeNumber: item.nfeNumber,
+                    emitterName: item.emitterName,
+                    quantity: item.quantity,
+                    unitCost: item.unitCost,
+                    isCheapest: item.unitCost === minCost,
+                }))
+            };
+        });
+    }
 
     const handleCompare = useCallback(() => {
         if (loadedNfes.length < 2) {
@@ -148,38 +175,18 @@ export default function NfeComparator() {
 
         setIsComparing(true);
         setComparisonResult([]);
-        setSearchResult([]); // Limpa a busca ao comparar
+        setSearchResult([]);
 
         const allProducts = getAllProducts();
 
         const groupedByCode = allProducts.reduce((acc, p) => {
-            if (!acc[p.code]) {
-                acc[p.code] = [];
-            }
+            if (!acc[p.code]) acc[p.code] = [];
             acc[p.code].push(p);
             return acc;
         }, {} as Record<string, typeof allProducts>);
 
-        const duplicates = Object.values(groupedByCode)
-            .filter(group => group.length > 1)
-            .map(group => {
-                const first = group[0];
-                return {
-                    code: first.code,
-                    description: first.description,
-                    totalQuantity: group.reduce((sum, item) => sum + item.quantity, 0),
-                    totalValue: group.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0),
-                    nfeCount: new Set(group.map(item => item.nfeId)).size,
-                    occurrences: group.map(item => ({
-                        nfeId: item.nfeId,
-                        nfeNumber: item.nfeNumber,
-                        emitterName: item.emitterName,
-                        quantity: item.quantity,
-                        unitCost: item.unitCost
-                    }))
-                };
-            }).filter(item => item.nfeCount > 1);
-        
+        const processed = processResults(groupedByCode);
+        const duplicates = processed.filter(item => item.nfeCount > 1);
         duplicates.sort((a,b) => b.nfeCount - a.nfeCount || a.description.localeCompare(b.description));
 
         setComparisonResult(duplicates);
@@ -219,35 +226,13 @@ export default function NfeComparator() {
 
         const groupedByCode = foundProducts.reduce((acc, p) => {
             const key = `${p.code}-${p.description}`;
-            if (!acc[key]) {
-                acc[key] = {
-                    code: p.code,
-                    description: p.description,
-                    totalQuantity: 0,
-                    totalValue: 0,
-                    nfeCount: 0,
-                    occurrences: []
-                };
-            }
-            acc[key].occurrences.push({
-                nfeId: p.nfeId,
-                nfeNumber: p.nfeNumber,
-                emitterName: p.emitterName,
-                quantity: p.quantity,
-                unitCost: p.unitCost
-            });
+             if (!acc[key]) acc[key] = [];
+            acc[key].push(p);
             return acc;
-        }, {} as Record<string, ComparisonResult>);
-
-        const results: ComparisonResult[] = Object.values(groupedByCode).map(group => ({
-            ...group,
-            totalQuantity: group.occurrences.reduce((sum, item) => sum + item.quantity, 0),
-            totalValue: group.occurrences.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0),
-            nfeCount: new Set(group.occurrences.map(item => item.nfeId)).size,
-        }));
+        }, {} as Record<string, typeof allProducts>);
         
+        const results = processResults(groupedByCode);
         results.sort((a, b) => a.description.localeCompare(b.description));
-
         setSearchResult(results);
 
         toast({
@@ -269,8 +254,20 @@ export default function NfeComparator() {
     }, [originalClearNfeData, toast]);
 
     const renderResultTable = (results: ComparisonResult[], title: string) => {
-        const grandTotalQuantity = results.reduce((sum, item) => sum + item.totalQuantity, 0);
-        const grandTotalValue = results.reduce((sum, item) => sum + item.totalValue, 0);
+        
+        const totalsByNfe = useMemo(() => {
+            const totals: Record<string, { total: number, emitter: string }> = {};
+            results.forEach(product => {
+                product.occurrences.forEach(occ => {
+                    if (!totals[occ.nfeNumber]) {
+                        totals[occ.nfeNumber] = { total: 0, emitter: occ.emitterName };
+                    }
+                    totals[occ.nfeNumber].total += occ.quantity * occ.unitCost;
+                });
+            });
+            return Object.entries(totals).sort((a,b) => a[1].emitter.localeCompare(b[1].emitter));
+        }, [results]);
+
 
         return (
          <Card className="mt-4">
@@ -286,7 +283,7 @@ export default function NfeComparator() {
                                 <TableHead className="text-center">Encontrado em</TableHead>
                                 <TableHead className="text-right">Qtde Total</TableHead>
                                 <TableHead className="text-right">Valor Total (R$)</TableHead>
-                                <TableHead>Ocorrências nas NF-es</TableHead>
+                                <TableHead className="min-w-[400px]">Ocorrências nas NF-es</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -300,16 +297,26 @@ export default function NfeComparator() {
                                         <Badge variant="secondary">{result.nfeCount} NF-es</Badge>
                                     </TableCell>
                                     <TableCell className="text-right font-bold">{formatNumber(result.totalQuantity)}</TableCell>
-                                    <TableCell className="text-right font-bold">{formatCurrency(result.totalValue)}</TableCell>
+                                    <TableCell className="text-right font-bold text-primary">{formatCurrency(result.totalValue)}</TableCell>
                                     <TableCell>
                                         <div className="flex flex-col gap-1">
                                             {result.occurrences.map((occ, index) => (
-                                                <div key={index} className="text-xs p-2 rounded-md bg-muted" title={`${occ.emitterName} - NF-e: ${occ.nfeNumber}`}>
+                                                <div 
+                                                    key={index} 
+                                                    className={cn(
+                                                        "text-xs p-2 rounded-md bg-muted",
+                                                        occ.isCheapest && "bg-green-100 dark:bg-green-900/50"
+                                                    )}
+                                                    title={`${occ.emitterName} - NF-e: ${occ.nfeNumber}`}
+                                                >
                                                    <p className="font-semibold">{occ.emitterName}</p>
-                                                   <div className="flex justify-between mt-1">
+                                                   <div className="flex flex-wrap justify-between items-center mt-1 gap-x-4 gap-y-1">
                                                         <span>NF-e: {occ.nfeNumber}</span>
                                                         <span>Qtde: {formatNumber(occ.quantity)}</span>
-                                                        <span>Custo: {formatCurrency(occ.unitCost)}</span>
+                                                        <span className={cn(occ.isCheapest && "font-bold text-green-700 dark:text-green-400")}>
+                                                            Custo: {formatCurrency(occ.unitCost)}
+                                                        </span>
+                                                         <span className="font-semibold">Subtotal: {formatCurrency(occ.quantity * occ.unitCost)}</span>
                                                    </div>
                                                 </div>
                                             ))}
@@ -318,12 +325,23 @@ export default function NfeComparator() {
                                 </TableRow>
                             ))}
                         </TableBody>
-                        <TableFooter>
-                            <TableRow className="font-bold bg-muted">
-                                <TableCell colSpan={2} className="text-right">Totais Gerais:</TableCell>
-                                <TableCell className="text-right">{formatNumber(grandTotalQuantity)}</TableCell>
-                                <TableCell className="text-right">{formatCurrency(grandTotalValue)}</TableCell>
-                                <TableCell></TableCell>
+                         <TableFooter>
+                            <TableRow className="font-bold bg-muted/50">
+                                <TableCell colSpan={4} className="text-right font-semibold">Totais por NF-e:</TableCell>
+                                <TableCell>
+                                    {totalsByNfe.length > 0 ? (
+                                        <div className="flex flex-col gap-1 text-xs">
+                                            {totalsByNfe.map(([nfeNumber, data]) => (
+                                                <div key={nfeNumber} className="flex justify-between p-1 rounded bg-background">
+                                                    <span className="text-muted-foreground">{data.emitter} (NF-e: {nfeNumber}):</span>
+                                                    <span className="font-bold text-primary">{formatCurrency(data.total)}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <span>-</span>
+                                    )}
+                                </TableCell>
                             </TableRow>
                         </TableFooter>
                     </Table>
