@@ -4,8 +4,9 @@
 import { useState, useRef, useCallback, ChangeEvent, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Upload, Trash2, GitCompareArrows, Search, ChevronsRight } from "lucide-react";
+import { Upload, Trash2, GitCompareArrows, Search, ChevronsRight, Info } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -49,7 +50,7 @@ interface ComparisonResult {
 }
 
 // Componente interno para exibir a tabela de resultados e corrigir o erro de hook
-const ResultTable = ({ results, title }: { results: ComparisonResult[], title: string }) => {
+const ResultTable = ({ results, title, allLoadedNfes }: { results: ComparisonResult[], title: string, allLoadedNfes: LoadedNfe[] }) => {
     const totalsByNfe = useMemo(() => {
         const totals: Record<string, { total: number, emitter: string }> = {};
         results.forEach(product => {
@@ -62,6 +63,8 @@ const ResultTable = ({ results, title }: { results: ComparisonResult[], title: s
         });
         return Object.entries(totals).sort((a,b) => a[1].emitter.localeCompare(b[1].emitter));
     }, [results]);
+    
+    const getNfeById = (nfeId: string) => allLoadedNfes.find(nfe => nfe.id === nfeId);
 
     return (
      <Card className="mt-4">
@@ -81,43 +84,73 @@ const ResultTable = ({ results, title }: { results: ComparisonResult[], title: s
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {results.map((result) => (
-                            <TableRow key={`${result.code}-${result.description}`}>
-                                <TableCell>
-                                    <div className="font-medium">{result.description}</div>
-                                    <div className="text-xs text-muted-foreground font-mono">{result.code}</div>
-                                </TableCell>
-                                <TableCell className="text-center">
-                                    <Badge variant="secondary">{result.nfeCount} NF-es</Badge>
-                                </TableCell>
-                                <TableCell className="text-right font-bold">{formatNumber(result.totalQuantity)}</TableCell>
-                                <TableCell className="text-right font-bold text-primary">{formatCurrency(result.totalValue)}</TableCell>
-                                <TableCell>
-                                    <div className="flex flex-col gap-1">
-                                        {result.occurrences.map((occ, index) => (
-                                            <div 
-                                                key={index} 
-                                                className={cn(
-                                                    "text-xs p-2 rounded-md bg-muted",
-                                                    occ.isCheapest && "bg-green-100 dark:bg-green-900/50"
-                                                )}
-                                                title={`${occ.emitterName} - NF-e: ${occ.nfeNumber}`}
-                                            >
-                                               <p className="font-semibold">{occ.emitterName}</p>
-                                               <div className="flex flex-wrap justify-between items-center mt-1 gap-x-4 gap-y-1">
-                                                    <span>NF-e: {occ.nfeNumber}</span>
-                                                    <span>Qtde: {formatNumber(occ.quantity)}</span>
-                                                    <span className={cn(occ.isCheapest && "font-bold text-green-700 dark:text-green-400")}>
-                                                        Custo: {formatCurrency(occ.unitCost)}
-                                                    </span>
-                                                     <span className="font-semibold">Subtotal: {formatCurrency(occ.quantity * occ.unitCost)}</span>
-                                               </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </TableCell>
-                            </TableRow>
-                        ))}
+                        {results.map((result) => {
+                            const cheapestCost = Math.min(...result.occurrences.map(o => o.unitCost));
+                            return (
+                                <TableRow key={`${result.code}-${result.description}`}>
+                                    <TableCell>
+                                        <div className="font-medium">{result.description}</div>
+                                        <div className="text-xs text-muted-foreground font-mono">{result.code}</div>
+                                    </TableCell>
+                                    <TableCell className="text-center">
+                                        <Badge variant="secondary">{result.nfeCount} NF-es</Badge>
+                                    </TableCell>
+                                    <TableCell className="text-right font-bold">{formatNumber(result.totalQuantity)}</TableCell>
+                                    <TableCell className="text-right font-bold text-primary">{formatCurrency(result.totalValue)}</TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-col gap-1">
+                                            {result.occurrences.map((occ, index) => {
+                                                const variation = cheapestCost > 0 ? ((occ.unitCost / cheapestCost) - 1) * 100 : 0;
+                                                const nfeContext = getNfeById(occ.nfeId);
+                                                const otherProducts = nfeContext?.products
+                                                    .filter(p => p.code !== result.code)
+                                                    .slice(0, 3);
+                                                
+                                                return (
+                                                    <div 
+                                                        key={index} 
+                                                        className={cn(
+                                                            "text-xs p-2 rounded-md bg-muted",
+                                                            occ.isCheapest && "bg-green-100 dark:bg-green-900/50"
+                                                        )}
+                                                        title={`${occ.emitterName} - NF-e: ${occ.nfeNumber}`}
+                                                    >
+                                                    <p className="font-semibold">{occ.emitterName}</p>
+                                                    <div className="flex flex-wrap justify-between items-center mt-1 gap-x-4 gap-y-1">
+                                                            <span>NF-e: {occ.nfeNumber}</span>
+                                                            <span>Qtde: {formatNumber(occ.quantity)}</span>
+                                                            <span className={cn(occ.isCheapest && "font-bold text-green-700 dark:text-green-400")}>
+                                                                Custo: {formatCurrency(occ.unitCost)}
+                                                                {!occ.isCheapest && variation > 0.01 && (
+                                                                    <Badge variant="destructive" className="ml-2">+{formatNumber(variation)}%</Badge>
+                                                                )}
+                                                            </span>
+                                                            <span className="font-semibold">Subtotal: {formatCurrency(occ.quantity * occ.unitCost)}</span>
+                                                             {otherProducts && otherProducts.length > 0 && (
+                                                                <TooltipProvider>
+                                                                    <Tooltip>
+                                                                        <TooltipTrigger asChild>
+                                                                            <Info className="h-3 w-3 cursor-pointer text-muted-foreground" />
+                                                                        </TooltipTrigger>
+                                                                        <TooltipContent className="max-w-xs">
+                                                                            <p className="font-bold mb-2">Outros itens nesta NF-e:</p>
+                                                                            <ul className="list-disc pl-4 space-y-1 text-xs">
+                                                                                {otherProducts.map(p => <li key={p.code}>{p.description}</li>)}
+                                                                                {nfeContext && nfeContext.products.length > 4 && <li>...e mais.</li>}
+                                                                            </ul>
+                                                                        </TooltipContent>
+                                                                    </Tooltip>
+                                                                </TooltipProvider>
+                                                            )}
+                                                    </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
                     </TableBody>
                      <TableFooter>
                         <TableRow className="font-bold bg-muted/50">
@@ -450,8 +483,8 @@ export default function NfeComparator() {
                 </div>
             )}
 
-            {comparisonResult.length > 0 && <ResultTable results={comparisonResult} title="Resultados da Comparação de Duplicados" />}
-            {searchResult.length > 0 && <ResultTable results={searchResult} title="Resultados da Busca" />}
+            {comparisonResult.length > 0 && <ResultTable results={comparisonResult} title="Resultados da Comparação de Duplicados" allLoadedNfes={loadedNfes} />}
+            {searchResult.length > 0 && <ResultTable results={searchResult} title="Resultados da Busca" allLoadedNfes={loadedNfes} />}
 
         </div>
     );
