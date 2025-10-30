@@ -63,6 +63,14 @@ const ResultTable = ({ results, title, allLoadedNfes }: { results: ComparisonRes
         });
         return Object.entries(totals).sort((a,b) => a[1].emitter.localeCompare(b[1].emitter));
     }, [results]);
+
+    const grandTotals = useMemo(() => {
+        return results.reduce((acc, product) => {
+            acc.quantity += product.totalQuantity;
+            acc.value += product.totalValue;
+            return acc;
+        }, { quantity: 0, value: 0 });
+    }, [results]);
     
     const getNfeById = (nfeId: string) => allLoadedNfes.find(nfe => nfe.id === nfeId);
 
@@ -79,7 +87,7 @@ const ResultTable = ({ results, title, allLoadedNfes }: { results: ComparisonRes
                             <TableHead>Produto</TableHead>
                             <TableHead className="text-center">Encontrado em</TableHead>
                             <TableHead className="text-right">Qtde Total</TableHead>
-                            <TableHead className="text-right">Valor Total (R$)</TableHead>
+                            <TableHead className="text-right">Valor Total</TableHead>
                             <TableHead className="min-w-[400px]">Ocorrências nas NF-es</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -154,7 +162,7 @@ const ResultTable = ({ results, title, allLoadedNfes }: { results: ComparisonRes
                     </TableBody>
                      <TableFooter>
                         <TableRow className="font-bold bg-muted/50">
-                            <TableCell colSpan={4} className="text-right font-semibold">Totais por NF-e:</TableCell>
+                            <TableCell colSpan={4} className="text-right font-semibold text-sm">Totais por NF-e:</TableCell>
                             <TableCell>
                                 {totalsByNfe.length > 0 ? (
                                     <div className="flex flex-col gap-1 text-xs">
@@ -169,6 +177,12 @@ const ResultTable = ({ results, title, allLoadedNfes }: { results: ComparisonRes
                                     <span>-</span>
                                 )}
                             </TableCell>
+                        </TableRow>
+                        <TableRow className="font-bold bg-muted text-base">
+                            <TableCell colSpan={2} className="text-right">Totais Gerais:</TableCell>
+                            <TableCell className="text-right">{formatNumber(grandTotals.quantity)}</TableCell>
+                            <TableCell className="text-right text-primary">{formatCurrency(grandTotals.value)}</TableCell>
+                            <TableCell></TableCell>
                         </TableRow>
                     </TableFooter>
                 </Table>
