@@ -257,3 +257,85 @@ Este documento descreve o roteiro para refatorar e melhorar a arquitetura do có
 **Benefícios:**
 *   **Inteligência de Negócio:** Fornece um indicador valioso sobre o comportamento dos clientes.
 *   **Análise Preditiva:** Ajuda a prever fluxos de devolução e a gerenciar melhor o estoque.
+
+---
+
+## Fase 13: Melhorias na Consulta de Devoluções (Dificuldade: Média)
+
+**Objetivo:** Melhorar a visualização de dados na tela de consulta de devoluções.
+
+**Roteiro Detalhado:**
+1.  **Hover no Modo Escuro:**
+    *   **Arquivo:** `src/components/ui/table.tsx`.
+    *   **UI (CSS):** Analisar a classe `hover:bg-muted/50` aplicada à `TableRow`. Garantir que a cor da variável `--muted` no tema escuro (`globals.css`) tenha contraste suficiente para o efeito de hover ser visível.
+2.  **Ícone de Informação do Mecânico:**
+    *   **Arquivo:** `src/components/sections/devolucao-query-section.tsx`.
+    *   **UI:** Na `TableRow`, adicionar uma condição para renderizar um ícone (`<Info />` de `lucide-react`) ao lado do nome do cliente se `item.mecanico` existir e for diferente de `item.cliente`. Envolver este ícone com o componente `<Tooltip>` do Shadcn para exibir as informações.
+
+**Benefícios:**
+*   **Consistência de UI:** Garante que a experiência do usuário seja a mesma nos modos claro e escuro.
+*   **Acesso Rápido à Informação:** Permite que o usuário veja informações importantes sem precisar navegar para outra tela.
+
+---
+
+## Fase 14: Máscara Automática para Telefone (Dificuldade: Média)
+
+**Objetivo:** Implementar uma máscara de formatação automática para o campo de telefone.
+
+**Roteiro Detalhado:**
+1.  **Criar Função Utilitária:**
+    *   **Arquivo:** `src/lib/utils.ts`.
+    *   **Lógica:** Criar e exportar uma função `formatPhoneNumber(value: string)` que aplique a máscara `(XX) XXXXX-XXXX` ou `(XX) XXXX-XXXX`.
+2.  **Aplicar no Formulário:**
+    *   **Arquivo:** `src/components/person-form.tsx`.
+    *   **Lógica:** No `FormField` de telefone, usar a função `formatPhoneNumber` no `onChange`.
+
+**Benefícios:**
+*   **Código Limpo:** Centraliza a lógica de formatação.
+*   **Padronização de Dados:** Garante que todos os telefones sigam o mesmo formato.
+
+---
+
+## Fase 15: Múltiplos Contatos (Dificuldade: Alta)
+
+**Objetivo:** Permitir o cadastro de múltiplos telefones e emails para clientes, mecânicos e fornecedores.
+
+**Roteiro Detalhado:**
+1.  **Atualizar Tipos:**
+    *   **Arquivo:** `src/lib/types.ts`.
+    *   **Lógica:** Criar `ContactInfo { type: string; value: string; }` e substituir os campos de telefone/email por `telefones?: ContactInfo[]` e `emails?: ContactInfo[]`.
+2.  **Formulários com Campos Dinâmicos:**
+    *   **Arquivos:** `src/components/person-form.tsx`, `src/components/supplier-form.tsx`.
+    *   **Lógica:** Usar `useFieldArray` de `react-hook-form` para adicionar/remover campos de contato.
+3.  **Atualizar Exibição:**
+    *   **Arquivos:** `src/components/sections/persons-section.tsx`, `src/components/sections/suppliers-section.tsx`.
+    *   **UI:** Mostrar o primeiro contato e usar `<Tooltip>` para exibir os demais.
+4.  **Atualizar Busca:**
+    *   **Lógica:** Aprimorar a busca para pesquisar nos arrays de contatos.
+
+**Benefícios:**
+*   **Flexibilidade:** Atende à necessidade real de ter múltiplos contatos.
+*   **Organização:** Permite categorizar os contatos (Comercial, Financeiro).
+
+---
+
+## Fase 16: Comportamento Padrão do "Lembrar de mim" (Dificuldade: Baixa)
+
+**Objetivo:** Alterar o estado padrão do checkbox "Lembrar de mim" para desmarcado.
+
+**Roteiro Detalhado:**
+1.  **Alterar Estado Inicial:**
+    *   **Arquivo:** `src/app/login/page.tsx`
+    *   **Lógica:** Alterar a declaração de estado `useState(true)` para `useState(false)`.
+
+**Benefícios:**
+*   **Segurança Aprimorada:** A persistência da sessão se torna uma ação explícita do usuário.
+
+---
+
+## Nota sobre Importação de Dados do Sistema Antigo
+
+Para facilitar a migração de dados de outros sistemas, a funcionalidade de "Backup / Restore" na tela de Backup deve ser utilizada.
+
+*   **Formato Ideal:** **JSON**. Este é o formato nativo que o sistema usa para backups e restaurações.
+*   **Ação Necessária:** Criar um arquivo `modelo-importacao.json` na raiz do projeto. Este arquivo servirá como um guia, contendo a estrutura exata de `products`, `persons` e `suppliers` que o sistema espera. Com base neste modelo, os dados de qualquer sistema antigo podem ser convertidos para o formato correto e importados com segurança, alimentando as tabelas de Clientes, Fornecedores e Produtos.
