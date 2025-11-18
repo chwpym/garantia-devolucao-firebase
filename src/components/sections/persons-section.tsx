@@ -126,14 +126,14 @@ export default function PersonsSection() {
     }
 
     return persons.filter(person => {
-      const { nome, nomeFantasia, cpfCnpj, telefone, cidade } = person;
-      return (
-        nome?.toLowerCase().includes(lowercasedTerm) ||
-        nomeFantasia?.toLowerCase().includes(lowercasedTerm) ||
-        cpfCnpj?.replace(/\D/g, '').includes(lowercasedTerm.replace(/\D/g, '')) ||
-        telefone?.toLowerCase().includes(lowercasedTerm) ||
-        cidade?.toLowerCase().includes(lowercasedTerm)
-      );
+      // Safe check for each property before calling toLowerCase()
+      const nameMatch = person.nome?.toLowerCase().includes(lowercasedTerm);
+      const fantasyNameMatch = person.nomeFantasia?.toLowerCase().includes(lowercasedTerm);
+      const cpfCnpjMatch = person.cpfCnpj?.replace(/\D/g, '').includes(lowercasedTerm.replace(/\D/g, ''));
+      const phoneMatch = person.telefone?.toLowerCase().includes(lowercasedTerm);
+      const cityMatch = person.cidade?.toLowerCase().includes(lowercasedTerm);
+
+      return nameMatch || fantasyNameMatch || cpfCnpjMatch || phoneMatch || cityMatch;
     });
   }, [persons, searchTerm]);
   
@@ -401,3 +401,5 @@ export default function PersonsSection() {
     </div>
   );
 }
+
+    
