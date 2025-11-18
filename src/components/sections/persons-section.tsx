@@ -121,14 +121,19 @@ export default function PersonsSection() {
   
   const filteredPersons = useMemo(() => {
     const lowercasedTerm = searchTerm.toLowerCase().trim();
-    if (!lowercasedTerm) return persons;
+    if (!lowercasedTerm) {
+      return persons;
+    }
 
     return persons.filter(person => {
-        return (person.nome?.toLowerCase().includes(lowercasedTerm) ?? false) ||
-               (person.nomeFantasia?.toLowerCase().includes(lowercasedTerm) ?? false) ||
-               (person.cpfCnpj?.replace(/\D/g, '').includes(lowercasedTerm.replace(/\D/g, '')) ?? false) ||
-               (person.telefone?.toLowerCase().includes(lowercasedTerm) ?? false) ||
-               (person.cidade?.toLowerCase().includes(lowercasedTerm) ?? false);
+      const { nome, nomeFantasia, cpfCnpj, telefone, cidade } = person;
+      return (
+        nome?.toLowerCase().includes(lowercasedTerm) ||
+        nomeFantasia?.toLowerCase().includes(lowercasedTerm) ||
+        cpfCnpj?.replace(/\D/g, '').includes(lowercasedTerm.replace(/\D/g, '')) ||
+        telefone?.toLowerCase().includes(lowercasedTerm) ||
+        cidade?.toLowerCase().includes(lowercasedTerm)
+      );
     });
   }, [persons, searchTerm]);
   
