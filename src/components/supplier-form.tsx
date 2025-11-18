@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -24,6 +23,7 @@ const formSchema = z.object({
   endereco: z.string().optional(),
   bairro: z.string().optional(),
   cidade: z.string().optional(),
+  codigoExterno: z.string().optional(),
 });
 
 type SupplierFormValues = z.infer<typeof formSchema>;
@@ -42,7 +42,8 @@ const defaultFormValues: SupplierFormValues = {
   cep: '',
   endereco: '',
   bairro: '',
-  cidade: ''
+  cidade: '',
+  codigoExterno: ''
 };
 
 const formatCNPJ = (value: string) => {
@@ -212,6 +213,19 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
               <FormLabel>Razão Social</FormLabel>
               <FormControl>
                 <Input placeholder="Razão Social Ltda." {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          name="codigoExterno"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Código Externo</FormLabel>
+              <FormControl>
+                <Input placeholder="Código em outro sistema (ERP, etc)" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

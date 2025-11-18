@@ -1,0 +1,55 @@
+{
+  "products": [
+    {
+      "codigo": "001-A",
+      "descricao": "PASTILHA DE FREIO DIANTEIRA",
+      "marca": "MARCA-X",
+      "referencia": "REF-123"
+    },
+    {
+      "codigo": "002-B",
+      "descricao": "FILTRO DE ÓLEO",
+      "marca": "MARCA-Y",
+      "referencia": "REF-456"
+    }
+  ],
+  "persons": [
+    {
+      "nome": "CLIENTE FINAL EXEMPLO",
+      "nomeFantasia": "CLIENTE EXEMPLO",
+      "tipo": "Cliente",
+      "cpfCnpj": "12345678901",
+      "telefone": "11999998888",
+      "email": "cliente@email.com",
+      "cep": "01000000",
+      "endereco": "Rua Exemplo, 123",
+      "bairro": "Centro",
+      "cidade": "São Paulo - SP",
+      "observacao": "Cliente antigo.",
+      "codigoExterno": "CLI-100"
+    },
+    {
+      "nome": "OFICINA DO ZÉ",
+      "nomeFantasia": "MECANICA DO ZÉ",
+      "tipo": "Mecânico",
+      "cpfCnpj": "11222333000144",
+      "telefone": "1155554444",
+      "email": "mecanica@email.com",
+      "cep": "02000000",
+      "endereco": "Avenida Teste, 456",
+      "bairro": "Bairro Teste",
+      "cidade": "Rio de Janeiro - RJ",
+      "observacao": "Especialista em injeção.",
+      "codigoExterno": "MEC-200"
+    }
+  ],
+  "suppliers": [
+    {
+      "razaoSocial": "DISTRIBUIDORA DE PEÇAS ABC LTDA",
+      "nomeFantasia": "ABC PEÇAS",
+      "cnpj": "99888777000166",
+      "cidade": "Curitiba - PR",
+      "codigoExterno": "FOR-300"
+    }
+  ]
+}

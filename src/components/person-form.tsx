@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -29,6 +28,7 @@ const formSchema = z.object({
   bairro: z.string().optional(),
   cidade: z.string().optional(),
   observacao: z.string().optional(),
+  codigoExterno: z.string().optional(),
 });
 
 type PersonFormValues = z.infer<typeof formSchema>;
@@ -51,6 +51,7 @@ const defaultFormValues: PersonFormValues = {
   bairro: '',
   cidade: '',
   observacao: '',
+  codigoExterno: '',
 };
 
 const formatCpfCnpj = (value: string) => {
@@ -209,6 +210,19 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
                 <FormLabel>Nome Fantasia</FormLabel>
                 <FormControl>
                   <Input placeholder="Nome popular da empresa" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            name="codigoExterno"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Código Externo</FormLabel>
+                <FormControl>
+                  <Input placeholder="Código em outro sistema (ERP, etc)" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

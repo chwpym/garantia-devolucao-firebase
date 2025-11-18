@@ -109,6 +109,27 @@ Este documento descreve o roteiro para refatorar e melhorar a arquitetura do có
 ---
 # Novas Funcionalidades e Melhorias
 
+## Fase 6.5: Correção de Bugs de Cadastro e Seleção (Dificuldade: Média)
+
+**Objetivo:** Corrigir bugs críticos que impedem a seleção de registros recém-cadastrados e ajustar o comportamento da busca.
+
+**Roteiro Detalhado:**
+1.  **Correção do Carregamento de Dados:**
+    *   **Arquivo:** `src/store/app-store.ts`
+    *   **Lógica:** Modificar a ação `reloadData` no store para garantir que, ao salvar um novo registro (cliente, produto, etc.), a lista de dados correspondente seja imediatamente atualizada no estado global.
+2.  **Ajuste da Busca de Clientes/Mecânicos:**
+    *   **Arquivo:** `src/components/sections/persons-section.tsx`
+    *   **Lógica:** Refinar a função de filtro para que ela pesquise tanto no campo `nome` quanto no `nomeFantasia`. Garantir que, se nenhum resultado for encontrado, a tabela exiba a mensagem "Nenhum registro encontrado".
+3.  **Verificação Cruzada:**
+    *   **Arquivos:** `src/components/sections/devolucao-register-section.tsx` e `src/components/warranty-form.tsx`.
+    *   **Lógica:** Garantir que os componentes `Combobox` para Cliente e Mecânico em ambos os formulários estejam utilizando a lista de `persons` do `app-store`, garantindo que os novos registros apareçam e sejam selecionáveis.
+
+**Benefícios:**
+*   **Confiabilidade:** Restaura a funcionalidade essencial de cadastro e seleção.
+*   **Melhor Experiência:** Remove a frustração do usuário ao não conseguir usar um dado que acabou de cadastrar.
+
+---
+
 ## Fase 7: Validador de Duplicidade (Dificuldade: Baixa)
 
 **Objetivo:** Impedir o cadastro de itens duplicados, avisando o usuário quando um código de produto, CNPJ de fornecedor ou CPF/CNPJ de cliente já existe.
@@ -130,108 +151,72 @@ Este documento descreve o roteiro para refatorar e melhorar a arquitetura do có
 
 ---
 
-## Fase 8: Campo "Código Externo" para Clientes/Fornecedores (Dificuldade: Baixa)
+## Fase 8: Melhorias de Fluxo e Usabilidade (Dificuldade: Média)
 
-**Objetivo:** Adicionar um campo de código para clientes e fornecedores, permitindo a integração com outros sistemas.
+**Objetivo:** Aumentar a produtividade do usuário adicionando atalhos de cadastro e melhorando a experiência em telas de consulta.
+
+**Roteiro Detalhado:**
+1.  **Cadastro Rápido nos Formulários:**
+    *   **Arquivos:** `src/components/warranty-form.tsx` e `src/components/sections/devolucao-register-section.tsx`.
+    *   **UI:** Adicionar um botão "+" ao lado dos campos de seleção de Cliente, Mecânico e Fornecedor.
+    *   **Lógica:** Ao clicar no botão, abrir um `Dialog` (janela modal) contendo o formulário de cadastro correspondente (`PersonForm` ou `SupplierForm`). Após salvar, o novo registro deve ser automaticamente selecionado no formulário original.
+2.  **Manter Filtros na Consulta de Garantia:**
+    *   **Arquivo:** `src/store/app-store.ts` e `src/components/sections/query-section.tsx`.
+    *   **Lógica:** Modificar a forma como os dados são recarregados para que os estados dos filtros (termo de busca, período) não sejam resetados após uma edição ou exclusão.
+3.  **Botões para Limpar Formulários:**
+    *   **Arquivo:** `src/components/warranty-form.tsx` e `src/components/sections/devolucao-register-section.tsx`.
+    *   **UI:** Adicionar um botão "Limpar" ao lado do botão "Salvar".
+    *   **Lógica:** O `onClick` do botão chamará a função `form.reset()` para limpar todos os campos, facilitando o início de um novo cadastro.
+
+**Benefícios:**
+*   **Agilidade:** Reduz drasticamente o número de cliques e a navegação entre telas.
+*   **Fluxo Contínuo:** Permite que o usuário permaneça no contexto da tarefa que está executando.
+
+---
+
+## Fase 9: Campo "Código Externo" e Melhorias de Consulta (Dificuldade: Baixa)
+
+**Objetivo:** Adicionar um campo de código para clientes e fornecedores e melhorar a interface das consultas.
 
 **Roteiro Detalhado:**
 1.  **Atualizar Tipos:**
     *   **Arquivo:** `src/lib/types.ts`.
     *   **Lógica:** Adicionar o campo `codigoExterno?: string` às interfaces `Person` e `Supplier`.
 2.  **Atualizar Formulários:**
-    *   **Arquivo:** `src/components/person-form.tsx`.
-    *   **UI:** Adicionar um novo `FormField` para o `codigoExterno`. Pode ser posicionado próximo ao campo de nome.
-    *   **Arquivo:** `src/components/supplier-form.tsx`.
-    *   **UI:** Adicionar um novo `FormField` para o `codigoExterno` no formulário de fornecedor.
-3.  **Atualizar Tabela de Exibição e Busca (Recomendado):**
+    *   **Arquivo:** `src/components/person-form.tsx` e `src/components/supplier-form.tsx`.
+    *   **UI:** Adicionar um novo `FormField` para o `codigoExterno`.
+3.  **Atualizar Tabelas de Exibição e Busca:**
     *   **Arquivos:** `src/components/sections/persons-section.tsx`, `src/components/sections/suppliers-section.tsx`.
-    *   **UI:** Adicionar uma nova coluna na tabela para exibir o `codigoExterno`.
-    *   **Lógica:** Atualizar a lógica de filtro da barra de busca para que ela também pesquise no campo `codigoExterno`.
+    *   **UI:** Adicionar uma nova coluna na tabela para exibir o `codigoExterno` e incluí-lo na lógica de busca.
+4.  **Botão "Editar" nas Devoluções do Dia:**
+    *   **Arquivo:** `src/components/sections/dashboard-section.tsx`.
+    *   **UI:** Adicionar uma coluna com um botão "Editar" na tabela de devoluções recentes no dashboard.
 
 **Benefícios:**
-*   **Interoperabilidade:** Facilita a importação/exportação e a sincronização de dados com outros softwares de gestão (ERPs).
-*   **Usabilidade:** Permite ao usuário encontrar um cliente ou fornecedor pelo código que ele já usa em outro sistema.
+*   **Interoperabilidade:** Facilita a integração de dados com outros sistemas.
+*   **Acesso Rápido:** Melhora a usabilidade, permitindo encontrar registros por códigos alternativos e editar itens recentes diretamente do dashboard.
 
 ---
 
-## Fase 9: Botões para Limpar Formulários (Dificuldade: Baixa)
+## Fase 10: Preferências do Usuário e Segurança (Dificuldade: Baixa)
 
-**Objetivo:** Adicionar um botão "Limpar" nos principais formulários de cadastro para facilitar a inserção de múltiplos registros em sequência.
-
-**Roteiro Detalhado:**
-1.  **Arquivo:** `src/components/warranty-form.tsx`
-    *   **UI:** No `CardFooter`, ao lado do botão "Salvar", adicionar um botão "Limpar" com `variant="outline"`.
-    *   **Lógica:** O `onClick` do botão deve chamar a função `form.reset(defaultValues)` para limpar todos os campos.
-2.  **Arquivo:** `src/components/sections/devolucao-register-section.tsx`
-    *   **UI:** Adicionar um botão "Limpar" no `CardFooter` do formulário de devolução.
-    *   **Lógica:** O `onClick` deve limpar tanto os dados gerais quanto os itens da devolução.
-
-**Benefícios:**
-*   **Agilidade:** Otimiza o fluxo de trabalho para usuários que precisam cadastrar vários itens de uma só vez.
-
----
-
-## Fase 10: Aba Fixa no Dashboard (Dificuldade: Baixa)
-
-**Objetivo:** Permitir que o usuário escolha a aba padrão (Garantias ou Devoluções) a ser exibida ao abrir o Dashboard.
+**Objetivo:** Permitir personalização da interface e ajustar comportamentos padrão para melhorar a segurança.
 
 **Roteiro Detalhado:**
-1.  **Armazenamento da Preferência:**
-    *   **Lógica:** Usar o `localStorage` do navegador, que é simples e eficaz para preferências do usuário que não precisam ser sincronizadas.
-2.  **UI no Dashboard:**
+1.  **Aba Fixa no Dashboard:**
     *   **Arquivo:** `src/components/sections/dashboard-section.tsx`.
-    *   **UI:** Adicionar um pequeno `Select` ou `RadioGroup` no cabeçalho da seção do dashboard com as opções: "Padrão: Garantias" e "Padrão: Devoluções".
-    *   **Estado:** Usar um `useState` para controlar a preferência atual. Ao mudar a seleção, salvar o valor no `localStorage`.
-3.  **Lógica de Carregamento:**
-    *   **Arquivo:** `src/components/sections/dashboard-section.tsx`.
-    *   **Lógica:** No `useEffect` inicial, ler o valor do `localStorage`. Se existir, definir o estado da aba ativa (`Tabs`) para a preferência salva. Caso contrário, usar "Garantias" como padrão.
+    *   **Lógica:** Usar o `localStorage` para salvar a última aba selecionada ("Garantias" ou "Devoluções") e abri-la como padrão no próximo acesso.
+2.  **Comportamento Padrão do "Lembrar de mim":**
+    *   **Arquivo:** `src/app/login/page.tsx`.
+    *   **Lógica:** Alterar o estado inicial do checkbox "Lembrar de mim" na tela de login para `false` (desmarcado).
 
 **Benefícios:**
 *   **Personalização:** Adapta o sistema ao fluxo de trabalho preferido do usuário.
+*   **Segurança Aprimorada:** O comportamento padrão se torna mais seguro, pois a sessão não persiste a menos que o usuário solicite.
 
 ---
 
-## Fase 11: Melhorias na Consulta de Devoluções (Dificuldade: Média)
-
-**Objetivo:** Melhorar a visualização de dados na tela de consulta de devoluções.
-
-**Roteiro Detalhado:**
-1.  **Hover no Modo Escuro:**
-    *   **Arquivo:** `src/components/ui/table.tsx`.
-    *   **UI (CSS):** Analisar a classe `hover:bg-muted/50` aplicada à `TableRow`. Garantir que a cor da variável `--muted` no tema escuro (`globals.css`) tenha contraste suficiente para o efeito de hover ser visível. Se necessário, ajustar a opacidade ou a cor.
-2.  **Ícone de Informação do Mecânico:**
-    *   **Arquivo:** `src/components/sections/devolucao-query-section.tsx`.
-    *   **UI:**
-        *   Na `TableRow`, adicionar uma condição para renderizar um ícone (`<Info />` de `lucide-react`) ao lado do nome do cliente se `item.mecanico` existir e for diferente de `item.cliente`.
-        *   Envolver este ícone com o componente `<Tooltip>` do Shadcn.
-        *   No `<TooltipContent>`, exibir as informações adicionais, como "Mecânico: {item.mecanico}".
-
-**Benefícios:**
-*   **Consistência de UI:** Garante que a experiência do usuário seja a mesma nos modos claro e escuro.
-*   **Acesso Rápido à Informação:** Permite que o usuário veja informações importantes sem precisar navegar para outra tela, economizando cliques.
-
----
-
-## Fase 12: Máscara Automática para Telefone (Dificuldade: Média)
-
-**Objetivo:** Implementar uma máscara de formatação automática para o campo de telefone, garantindo a padronização dos dados e centralizando a lógica.
-
-**Roteiro Detalhado:**
-1.  **Criar Função Utilitária Reutilizável:**
-    *   **Arquivo:** `src/lib/utils.ts`.
-    *   **Lógica:** Criar e exportar uma nova função, por exemplo `formatPhoneNumber(value: string)`. A função receberá uma string de números e aplicará a máscara `(XX) XXXXX-XXXX` para celulares ou `(XX) XXXX-XXXX` para fixos, com base no comprimento do número.
-2.  **Aplicar a Função no Formulário:**
-    *   **Arquivo:** `src/components/person-form.tsx`.
-    *   **Lógica:** No `FormField` do campo `telefone`, importar a função `formatPhoneNumber` de `utils.ts`. Modificar o `onChange` para que o valor do input seja sempre passado pela função de formatação antes de ser salvo no estado do formulário (`field.onChange(formatPhoneNumber(e.target.value))`).
-
-**Benefícios:**
-*   **Código Limpo e Reutilizável:** A lógica de formatação fica em um único lugar, fácil de manter e de usar em outras partes do sistema no futuro.
-*   **Padronização de Dados:** Todos os números de telefone seguirão o mesmo formato.
-*   **Melhor Usabilidade:** O usuário não precisa se preocupar em formatar o número manualmente.
-
----
-
-## Fase 13: Cadastro de Status Dinâmicos (Dificuldade: Alta)
+## Fase 11: Cadastro de Status Dinâmicos (Dificuldade: Alta)
 
 **Objetivo:** Criar uma seção para que o administrador possa cadastrar, editar e excluir os status usados no sistema (garantias, lotes, etc.) e definir onde cada um pode ser usado.
 
@@ -253,7 +238,7 @@ Este documento descreve o roteiro para refatorar e melhorar a arquitetura do có
 
 ---
 
-## Fase 14: Análise de Tempo Médio de Devolução (Dificuldade: Alta)
+## Fase 12: Análise de Tempo Médio de Devolução (Dificuldade: Alta)
 
 **Objetivo:** Calcular e exibir o tempo médio que cada cliente leva para devolver as peças após a compra.
 
@@ -267,54 +252,8 @@ Este documento descreve o roteiro para refatorar e melhorar a arquitetura do có
         *   Calcular a média de dias para cada cliente.
 2.  **Exibição dos Dados:**
     *   **Arquivo:** `src/components/sections/devolucao-report-section.tsx`.
-    *   **UI:**
-        *   **Opção 1 (Card):** Adicionar um novo `Card` na tela de relatórios chamado "Tempo Médio de Devolução por Cliente".
-        *   **Opção 2 (Tabela):** Exibir os resultados em uma nova tabela, com colunas "Cliente" e "Tempo Médio (dias)".
+    *   **UI:** Adicionar um novo `Card` ou Tabela na tela de relatórios de devolução para exibir o tempo médio por cliente.
 
 **Benefícios:**
-*   **Inteligência de Negócio:** Fornece um indicador valioso sobre o comportamento dos clientes, podendo sinalizar problemas ou padrões de compra.
+*   **Inteligência de Negócio:** Fornece um indicador valioso sobre o comportamento dos clientes.
 *   **Análise Preditiva:** Ajuda a prever fluxos de devolução e a gerenciar melhor o estoque.
-
----
-
-## Fase 15: Múltiplos Contatos para Pessoas e Fornecedores (Dificuldade: Alta)
-
-**Objetivo:** Permitir o cadastro de múltiplos telefones e emails para clientes, mecânicos e fornecedores, com um tipo associado (ex: Comercial, Financeiro).
-
-**Roteiro Detalhado:**
-1.  **Atualizar Tipos de Dados:**
-    *   **Arquivo:** `src/lib/types.ts`.
-    *   **Lógica:**
-        *   Criar uma nova interface `ContactInfo { type: string; value: string; }`.
-        *   Nas interfaces `Person` e `Supplier`, substituir `telefone?: string` por `telefones?: ContactInfo[]` e `email?: string` por `emails?: ContactInfo[]`.
-2.  **Atualizar Formulários com Campos Dinâmicos:**
-    *   **Arquivos:** `src/components/person-form.tsx`, `src/components/supplier-form.tsx`.
-    *   **Lógica:** Usar o hook `useFieldArray` de `react-hook-form` para permitir que o usuário adicione ou remova campos de telefone e email dinamicamente.
-    *   **UI:** Para cada contato, adicionar um campo de `Input` para o `type` (ex: "Comercial") e outro para o `value` (o número ou email). Incluir um botão "Adicionar Telefone" e "Remover".
-    *   **Máscara e Validação:** Garantir que a função de máscara de telefone da **Fase 12** seja aplicada a cada campo de telefone. Garantir que a validação de e-mail (`zod.string().email()`) seja aplicada a cada campo de e-mail.
-3.  **Atualizar Exibição nas Consultas:**
-    *   **Arquivos:** `src/components/sections/persons-section.tsx`, `src/components/sections/suppliers-section.tsx`.
-    *   **UI:** Modificar a tabela para exibir o primeiro telefone/email. Usar um `<Tooltip>` para mostrar os contatos adicionais quando o usuário passar o mouse sobre o contato principal.
-4.  **Atualizar Lógica de Busca:**
-    *   **Arquivos:** `src/components/sections/persons-section.tsx`, `src/components/sections/suppliers-section.tsx`.
-    *   **Lógica:** Aprimorar a função de filtro da barra de busca para que ela pesquise dentro do array de `telefones` e `emails`.
-
-**Benefícios:**
-*   **Flexibilidade:** Atende à necessidade real de ter múltiplos pontos de contato para uma mesma entidade.
-*   **Organização:** Permite categorizar os contatos, facilitando a comunicação direcionada.
-*   **Integridade dos Dados:** Garante que todos os e-mails e telefones sejam inseridos em um formato padronizado e válido.
-
----
-
-## Fase 16: Comportamento Padrão do "Lembrar de mim" (Dificuldade: Baixa)
-
-**Objetivo:** Alterar o estado padrão do checkbox "Lembrar de mim" para desmarcado, tornando a persistência da sessão uma ação explícita do usuário.
-
-**Roteiro Detalhado:**
-1.  **Alterar Estado Inicial:**
-    *   **Arquivo:** `src/app/login/page.tsx`
-    *   **Lógica:** Encontrar a declaração de estado `const [rememberMe, setRememberMe] = useState(true);` e alterá-la para `const [rememberMe, setRememberMe] = useState(false);`.
-
-**Benefícios:**
-*   **Segurança Aprimorada:** O comportamento padrão se torna mais seguro, pois a sessão não persiste a menos que o usuário solicite.
-*   **Melhor Usabilidade:** Alinha o comportamento do sistema com a expectativa comum para essa funcionalidade.

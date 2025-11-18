@@ -1,4 +1,3 @@
-
 'use client';
 
 export const WARRANTY_STATUSES = ['Aguardando Envio', 'Enviado para Análise', 'Aprovada - Peça Nova', 'Aprovada - Crédito NF', 'Aprovada - Crédito Boleto', 'Recusada'] as const;
@@ -42,6 +41,7 @@ export interface Person {
   bairro?: string;
   cidade?: string;
   observacao?: string;
+  codigoExterno?: string;
 }
 
 export interface Supplier {
@@ -53,6 +53,7 @@ export interface Supplier {
   cep?: string;
   endereco?: string;
   bairro?: string;
+  codigoExterno?: string;
 }
 
 export type LoteStatus = 'Aberto' | 'Enviado' | 'Aprovado Parcialmente' | 'Aprovado Totalmente' | 'Recusado';
