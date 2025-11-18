@@ -127,12 +127,20 @@ export default function PersonsSection() {
 
     return persons.filter(person => {
       const cleanedSearchTerm = lowercasedTerm.replace(/\D/g, '');
+      const name = person.nome?.toLowerCase() || '';
+      const fantasyName = person.nomeFantasia?.toLowerCase() || '';
+      const doc = person.cpfCnpj?.replace(/\D/g, '') || '';
+      const phone = person.telefone?.toLowerCase() || '';
+      const city = person.cidade?.toLowerCase() || '';
+      const externalCode = person.codigoExterno?.toLowerCase() || '';
+
       return (
-        (person.nome && person.nome.toLowerCase().includes(lowercasedTerm)) ||
-        (person.nomeFantasia && person.nomeFantasia.toLowerCase().includes(lowercasedTerm)) ||
-        (person.cpfCnpj && person.cpfCnpj.replace(/\D/g, '').includes(cleanedSearchTerm)) ||
-        (person.telefone && person.telefone.toLowerCase().includes(lowercasedTerm)) ||
-        (person.cidade && person.cidade.toLowerCase().includes(lowercasedTerm))
+        name.includes(lowercasedTerm) ||
+        fantasyName.includes(lowercasedTerm) ||
+        (cleanedSearchTerm && doc.includes(cleanedSearchTerm)) ||
+        phone.includes(lowercasedTerm) ||
+        city.includes(lowercasedTerm) ||
+        externalCode.includes(lowercasedTerm)
       );
     });
   }, [persons, searchTerm]);
@@ -401,5 +409,7 @@ export default function PersonsSection() {
     </div>
   );
 }
+
+    
 
     
