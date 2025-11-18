@@ -145,18 +145,20 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   reloadData: async (dataType) => {
     try {
-      if (!dataType || dataType === 'products') {
-        const products = await db.getAllProducts();
-        set({ products: products.sort((a, b) => a.descricao.localeCompare(b.descricao)) });
-      }
-      if (!dataType || dataType === 'persons') {
-        const persons = await db.getAllPersons();
-        set({ persons: persons.sort((a, b) => a.nome.localeCompare(b.nome)) });
-      }
-      if (!dataType || dataType === 'suppliers') {
-        const suppliers = await db.getAllSuppliers();
-        set({ suppliers: suppliers.sort((a, b) => a.nomeFantasia.localeCompare(b.nomeFantasia)) });
-      }
+        const currentState = get();
+        if (!dataType || dataType === 'products') {
+            const products = await db.getAllProducts();
+            set({ products: [...products.sort((a, b) => a.descricao.localeCompare(b.descricao))] });
+        }
+        if (!dataType || dataType === 'persons') {
+            const persons = await db.getAllPersons();
+            // Using spread operator to create a new array reference, forcing a state update
+            set({ persons: [...persons.sort((a, b) => a.nome.localeCompare(b.nome))] });
+        }
+        if (!dataType || dataType === 'suppliers') {
+            const suppliers = await db.getAllSuppliers();
+            set({ suppliers: [...suppliers.sort((a, b) => a.nomeFantasia.localeCompare(b.nomeFantasia))] });
+        }
     } catch (error) {
        console.error("Failed to reload data:", error);
     }

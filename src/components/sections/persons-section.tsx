@@ -120,16 +120,16 @@ export default function PersonsSection() {
   }, [loadPersons, toast, isDbReady]);
   
   const filteredPersons = useMemo(() => {
-    const lowercasedTerm = searchTerm.toLowerCase();
+    const lowercasedTerm = searchTerm.toLowerCase().trim();
     if (!lowercasedTerm) return persons;
 
-    return persons.filter(person => 
-        person.nome.toLowerCase().includes(lowercasedTerm) ||
-        (person.nomeFantasia && person.nomeFantasia.toLowerCase().includes(lowercasedTerm)) ||
-        (person.cpfCnpj && person.cpfCnpj.replace(/\D/g, '').includes(lowercasedTerm.replace(/\D/g, ''))) ||
-        (person.telefone && person.telefone.toLowerCase().includes(lowercasedTerm)) ||
-        (person.cidade && person.cidade.toLowerCase().includes(lowercasedTerm))
-    );
+    return persons.filter(person => {
+        return (person.nome?.toLowerCase().includes(lowercasedTerm) ?? false) ||
+               (person.nomeFantasia?.toLowerCase().includes(lowercasedTerm) ?? false) ||
+               (person.cpfCnpj?.replace(/\D/g, '').includes(lowercasedTerm.replace(/\D/g, '')) ?? false) ||
+               (person.telefone?.toLowerCase().includes(lowercasedTerm) ?? false) ||
+               (person.cidade?.toLowerCase().includes(lowercasedTerm) ?? false);
+    });
   }, [persons, searchTerm]);
   
   const sortedPersons = useMemo(() => {
@@ -156,9 +156,10 @@ export default function PersonsSection() {
   }, [filteredPersons, sortConfig]);
 
 
-  const handleSave = () => {
+  const handleSave = (newPerson: Person) => {
     setEditingPerson(null);
     setIsFormModalOpen(false);
+    // The 'datachanged' event will trigger a reload of the persons list.
   };
   
   const handleEditClick = (person: Person) => {
@@ -292,7 +293,6 @@ export default function PersonsSection() {
                              <PersonForm 
                                 onSave={handleSave}
                                 editingPerson={editingPerson}
-                                onClear={() => setEditingPerson(null)}
                             />
                         </div>
                     </DialogContent>
@@ -367,7 +367,7 @@ export default function PersonsSection() {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={7} className="h-24 text-center">
-                        Nenhum registro encontrado para a busca realizada.
+                        {searchTerm ? 'Nenhum registro encontrado para a busca realizada.' : 'Nenhum cliente ou mecânico cadastrado.'}
                       </TableCell>
                     </TableRow>
                   )}
