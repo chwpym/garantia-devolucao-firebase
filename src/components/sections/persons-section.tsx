@@ -126,14 +126,14 @@ export default function PersonsSection() {
     }
 
     return persons.filter(person => {
-      // Safe check for each property before calling toLowerCase()
-      const nameMatch = person.nome?.toLowerCase().includes(lowercasedTerm);
-      const fantasyNameMatch = person.nomeFantasia?.toLowerCase().includes(lowercasedTerm);
-      const cpfCnpjMatch = person.cpfCnpj?.replace(/\D/g, '').includes(lowercasedTerm.replace(/\D/g, ''));
-      const phoneMatch = person.telefone?.toLowerCase().includes(lowercasedTerm);
-      const cityMatch = person.cidade?.toLowerCase().includes(lowercasedTerm);
-
-      return nameMatch || fantasyNameMatch || cpfCnpjMatch || phoneMatch || cityMatch;
+      const cleanedSearchTerm = lowercasedTerm.replace(/\D/g, '');
+      return (
+        (person.nome && person.nome.toLowerCase().includes(lowercasedTerm)) ||
+        (person.nomeFantasia && person.nomeFantasia.toLowerCase().includes(lowercasedTerm)) ||
+        (person.cpfCnpj && person.cpfCnpj.replace(/\D/g, '').includes(cleanedSearchTerm)) ||
+        (person.telefone && person.telefone.toLowerCase().includes(lowercasedTerm)) ||
+        (person.cidade && person.cidade.toLowerCase().includes(lowercasedTerm))
+      );
     });
   }, [persons, searchTerm]);
   
