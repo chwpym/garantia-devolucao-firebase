@@ -65,12 +65,14 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
 
   const form = useForm<SupplierFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: editingSupplier || defaultFormValues,
+    defaultValues: defaultFormValues,
   });
 
   useEffect(() => {
     const defaultVals = editingSupplier ? {
         ...editingSupplier,
+        razaoSocial: editingSupplier.razaoSocial || '',
+        nomeFantasia: editingSupplier.nomeFantasia || '',
         cnpj: editingSupplier.cnpj ? formatCNPJ(editingSupplier.cnpj) : '',
         cep: editingSupplier.cep || '',
         endereco: editingSupplier.endereco || '',

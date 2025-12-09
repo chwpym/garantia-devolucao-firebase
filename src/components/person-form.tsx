@@ -83,18 +83,16 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
   
   const form = useForm<PersonFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: editingPerson ? {
-        ...editingPerson,
-        cpfCnpj: editingPerson.cpfCnpj ? formatCpfCnpj(editingPerson.cpfCnpj) : '',
-    } : defaultFormValues,
+    defaultValues: defaultFormValues,
   });
   const { isSubmitting } = form.formState;
 
   useEffect(() => {
     const defaultVals = editingPerson ? {
         ...editingPerson,
-        cpfCnpj: editingPerson.cpfCnpj ? formatCpfCnpj(editingPerson.cpfCnpj) : '',
+        nome: editingPerson.nome || '',
         nomeFantasia: editingPerson.nomeFantasia || '',
+        cpfCnpj: editingPerson.cpfCnpj ? formatCpfCnpj(editingPerson.cpfCnpj) : '',
         telefone: editingPerson.telefone || '',
         email: editingPerson.email || '',
         cep: editingPerson.cep || '',
