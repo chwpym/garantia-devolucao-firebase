@@ -18,7 +18,8 @@ export function AuthGuard({ children }: AuthGuardProps) {
   const pathname = usePathname();
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
 
-  // While loading authentication state, show a full-screen spinner.
+  // 1. Durante o carregamento inicial, sempre exiba um spinner.
+  // Isso garante que o servidor e o cliente renderizem a mesma coisa inicialmente.
   if (isLoading) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
@@ -28,21 +29,21 @@ export function AuthGuard({ children }: AuthGuardProps) {
     );
   }
 
-  // If on a public route, render the children directly (login/signup pages).
-  // The useAuthGuard hook handles redirecting away if already authenticated.
+  // 2. Se for uma rota pública (login/signup), renderize o conteúdo diretamente.
+  // O hook useAuthGuard cuidará do redirecionamento se o usuário já estiver logado.
   if (isPublicRoute) {
     return <>{children}</>;
   }
 
-  // For protected routes, use ClientOnly to prevent hydration mismatch.
-  // This ensures the main app content only renders on the client side
-  // after authentication state is confirmed.
+  // 3. Se for uma rota protegida E o usuário estiver autenticado:
+  //    Use o ClientOnly para garantir que o conteúdo principal da aplicação (children)
+  //    só seja renderizado no cliente, após a hidratação.
   if (isAuthenticated) {
     return <ClientOnly>{children}</ClientOnly>;
   }
   
-  // If not authenticated and on a protected route, the hook will redirect.
-  // Show a spinner during this brief period to prevent content flashing.
+  // 4. Se não estiver autenticado em uma rota protegida, o hook fará o redirecionamento.
+  // Exibir um spinner durante esse breve momento evita que qualquer conteúdo pisque na tela.
   return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
