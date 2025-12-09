@@ -14,9 +14,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Pencil, Trash2, Search, FileDown, ArrowUpDown } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, Search, FileDown, ArrowUpDown, Info } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 import { Input } from '../ui/input';
 import { DatePickerWithRange } from '../ui/date-range-picker';
@@ -321,7 +322,23 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
                                 <TableRow key={`${item.id}-${item.itemId || 'no-item'}`}>
                                     <TableCell className="font-medium text-muted-foreground">{item.id}</TableCell>
                                     <TableCell>{item.dataDevolucao ? format(parseISO(item.dataDevolucao), 'dd/MM/yyyy') : '-'}</TableCell>
-                                    <TableCell>{item.cliente}</TableCell>
+                                    <TableCell>
+                                        <div className='flex items-center gap-2'>
+                                            <span>{item.cliente}</span>
+                                            {item.mecanico && item.mecanico !== item.cliente && (
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Info className="h-4 w-4 text-muted-foreground cursor-pointer" />
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Mecânico: {item.mecanico}</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            )}
+                                        </div>
+                                    </TableCell>
                                     <TableCell>{item.requisicaoVenda}</TableCell>
                                     <TableCell className="font-medium">{item.codigoPeca || '-'}</TableCell>
                                     <TableCell>{item.descricaoPeca || '-'}</TableCell>
