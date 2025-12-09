@@ -22,8 +22,6 @@ import ProductsSection from '@/components/sections/products-section';
 import ProductReportSection from '@/components/sections/product-report-section';
 import { useAppStore } from '@/store/app-store';
 import UsersSection from '@/components/sections/users-section';
-import { useIsMobile } from '@/hooks/use-mobile';
-import ClientOnly from '@/components/client-only';
 
 
 export type RegisterMode = 'edit' | 'clone';
@@ -50,7 +48,7 @@ const viewComponents: { [key: string]: ComponentType<any> } = {
   calculators: CalculatorsSection,
 };
 
-function PageContent() {
+export default function Home() {
   const {
     activeView,
     selectedLoteId,
@@ -65,8 +63,6 @@ function PageContent() {
     handleCloneWarranty,
     handleWarrantySave,
   } = useAppStore();
-
-  const isMobile = useIsMobile();
 
   const renderContent = () => {
     const Component = viewComponents[activeView];
@@ -101,20 +97,9 @@ function PageContent() {
     }
   };
   
-  if (isMobile === undefined) return null;
-
   return (
     <AppLayout>
       {renderContent()}
     </AppLayout>
-  );
-}
-
-
-export default function Home() {
-  return (
-    <ClientOnly>
-      <PageContent />
-    </ClientOnly>
   );
 }

@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import { useAuthGuard } from '@/hooks/use-auth-guard';
 import { Loader2 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
+import ClientOnly from './client-only';
 
 interface AuthGuardProps {
   children: ReactNode;
@@ -27,19 +28,21 @@ export function AuthGuard({ children }: AuthGuardProps) {
     );
   }
 
-  // If on a public route, just show the children (login/signup pages).
-  // The useAuthGuard hook will handle redirection if the user is already logged in.
+  // If on a public route, render the children directly (login/signup pages).
+  // The useAuthGuard hook handles redirecting away if already authenticated.
   if (isPublicRoute) {
     return <>{children}</>;
   }
 
-  // If authenticated and on a protected route, show the children.
+  // For protected routes, use ClientOnly to prevent hydration mismatch.
+  // This ensures the main app content only renders on the client side
+  // after authentication state is confirmed.
   if (isAuthenticated) {
-    return <>{children}</>;
+    return <ClientOnly>{children}</ClientOnly>;
   }
   
-  // If not authenticated and not on a public route, the hook will redirect.
-  // Show a spinner during this brief period to prevent flashing content.
+  // If not authenticated and on a protected route, the hook will redirect.
+  // Show a spinner during this brief period to prevent content flashing.
   return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
