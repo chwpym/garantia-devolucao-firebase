@@ -19,7 +19,7 @@ import { DatePicker } from '../ui/date-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '../ui/textarea';
 import { parseISO, isSameDay } from 'date-fns';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
 import ProductForm from '../product-form';
 import PersonForm from '../person-form';
 import { useAppStore } from '@/store/app-store';
@@ -175,6 +175,8 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                 ...data,
                 dataVenda: data.dataVenda ? parseISO(data.dataVenda) : new Date(),
                 dataDevolucao: data.dataDevolucao ? parseISO(data.dataDevolucao) : new Date(),
+                mecanico: data.mecanico || '',
+                observacaoGeral: data.observacaoGeral || '',
             });
             if (data.itens) {
                 replace(data.itens.map(item => ({ ...item, id: item.id || undefined })));
@@ -517,6 +519,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Cadastrar Novo Produto</DialogTitle>
+                        <DialogDescription>Preencha os dados do novo produto.</DialogDescription>
                     </DialogHeader>
                     <ProductForm onSave={handleProductSaved} onClear={() => setProductModalOpen(false)}/>
                 </DialogContent>
@@ -525,6 +528,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                 <DialogContent className="max-w-2xl">
                     <DialogHeader>
                         <DialogTitle>Cadastrar Novo Cliente/Mecânico</DialogTitle>
+                        <DialogDescription>Preencha os dados abaixo para criar um novo registro.</DialogDescription>
                     </DialogHeader>
                     <PersonForm onSave={handlePersonSaved} onClear={() => setPersonModalOpen(false)} />
                 </DialogContent>

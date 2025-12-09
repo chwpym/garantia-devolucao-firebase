@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import SupplierForm from './supplier-form';
 import PersonForm from './person-form';
 import { Combobox } from './ui/combobox';
@@ -339,6 +339,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                                             <DialogContent className="max-w-2xl">
                                                 <DialogHeader>
                                                     <DialogTitle>Cadastrar Novo Fornecedor</DialogTitle>
+                                                    <DialogDescription>Preencha os dados do novo fornecedor.</DialogDescription>
                                                 </DialogHeader>
                                                 <SupplierForm onSave={handleSupplierSaved} isModal />
                                             </DialogContent>
@@ -449,6 +450,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                                             <DialogContent className="max-w-2xl">
                                                 <DialogHeader>
                                                     <DialogTitle>Cadastrar Novo Cliente/Mecânico</DialogTitle>
+                                                    <DialogDescription>Preencha os dados do novo registro.</DialogDescription>
                                                 </DialogHeader>
                                                 <PersonForm onSave={handlePersonSaved} onClear={() => {}} />
                                             </DialogContent>
@@ -483,6 +485,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                                             <DialogContent className="max-w-2xl">
                                                     <DialogHeader>
                                                     <DialogTitle>Cadastrar Novo Cliente/Mecânico</DialogTitle>
+                                                    <DialogDescription>Preencha os dados do novo registro.</DialogDescription>
                                                     </DialogHeader>
                                                     <PersonForm onSave={handlePersonSaved} onClear={() => {}} />
                                             </DialogContent>
@@ -559,6 +562,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Cadastrar Novo Produto</DialogTitle>
+                    <DialogDescription>Preencha os dados do novo produto.</DialogDescription>
                 </DialogHeader>
                 <ProductForm onSave={handleProductSaved} />
             </DialogContent>

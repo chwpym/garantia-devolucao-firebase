@@ -45,7 +45,12 @@ export default function ProductForm({ onSave, editingProduct, onClear }: Product
   });
 
   useEffect(() => {
-    form.reset(editingProduct || defaultFormValues);
+    const defaultVals = editingProduct ? {
+      ...editingProduct,
+      referencia: editingProduct.referencia || '',
+      marca: editingProduct.marca || ''
+    } : defaultFormValues;
+    form.reset(defaultVals);
   }, [editingProduct, form]);
 
   const { isSubmitting } = form.formState;

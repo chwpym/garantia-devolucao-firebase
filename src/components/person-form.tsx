@@ -93,6 +93,15 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
     const defaultVals = editingPerson ? {
         ...editingPerson,
         cpfCnpj: editingPerson.cpfCnpj ? formatCpfCnpj(editingPerson.cpfCnpj) : '',
+        nomeFantasia: editingPerson.nomeFantasia || '',
+        telefone: editingPerson.telefone || '',
+        email: editingPerson.email || '',
+        cep: editingPerson.cep || '',
+        endereco: editingPerson.endereco || '',
+        bairro: editingPerson.bairro || '',
+        cidade: editingPerson.cidade || '',
+        observacao: editingPerson.observacao || '',
+        codigoExterno: editingPerson.codigoExterno || '',
     } : defaultFormValues;
     form.reset(defaultVals);
   }, [editingPerson, form]);

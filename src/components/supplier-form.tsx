@@ -72,6 +72,11 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
     const defaultVals = editingSupplier ? {
         ...editingSupplier,
         cnpj: editingSupplier.cnpj ? formatCNPJ(editingSupplier.cnpj) : '',
+        cep: editingSupplier.cep || '',
+        endereco: editingSupplier.endereco || '',
+        bairro: editingSupplier.bairro || '',
+        cidade: editingSupplier.cidade || '',
+        codigoExterno: editingSupplier.codigoExterno || ''
     } : defaultFormValues;
     form.reset(defaultVals);
   }, [editingSupplier, form]);
