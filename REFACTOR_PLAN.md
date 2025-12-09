@@ -109,7 +109,9 @@ Este documento descreve o roteiro para refatorar e melhorar a arquitetura do có
 ---
 # Novas Funcionalidades e Melhorias
 
-## Fase 6.5: Correção de Bugs de Cadastro e Seleção (Dificuldade: Média)
+## Fase 6.5: Correção de Bugs de Cadastro e Seleção (Concluída)
+
+**Status: Concluída**
 
 **Objetivo:** Corrigir bugs críticos que impedem a seleção de registros recém-cadastrados e ajustar o comportamento da busca.
 
@@ -130,7 +132,9 @@ Este documento descreve o roteiro para refatorar e melhorar a arquitetura do có
 
 ---
 
-## Fase 7: Validador de Duplicidade (Dificuldade: Baixa)
+## Fase 7: Validador de Duplicidade (Concluída)
+
+**Status: Concluída**
 
 **Objetivo:** Impedir o cadastro de itens duplicados, avisando o usuário quando um código de produto, CNPJ de fornecedor ou CPF/CNPJ de cliente já existe.
 
@@ -151,7 +155,9 @@ Este documento descreve o roteiro para refatorar e melhorar a arquitetura do có
 
 ---
 
-## Fase 8: Melhorias de Fluxo e Usabilidade (Dificuldade: Média)
+## Fase 8: Melhorias de Fluxo e Usabilidade (Concluída)
+
+**Status: Concluída**
 
 **Objetivo:** Aumentar a produtividade do usuário adicionando atalhos de cadastro e melhorando a experiência em telas de consulta.
 
@@ -174,7 +180,9 @@ Este documento descreve o roteiro para refatorar e melhorar a arquitetura do có
 
 ---
 
-## Fase 9: Campo "Código Externo" e Melhorias de Consulta (Dificuldade: Baixa)
+## Fase 9: Campo "Código Externo" e Melhorias de Consulta (Concluída)
+
+**Status: Concluída**
 
 **Objetivo:** Adicionar um campo de código para clientes e fornecedores e melhorar a interface das consultas.
 
@@ -198,7 +206,9 @@ Este documento descreve o roteiro para refatorar e melhorar a arquitetura do có
 
 ---
 
-## Fase 10: Preferências do Usuário e Segurança (Dificuldade: Baixa)
+## Fase 10: Preferências do Usuário e Segurança (Concluída)
+
+**Status: Concluída**
 
 **Objetivo:** Permitir personalização da interface e ajustar comportamentos padrão para melhorar a segurança.
 
@@ -319,7 +329,9 @@ Este documento descreve o roteiro para refatorar e melhorar a arquitetura do có
 
 ---
 
-## Fase 16: Comportamento Padrão do "Lembrar de mim" (Dificuldade: Baixa)
+## Fase 16: Comportamento Padrão do "Lembrar de mim" (Concluída)
+
+**Status: Concluída**
 
 **Objetivo:** Alterar o estado padrão do checkbox "Lembrar de mim" para desmarcado.
 
