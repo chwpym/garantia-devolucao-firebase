@@ -18,7 +18,6 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { DialogClose, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from './ui/textarea';
 import { formatPhoneNumber } from '@/lib/utils';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 const contactInfoSchema = z.object({
   type: z.string().min(1, "O tipo é obrigatório."),
@@ -226,7 +225,7 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSave)}>
-        <div className="space-y-6 px-1">
+        <div className="space-y-6 px-1 max-h-[70vh] overflow-y-auto pr-4">
           <FormField
             name="nome"
             control={form.control}
@@ -253,19 +252,42 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
               </FormItem>
             )}
           />
-          <FormField
-            name="codigoExterno"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Código Externo</FormLabel>
-                <FormControl>
-                  <Input placeholder="Código em outro sistema (ERP, etc)" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              name="codigoExterno"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Código Externo</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Código em outro sistema (ERP, etc)" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              name="cpfCnpj"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>CPF / CNPJ</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Input 
+                        placeholder="000.000.000-00 ou 00.000.000/0000-00" 
+                        {...field} 
+                        onChange={(e) => field.onChange(formatCpfCnpj(e.target.value))}
+                        onBlur={handleCpfCnpjBlur}
+                      />
+                      {isFetchingCnpj && <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin" />}
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
           <FormField
             control={form.control}
             name="tipo"
@@ -291,28 +313,6 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
                       <FormLabel className="font-normal">Ambos</FormLabel>
                     </FormItem>
                   </RadioGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-           <FormField
-            name="cpfCnpj"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>CPF / CNPJ</FormLabel>
-                <FormControl>
-                  <div className="relative">
-                    <Input 
-                      placeholder="000.000.000-00 ou 00.000.000/0000-00" 
-                      {...field} 
-                      onChange={(e) => field.onChange(formatCpfCnpj(e.target.value))}
-                      onBlur={handleCpfCnpjBlur}
-                    />
-                    {isFetchingCnpj && <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin" />}
-                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>
