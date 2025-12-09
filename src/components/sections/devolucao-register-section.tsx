@@ -40,6 +40,7 @@ const devolucaoSchema = z.object({
     mecanico: z.string().optional(),
     requisicaoVenda: z.string().min(1, 'Requisição é obrigatória'),
     acaoRequisicao: z.string({ required_error: 'Selecione uma ação para a requisição' }).min(1, 'Selecione uma ação para a requisição'),
+    status: z.string({ required_error: 'Selecione um status' }).min(1, 'Selecione um status'),
     dataVenda: z.date({ required_error: 'Data da venda é obrigatória' }),
     dataDevolucao: z.date({ required_error: 'Data da devolução é obrigatória' }),
     observacaoGeral: z.string().optional(),
@@ -53,11 +54,10 @@ interface DevolucaoRegisterSectionProps {
     onSave: () => void;
 }
 
-const defaultFormValues: DevolucaoFormValues = {
+const defaultFormValues: Omit<DevolucaoFormValues, 'acaoRequisicao' | 'status'> & { acaoRequisicao?: string; status?: string } = {
   cliente: '',
   mecanico: '',
   requisicaoVenda: '',
-  acaoRequisicao: '',
   dataDevolucao: new Date(),
   dataVenda: new Date(),
   observacaoGeral: '',
@@ -163,11 +163,16 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
         return statuses.filter(s => s.aplicavelEm.includes('acaoRequisicao'));
     }, [statuses]);
 
+    const devolutionStatusOptions = useMemo(() => {
+        return statuses.filter(s => s.aplicavelEm.includes('devolucao'));
+    }, [statuses]);
+
     const form = useForm<DevolucaoFormValues>({
         resolver: zodResolver(devolucaoSchema),
         defaultValues: {
             ...defaultFormValues,
             acaoRequisicao: acaoRequisicaoOptions.find(o => o.nome === 'Alterada')?.nome || '',
+            status: devolutionStatusOptions[0]?.nome || 'Recebido',
         },
     });
 
@@ -180,7 +185,10 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
         if (acaoRequisicaoOptions.length > 0 && !form.getValues('acaoRequisicao')) {
             form.setValue('acaoRequisicao', acaoRequisicaoOptions[0].nome);
         }
-    }, [acaoRequisicaoOptions, form]);
+        if(devolutionStatusOptions.length > 0 && !form.getValues('status')) {
+            form.setValue('status', devolutionStatusOptions[0].nome);
+        }
+    }, [acaoRequisicaoOptions, devolutionStatusOptions, form]);
 
     const loadEditingData = useCallback(async (id: number) => {
         const data = await db.getDevolucaoById(id);
@@ -191,6 +199,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                 dataDevolucao: data.dataDevolucao ? parseISO(data.dataDevolucao) : new Date(),
                 mecanico: data.mecanico || '',
                 observacaoGeral: data.observacaoGeral || '',
+                status: data.status || devolutionStatusOptions[0]?.nome || 'Recebido',
             });
             if (data.itens) {
                 replace(data.itens.map(item => ({ ...item, id: item.id || undefined })));
@@ -203,7 +212,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
             });
             onSave(); // Volta para a lista
         }
-    }, [form, onSave, replace, toast]);
+    }, [form, onSave, replace, toast, devolutionStatusOptions]);
 
 
     useEffect(() => {
@@ -214,9 +223,6 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
 
     const onSubmit = async (data: DevolucaoFormValues) => {
         try {
-            const currentDevolucao = editingId ? await db.getDevolucaoById(editingId) : null;
-            const currentStatus: ReturnStatus = currentDevolucao?.status || 'Recebido';
-
             const devolucaoBaseData = {
                 cliente: data.cliente,
                 mecanico: data.mecanico,
@@ -224,7 +230,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                 acaoRequisicao: data.acaoRequisicao,
                 dataVenda: data.dataVenda.toISOString(),
                 dataDevolucao: data.dataDevolucao.toISOString(),
-                status: currentStatus,
+                status: data.status,
                 observacaoGeral: data.observacaoGeral
             };
 
@@ -260,7 +266,11 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                     title: 'Sucesso!',
                     description: 'Devolução registrada com sucesso.'
                 });
-                form.reset(defaultFormValues);
+                form.reset({
+                    ...defaultFormValues,
+                    acaoRequisicao: acaoRequisicaoOptions.find(o => o.nome === 'Alterada')?.nome || '',
+                    status: devolutionStatusOptions[0]?.nome || 'Recebido',
+                });
                 window.dispatchEvent(new CustomEvent('datachanged')); // Notifica a lista para atualizar
             }
         } catch (error) {
@@ -278,7 +288,11 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
     }
 
     const handleClearForm = () => {
-        form.reset(defaultFormValues);
+        form.reset({
+            ...defaultFormValues,
+            acaoRequisicao: acaoRequisicaoOptions.find(o => o.nome === 'Alterada')?.nome || '',
+            status: devolutionStatusOptions[0]?.nome || 'Recebido',
+        });
         toast({ title: 'Formulário Limpo', description: 'Você pode iniciar um novo cadastro.' });
     };
 
@@ -393,8 +407,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                             ))}
                                         </div>
                                     </div>
-
-                                    {/* General Info */}
+                                    
                                     <Dialog open={isPersonModalOpen} onOpenChange={setPersonModalOpen}>
                                         <div className='grid md:grid-cols-2 gap-4'>
                                             <FormField
@@ -478,6 +491,24 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                                     </FormItem>
                                                 )}
                                             />
+                                             <FormField
+                                                control={form.control}
+                                                name="status"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Status da Devolução <span className='text-destructive'>*</span></FormLabel>
+                                                        <Select onValueChange={field.onChange} value={field.value}>
+                                                            <FormControl><SelectTrigger><SelectValue placeholder="Selecione o status..." /></SelectTrigger></FormControl>
+                                                            <SelectContent>
+                                                                {devolutionStatusOptions.map(opt => (
+                                                                    <SelectItem key={opt.id} value={opt.nome}>{opt.nome}</SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
                                             <FormField
                                                 control={form.control}
                                                 name="dataVenda"
@@ -501,14 +532,14 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                                 )}
                                             />
                                         </div>
-                                        <DialogContent className="max-w-2xl">
-                                            <DialogHeader>
-                                                <DialogTitle>Cadastrar Novo Cliente/Mecânico</DialogTitle>
-                                                <DialogDescription>Preencha os dados abaixo para criar um novo registro.</DialogDescription>
-                                            </DialogHeader>
-                                            <div className='max-h-[80vh] overflow-y-auto pr-2'>
-                                                <PersonForm onSave={handlePersonSaved} onClear={() => setPersonModalOpen(false)} />
-                                            </div>
+                                         <DialogContent className="max-w-2xl">
+                                                <DialogHeader>
+                                                    <DialogTitle>Cadastrar Novo Cliente/Mecânico</DialogTitle>
+                                                    <DialogDescription>Preencha os dados abaixo para criar um novo registro.</DialogDescription>
+                                                </DialogHeader>
+                                                <div className='max-h-[80vh] overflow-y-auto pr-2'>
+                                                    <PersonForm onSave={handlePersonSaved} onClear={() => setPersonModalOpen(false)} />
+                                                </div>
                                         </DialogContent>
                                     </Dialog>
                                     <FormField
@@ -557,3 +588,4 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
         </>
     );
 }
+
