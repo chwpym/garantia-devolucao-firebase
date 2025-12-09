@@ -1,4 +1,5 @@
 
+
 # Plano de Refatoração do Synergia OS
 
 Este documento descreve o roteiro para refatorar e melhorar a arquitetura do código do aplicativo Synergia OS. As mudanças serão aplicadas em fases para garantir estabilidade e segurança.
@@ -370,9 +371,80 @@ Este documento descreve o roteiro para refatorar e melhorar a arquitetura do có
 
 ---
 
+## Fase 18: Dashboard Mais Visual e Informativo (Pendente)
+
+**Objetivo:** Substituir as listas de texto "Top 5" por gráficos mais visuais e adicionar um painel de "Garantias Recentes".
+
+**Roteiro Detalhado:**
+1.  **Gráficos para Rankings:**
+    *   **Arquivo:** `src/components/sections/dashboard-section.tsx`.
+    *   **Lógica:** Substituir as listas de `Top 5 Fornecedores` e `Top 5 Clientes/Mecânicos` por componentes `BarChart` da biblioteca `recharts`. Isso proporcionará uma leitura visual imediata dos dados.
+2.  **Painel de Garantias Recentes:**
+    *   **Arquivo:** `src/components/sections/dashboard-section.tsx`.
+    *   **Lógica:** Criar um novo `Card` que exibirá uma tabela com as 5 garantias mais recentes. Assim como no painel de devoluções, cada linha terá um botão "Editar" para acesso rápido ao formulário de edição.
+
+**Benefícios:**
+*   **Leitura Rápida:** Gráficos permitem identificar padrões e informações importantes de forma muito mais rápida que texto.
+*   **Acesso Direto:** O painel de garantias recentes agiliza o acesso a registros que frequentemente precisam de atenção.
+
+---
+
+## Fase 19: Melhoria da Experiência do Usuário (UX) em Telas Vazias (Pendente)
+
+**Objetivo:** Transformar telas de consulta vazias em guias úteis para o usuário.
+
+**Roteiro Detalhado:**
+1.  **Componente de "Estado Vazio":**
+    *   **Arquivos:** `lotes-section.tsx`, `persons-section.tsx`, `suppliers-section.tsx`, etc.
+    *   **Lógica:** Em cada tela de consulta, em vez de mostrar apenas "Nenhum registro encontrado", exibir um componente visual com um ícone, um título e um botão de ação.
+    *   **Exemplo (Lotes):** Mostrar um ícone `<Package>`, o título "Nenhum lote encontrado" e um botão "Criar Novo Lote".
+
+**Benefícios:**
+*   **Orientação ao Usuário:** Guia o usuário sobre qual é o próximo passo lógico a ser tomado.
+*   **Interface Amigável:** Evita a sensação de "beco sem saída" e torna a aplicação mais convidativa.
+
+---
+
+## Fase 20: Otimização do Fluxo de Cadastro Rápido (Pendente)
+
+**Objetivo:** Aprimorar a funcionalidade de cadastro rápido ("+") para que o item recém-criado seja automaticamente selecionado.
+
+**Roteiro Detalhado:**
+1.  **Refatorar o `onSave`:**
+    *   **Arquivos:** `person-form.tsx`, `supplier-form.tsx`, `product-form.tsx`.
+    *   **Lógica:** Modificar a função `onSave` nestes formulários para que ela receba o objeto recém-criado como parâmetro.
+2.  **Atualizar o Formulário Principal:**
+    *   **Arquivos:** `warranty-form.tsx`, `devolucao-register-section.tsx`.
+    *   **Lógica:** A função que lida com o salvamento no modal (ex: `handlePersonSaved`) receberá o novo objeto (`newPerson`). Dentro dela, será chamada a função `form.setValue('cliente', newPerson.nome)` para preencher automaticamente o campo correspondente.
+
+**Benefícios:**
+*   **Eficiência Máxima:** Elimina um passo manual, tornando o fluxo de cadastro contínuo e muito mais rápido.
+*   **Experiência Inteligente:** O sistema "adivinha" a intenção do usuário, melhorando a satisfação.
+
+---
+
+## Fase 21: Revisão de Consistência Visual (UI Polish) (Pendente)
+
+**Objetivo:** Realizar uma revisão geral da interface para garantir consistência em estilos, espaçamentos e componentes.
+
+**Roteiro Detalhado:**
+1.  **Análise de Componentes:** Revisar todos os `Card`, `Button`, `Input`, `Select` e `Dialog` da aplicação.
+2.  **Padronização de Ações:**
+    *   Garantir que botões de "Salvar" ou "Criar" sempre tenham a variante `default` (primária).
+    *   Botões de "Cancelar" ou "Limpar" tenham a variante `outline` ou `secondary`.
+    *   Ações de exclusão usem consistentemente a variante `destructive`.
+3.  **Ajuste de Espaçamentos:** Verificar `margin` e `padding` em todos os formulários e seções para garantir um ritmo visual consistente.
+4.  **Tipografia:** Garantir que `CardTitle` e `CardDescription` sejam usados de forma consistente para hierarquia de informação.
+
+**Benefícios:**
+*   **Profissionalismo:** Uma interface consistente transmite a sensação de um produto mais robusto e bem-acabado.
+*   **Previsibilidade:** O usuário aprende rapidamente como a interface funciona, pois os padrões se repetem.
+---
+
 ## Nota sobre Importação de Dados do Sistema Antigo
 
 Para facilitar a migração de dados de outros sistemas, a funcionalidade de "Backup / Restore" na tela de Backup deve ser utilizada.
 
 *   **Formato Ideal:** **JSON**. Este é o formato nativo que o sistema usa para backups e restaurações.
 *   **Ação Necessária:** Criar um arquivo `modelo-importacao.json` na raiz do projeto. Este arquivo servirá como um guia, contendo a estrutura exata de `products`, `persons` e `suppliers` que o sistema espera. Com base neste modelo, os dados de qualquer sistema antigo podem ser convertidos para o formato correto e importados com segurança, alimentando as tabelas de Clientes, Fornecedores e Produtos.
+
