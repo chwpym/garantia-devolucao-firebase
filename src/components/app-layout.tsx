@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Settings, Menu, DatabaseBackup, ArrowLeft } from 'lucide-react';
@@ -27,24 +27,28 @@ export default function AppLayout({ children }: AppLayoutProps) {
     goBack,
     loadInitialData,
   } = useAppStore();
-
-  const handleDataChanged = useCallback(() => {
-    loadInitialData();
-  }, [loadInitialData]);
+  
+  const isInitialLoadDone = useRef(false);
 
   useEffect(() => {
-    // Initial data load
-    loadInitialData();
-    
-    // Set up a listener for the custom 'datachanged' event
-    // This ensures that data is re-fetched whenever it's updated anywhere in the app
-    window.addEventListener('datachanged', handleDataChanged);
-    
-    // Cleanup the event listener on component unmount
-    return () => {
-      window.removeEventListener('datachanged', handleDataChanged);
-    };
-  }, [handleDataChanged, loadInitialData]);
+    // Garantir que a carga de dados e o listener sejam configurados apenas uma vez.
+    if (!isInitialLoadDone.current) {
+      const handleDataChanged = () => {
+        loadInitialData();
+      };
+
+      loadInitialData();
+      window.addEventListener('datachanged', handleDataChanged);
+      
+      isInitialLoadDone.current = true;
+
+      // Retornar a função de limpeza para o useEffect
+      return () => {
+        window.removeEventListener('datachanged', handleDataChanged);
+      };
+    }
+  }, [loadInitialData]);
+
 
   const handleNavClick = (view: string) => {
     setActiveView(view);
