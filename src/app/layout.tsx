@@ -7,6 +7,7 @@ import './globals.css';
 import { cn } from '@/lib/utils';
 import PwaUpdateAlert from '@/components/pwa-update-alert';
 import { AuthProvider } from '@/components/auth-provider';
+import ClientOnly from '@/components/client-only';
 
 
 const inter = Inter({
@@ -45,8 +46,10 @@ export default function RootLayout({
           <AuthProvider>
             {children}
           </AuthProvider>
-          <Toaster />
-          <PwaUpdateAlert />
+          <ClientOnly>
+            <Toaster />
+            <PwaUpdateAlert />
+          </ClientOnly>
         </ThemeProvider>
       </body>
     </html>
