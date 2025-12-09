@@ -7,7 +7,6 @@ import './globals.css';
 import { cn } from '@/lib/utils';
 import PwaUpdateAlert from '@/components/pwa-update-alert';
 import { AuthProvider } from '@/components/auth-provider';
-import { AuthGuard } from '@/components/auth-guard';
 
 
 const inter = Inter({
@@ -44,9 +43,7 @@ export default function RootLayout({
       <body className="font-body antialiased" suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>
-            <AuthGuard>
-              {children}
-            </AuthGuard>
+            {children}
           </AuthProvider>
           <Toaster />
           <PwaUpdateAlert />

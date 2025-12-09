@@ -3,35 +3,16 @@
 
 import type { ReactNode } from 'react';
 import { useAuthGuard } from '@/hooks/use-auth-guard';
-import { Loader2 } from 'lucide-react';
-import ClientOnly from './client-only';
 
 interface AuthGuardProps {
   children: ReactNode;
 }
 
+// This component is now a "logic-only" component.
+// It runs the auth guard hook but doesn't render any UI itself.
+// The UI (spinner or children) is now handled by the AuthProvider.
 export function AuthGuard({ children }: AuthGuardProps) {
-  const { isLoading, isAuthenticated } = useAuthGuard();
-
-  if (isLoading) {
-    return (
-      <div className="flex h-screen w-screen items-center justify-center bg-background">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <span className="sr-only">Carregando...</span>
-      </div>
-    );
-  }
+  useAuthGuard();
   
-  if (isAuthenticated) {
-    return <ClientOnly>{children}</ClientOnly>
-  }
-
-  // If not authenticated and not loading, the hook will have already triggered a redirect.
-  // We can return null or a loader as a fallback.
-  return (
-    <div className="flex h-screen w-screen items-center justify-center bg-background">
-      <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      <span className="sr-only">Redirecionando...</span>
-    </div>
-  );
+  return <>{children}</>;
 }
