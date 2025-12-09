@@ -1,17 +1,18 @@
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { Devolucao, ItemDevolucao, Person } from '@/lib/types';
 import * as db from '@/lib/db';
-import { format, parseISO, addDays, startOfMonth, endOfMonth } from 'date-fns';
+import { format, parseISO, addDays, startOfMonth, endOfMonth, differenceInDays } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Undo, Wrench, Users, UserCog, BarChart3, PieChart, User, FileDown, X } from 'lucide-react';
+import { Undo, Wrench, Users, UserCog, BarChart3, PieChart, User, FileDown, X, Clock } from 'lucide-react';
 import { DatePickerWithRange } from '../ui/date-range-picker';
 import { Badge } from '../ui/badge';
 import { Combobox } from '../ui/combobox';
@@ -31,6 +32,7 @@ interface ReportData {
   porCliente: { nome: string; qtdTotal: number; ocorrencias: number; pecasDistintas: number }[];
   porMecanico: { nome: string; qtdTotal: number; ocorrencias: number; clientesUnicos: number }[];
   porAcao: { acao: string; qtdTotal: number; ocorrencias: number }[];
+  tempoMedioPorCliente: { nome: string; tempoMedio: number; numeroDevolucoes: number }[];
 }
 
 interface ClientReportFilters {
@@ -187,6 +189,31 @@ export default function DevolucaoReportSection() {
     });
     const porAcao = Object.values(acaoStats).sort((a,b) => b.ocorrencias - a.ocorrencias);
 
+    // Tempo Médio de Devolução
+    const tempoMedioStats: Record<string, { totalDias: number; numeroDevolucoes: number }> = {};
+    filteredDevolucoes.forEach(dev => {
+        if (!dev.dataVenda) return;
+        
+        if (!tempoMedioStats[dev.cliente]) {
+            tempoMedioStats[dev.cliente] = { totalDias: 0, numeroDevolucoes: 0 };
+        }
+        
+        const diff = differenceInDays(parseISO(dev.dataDevolucao), parseISO(dev.dataVenda));
+        if (diff >= 0) {
+            tempoMedioStats[dev.cliente].totalDias += diff;
+            tempoMedioStats[dev.cliente].numeroDevolucoes++;
+        }
+    });
+
+    const tempoMedioPorCliente = Object.entries(tempoMedioStats)
+        .map(([nome, stats]) => ({
+            nome,
+            tempoMedio: stats.numeroDevolucoes > 0 ? stats.totalDias / stats.numeroDevolucoes : 0,
+            numeroDevolucoes: stats.numeroDevolucoes,
+        }))
+        .filter(item => item.numeroDevolucoes > 0)
+        .sort((a, b) => b.tempoMedio - a.tempoMedio);
+
     setReportData({
         totalDevolucoes,
         totalPecas,
@@ -196,6 +223,7 @@ export default function DevolucaoReportSection() {
         porCliente,
         porMecanico,
         porAcao,
+        tempoMedioPorCliente,
     });
   }, [filteredDevolucoes, toast]);
 
@@ -515,6 +543,26 @@ export default function DevolucaoReportSection() {
                             <TableBody>
                                 {reportData.porCliente.slice(0,10).map(c => (
                                     <TableRow key={c.nome}><TableCell>{c.nome}</TableCell><TableCell>{c.qtdTotal}</TableCell><TableCell>{c.ocorrencias}</TableCell><TableCell>{c.pecasDistintas}</TableCell></TableRow>
+                                ))}
+                            </TableBody>
+                         </Table>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle className='flex items-center gap-2'><Clock className='h-5 w-5' /> Tempo Médio de Devolução</CardTitle>
+                        <CardDescription>Média de dias entre a venda e a devolução por cliente.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                         <Table>
+                            <TableHeader><TableRow><TableHead>Cliente</TableHead><TableHead className='text-right'>Tempo Médio (dias)</TableHead><TableHead className='text-right'>Nº de Devoluções</TableHead></TableRow></TableHeader>
+                            <TableBody>
+                                {reportData.tempoMedioPorCliente.slice(0,10).map(c => (
+                                    <TableRow key={c.nome}>
+                                        <TableCell>{c.nome}</TableCell>
+                                        <TableCell className='text-right font-bold'>{c.tempoMedio.toFixed(1)}</TableCell>
+                                        <TableCell className='text-right'>{c.numeroDevolucoes}</TableCell>
+                                    </TableRow>
                                 ))}
                             </TableBody>
                          </Table>
