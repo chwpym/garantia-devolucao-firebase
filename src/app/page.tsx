@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { ComponentType } from 'react';
+import { useEffect, useState, type ComponentType } from 'react';
 import AppLayout from '@/components/app-layout';
 import DashboardSection from '@/components/sections/dashboard-section';
 import RegisterSection from '@/components/sections/register-section';
@@ -51,6 +51,7 @@ const viewComponents: { [key: string]: ComponentType<any> } = {
 };
 
 export default function Home() {
+  const [hasMounted, setHasMounted] = useState(false);
   const {
     activeView,
     selectedLoteId,
@@ -65,6 +66,14 @@ export default function Home() {
     handleCloneWarranty,
     handleWarrantySave,
   } = useAppStore();
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  if (!hasMounted) {
+    return null;
+  }
 
   const renderContent = () => {
     const Component = viewComponents[activeView];
