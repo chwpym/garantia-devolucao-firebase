@@ -1,8 +1,9 @@
 
+
 'use client';
 
 import { create } from 'zustand';
-import type { Warranty, Person, Supplier, Product, WarrantyStatus } from '@/lib/types';
+import type { Warranty, Person, Supplier, Product, CustomStatus } from '@/lib/types';
 import * as db from '@/lib/db';
 
 export type RegisterMode = 'edit' | 'clone';
@@ -12,6 +13,7 @@ interface AppState {
   products: Product[];
   persons: Person[];
   suppliers: Supplier[];
+  statuses: CustomStatus[];
   isDataLoaded: boolean;
   
   // Navigation and UI
@@ -28,7 +30,7 @@ interface AppState {
 
   // Actions
   loadInitialData: () => Promise<void>;
-  reloadData: (dataType?: 'products' | 'persons' | 'suppliers') => Promise<void>;
+  reloadData: (dataType?: 'products' | 'persons' | 'suppliers' | 'statuses') => Promise<void>;
   setActiveView: (viewId: string, shouldAddToHistory?: boolean) => void;
   goBack: () => void;
   setMobileMenuOpen: (isOpen: boolean) => void;
@@ -51,65 +53,13 @@ interface AppState {
   setNewLoteModalOpen: (isOpen: boolean) => void;
 }
 
-const runDataMigration = async () => {
-  const MIGRATION_KEY = 'warranty_status_migration_v1';
-  if (typeof window !== 'undefined' && localStorage.getItem(MIGRATION_KEY)) {
-    return; // Migration already performed
-  }
-
-  console.log('Iniciando migração de status de garantias...');
-  try {
-    const warranties = await db.getAllWarranties();
-    let updatedCount = 0;
-
-    for (const warranty of warranties) {
-      let needsUpdate = false;
-      let newStatus: WarrantyStatus | undefined = warranty.status;
-      
-      const oldStatus = warranty.status as unknown; // Treat as unknown for safe comparison
-
-      switch (oldStatus) {
-        case 'Em análise':
-          newStatus = 'Enviado para Análise';
-          needsUpdate = true;
-          break;
-        case 'Aprovada':
-          newStatus = 'Aprovada - Peça Nova';
-          needsUpdate = true;
-          break;
-        case 'Paga':
-          newStatus = 'Aprovada - Crédito Boleto';
-          needsUpdate = true;
-          break;
-      }
-
-      if (needsUpdate && newStatus) {
-        const updatedWarranty = { ...warranty, status: newStatus };
-        await db.updateWarranty(updatedWarranty);
-        updatedCount++;
-      }
-    }
-
-    if (updatedCount > 0) {
-      console.log(`Migração concluída! ${updatedCount} garantias foram atualizadas.`);
-    } else {
-      console.log('Nenhuma garantia precisou de migração.');
-    }
-
-    if (typeof window !== 'undefined') {
-        localStorage.setItem(MIGRATION_KEY, 'completed');
-    }
-  } catch (error) {
-    console.error('Falha na migração de dados:', error);
-  }
-};
-
 
 export const useAppStore = create<AppState>((set, get) => ({
   // Initial state
   products: [],
   persons: [],
   suppliers: [],
+  statuses: [],
   isDataLoaded: false,
   activeView: 'dashboard',
   navigationHistory: [],
@@ -124,18 +74,17 @@ export const useAppStore = create<AppState>((set, get) => ({
   loadInitialData: async () => {
     try {
       await db.initDB();
-      // Run data migration before loading data
-      await runDataMigration();
-
-      const [products, persons, suppliers] = await Promise.all([
+      const [products, persons, suppliers, statuses] = await Promise.all([
         db.getAllProducts(),
         db.getAllPersons(),
         db.getAllSuppliers(),
+        db.getAllStatuses(),
       ]);
       set({ 
         products: products.sort((a, b) => a.descricao.localeCompare(b.descricao)),
         persons: persons.sort((a, b) => a.nome.localeCompare(b.nome)),
         suppliers: suppliers.sort((a, b) => a.nomeFantasia.localeCompare(b.nomeFantasia)),
+        statuses: statuses,
         isDataLoaded: true 
       });
     } catch (error) {
@@ -158,6 +107,10 @@ export const useAppStore = create<AppState>((set, get) => ({
         if (!dataType || dataType === 'suppliers') {
             const suppliers = await db.getAllSuppliers();
             set({ suppliers: [...suppliers.sort((a, b) => a.nomeFantasia.localeCompare(b.nomeFantasia))] });
+        }
+        if (!dataType || dataType === 'statuses') {
+            const statuses = await db.getAllStatuses();
+            set({ statuses: [...statuses] });
         }
     } catch (error) {
        console.error("Failed to reload data:", error);

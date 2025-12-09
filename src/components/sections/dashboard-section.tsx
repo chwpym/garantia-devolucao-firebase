@@ -6,7 +6,7 @@ import { useEffect, useState, useCallback } from 'react';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Wrench, ShieldCheck, Hourglass, BarChart3, ShieldX, Users, Building, DollarSign, Undo, Package } from 'lucide-react';
+import { Wrench, ShieldCheck, Hourglass, BarChart3, ShieldX, Users, Building, DollarSign, Undo, Package, Pencil } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, Pie, PieChart as RechartsPieChart, Cell } from 'recharts';
@@ -19,7 +19,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { WARRANTY_STATUSES } from '@/lib/types';
+import { useAppStore } from '@/store/app-store';
 
 
 // Tipos para Garantias
@@ -90,7 +90,13 @@ const COLORS: Record<WarrantyStatus, string> = {
     'Recusada': 'hsl(var(--chart-5))',
 };
 
+const DASHBOARD_TAB_KEY = 'synergia-dashboard-tab';
+
 export default function DashboardSection({ openTab: setActiveView }: DashboardSectionProps) {
+  const handleEditDevolucao = useAppStore(state => state.handleEditDevolucao);
+  const [activeTab, setActiveTab] = useState('garantias');
+  const warrantyStatuses = useAppStore(state => state.statuses.filter(s => s.aplicavelEm.includes('garantia')));
+
   // Estado para Garantias
   const [stats, setStats] = useState<DashboardStats>({ total: 0, totalDefeitos: 0, pendentes: 0, aprovadas: 0, recusadas: 0, pagas: 0 });
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
@@ -104,6 +110,20 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
 
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Fase 10: Recuperar a última aba selecionada
+    const savedTab = localStorage.getItem(DASHBOARD_TAB_KEY);
+    if (savedTab) {
+        setActiveTab(savedTab);
+    }
+  }, []);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    // Fase 10: Salvar a aba selecionada
+    localStorage.setItem(DASHBOARD_TAB_KEY, value);
+  };
 
   const loadStats = useCallback(async () => {
     setIsLoading(true);
@@ -119,7 +139,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
           return acc + (warranty.quantidade ?? 0);
       }, 0);
       
-      const statusCounts = Object.fromEntries(WARRANTY_STATUSES.map(s => [s, 0])) as Record<WarrantyStatus, number>;
+      const statusCounts = Object.fromEntries(warrantyStatuses.map(s => [s.nome, 0])) as Record<string, number>;
 
       let totalAprovadas = 0;
       let totalPendentes = 0;
@@ -145,13 +165,17 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
         totalDefeitos: totalDefeitos,
         pendentes: totalPendentes,
         aprovadas: totalAprovadas,
-        recusadas: statusCounts['Recusada'],
+        recusadas: statusCounts['Recusada'] || 0,
         pagas: totalPagas,
       });
       
       setStatusData(Object.entries(statusCounts)
         .filter(([, value]) => value > 0)
-        .map(([name, value]) => ({ name, value, fill: COLORS[name as WarrantyStatus] }))
+        .map(([name, value]) => ({ 
+            name, 
+            value, 
+            fill: warrantyStatuses.find(s => s.nome === name)?.cor || COLORS[name as WarrantyStatus] || '#8884d8' 
+        }))
       );
       
       const now = new Date();
@@ -220,7 +244,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [toast, warrantyStatuses]);
 
   useEffect(() => {
     const handleDataChanged = () => {
@@ -247,7 +271,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
             </div>
         </div>
 
-        <Tabs defaultValue="garantias" className="w-full">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="garantias" className={cn("border-2 border-transparent data-[state=active]:border-primary")}>Garantias</TabsTrigger>
                 <TabsTrigger value="devolucoes" className={cn("border-2 border-transparent data-[state=active]:border-[hsl(var(--accent-blue))]")}>Devoluções</TabsTrigger>
@@ -486,6 +510,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                                         <TableHead>Peça</TableHead>
                                         <TableHead className='text-center'>Quantidade</TableHead>
                                         <TableHead>Requisição</TableHead>
+                                        <TableHead className='w-[100px] text-right'>Ações</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -502,11 +527,17 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                                                     <Badge variant="secondary">{item.quantidade}</Badge>
                                                 </TableCell>
                                                 <TableCell>{item.requisicaoVenda}</TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button variant="outline" size="sm" onClick={() => handleEditDevolucao(item.id)}>
+                                                        <Pencil className="mr-2 h-4 w-4" />
+                                                        Editar
+                                                    </Button>
+                                                </TableCell>
                                             </TableRow>
                                         ))
                                     ) : (
                                         <TableRow>
-                                            <TableCell colSpan={5} className="h-24 text-center">Nenhuma devolução registrada ainda.</TableCell>
+                                            <TableCell colSpan={6} className="h-24 text-center">Nenhuma devolução registrada ainda.</TableCell>
                                         </TableRow>
                                     )}
                                 </TableBody>
@@ -519,3 +550,4 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
     </div>
   );
 }
+

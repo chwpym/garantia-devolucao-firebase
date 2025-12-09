@@ -1,10 +1,11 @@
+
 'use client';
 
 import { useRef, useState } from 'react';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import * as db from '@/lib/db';
-import type { Warranty, Devolucao, Lote, Person, Supplier, CompanyData, ItemDevolucao, Product } from '@/lib/types';
+import type { Warranty, Devolucao, Lote, Person, Supplier, CompanyData, ItemDevolucao, Product, CustomStatus } from '@/lib/types';
 import { Loader2, Upload } from 'lucide-react';
 import {
   AlertDialog,
@@ -26,6 +27,7 @@ interface FullBackupData {
   devolucoes?: (Omit<Devolucao, 'id'> & { id?: number; itens: (Omit<ItemDevolucao, 'id' | 'devolucaoId'>)[] })[];
   companyData?: CompanyData;
   products?: Product[];
+  statuses?: CustomStatus[];
 }
 
 
@@ -67,6 +69,7 @@ export function ImportButton({ onDataImported }: ImportButtonProps) {
           !Array.isArray(data.lotes) &&
           !Array.isArray(data.devolucoes) &&
           !Array.isArray(data.products) &&
+          !Array.isArray(data.statuses) &&
           !data.companyData
         )) {
             throw new Error('O arquivo de backup não parece ter um formato válido.');
@@ -103,6 +106,7 @@ export function ImportButton({ onDataImported }: ImportButtonProps) {
             db.clearDevolucoes(),
             db.clearProducts(),
             db.clearCompanyData(),
+            db.clearStatuses(),
         ]);
 
         // Import new data
@@ -136,6 +140,11 @@ export function ImportButton({ onDataImported }: ImportButtonProps) {
                 await db.addProduct(productData);
             }
         }
+        if (dataToImport.statuses) {
+            for (const { ...statusData } of dataToImport.statuses) {
+                await db.addStatus(statusData);
+            }
+        }
         if (dataToImport.companyData) {
             const { ...companyData } = dataToImport.companyData;
             await db.updateCompanyData(companyData);
@@ -164,6 +173,7 @@ export function ImportButton({ onDataImported }: ImportButtonProps) {
         dataToImport.lotes?.length || 0,
         dataToImport.devolucoes?.length || 0,
         dataToImport.products?.length || 0,
+        dataToImport.statuses?.length || 0,
     ];
     const totalRecords = counts.reduce((acc, count) => acc + count, 0);
     return `Você está prestes a importar um total de ${totalRecords} registros em várias categorias. Deseja continuar?`

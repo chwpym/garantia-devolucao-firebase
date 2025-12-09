@@ -1,9 +1,8 @@
 
+
 'use client';
 
-export const WARRANTY_STATUSES = ['Aguardando Envio', 'Enviado para Análise', 'Aprovada - Peça Nova', 'Aprovada - Crédito NF', 'Aprovada - Crédito Boleto', 'Recusada'] as const;
-export type WarrantyStatus = typeof WARRANTY_STATUSES[number];
-
+export type WarrantyStatus = string; // Agora é dinâmico
 
 export interface Warranty {
   id?: number;
@@ -57,7 +56,7 @@ export interface Supplier {
   codigoExterno?: string;
 }
 
-export type LoteStatus = 'Aberto' | 'Enviado' | 'Aprovado Parcialmente' | 'Aprovado Totalmente' | 'Recusado';
+export type LoteStatus = string; // Agora é dinâmico
 
 export interface LoteAttachment {
     name: string;
@@ -104,7 +103,7 @@ export interface Product {
 
 // --- Novas Estruturas para Devolução ---
 
-export type ReturnStatus = 'Recebido' | 'Aguardando Peças' | 'Finalizada' | 'Cancelada';
+export type ReturnStatus = string; // Agora é dinâmico
 export type RequisitionAction = 'Alterada' | 'Excluída';
 
 export interface Devolucao {
@@ -165,3 +164,14 @@ export interface UserProfile {
   photoURL?: string;
   status: UserStatus;
 }
+
+// --- Status Management ---
+export type StatusApplicability = 'garantia' | 'lote' | 'devolucao';
+
+export interface CustomStatus {
+    id?: number;
+    nome: string;
+    cor: string;
+    aplicavelEm: StatusApplicability[];
+}
+

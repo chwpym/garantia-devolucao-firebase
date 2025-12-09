@@ -4,7 +4,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import ReportGenerator from '@/components/report-generator';
 import type { Warranty, WarrantyStatus } from '@/lib/types';
-import { WARRANTY_STATUSES } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -18,6 +17,7 @@ import { addDays, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { useAppStore } from '@/store/app-store';
 
 export default function ReportSection() {
   const [warranties, setWarranties] = useState<Warranty[]>([]);
@@ -29,6 +29,8 @@ export default function ReportSection() {
     to: new Date(),
   });
   const { toast } = useToast();
+  const warrantyStatuses = useAppStore(state => state.statuses.filter(s => s.aplicavelEm.includes('garantia')));
+
 
   const loadWarranties = useCallback(async () => {
     try {
@@ -114,6 +116,12 @@ export default function ReportSection() {
   }, [warranties, selectedIds]);
 
   const getWarrantyStatusClass = (status?: WarrantyStatus): string => {
+    const customStatus = warrantyStatuses.find(s => s.nome === status);
+    if (customStatus) {
+        return ''; // A cor será aplicada via style
+    }
+    
+    // Fallback para status antigos
     switch (status) {
       case 'Aprovada - Peça Nova':
         return 'bg-accent-green text-accent-green-foreground';
@@ -126,11 +134,17 @@ export default function ReportSection() {
       case 'Enviado para Análise':
         return 'bg-accent-blue text-accent-blue-foreground';
       case 'Aguardando Envio':
-        return 'bg-third text-white';
+        return 'bg-amber-500 text-white';
       default:
         return 'bg-secondary text-secondary-foreground';
     }
   };
+
+  const getWarrantyStatusStyle = (status?: Warranty['status']): React.CSSProperties => {
+    const customStatus = warrantyStatuses.find(s => s.nome === status);
+    return customStatus ? { backgroundColor: customStatus.cor, color: '#FFFFFF' } : {};
+  }
+
 
   return (
     <div className="space-y-8">
@@ -158,8 +172,8 @@ export default function ReportSection() {
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="Todos">Todos Status</SelectItem>
-                        {WARRANTY_STATUSES.map(status => (
-                          <SelectItem key={status} value={status}>{status}</SelectItem>
+                        {warrantyStatuses.map(status => (
+                          <SelectItem key={status.id} value={status.nome}>{status.nome}</SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
@@ -200,7 +214,12 @@ export default function ReportSection() {
                       <TableCell>{warranty.cliente || '-'}</TableCell>
                       <TableCell>
                         {warranty.status ? (
-                            <Badge className={cn(getWarrantyStatusClass(warranty.status))}>{warranty.status}</Badge>
+                            <Badge 
+                              className={cn(getWarrantyStatusClass(warranty.status))}
+                              style={getWarrantyStatusStyle(warranty.status)}
+                            >
+                              {warranty.status}
+                            </Badge>
                         ) : (
                             <Badge variant="secondary">N/A</Badge>
                         )}

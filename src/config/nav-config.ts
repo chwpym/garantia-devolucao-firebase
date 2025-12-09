@@ -1,7 +1,7 @@
 
 'use client';
 
-import { LayoutDashboard, FileText, Search, PlusSquare, Users, Building, Package, FolderKanban, Wrench, Undo2, Calculator, History, Archive, BarChartHorizontal, UserCog } from 'lucide-react';
+import { LayoutDashboard, FileText, Search, PlusSquare, Users, Building, Package, FolderKanban, Wrench, Undo2, Calculator, History, Archive, BarChartHorizontal, UserCog, Settings } from 'lucide-react';
 
 export type NavItem = {
     id: string;
@@ -72,6 +72,7 @@ export const navConfig: NavItem[] = [
     adminOnly: true, // This whole section is for admins
     items: [
         { id: 'users', label: 'Gerenciar Usuários', icon: Users },
+        { id: 'statuses', label: 'Gerenciar Status', icon: Settings },
     ]
   }
 ];

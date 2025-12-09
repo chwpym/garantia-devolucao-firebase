@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -20,6 +21,7 @@ interface FullBackupData {
   devolucoes: Awaited<ReturnType<typeof db.getAllDevolucoes>>;
   companyData: Awaited<ReturnType<typeof db.getCompanyData>>;
   products: Awaited<ReturnType<typeof db.getAllProducts>>;
+  statuses: Awaited<ReturnType<typeof db.getAllStatuses>>;
 }
 
 
@@ -37,7 +39,8 @@ export default function BackupSection() {
         lotes,
         devolucoes,
         companyData,
-        products
+        products,
+        statuses
     ] = await Promise.all([
         db.getAllWarranties(),
         db.getAllPersons(),
@@ -45,7 +48,8 @@ export default function BackupSection() {
         db.getAllLotes(),
         db.getAllDevolucoes(),
         db.getCompanyData(),
-        db.getAllProducts()
+        db.getAllProducts(),
+        db.getAllStatuses(),
     ]);
     
     return {
@@ -55,7 +59,8 @@ export default function BackupSection() {
         lotes,
         devolucoes,
         companyData,
-        products
+        products,
+        statuses,
     };
   }
 

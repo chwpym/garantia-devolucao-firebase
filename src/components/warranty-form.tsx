@@ -1,7 +1,8 @@
 
+
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -9,7 +10,7 @@ import { Loader2, PlusCircle, Upload, X as XIcon, Image as ImageIcon } from 'luc
 import Image from 'next/image';
 
 
-import type { Warranty, Person, Supplier, Product, WarrantyStatus } from '@/lib/types';
+import type { Warranty, Person, Supplier, Product, WarrantyStatus, CustomStatus } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -26,7 +27,7 @@ import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './ui/command';
 import ProductForm from './product-form';
 import { useAppStore } from '@/store/app-store';
-import { WARRANTY_STATUSES } from '@/lib/types';
+import * as db from '@/lib/db';
 
 
 const formSchema = z.object({
@@ -45,7 +46,7 @@ const formSchema = z.object({
   notaFiscalSaida: z.string().optional(),
   notaFiscalRetorno: z.string().optional(),
   observacao: z.string().optional(),
-  status: z.enum(WARRANTY_STATUSES).optional(),
+  status: z.string().optional(),
   loteId: z.number().nullable().optional(),
   photos: z.array(z.string()).optional(),
   dataRegistro: z.string().optional(),
@@ -91,6 +92,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
     const formRef = useRef<HTMLFormElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { products, persons, suppliers, reloadData } = useAppStore();
+    const [warrantyStatuses, setWarrantyStatuses] = useState<CustomStatus[]>([]);
 
     const [isSupplierModalOpen, setSupplierModalOpen] = useState(false);
     const [isPersonModalOpen, setPersonModalOpen] = useState(false);
@@ -102,6 +104,13 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
     const { toast } = useToast();
     const goBack = useAppStore(state => state.goBack);
 
+    useEffect(() => {
+        const fetchStatuses = async () => {
+            const allStatuses = await db.getAllStatuses();
+            setWarrantyStatuses(allStatuses.filter(s => s.aplicavelEm.includes('garantia')));
+        };
+        fetchStatuses();
+    }, []);
 
     const form = useForm<WarrantyFormValues>({
         resolver: zodResolver(formSchema),
@@ -526,8 +535,8 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                                         </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            {WARRANTY_STATUSES.map(status => (
-                                                <SelectItem key={status} value={status}>{status}</SelectItem>
+                                            {warrantyStatuses.map(status => (
+                                                <SelectItem key={status.id} value={status.nome}>{status.nome}</SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>

@@ -2,10 +2,10 @@
 
 'use client';
 
-import type { Warranty, Person, Supplier, Lote, LoteItem, CompanyData, Devolucao, ItemDevolucao, Product, PurchaseSimulation, UserProfile } from './types';
+import type { Warranty, Person, Supplier, Lote, LoteItem, CompanyData, Devolucao, ItemDevolucao, Product, PurchaseSimulation, UserProfile, CustomStatus } from './types';
 
 const DB_NAME = 'GarantiasDB';
-const DB_VERSION = 8; // Incremented version
+const DB_VERSION = 9; // Incremented version
 
 const GARANTIAS_STORE_NAME = 'garantias';
 const PERSONS_STORE_NAME = 'persons';
@@ -17,7 +17,8 @@ const DEVOLUCOES_STORE_NAME = 'devolucoes';
 const ITENS_DEVOLUCAO_STORE_NAME = 'itens_devolucao';
 const PRODUCTS_STORE_NAME = 'products';
 const SIMULATIONS_STORE_NAME = 'simulations';
-const USERS_STORE_NAME = 'users'; // New store for user profiles/roles
+const USERS_STORE_NAME = 'users'; 
+const STATUSES_STORE_NAME = 'statuses'; // New store for custom statuses
 
 
 let dbPromise: Promise<IDBDatabase> | null = null;
@@ -83,10 +84,13 @@ const getDB = (): Promise<IDBDatabase> => {
             simulationStore.createIndex('nfeNumber', 'nfeInfo.nfeNumber', { unique: false });
             simulationStore.createIndex('emitterName', 'nfeInfo.emitterName', { unique: false });
         }
-        // Create user profile store
         if (!dbInstance.objectStoreNames.contains(USERS_STORE_NAME)) {
             const userStore = dbInstance.createObjectStore(USERS_STORE_NAME, { keyPath: 'uid' });
             userStore.createIndex('email', 'email', { unique: true });
+        }
+        if (!dbInstance.objectStoreNames.contains(STATUSES_STORE_NAME)) {
+            const statusStore = dbInstance.createObjectStore(STATUSES_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+            statusStore.createIndex('nome', 'nome', { unique: true });
         }
       };
 
@@ -104,8 +108,59 @@ const getDB = (): Promise<IDBDatabase> => {
 
 export const initDB = async (): Promise<boolean> => {
   try {
-    await getDB();
-    return true;
+    const db = await getDB();
+    
+    // Seed initial statuses if the store is empty
+    const transaction = db.transaction(STATUSES_STORE_NAME, 'readonly');
+    const store = transaction.objectStore(STATUSES_STORE_NAME);
+    const countRequest = store.count();
+
+    return new Promise((resolve, reject) => {
+        transaction.oncomplete = () => {
+            if (countRequest.result === 0) {
+                console.log("Seeding initial statuses...");
+                const seedTransaction = db.transaction(STATUSES_STORE_NAME, 'readwrite');
+                const seedStore = seedTransaction.objectStore(STATUSES_STORE_NAME);
+                const initialStatuses: Omit<CustomStatus, 'id'>[] = [
+                    { nome: 'Aguardando Envio', cor: '#FBBF24', aplicavelEm: ['garantia'] },
+                    { nome: 'Enviado para Análise', cor: '#3B82F6', aplicavelEm: ['garantia', 'lote'] },
+                    { nome: 'Aprovada - Peça Nova', cor: '#22C55E', aplicavelEm: ['garantia'] },
+                    { nome: 'Aprovada - Crédito NF', cor: '#8B5CF6', aplicavelEm: ['garantia'] },
+                    { nome: 'Aprovada - Crédito Boleto', cor: '#15803D', aplicavelEm: ['garantia'] },
+                    { nome: 'Recusada', cor: '#EF4444', aplicavelEm: ['garantia', 'lote'] },
+                    { nome: 'Aberto', cor: '#6B7280', aplicavelEm: ['lote'] },
+                    { nome: 'Aprovado Parcialmente', cor: '#16A34A', aplicavelEm: ['lote'] },
+                    { nome: 'Aprovado Totalmente', cor: '#15803D', aplicavelEm: ['lote'] },
+                    { nome: 'Recebido', cor: '#6B7280', aplicavelEm: ['devolucao'] },
+                    { nome: 'Aguardando Peças', cor: '#FBBF24', aplicavelEm: ['devolucao'] },
+                    { nome: 'Finalizada', cor: '#22C55E', aplicavelEm: ['devolucao'] },
+                    { nome: 'Cancelada', cor: '#EF4444', aplicavelEm: ['devolucao'] },
+                ];
+                let seedsAdded = 0;
+                initialStatuses.forEach(status => {
+                    const addReq = seedStore.add(status);
+                    addReq.onsuccess = () => {
+                        seedsAdded++;
+                        if (seedsAdded === initialStatuses.length) {
+                             console.log("Initial statuses seeded successfully.");
+                             resolve(true);
+                        }
+                    };
+                    addReq.onerror = () => {
+                        console.error("Error seeding status:", addReq.error);
+                    };
+                });
+
+                seedTransaction.oncomplete = () => resolve(true);
+                seedTransaction.onerror = () => reject(seedTransaction.error);
+
+            } else {
+                resolve(true);
+            }
+        };
+        transaction.onerror = () => reject(transaction.error);
+    });
+
   } catch (e) {
     console.error(e);
     return false;
@@ -131,6 +186,62 @@ const clearStore = (storeName: string): Promise<void> => {
     }
   });
 };
+
+// --- Custom Status Functions ---
+export const addStatus = (status: Omit<CustomStatus, 'id'>): Promise<number> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(STATUSES_STORE_NAME, 'readwrite');
+      const request = store.add(status);
+      request.onsuccess = () => resolve(request.result as number);
+      request.onerror = () => reject(request.error);
+    } catch(err) {
+        reject(err);
+    }
+  });
+};
+
+export const getAllStatuses = (): Promise<CustomStatus[]> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+        const store = await getStore(STATUSES_STORE_NAME, 'readonly');
+        const request = store.getAll();
+        request.onsuccess = () => resolve(request.result as CustomStatus[]);
+        request.onerror = () => reject(request.error);
+    } catch (err) {
+        reject(err);
+    }
+  });
+};
+
+export const updateStatus = (status: CustomStatus): Promise<number> => {
+  return new Promise(async(resolve, reject) => {
+    try {
+        const store = await getStore(STATUSES_STORE_NAME, 'readwrite');
+        const request = store.put(status);
+        request.onsuccess = () => resolve(request.result as number);
+        request.onerror = () => reject(request.error);
+    } catch (err) {
+        reject(err);
+    }
+  });
+};
+
+export const deleteStatus = (id: number): Promise<void> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+        const store = await getStore(STATUSES_STORE_NAME, 'readwrite');
+        const request = store.delete(id);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+    } catch (err) {
+        reject(err);
+    }
+  });
+};
+
+export const clearStatuses = (): Promise<void> => clearStore(STATUSES_STORE_NAME);
+
 
 // --- User Profile Functions ---
 
