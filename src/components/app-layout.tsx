@@ -6,7 +6,7 @@ import React, { useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Settings, Menu, DatabaseBackup, ArrowLeft } from 'lucide-react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from './ui/sheet';
 import MobileSidebar from './mobile-sidebar';
 import QuickShortcuts from './quick-shortcuts';
 import { useAppStore } from '@/store/app-store';
@@ -83,9 +83,14 @@ export default function AppLayout({ children }: AppLayoutProps) {
                       height={32}
                       className="h-8 w-8 rounded-md flex-shrink-0"
                     />
-                    <SheetTitle className="text-2xl font-bold font-headline text-foreground whitespace-nowrap">
-                      Synergia OS
-                    </SheetTitle>
+                    <div>
+                      <SheetTitle className="text-2xl font-bold font-headline text-foreground whitespace-nowrap">
+                        Synergia OS
+                      </SheetTitle>
+                      <SheetDescription className="text-xs">
+                        Menu de navegação principal.
+                      </SheetDescription>
+                    </div>
                   </SheetHeader>
                   <MobileSidebar
                     activeView={activeView}

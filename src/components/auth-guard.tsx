@@ -5,7 +5,6 @@ import type { ReactNode } from 'react';
 import { useAuthGuard } from '@/hooks/use-auth-guard';
 import { Loader2 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-import ClientOnly from './client-only';
 
 interface AuthGuardProps {
   children: ReactNode;
@@ -18,8 +17,13 @@ export function AuthGuard({ children }: AuthGuardProps) {
   const pathname = usePathname();
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
 
-  // 1. Durante o carregamento inicial, sempre exiba um spinner.
-  // Isso garante que o servidor e o cliente renderizem a mesma coisa inicialmente.
+  // During the initial check or if it's a public route, show the content.
+  // The hook will handle redirection if necessary.
+  if (isPublicRoute) {
+    return <>{children}</>;
+  }
+  
+  // For protected routes, show a loader while checking auth state.
   if (isLoading) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
@@ -29,25 +33,17 @@ export function AuthGuard({ children }: AuthGuardProps) {
     );
   }
 
-  // 2. Se for uma rota pública (login/signup), renderize o conteúdo diretamente.
-  // O hook useAuthGuard cuidará do redirecionamento se o usuário já estiver logado.
-  if (isPublicRoute) {
+  // Once loading is complete, if the user is authenticated, show the content.
+  if (isAuthenticated) {
     return <>{children}</>;
   }
 
-  // 3. Se for uma rota protegida E o usuário estiver autenticado:
-  //    Use o ClientOnly para garantir que o conteúdo principal da aplicação (children)
-  //    só seja renderizado no cliente, após a hidratação.
-  if (isAuthenticated) {
-    return <ClientOnly>{children}</ClientOnly>;
-  }
-  
-  // 4. Se não estiver autenticado em uma rota protegida, o hook fará o redirecionamento.
-  // Exibir um spinner durante esse breve momento evita que qualquer conteúdo pisque na tela.
+  // If not authenticated and not loading, show the loader while redirecting.
+  // This prevents content from flashing.
   return (
-      <div className="flex h-screen w-screen items-center justify-center bg-background">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <span className="sr-only">Redirecionando...</span>
-      </div>
-    );
+    <div className="flex h-screen w-screen items-center justify-center bg-background">
+      <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      <span className="sr-only">Redirecionando...</span>
+    </div>
+  );
 }
