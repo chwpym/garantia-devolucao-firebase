@@ -3,20 +3,16 @@
 
 import type { ReactNode } from 'react';
 import { useAuthGuard } from '@/hooks/use-auth-guard';
-import { useAuth } from '@/hooks/use-auth';
 import { Loader2 } from 'lucide-react';
 
 interface AuthGuardProps {
   children: ReactNode;
 }
 
-// This component now handles the loading UI, but only renders its children
-// when authentication is no longer loading.
 export function AuthGuard({ children }: AuthGuardProps) {
-  const { isLoading: isAuthLoading } = useAuthGuard();
-  const { loading: isProviderLoading } = useAuth();
+  const { isLoading, isAuthenticated } = useAuthGuard();
   
-  if (isAuthLoading || isProviderLoading) {
+  if (isLoading) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -25,5 +21,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
     );
   }
 
-  return <>{children}</>;
+  // If authenticated, render children. If not, the hook will have already
+  // initiated a redirect, so rendering null is safe.
+  return isAuthenticated ? <>{children}</> : null;
 }
