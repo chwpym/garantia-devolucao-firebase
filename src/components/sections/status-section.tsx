@@ -53,7 +53,8 @@ import StatusForm from '../status-form';
 const applicabilityLabels: Record<StatusApplicability, string> = {
   garantia: 'Garantias',
   lote: 'Lotes',
-  devolucao: 'Devoluções',
+  devolucao: 'Devoluções (Status)',
+  acaoRequisicao: 'Ação na Requisição',
 };
 
 export default function StatusSection() {
@@ -179,7 +180,7 @@ export default function StatusSection() {
                         <div className="flex flex-wrap gap-1">
                           {status.aplicavelEm.map((app) => (
                             <Badge key={app} variant="secondary">
-                              {applicabilityLabels[app]}
+                              {applicabilityLabels[app] || app}
                             </Badge>
                           ))}
                         </div>
