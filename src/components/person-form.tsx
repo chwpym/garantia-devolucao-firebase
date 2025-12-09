@@ -103,13 +103,13 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
   });
 
   useEffect(() => {
-    const valuesToReset = editingPerson ? {
-        ...editingPerson,
+    const valuesToReset: PersonFormValues = editingPerson ? {
         nome: editingPerson.nome || '',
         nomeFantasia: editingPerson.nomeFantasia || '',
+        tipo: editingPerson.tipo,
         cpfCnpj: editingPerson.cpfCnpj ? formatCpfCnpj(editingPerson.cpfCnpj) : '',
-        telefones: editingPerson.telefones?.length ? editingPerson.telefones : [{ type: 'Celular', value: '' }],
-        emails: editingPerson.emails?.length ? editingPerson.emails : [{ type: 'Principal', value: '' }],
+        telefones: editingPerson?.telefones?.length ? editingPerson.telefones : [{ type: 'Celular', value: '' }],
+        emails: editingPerson?.emails?.length ? editingPerson.emails : [{ type: 'Principal', value: '' }],
         cep: editingPerson.cep || '',
         endereco: editingPerson.endereco || '',
         bairro: editingPerson.bairro || '',

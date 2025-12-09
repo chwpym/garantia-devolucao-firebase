@@ -88,8 +88,7 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
   });
 
   useEffect(() => {
-    const valuesToReset = editingSupplier ? {
-        ...editingSupplier,
+    const valuesToReset: SupplierFormValues = editingSupplier ? {
         razaoSocial: editingSupplier.razaoSocial || '',
         nomeFantasia: editingSupplier.nomeFantasia || '',
         cnpj: editingSupplier.cnpj ? formatCNPJ(editingSupplier.cnpj) : '',
@@ -98,8 +97,8 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
         bairro: editingSupplier.bairro || '',
         cidade: editingSupplier.cidade || '',
         codigoExterno: editingSupplier.codigoExterno || '',
-        telefones: editingSupplier.telefones?.length ? editingSupplier.telefones : [{ type: 'Comercial', value: '' }],
-        emails: editingSupplier.emails?.length ? editingSupplier.emails : [{ type: 'Principal', value: '' }],
+        telefones: editingSupplier?.telefones?.length ? editingSupplier.telefones : [{ type: 'Comercial', value: '' }],
+        emails: editingSupplier?.emails?.length ? editingSupplier.emails : [{ type: 'Principal', value: '' }],
     } : defaultFormValues;
     form.reset(valuesToReset);
   }, [editingSupplier, form]);
