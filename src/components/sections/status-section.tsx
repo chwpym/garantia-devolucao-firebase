@@ -156,7 +156,61 @@ export default function StatusSection() {
           <CardDescription>Lista de todos os status personalizados.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="border rounded-md">
+          {/* Mobile View */}
+          <div className="md:hidden space-y-4">
+            {statuses.length > 0 ? (
+                statuses.map((status) => (
+                    <div key={status.id} className="border p-4 rounded-lg flex flex-col gap-4">
+                        <div className="flex justify-between items-start">
+                            <Badge style={{ backgroundColor: status.cor, color: 'white' }}>
+                                {status.nome}
+                            </Badge>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <span className="sr-only">Abrir menu</span>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => handleEditClick(status)}>
+                                    <Pencil className="mr-2 h-4 w-4" />
+                                    Editar
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                    onClick={() => setDeleteTarget(status)}
+                                    className="text-destructive focus:text-destructive"
+                                    >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Excluir
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-muted-foreground">Nome</p>
+                            <p>{status.nome}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-muted-foreground">Aplicável Em</p>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                                {status.aplicavelEm.map((app) => (
+                                    <Badge key={app} variant="secondary">
+                                    {applicabilityLabels[app] || app}
+                                    </Badge>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                ))
+            ) : (
+                <div className="h-24 text-center flex items-center justify-center">
+                    <p>Nenhum status personalizado cadastrado.</p>
+                </div>
+            )}
+          </div>
+          {/* Desktop View */}
+          <div className="hidden md:block border rounded-md">
             <Table>
               <TableHeader>
                 <TableRow>
