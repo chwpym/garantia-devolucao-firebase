@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
@@ -270,7 +269,70 @@ export default function SuppliersSection() {
                   />
               </div>
           </div>
-          <div className="border rounded-md">
+          
+          {/* Mobile View */}
+          <div className="md:hidden space-y-4">
+            {sortedSuppliers.length > 0 ? (
+                sortedSuppliers.map((supplier) => (
+                    <div key={supplier.id} className="border p-4 rounded-lg flex flex-col gap-2">
+                         <div className="flex justify-between items-start">
+                            <span className="font-bold">{supplier.nomeFantasia}</span>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="h-8 w-8 p-0">
+                                        <span className="sr-only">Abrir menu</span>
+                                        <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => handleEditClick(supplier)}><Pencil className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => setDeleteTarget(supplier)} className="text-destructive focus:text-destructive"><Trash2 className="mr-2 h-4 w-4" />Excluir</DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                        <div className="text-sm text-muted-foreground">{supplier.razaoSocial}</div>
+                        <div className="text-sm"><span className="font-medium">CNPJ:</span> {formatCnpj(supplier.cnpj)}</div>
+                        <div className="text-sm"><span className="font-medium">Cidade:</span> {supplier.cidade || '-'}</div>
+                        <div className="text-sm"><span className="font-medium">Cód. Externo:</span> {supplier.codigoExterno || '-'}</div>
+                         <div className='flex flex-col gap-1 text-sm'>
+                            {supplier.telefones?.[0] && (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div className="flex items-center gap-1 cursor-pointer">
+                                                <Phone className="h-3 w-3 text-muted-foreground" /> 
+                                                <span>{supplier.telefones[0].value}</span>
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>{supplier.telefones.map((t, i) => <p key={i}><strong>{t.type}:</strong> {t.value}</p>)}</TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            )}
+                            {supplier.emails?.[0] && (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div className="flex items-center gap-1 cursor-pointer">
+                                                <Mail className="h-3 w-3 text-muted-foreground" />
+                                                <span className="truncate max-w-[150px]">{supplier.emails[0].value}</span>
+                                            </div>
+                                        </TooltipTrigger>
+                                         <TooltipContent>{supplier.emails.map((e, i) => <p key={i}><strong>{e.type}:</strong> {e.value}</p>)}</TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            )}
+                          </div>
+                    </div>
+                ))
+            ) : (
+                 <div className="h-24 text-center flex items-center justify-center">
+                    <p>Nenhum fornecedor encontrado.</p>
+                </div>
+            )}
+          </div>
+          
+          {/* Desktop View */}
+          <div className="hidden md:block border rounded-md">
             <Table>
               <TableHeader>
                 <TableRow>

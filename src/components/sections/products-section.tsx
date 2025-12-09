@@ -260,7 +260,41 @@ export default function ProductsSection() {
                     />
                 </div>
             </div>
-            <div className="border rounded-md">
+
+             {/* Mobile View */}
+            <div className="md:hidden space-y-4">
+                 {sortedProducts.length > 0 ? (
+                    sortedProducts.map(product => (
+                        <div key={product.id} className="border p-4 rounded-lg flex flex-col gap-2">
+                             <div className="flex justify-between items-start">
+                                <span className="font-bold">{product.descricao}</span>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" className="h-8 w-8 p-0">
+                                            <span className="sr-only">Abrir menu</span>
+                                            <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem onClick={() => handleEditClick(product)}><Pencil className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => setDeleteTarget(product)} className="text-destructive focus:text-destructive"><Trash2 className="mr-2 h-4 w-4" />Excluir</DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                            <div className="text-sm"><span className="font-medium text-muted-foreground">Código:</span> {product.codigo}</div>
+                            <div className="text-sm"><span className="font-medium text-muted-foreground">Marca:</span> {product.marca || '-'}</div>
+                            <div className="text-sm"><span className="font-medium text-muted-foreground">Referência:</span> {product.referencia || '-'}</div>
+                        </div>
+                    ))
+                 ) : (
+                    <div className="h-24 text-center flex items-center justify-center">
+                        <p>Nenhum produto encontrado.</p>
+                    </div>
+                 )}
+            </div>
+
+            {/* Desktop View */}
+            <div className="hidden md:block border rounded-md">
               <Table>
                 <TableHeader>
                   <TableRow>

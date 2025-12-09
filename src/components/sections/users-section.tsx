@@ -248,7 +248,7 @@ export default function UsersSection() {
           <Info className="h-4 w-4" />
           <AlertTitle>Como Adicionar Novos Usuários</AlertTitle>
           <AlertDescription>
-            Para garantir a segurança, novos usuários devem se cadastrar pela página de <a href="/signup" className='underline'>cadastro público</a>. Após se registrarem, eles aparecerão nesta lista com o nível &quot;Usuário Padrão&quot; e você poderá editar suas permissões ou status.
+            Para garantir a segurança, novos usuários devem se cadastrar pela página de <a href="/signup" className='underline'>cadastro público</a>. Após se registrarem, eles aparecerão nesta lista com o nível "Usuário Padrão" e você poderá editar suas permissões ou status.
           </AlertDescription>
         </Alert>
 
@@ -349,84 +349,136 @@ export default function UsersSection() {
                 />
                 <Label htmlFor="show-blocked">Mostrar usuários bloqueados</Label>
             </div>
-          <div className="border rounded-md">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <SortableHeader sortKey='displayName'>Nome</SortableHeader>
-                  <SortableHeader sortKey='email'>Email</SortableHeader>
-                  <SortableHeader sortKey='role'>Nível</SortableHeader>
-                  <SortableHeader sortKey='status'>Status</SortableHeader>
-                  <TableHead className='text-right'>Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">
-                      <Loader2 className="mx-auto h-6 w-6 animate-spin" />
-                    </TableCell>
-                  </TableRow>
+            
+            {/* Mobile View */}
+            <div className="md:hidden space-y-4">
+               {isLoading ? (
+                    <div className="h-24 text-center flex items-center justify-center">
+                        <Loader2 className="h-6 w-6 animate-spin" />
+                    </div>
                 ) : sortedUsers.length > 0 ? (
-                  sortedUsers.map((user) => (
-                    <TableRow key={user.uid} className={user.status === 'blocked' ? 'bg-muted/50 text-muted-foreground' : ''}>
-                      <TableCell className="font-medium">
-                        {user.displayName}
-                      </TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={user.role === 'admin' ? 'default' : 'secondary'}
-                        >
-                          {user.role === 'admin' ? 'Admin' : 'Usuário'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                         <Badge
-                          variant={user.status === 'blocked' ? 'destructive' : 'outline'}
-                        >
-                          {user.status === 'blocked' ? 'Bloqueado' : 'Ativo'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className='text-right'>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Abrir menu</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => openEditModal(user)}>
-                                <Pencil className="mr-2 h-4 w-4" />
-                                Editar
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                               <DropdownMenuItem 
-                                onClick={() => handleToggleBlockUser(user)} 
-                                className={user.status === 'blocked' ? 'text-green-600 focus:text-green-700' : 'text-destructive focus:text-destructive'}
-                                disabled={user.uid === currentUser?.uid}>
-                                {user.status === 'blocked' ? (
-                                    <><CheckCircle className="mr-2 h-4 w-4" /> Desbloquear</>
-                                ) : (
-                                    <><Ban className="mr-2 h-4 w-4" /> Bloquear</>
-                                )}
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                    sortedUsers.map((user) => (
+                        <div key={user.uid} className="border p-4 rounded-lg flex flex-col gap-2">
+                             <div className="flex justify-between items-start">
+                                <span className="font-bold">{user.displayName}</span>
+                                 <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" className="h-8 w-8 p-0">
+                                            <span className="sr-only">Abrir menu</span>
+                                            <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem onClick={() => openEditModal(user)}>
+                                            <Pencil className="mr-2 h-4 w-4" /> Editar
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem 
+                                            onClick={() => handleToggleBlockUser(user)} 
+                                            className={user.status === 'blocked' ? 'text-green-600 focus:text-green-700' : 'text-destructive focus:text-destructive'}
+                                            disabled={user.uid === currentUser?.uid}>
+                                            {user.status === 'blocked' ? <><CheckCircle className="mr-2 h-4 w-4" /> Desbloquear</> : <><Ban className="mr-2 h-4 w-4" /> Bloquear</>}
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                            <div className="text-sm text-muted-foreground">{user.email}</div>
+                             <div className="flex items-center gap-4 text-sm">
+                                <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
+                                    {user.role === 'admin' ? 'Admin' : 'Usuário'}
+                                </Badge>
+                                <Badge variant={user.status === 'blocked' ? 'destructive' : 'outline'}>
+                                    {user.status === 'blocked' ? 'Bloqueado' : 'Ativo'}
+                                </Badge>
+                            </div>
+                        </div>
+                    ))
                 ) : (
-                  <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">
-                      Nenhum usuário encontrado.
-                    </TableCell>
-                  </TableRow>
+                    <div className="h-24 text-center flex items-center justify-center">
+                        <p>Nenhum usuário encontrado.</p>
+                    </div>
                 )}
-              </TableBody>
-            </Table>
-          </div>
+            </div>
+
+            {/* Desktop View */}
+            <div className="hidden md:block border rounded-md">
+                <Table>
+                <TableHeader>
+                    <TableRow>
+                    <SortableHeader sortKey='displayName'>Nome</SortableHeader>
+                    <SortableHeader sortKey='email'>Email</SortableHeader>
+                    <SortableHeader sortKey='role'>Nível</SortableHeader>
+                    <SortableHeader sortKey='status'>Status</SortableHeader>
+                    <TableHead className='text-right'>Ações</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {isLoading ? (
+                    <TableRow>
+                        <TableCell colSpan={5} className="h-24 text-center">
+                        <Loader2 className="mx-auto h-6 w-6 animate-spin" />
+                        </TableCell>
+                    </TableRow>
+                    ) : sortedUsers.length > 0 ? (
+                    sortedUsers.map((user) => (
+                        <TableRow key={user.uid} className={user.status === 'blocked' ? 'bg-muted/50 text-muted-foreground' : ''}>
+                        <TableCell className="font-medium">
+                            {user.displayName}
+                        </TableCell>
+                        <TableCell>{user.email}</TableCell>
+                        <TableCell>
+                            <Badge
+                            variant={user.role === 'admin' ? 'default' : 'secondary'}
+                            >
+                            {user.role === 'admin' ? 'Admin' : 'Usuário'}
+                            </Badge>
+                        </TableCell>
+                        <TableCell>
+                            <Badge
+                            variant={user.status === 'blocked' ? 'destructive' : 'outline'}
+                            >
+                            {user.status === 'blocked' ? 'Bloqueado' : 'Ativo'}
+                            </Badge>
+                        </TableCell>
+                        <TableCell className='text-right'>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <span className="sr-only">Abrir menu</span>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => openEditModal(user)}>
+                                    <Pencil className="mr-2 h-4 w-4" />
+                                    Editar
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                    onClick={() => handleToggleBlockUser(user)} 
+                                    className={user.status === 'blocked' ? 'text-green-600 focus:text-green-700' : 'text-destructive focus:text-destructive'}
+                                    disabled={user.uid === currentUser?.uid}>
+                                    {user.status === 'blocked' ? (
+                                        <><CheckCircle className="mr-2 h-4 w-4" /> Desbloquear</>
+                                    ) : (
+                                        <><Ban className="mr-2 h-4 w-4" /> Bloquear</>
+                                    )}
+                                </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </TableCell>
+                        </TableRow>
+                    ))
+                    ) : (
+                    <TableRow>
+                        <TableCell colSpan={5} className="h-24 text-center">
+                        Nenhum usuário encontrado.
+                        </TableCell>
+                    </TableRow>
+                    )}
+                </TableBody>
+                </Table>
+            </div>
         </CardContent>
       </Card>
     </div>
