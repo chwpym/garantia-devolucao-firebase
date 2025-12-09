@@ -214,7 +214,7 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSave)}>
         <div className="space-y-6 pt-4 max-h-[70vh] overflow-y-auto pr-4">
-            <FormField
+           <FormField
             name="cnpj"
             control={form.control}
             render={({ field }) => (
@@ -235,32 +235,34 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
                 </FormItem>
             )}
             />
-            <FormField
-            name="nomeFantasia"
-            control={form.control}
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Nome Fantasia</FormLabel>
-                <FormControl>
-                    <Input placeholder="Nome da Empresa" {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-            <FormField
-            name="razaoSocial"
-            control={form.control}
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Razão Social</FormLabel>
-                <FormControl>
-                    <Input placeholder="Razão Social Ltda." {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                 <FormField
+                name="nomeFantasia"
+                control={form.control}
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Nome Fantasia</FormLabel>
+                    <FormControl>
+                        <Input placeholder="Nome da Empresa" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                name="razaoSocial"
+                control={form.control}
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Razão Social</FormLabel>
+                    <FormControl>
+                        <Input placeholder="Razão Social Ltda." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
             <FormField
             name="codigoExterno"
             control={form.control}
