@@ -3,16 +3,27 @@
 
 import type { ReactNode } from 'react';
 import { useAuthGuard } from '@/hooks/use-auth-guard';
+import { useAuth } from '@/hooks/use-auth';
+import { Loader2 } from 'lucide-react';
 
 interface AuthGuardProps {
   children: ReactNode;
 }
 
-// This component is now a "logic-only" component.
-// It runs the auth guard hook but doesn't render any UI itself.
-// The UI (spinner or children) is now handled by the AuthProvider.
+// This component now handles the loading UI, but only renders its children
+// when authentication is no longer loading.
 export function AuthGuard({ children }: AuthGuardProps) {
-  useAuthGuard();
+  const { isLoading: isAuthLoading } = useAuthGuard();
+  const { loading: isProviderLoading } = useAuth();
   
+  if (isAuthLoading || isProviderLoading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-background">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <span className="sr-only">Carregando...</span>
+      </div>
+    );
+  }
+
   return <>{children}</>;
 }
