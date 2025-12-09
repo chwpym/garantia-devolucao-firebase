@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
@@ -49,9 +50,10 @@ import {
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MoreHorizontal, Pencil, Trash2, PlusCircle, Download, Search, ArrowUpDown } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, PlusCircle, Download, Search, ArrowUpDown, Phone, Mail } from 'lucide-react';
 import PersonForm from '../person-form';
 import { Input } from '../ui/input';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 type SortableKeys = keyof Person;
 
@@ -130,15 +132,18 @@ export default function PersonsSection() {
       const name = person.nome?.toLowerCase() || '';
       const fantasyName = person.nomeFantasia?.toLowerCase() || '';
       const doc = person.cpfCnpj?.replace(/\D/g, '') || '';
-      const phone = person.telefone?.toLowerCase() || '';
       const city = person.cidade?.toLowerCase() || '';
       const externalCode = person.codigoExterno?.toLowerCase() || '';
+
+      const hasMatchingPhone = person.telefones?.some(t => t.value.toLowerCase().includes(lowercasedTerm)) || false;
+      const hasMatchingEmail = person.emails?.some(e => e.value.toLowerCase().includes(lowercasedTerm)) || false;
 
       return (
         name.includes(lowercasedTerm) ||
         fantasyName.includes(lowercasedTerm) ||
         (cleanedSearchTerm && doc.includes(cleanedSearchTerm)) ||
-        phone.includes(lowercasedTerm) ||
+        hasMatchingPhone ||
+        hasMatchingEmail ||
         city.includes(lowercasedTerm) ||
         externalCode.includes(lowercasedTerm)
       );
@@ -172,7 +177,6 @@ export default function PersonsSection() {
   const handleSave = (newPerson: Person) => {
     setEditingPerson(null);
     setIsFormModalOpen(false);
-    // The 'datachanged' event will trigger a reload of the persons list.
   };
   
   const handleEditClick = (person: Person) => {
@@ -323,7 +327,7 @@ export default function PersonsSection() {
                  <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                        placeholder="Buscar por nome, nome fantasia, CPF/CNPJ, telefone, cidade ou código externo..."
+                        placeholder="Buscar por nome, CPF/CNPJ, telefone, email, etc..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-10"
@@ -338,7 +342,7 @@ export default function PersonsSection() {
                     <SortableHeader sortKey='nome'>Razão Social</SortableHeader>
                     <SortableHeader sortKey='nomeFantasia'>Nome Fantasia</SortableHeader>
                     <SortableHeader sortKey='cpfCnpj'>CPF/CNPJ</SortableHeader>
-                    <SortableHeader sortKey='telefone'>Telefone</SortableHeader>
+                    <TableHead>Contatos</TableHead>
                     <SortableHeader sortKey='tipo'>Tipo</SortableHeader>
                     <TableHead className="w-[50px] text-right">Ações</TableHead>
                   </TableRow>
@@ -351,7 +355,40 @@ export default function PersonsSection() {
                         <TableCell className="font-medium">{person.nome}</TableCell>
                         <TableCell>{person.nomeFantasia || '-'}</TableCell>
                         <TableCell>{formatCpfCnpj(person.cpfCnpj)}</TableCell>
-                        <TableCell>{person.telefone || '-'}</TableCell>
+                        <TableCell>
+                          <div className='flex flex-col gap-1'>
+                            {person.telefones?.[0] && (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div className="flex items-center gap-1 cursor-pointer">
+                                                <Phone className="h-3 w-3 text-muted-foreground" /> 
+                                                <span>{person.telefones[0].value}</span>
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            {person.telefones.map((t, i) => <p key={i}><strong>{t.type}:</strong> {t.value}</p>)}
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            )}
+                            {person.emails?.[0] && (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div className="flex items-center gap-1 cursor-pointer">
+                                                <Mail className="h-3 w-3 text-muted-foreground" />
+                                                <span className="truncate max-w-[150px]">{person.emails[0].value}</span>
+                                            </div>
+                                        </TooltipTrigger>
+                                         <TooltipContent>
+                                            {person.emails.map((e, i) => <p key={i}><strong>{e.type}:</strong> {e.value}</p>)}
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell>
                           <Badge variant={getTypeVariant(person.tipo)}>{person.tipo}</Badge>
                         </TableCell>

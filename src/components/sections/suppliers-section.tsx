@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
@@ -46,9 +47,10 @@ import {
 } from '@/components/ui/dialog';
 
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Pencil, Trash2, PlusCircle, Search, ArrowUpDown } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, PlusCircle, Search, ArrowUpDown, Phone, Mail } from 'lucide-react';
 import SupplierForm from '../supplier-form';
 import { Input } from '../ui/input';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 
 const formatCnpj = (value?: string) => {
@@ -117,12 +119,17 @@ export default function SuppliersSection() {
     const lowercasedTerm = searchTerm.toLowerCase();
     if (!lowercasedTerm) return suppliers;
 
-    return suppliers.filter(supplier => 
-        supplier.nomeFantasia.toLowerCase().includes(lowercasedTerm) ||
+    return suppliers.filter(supplier => {
+        const hasMatchingPhone = supplier.telefones?.some(t => t.value.toLowerCase().includes(lowercasedTerm)) || false;
+        const hasMatchingEmail = supplier.emails?.some(e => e.value.toLowerCase().includes(lowercasedTerm)) || false;
+
+        return supplier.nomeFantasia.toLowerCase().includes(lowercasedTerm) ||
         supplier.razaoSocial.toLowerCase().includes(lowercasedTerm) ||
         (supplier.cnpj && supplier.cnpj.replace(/\D/g, '').includes(lowercasedTerm.replace(/\D/g, ''))) ||
-        (supplier.codigoExterno && supplier.codigoExterno.toLowerCase().includes(lowercasedTerm))
-    );
+        (supplier.codigoExterno && supplier.codigoExterno.toLowerCase().includes(lowercasedTerm)) ||
+        hasMatchingPhone ||
+        hasMatchingEmail;
+    });
   }, [suppliers, searchTerm]);
 
   const sortedSuppliers = useMemo(() => {
@@ -254,7 +261,7 @@ export default function SuppliersSection() {
                <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                      placeholder="Buscar por Nome Fantasia, Razão Social, CNPJ ou Cód. Externo..."
+                      placeholder="Buscar por Nome, Razão Social, CNPJ, etc..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="w-full pl-10"
@@ -269,6 +276,7 @@ export default function SuppliersSection() {
                   <SortableHeader sortKey='nomeFantasia'>Nome Fantasia</SortableHeader>
                   <SortableHeader sortKey='razaoSocial'>Razão Social</SortableHeader>
                   <SortableHeader sortKey='cnpj'>CNPJ</SortableHeader>
+                  <TableHead>Contatos</TableHead>
                   <SortableHeader sortKey='cidade'>Cidade</SortableHeader>
                   <TableHead className="w-[50px] text-right">Ações</TableHead>
                 </TableRow>
@@ -281,6 +289,40 @@ export default function SuppliersSection() {
                       <TableCell className="font-medium">{supplier.nomeFantasia}</TableCell>
                       <TableCell>{supplier.razaoSocial}</TableCell>
                       <TableCell>{formatCnpj(supplier.cnpj)}</TableCell>
+                       <TableCell>
+                          <div className='flex flex-col gap-1'>
+                            {supplier.telefones?.[0] && (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div className="flex items-center gap-1 cursor-pointer">
+                                                <Phone className="h-3 w-3 text-muted-foreground" /> 
+                                                <span>{supplier.telefones[0].value}</span>
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            {supplier.telefones.map((t, i) => <p key={i}><strong>{t.type}:</strong> {t.value}</p>)}
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            )}
+                            {supplier.emails?.[0] && (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div className="flex items-center gap-1 cursor-pointer">
+                                                <Mail className="h-3 w-3 text-muted-foreground" />
+                                                <span className="truncate max-w-[150px]">{supplier.emails[0].value}</span>
+                                            </div>
+                                        </TooltipTrigger>
+                                         <TooltipContent>
+                                            {supplier.emails.map((e, i) => <p key={i}><strong>{e.type}:</strong> {e.value}</p>)}
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            )}
+                          </div>
+                        </TableCell>
                       <TableCell>{supplier.cidade || '-'}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
@@ -306,7 +348,7 @@ export default function SuppliersSection() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
+                    <TableCell colSpan={7} className="h-24 text-center">
                       Nenhum fornecedor encontrado para a busca realizada.
                     </TableCell>
                   </TableRow>

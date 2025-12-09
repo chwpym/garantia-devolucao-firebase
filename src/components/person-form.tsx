@@ -1,11 +1,12 @@
 
+
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2 } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2 } from 'lucide-react';
 import type { Person } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
@@ -17,14 +18,20 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { DialogClose, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from './ui/textarea';
 import { formatPhoneNumber } from '@/lib/utils';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+
+const contactInfoSchema = z.object({
+  type: z.string().min(1, "O tipo é obrigatório."),
+  value: z.string().min(1, "O valor é obrigatório."),
+});
 
 const formSchema = z.object({
   nome: z.string().min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' }),
   nomeFantasia: z.string().optional(),
   tipo: z.enum(['Cliente', 'Mecânico', 'Ambos'], { required_error: 'Selecione um tipo.' }),
   cpfCnpj: z.string().optional(),
-  telefone: z.string().optional(),
-  email: z.string().email({ message: "Email inválido." }).optional().or(z.literal('')),
+  telefones: z.array(contactInfoSchema).optional(),
+  emails: z.array(contactInfoSchema).optional(),
   cep: z.string().optional(),
   endereco: z.string().optional(),
   bairro: z.string().optional(),
@@ -46,8 +53,8 @@ const defaultFormValues: PersonFormValues = {
   nomeFantasia: '',
   tipo: 'Cliente',
   cpfCnpj: '',
-  telefone: '',
-  email: '',
+  telefones: [{ type: 'Celular', value: '' }],
+  emails: [{ type: 'Principal', value: '' }],
   cep: '',
   endereco: '',
   bairro: '',
@@ -87,14 +94,23 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
   });
   const { isSubmitting } = form.formState;
 
+  const { fields: telefoneFields, append: appendTelefone, remove: removeTelefone } = useFieldArray({
+    control: form.control,
+    name: 'telefones',
+  });
+  const { fields: emailFields, append: appendEmail, remove: removeEmail } = useFieldArray({
+    control: form.control,
+    name: 'emails',
+  });
+
   useEffect(() => {
     const defaultVals = editingPerson ? {
         ...editingPerson,
         nome: editingPerson.nome || '',
         nomeFantasia: editingPerson.nomeFantasia || '',
         cpfCnpj: editingPerson.cpfCnpj ? formatCpfCnpj(editingPerson.cpfCnpj) : '',
-        telefone: editingPerson.telefone || '',
-        email: editingPerson.email || '',
+        telefones: editingPerson.telefones?.length ? editingPerson.telefones : [{ type: 'Celular', value: '' }],
+        emails: editingPerson.emails?.length ? editingPerson.emails : [{ type: 'Principal', value: '' }],
         cep: editingPerson.cep || '',
         endereco: editingPerson.endereco || '',
         bairro: editingPerson.bairro || '',
@@ -110,7 +126,6 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
     try {
       const doc = data.cpfCnpj?.replace(/\D/g, '') || '';
       
-      // Fase 7: Validação de duplicidade
       if (doc) {
         const allPersons = await db.getAllPersons();
         const isDuplicate = allPersons.some(p => p.cpfCnpj === doc && p.id !== editingPerson?.id);
@@ -123,6 +138,8 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
       const dataToSave: Omit<Person, 'id'> = {
         ...data,
         cpfCnpj: doc,
+        telefones: data.telefones?.filter(t => t.value),
+        emails: data.emails?.filter(e => e.value),
       };
 
       if (editingPerson?.id) {
@@ -150,7 +167,7 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
 
   const handleCpfCnpjBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
     const cnpj = e.target.value.replace(/\D/g, '');
-    if (cnpj.length !== 14) return; // Only fetch for CNPJ
+    if (cnpj.length !== 14) return; 
 
     setIsFetchingCnpj(true);
     try {
@@ -209,7 +226,7 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSave)}>
-        <div className="space-y-4 px-1">
+        <div className="space-y-6 px-1">
           <FormField
             name="nome"
             control={form.control}
@@ -302,36 +319,38 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
             )}
           />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 <FormField
-                    name="telefone"
-                    control={form.control}
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Telefone</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="(00) 00000-0000" 
-                            {...field}
-                            onChange={(e) => field.onChange(formatPhoneNumber(e.target.value))}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                 <FormField
-                    name="email"
-                    control={form.control}
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl><Input placeholder="contato@email.com" {...field} /></FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
+            <div className="space-y-4 rounded-md border p-4">
+                <FormLabel>Telefones</FormLabel>
+                {telefoneFields.map((field, index) => (
+                    <div key={field.id} className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                        <FormField control={form.control} name={`telefones.${index}.type`} render={({ field }) => (
+                            <FormItem className="sm:col-span-4"><FormControl><Input placeholder="Tipo (Ex: Celular)" {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={form.control} name={`telefones.${index}.value`} render={({ field }) => (
+                            <FormItem className="sm:col-span-7"><FormControl><Input placeholder="(00) 00000-0000" {...field} onChange={(e) => field.onChange(formatPhoneNumber(e.target.value))} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <Button type="button" variant="ghost" size="icon" onClick={() => removeTelefone(index)} className="sm:col-span-1 text-destructive hover:text-destructive" disabled={telefoneFields.length <= 1}><Trash2 className="h-4 w-4" /></Button>
+                    </div>
+                ))}
+                 <Button type="button" size="sm" variant="outline" onClick={() => appendTelefone({ type: 'Celular', value: '' })}><PlusCircle className="mr-2 h-4 w-4" />Adicionar Telefone</Button>
             </div>
+
+            <div className="space-y-4 rounded-md border p-4">
+                <FormLabel>Emails</FormLabel>
+                {emailFields.map((field, index) => (
+                    <div key={field.id} className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                        <FormField control={form.control} name={`emails.${index}.type`} render={({ field }) => (
+                            <FormItem className="sm:col-span-4"><FormControl><Input placeholder="Tipo (Ex: Principal)" {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={form.control} name={`emails.${index}.value`} render={({ field }) => (
+                            <FormItem className="sm:col-span-7"><FormControl><Input type="email" placeholder="contato@email.com" {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <Button type="button" variant="ghost" size="icon" onClick={() => removeEmail(index)} className="sm:col-span-1 text-destructive hover:text-destructive" disabled={emailFields.length <= 1}><Trash2 className="h-4 w-4" /></Button>
+                    </div>
+                ))}
+                <Button type="button" size="sm" variant="outline" onClick={() => appendEmail({ type: 'Principal', value: '' })}><PlusCircle className="mr-2 h-4 w-4" />Adicionar Email</Button>
+            </div>
+
              <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
                  <FormField
                     name="cep"

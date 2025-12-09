@@ -28,14 +28,19 @@ export interface Warranty {
 
 export type PersonType = 'Cliente' | 'Mecânico' | 'Ambos';
 
+export interface ContactInfo {
+  type: string;
+  value: string;
+}
+
 export interface Person {
   id?: number;
   nome: string;
   nomeFantasia?: string;
   tipo: PersonType;
   cpfCnpj?: string;
-  telefone?: string;
-  email?: string;
+  telefones?: ContactInfo[];
+  emails?: ContactInfo[];
   cep?: string;
   endereco?: string;
   bairro?: string;
@@ -54,6 +59,8 @@ export interface Supplier {
   endereco?: string;
   bairro?: string;
   codigoExterno?: string;
+  telefones?: ContactInfo[];
+  emails?: ContactInfo[];
 }
 
 export type LoteStatus = string; // Agora é dinâmico
@@ -174,4 +181,3 @@ export interface CustomStatus {
     cor: string;
     aplicavelEm: StatusApplicability[];
 }
-

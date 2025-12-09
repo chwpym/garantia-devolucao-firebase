@@ -1,11 +1,12 @@
 
+
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2 } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2 } from 'lucide-react';
 import type { Supplier } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
@@ -15,6 +16,12 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { CardContent, CardFooter } from '@/components/ui/card';
 import { DialogClose, DialogFooter } from './ui/dialog';
+import { formatPhoneNumber } from '@/lib/utils';
+
+const contactInfoSchema = z.object({
+  type: z.string().min(1, "O tipo é obrigatório."),
+  value: z.string().min(1, "O valor é obrigatório."),
+});
 
 const formSchema = z.object({
   razaoSocial: z.string().min(2, { message: 'A razão social deve ter pelo menos 2 caracteres.' }),
@@ -25,6 +32,8 @@ const formSchema = z.object({
   bairro: z.string().optional(),
   cidade: z.string().optional(),
   codigoExterno: z.string().optional(),
+  telefones: z.array(contactInfoSchema).optional(),
+  emails: z.array(contactInfoSchema).optional(),
 });
 
 type SupplierFormValues = z.infer<typeof formSchema>;
@@ -44,7 +53,9 @@ const defaultFormValues: SupplierFormValues = {
   endereco: '',
   bairro: '',
   cidade: '',
-  codigoExterno: ''
+  codigoExterno: '',
+  telefones: [{ type: 'Comercial', value: '' }],
+  emails: [{ type: 'Principal', value: '' }],
 };
 
 const formatCNPJ = (value: string) => {
@@ -68,6 +79,15 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
     defaultValues: defaultFormValues,
   });
 
+  const { fields: telefoneFields, append: appendTelefone, remove: removeTelefone } = useFieldArray({
+    control: form.control,
+    name: 'telefones',
+  });
+  const { fields: emailFields, append: appendEmail, remove: removeEmail } = useFieldArray({
+    control: form.control,
+    name: 'emails',
+  });
+
   useEffect(() => {
     const defaultVals = editingSupplier ? {
         ...editingSupplier,
@@ -78,7 +98,9 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
         endereco: editingSupplier.endereco || '',
         bairro: editingSupplier.bairro || '',
         cidade: editingSupplier.cidade || '',
-        codigoExterno: editingSupplier.codigoExterno || ''
+        codigoExterno: editingSupplier.codigoExterno || '',
+        telefones: editingSupplier.telefones?.length ? editingSupplier.telefones : [{ type: 'Comercial', value: '' }],
+        emails: editingSupplier.emails?.length ? editingSupplier.emails : [{ type: 'Principal', value: '' }],
     } : defaultFormValues;
     form.reset(defaultVals);
   }, [editingSupplier, form]);
@@ -86,7 +108,6 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
   const { isSubmitting } = form.formState;
 
   const handleCnpjBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
-    // A condição para executar a busca: apenas se não estiver editando.
     if (editingSupplier) return;
 
     const cnpj = e.target.value.replace(/\D/g, '');
@@ -150,7 +171,6 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
     try {
       const cnpj = data.cnpj?.replace(/[^\d]/g, '') || '';
       
-      // Fase 7: Validação de duplicidade
       if (cnpj) {
         const allSuppliers = await db.getAllSuppliers();
         const isDuplicate = allSuppliers.some(s => s.cnpj === cnpj && s.id !== editingSupplier?.id);
@@ -164,6 +184,8 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
         ...data,
         cnpj,
         cidade: data.cidade || '',
+        telefones: data.telefones?.filter(t => t.value),
+        emails: data.emails?.filter(e => e.value),
       };
 
       if (editingSupplier?.id) {
@@ -190,7 +212,7 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
   };
 
   const FormContent = (
-      <div className="space-y-4 pt-4">
+      <div className="space-y-6 pt-4">
         <FormField
           name="cnpj"
           control={form.control}
@@ -251,6 +273,40 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
             </FormItem>
           )}
         />
+
+        <div className="space-y-4 rounded-md border p-4">
+            <FormLabel>Telefones</FormLabel>
+            {telefoneFields.map((field, index) => (
+                <div key={field.id} className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                    <FormField control={form.control} name={`telefones.${index}.type`} render={({ field }) => (
+                        <FormItem className="sm:col-span-4"><FormControl><Input placeholder="Tipo (Ex: Comercial)" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name={`telefones.${index}.value`} render={({ field }) => (
+                        <FormItem className="sm:col-span-7"><FormControl><Input placeholder="(00) 0000-0000" {...field} onChange={(e) => field.onChange(formatPhoneNumber(e.target.value))} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removeTelefone(index)} className="sm:col-span-1 text-destructive hover:text-destructive" disabled={telefoneFields.length <= 1}><Trash2 className="h-4 w-4" /></Button>
+                </div>
+            ))}
+            <Button type="button" size="sm" variant="outline" onClick={() => appendTelefone({ type: 'Comercial', value: '' })}><PlusCircle className="mr-2 h-4 w-4" />Adicionar Telefone</Button>
+        </div>
+
+        <div className="space-y-4 rounded-md border p-4">
+            <FormLabel>Emails</FormLabel>
+            {emailFields.map((field, index) => (
+                <div key={field.id} className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                    <FormField control={form.control} name={`emails.${index}.type`} render={({ field }) => (
+                        <FormItem className="sm:col-span-4"><FormControl><Input placeholder="Tipo (Ex: Financeiro)" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name={`emails.${index}.value`} render={({ field }) => (
+                        <FormItem className="sm:col-span-7"><FormControl><Input type="email" placeholder="financeiro@empresa.com" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removeEmail(index)} className="sm:col-span-1 text-destructive hover:text-destructive" disabled={emailFields.length <= 1}><Trash2 className="h-4 w-4" /></Button>
+                </div>
+            ))}
+            <Button type="button" size="sm" variant="outline" onClick={() => appendEmail({ type: 'Principal', value: '' })}><PlusCircle className="mr-2 h-4 w-4" />Adicionar Email</Button>
+        </div>
+
+
         <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
           <FormField name="cep" control={form.control} render={({ field }) => (
               <FormItem className="md:col-span-1">
