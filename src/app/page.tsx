@@ -51,7 +51,6 @@ const viewComponents: { [key: string]: ComponentType<any> } = {
 };
 
 export default function Home() {
-  const [hasMounted, setHasMounted] = useState(false);
   const {
     activeView,
     selectedLoteId,
@@ -66,14 +65,6 @@ export default function Home() {
     handleCloneWarranty,
     handleWarrantySave,
   } = useAppStore();
-
-  useEffect(() => {
-    setHasMounted(true);
-  }, []);
-
-  if (!hasMounted) {
-    return null;
-  }
 
   const renderContent = () => {
     const Component = viewComponents[activeView];
@@ -109,10 +100,8 @@ export default function Home() {
   };
   
   return (
-     <ClientOnly>
-      <AppLayout>
-        {renderContent()}
-      </AppLayout>
-    </ClientOnly>
+    <AppLayout>
+      {renderContent()}
+    </AppLayout>
   );
 }
