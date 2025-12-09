@@ -408,7 +408,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                         </div>
                                     </div>
                                     
-                                    <Dialog open={isPersonModalOpen} onOpenChange={setPersonModalOpen}>
+                                     <Dialog open={isPersonModalOpen} onOpenChange={setPersonModalOpen}>
                                         <div className='grid md:grid-cols-2 gap-4'>
                                             <FormField
                                                 control={form.control}
@@ -536,7 +536,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                                 )}
                                             />
                                         </div>
-                                         <DialogContent className="max-w-2xl">
+                                         <DialogContent className="max-w-3xl">
                                             <DialogHeader>
                                                 <DialogTitle>Cadastrar Novo Cliente/Mecânico</DialogTitle>
                                                 <DialogDescription>Preencha os dados abaixo para criar um novo registro.</DialogDescription>
@@ -552,22 +552,22 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Observação Geral</FormLabel>
-                                                <FormControl><Textarea placeholder="Adicione uma observação geral sobre a devolução..." {...field} /></FormControl>
+                                                <FormControl><Textarea placeholder="Adicione uma observação geral sobre a devolução..." {...field} className="uppercase" /></FormControl>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
                                     />
 
                                 </CardContent>
-                                <CardFooter className="flex justify-end gap-2">
-                                    <Button type="button" variant="outline" onClick={handleCancel}>
+                                <CardFooter className="flex flex-col sm:flex-row sm:justify-end gap-2">
+                                    <Button type="button" variant="outline" onClick={handleCancel} className="w-full sm:w-auto">
                                         Cancelar
                                     </Button>
-                                    <Button type="button" variant="secondary" onClick={handleClearForm}>
+                                    <Button type="button" variant="secondary" onClick={handleClearForm} className="w-full sm:w-auto">
                                         <RotateCcw className="mr-2 h-4 w-4" />
                                         Limpar
                                     </Button>
-                                    <Button type="submit" disabled={form.formState.isSubmitting}>
+                                    <Button type="submit" disabled={form.formState.isSubmitting} className="w-full sm:w-auto">
                                         {form.formState.isSubmitting ? "Salvando..." : (editingId ? 'Atualizar Devolução' : 'Salvar Devolução')}
                                     </Button>
                                 </CardFooter>
@@ -593,3 +593,6 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
     );
 }
 
+
+
+    
