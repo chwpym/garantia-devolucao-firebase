@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { DialogClose, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from './ui/textarea';
+import { formatPhoneNumber } from '@/lib/utils';
 
 const formSchema = z.object({
   nome: z.string().min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' }),
@@ -310,7 +311,13 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
                     render={({ field }) => (
                     <FormItem>
                         <FormLabel>Telefone</FormLabel>
-                        <FormControl><Input placeholder="(00) 00000-0000" {...field} /></FormControl>
+                        <FormControl>
+                          <Input 
+                            placeholder="(00) 00000-0000" 
+                            {...field}
+                            onChange={(e) => field.onChange(formatPhoneNumber(e.target.value))}
+                          />
+                        </FormControl>
                         <FormMessage />
                     </FormItem>
                     )}
