@@ -350,7 +350,9 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                                                     <DialogTitle>Cadastrar Novo Fornecedor</DialogTitle>
                                                     <DialogDescription>Preencha os dados do novo fornecedor.</DialogDescription>
                                                 </DialogHeader>
-                                                <SupplierForm onSave={handleSupplierSaved} isModal />
+                                                <div className="max-h-[80vh] overflow-y-auto pr-2">
+                                                    <SupplierForm onSave={handleSupplierSaved} isModal />
+                                                </div>
                                             </DialogContent>
                                         </Dialog>
                                     </div>
@@ -461,7 +463,9 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                                                     <DialogTitle>Cadastrar Novo Cliente/Mecânico</DialogTitle>
                                                     <DialogDescription>Preencha os dados do novo registro.</DialogDescription>
                                                 </DialogHeader>
-                                                <PersonForm onSave={handlePersonSaved} onClear={() => {}} />
+                                                <div className='max-h-[80vh] overflow-y-auto pr-2'>
+                                                  <PersonForm onSave={handlePersonSaved} onClear={() => setPersonModalOpen(false)} />
+                                                </div>
                                             </DialogContent>
                                         </Dialog>
                                     </div>
@@ -496,7 +500,9 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                                                     <DialogTitle>Cadastrar Novo Cliente/Mecânico</DialogTitle>
                                                     <DialogDescription>Preencha os dados do novo registro.</DialogDescription>
                                                     </DialogHeader>
-                                                    <PersonForm onSave={handlePersonSaved} onClear={() => {}} />
+                                                    <div className='max-h-[80vh] overflow-y-auto pr-2'>
+                                                        <PersonForm onSave={handlePersonSaved} onClear={() => setPersonModalOpen(false)} />
+                                                    </div>
                                             </DialogContent>
                                         </Dialog>
                                     </div>
@@ -573,7 +579,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                     <DialogTitle>Cadastrar Novo Produto</DialogTitle>
                     <DialogDescription>Preencha os dados do novo produto.</DialogDescription>
                 </DialogHeader>
-                <ProductForm onSave={handleProductSaved} />
+                <ProductForm onSave={handleProductSaved} onClear={() => setProductModalOpen(false)} />
             </DialogContent>
         </Dialog>
     </Form>

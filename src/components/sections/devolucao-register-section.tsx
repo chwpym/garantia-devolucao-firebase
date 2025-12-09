@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -530,7 +531,9 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                         <DialogTitle>Cadastrar Novo Cliente/Mecânico</DialogTitle>
                         <DialogDescription>Preencha os dados abaixo para criar um novo registro.</DialogDescription>
                     </DialogHeader>
-                    <PersonForm onSave={handlePersonSaved} onClear={() => setPersonModalOpen(false)} />
+                    <div className='max-h-[80vh] overflow-y-auto pr-2'>
+                        <PersonForm onSave={handlePersonSaved} onClear={() => setPersonModalOpen(false)} />
+                    </div>
                 </DialogContent>
             </Dialog>
         </>
