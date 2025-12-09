@@ -223,215 +223,217 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSave)}>
-        <div className="space-y-6 pr-4">
-          <FormField
-            name="nome"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nome Completo / Razão Social</FormLabel>
-                <FormControl>
-                  <Input placeholder="John Doe" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-           <FormField
-            name="nomeFantasia"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nome Fantasia</FormLabel>
-                <FormControl>
-                  <Input placeholder="Nome popular da empresa" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className='py-4 overflow-y-auto pl-1 pr-4'>
+        <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSave)}>
+            <div className="space-y-6">
             <FormField
-              name="codigoExterno"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Código Externo</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Código em outro sistema (ERP, etc)" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              name="cpfCnpj"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>CPF / CNPJ</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Input 
-                        placeholder="000.000.000-00 ou 00.000.000/0000-00" 
-                        {...field} 
-                        onChange={(e) => field.onChange(formatCpfCnpj(e.target.value))}
-                        onBlur={handleCpfCnpjBlur}
-                      />
-                      {isFetchingCnpj && <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin" />}
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          <FormField
-            control={form.control}
-            name="tipo"
-            render={({ field }) => (
-              <FormItem className="space-y-2">
-                <FormLabel>Tipo</FormLabel>
-                <FormControl>
-                  <RadioGroup
-                    onValueChange={field.onChange}
-                    value={field.value}
-                    className="flex flex-row space-x-4"
-                  >
-                    <FormItem className="flex items-center space-x-2 space-y-0">
-                      <FormControl><RadioGroupItem value="Cliente" /></FormControl>
-                      <FormLabel className="font-normal">Cliente</FormLabel>
-                    </FormItem>
-                    <FormItem className="flex items-center space-x-2 space-y-0">
-                      <FormControl><RadioGroupItem value="Mecânico" /></FormControl>
-                      <FormLabel className="font-normal">Mecânico</FormLabel>
-                    </FormItem>
-                    <FormItem className="flex items-center space-x-2 space-y-0">
-                      <FormControl><RadioGroupItem value="Ambos" /></FormControl>
-                      <FormLabel className="font-normal">Ambos</FormLabel>
-                    </FormItem>
-                  </RadioGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-            <div className="space-y-4 rounded-md border p-4">
-                <FormLabel>Telefones</FormLabel>
-                {telefoneFields.map((field, index) => (
-                    <div key={field.id} className="grid grid-cols-1 sm:grid-cols-12 gap-2">
-                        <FormField control={form.control} name={`telefones.${index}.type`} render={({ field }) => (
-                            <FormItem className="sm:col-span-4"><FormControl><Input placeholder="Tipo (Ex: Celular)" {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <FormField control={form.control} name={`telefones.${index}.value`} render={({ field }) => (
-                            <FormItem className="sm:col-span-7"><FormControl><Input placeholder="(00) 00000-0000" {...field} onChange={(e) => field.onChange(formatPhoneNumber(e.target.value))} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <Button type="button" variant="ghost" size="icon" onClick={() => removeTelefone(index)} className="sm:col-span-1 text-destructive hover:text-destructive" disabled={telefoneFields.length <= 1}><Trash2 className="h-4 w-4" /></Button>
-                    </div>
-                ))}
-                 <Button type="button" size="sm" variant="outline" onClick={() => appendTelefone({ type: 'Celular', value: '' })}><PlusCircle className="mr-2 h-4 w-4" />Adicionar Telefone</Button>
-            </div>
-
-            <div className="space-y-4 rounded-md border p-4">
-                <FormLabel>Emails</FormLabel>
-                {emailFields.map((field, index) => (
-                    <div key={field.id} className="grid grid-cols-1 sm:grid-cols-12 gap-2">
-                        <FormField control={form.control} name={`emails.${index}.type`} render={({ field }) => (
-                            <FormItem className="sm:col-span-4"><FormControl><Input placeholder="Tipo (Ex: Principal)" {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <FormField control={form.control} name={`emails.${index}.value`} render={({ field }) => (
-                            <FormItem className="sm:col-span-7"><FormControl><Input type="email" placeholder="contato@email.com" {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <Button type="button" variant="ghost" size="icon" onClick={() => removeEmail(index)} className="sm:col-span-1 text-destructive hover:text-destructive" disabled={emailFields.length <= 1}><Trash2 className="h-4 w-4" /></Button>
-                    </div>
-                ))}
-                <Button type="button" size="sm" variant="outline" onClick={() => appendEmail({ type: 'Principal', value: '' })}><PlusCircle className="mr-2 h-4 w-4" />Adicionar Email</Button>
-            </div>
-
-             <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-                 <FormField
-                    name="cep"
-                    control={form.control}
-                    render={({ field }) => (
-                    <FormItem className="md:col-span-1">
-                        <FormLabel>CEP</FormLabel>
-                        <FormControl>
-                            <div className="relative">
-                                <Input placeholder="00000-000" {...field} onBlur={handleCepBlur} />
-                                {isFetchingCep && <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin" />}
-                            </div>
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                <FormField
-                    name="endereco"
-                    control={form.control}
-                    render={({ field }) => (
-                    <FormItem className="md:col-span-2">
-                        <FormLabel>Endereço</FormLabel>
-                        <FormControl><Input placeholder="Rua Exemplo, 123" {...field} /></FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                    name="bairro"
-                    control={form.control}
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Bairro</FormLabel>
-                        <FormControl><Input placeholder="Centro" {...field} /></FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                <FormField
-                    name="cidade"
-                    control={form.control}
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Cidade/UF</FormLabel>
-                        <FormControl><Input placeholder="São Paulo - SP" {...field} /></FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-            </div>
-            <FormField
-                name="observacao"
+                name="nome"
                 control={form.control}
                 render={({ field }) => (
                 <FormItem>
-                    <FormLabel>Observação</FormLabel>
+                    <FormLabel>Nome Completo / Razão Social</FormLabel>
                     <FormControl>
-                    <Textarea
-                        placeholder="Adicione uma observação sobre o cliente ou mecânico..."
-                        {...field}
-                    />
+                    <Input placeholder="John Doe" {...field} />
                     </FormControl>
                     <FormMessage />
                 </FormItem>
                 )}
             />
-        </div>
-        <DialogFooter className="pt-6">
-            <DialogClose asChild>
-                <Button type="button" variant="outline">Cancelar</Button>
-            </DialogClose>
-          {onClear && <Button type="button" variant="outline" onClick={onClear}>Limpar</Button>}
-          <Button type="submit" disabled={isSubmitting || isFetchingCep || isFetchingCnpj}>
-            {isSubmitting || isFetchingCep || isFetchingCnpj ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            {editingPerson ? 'Atualizar Registro' : 'Salvar Registro'}
-          </Button>
-        </DialogFooter>
-      </form>
-    </Form>
+            <FormField
+                name="nomeFantasia"
+                control={form.control}
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Nome Fantasia</FormLabel>
+                    <FormControl>
+                    <Input placeholder="Nome popular da empresa" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                name="codigoExterno"
+                control={form.control}
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Código Externo</FormLabel>
+                    <FormControl>
+                        <Input placeholder="Código em outro sistema (ERP, etc)" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                name="cpfCnpj"
+                control={form.control}
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>CPF / CNPJ</FormLabel>
+                    <FormControl>
+                        <div className="relative">
+                        <Input 
+                            placeholder="000.000.000-00 ou 00.000.000/0000-00" 
+                            {...field} 
+                            onChange={(e) => field.onChange(formatCpfCnpj(e.target.value))}
+                            onBlur={handleCpfCnpjBlur}
+                        />
+                        {isFetchingCnpj && <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin" />}
+                        </div>
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
+            <FormField
+                control={form.control}
+                name="tipo"
+                render={({ field }) => (
+                <FormItem className="space-y-2">
+                    <FormLabel>Tipo</FormLabel>
+                    <FormControl>
+                    <RadioGroup
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        className="flex flex-row space-x-4"
+                    >
+                        <FormItem className="flex items-center space-x-2 space-y-0">
+                        <FormControl><RadioGroupItem value="Cliente" /></FormControl>
+                        <FormLabel className="font-normal">Cliente</FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-2 space-y-0">
+                        <FormControl><RadioGroupItem value="Mecânico" /></FormControl>
+                        <FormLabel className="font-normal">Mecânico</FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-2 space-y-0">
+                        <FormControl><RadioGroupItem value="Ambos" /></FormControl>
+                        <FormLabel className="font-normal">Ambos</FormLabel>
+                        </FormItem>
+                    </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+
+                <div className="space-y-4 rounded-md border p-4">
+                    <FormLabel>Telefones</FormLabel>
+                    {telefoneFields.map((field, index) => (
+                        <div key={field.id} className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                            <FormField control={form.control} name={`telefones.${index}.type`} render={({ field }) => (
+                                <FormItem className="sm:col-span-4"><FormControl><Input placeholder="Tipo (Ex: Celular)" {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            <FormField control={form.control} name={`telefones.${index}.value`} render={({ field }) => (
+                                <FormItem className="sm:col-span-7"><FormControl><Input placeholder="(00) 00000-0000" {...field} onChange={(e) => field.onChange(formatPhoneNumber(e.target.value))} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            <Button type="button" variant="ghost" size="icon" onClick={() => removeTelefone(index)} className="sm:col-span-1 text-destructive hover:text-destructive" disabled={telefoneFields.length <= 1}><Trash2 className="h-4 w-4" /></Button>
+                        </div>
+                    ))}
+                    <Button type="button" size="sm" variant="outline" onClick={() => appendTelefone({ type: 'Celular', value: '' })}><PlusCircle className="mr-2 h-4 w-4" />Adicionar Telefone</Button>
+                </div>
+
+                <div className="space-y-4 rounded-md border p-4">
+                    <FormLabel>Emails</FormLabel>
+                    {emailFields.map((field, index) => (
+                        <div key={field.id} className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                            <FormField control={form.control} name={`emails.${index}.type`} render={({ field }) => (
+                                <FormItem className="sm:col-span-4"><FormControl><Input placeholder="Tipo (Ex: Principal)" {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            <FormField control={form.control} name={`emails.${index}.value`} render={({ field }) => (
+                                <FormItem className="sm:col-span-7"><FormControl><Input type="email" placeholder="contato@email.com" {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            <Button type="button" variant="ghost" size="icon" onClick={() => removeEmail(index)} className="sm:col-span-1 text-destructive hover:text-destructive" disabled={emailFields.length <= 1}><Trash2 className="h-4 w-4" /></Button>
+                        </div>
+                    ))}
+                    <Button type="button" size="sm" variant="outline" onClick={() => appendEmail({ type: 'Principal', value: '' })}><PlusCircle className="mr-2 h-4 w-4" />Adicionar Email</Button>
+                </div>
+
+                <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+                    <FormField
+                        name="cep"
+                        control={form.control}
+                        render={({ field }) => (
+                        <FormItem className="md:col-span-1">
+                            <FormLabel>CEP</FormLabel>
+                            <FormControl>
+                                <div className="relative">
+                                    <Input placeholder="00000-000" {...field} onBlur={handleCepBlur} />
+                                    {isFetchingCep && <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin" />}
+                                </div>
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField
+                        name="endereco"
+                        control={form.control}
+                        render={({ field }) => (
+                        <FormItem className="md:col-span-2">
+                            <FormLabel>Endereço</FormLabel>
+                            <FormControl><Input placeholder="Rua Exemplo, 123" {...field} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                        name="bairro"
+                        control={form.control}
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Bairro</FormLabel>
+                            <FormControl><Input placeholder="Centro" {...field} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField
+                        name="cidade"
+                        control={form.control}
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Cidade/UF</FormLabel>
+                            <FormControl><Input placeholder="São Paulo - SP" {...field} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                </div>
+                <FormField
+                    name="observacao"
+                    control={form.control}
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Observação</FormLabel>
+                        <FormControl>
+                        <Textarea
+                            placeholder="Adicione uma observação sobre o cliente ou mecânico..."
+                            {...field}
+                        />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+            </div>
+            <DialogFooter className="pt-6">
+                <DialogClose asChild>
+                    <Button type="button" variant="outline">Cancelar</Button>
+                </DialogClose>
+            {onClear && <Button type="button" variant="outline" onClick={onClear}>Limpar</Button>}
+            <Button type="submit" disabled={isSubmitting || isFetchingCep || isFetchingCnpj}>
+                {isSubmitting || isFetchingCep || isFetchingCnpj ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                {editingPerson ? 'Atualizar Registro' : 'Salvar Registro'}
+            </Button>
+            </DialogFooter>
+        </form>
+        </Form>
+    </div>
   );
 }
