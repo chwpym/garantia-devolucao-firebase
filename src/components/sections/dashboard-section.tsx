@@ -95,7 +95,6 @@ const DASHBOARD_TAB_KEY = 'synergia-dashboard-tab';
 export default function DashboardSection({ openTab: setActiveView }: DashboardSectionProps) {
   const handleEditDevolucao = useAppStore(state => state.handleEditDevolucao);
   const [activeTab, setActiveTab] = useState('garantias');
-  const warrantyStatuses = useAppStore(state => state.statuses.filter(s => s.aplicavelEm.includes('garantia')));
 
   // Estado para Garantias
   const [stats, setStats] = useState<DashboardStats>({ total: 0, totalDefeitos: 0, pendentes: 0, aprovadas: 0, recusadas: 0, pagas: 0 });
@@ -133,6 +132,8 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
           db.getAllWarranties(),
           db.getAllDevolucoes(),
       ]);
+
+      const warrantyStatuses = useAppStore.getState().statuses.filter(s => s.aplicavelEm.includes('garantia'));
       
       // --- Cálculo de Garantias ---
       const totalDefeitos = allWarranties.reduce((acc, warranty) => {
@@ -244,7 +245,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
     } finally {
       setIsLoading(false);
     }
-  }, [toast, warrantyStatuses]);
+  }, [toast]);
 
   useEffect(() => {
     const handleDataChanged = () => {
@@ -550,4 +551,3 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
     </div>
   );
 }
-
