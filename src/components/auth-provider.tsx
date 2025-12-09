@@ -10,6 +10,7 @@ import * as db from '@/lib/db';
 import { countUsers } from '@/lib/db-utils';
 import { useToast } from '@/hooks/use-toast';
 import { AuthGuard } from './auth-guard';
+import { Loader2 } from 'lucide-react';
 
 
 // This new type combines Firebase Auth user with our custom profile data
@@ -26,38 +27,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  
+  // State to prevent rendering on the server
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true); // This runs only on the client
+
     const app = getFirebaseApp();
     const auth = getAuth(app);
     
     const unsubscribe = onAuthStateChanged(auth, (authUser) => {
       if (authUser) {
-        // User is signed in, now fetch or create profile
         const checkUserProfile = async () => {
           try {
-            await db.initDB(); // Ensure DB is ready
+            await db.initDB();
             let profile = await db.getUserProfile(authUser.uid);
 
             if (!profile) {
-              // Profile doesn't exist, create it.
               const userCount = await countUsers();
               const newRole = userCount === 0 ? 'admin' : 'user';
 
-              console.log(`Creating profile for ${authUser.email}. User count: ${userCount}. New role: ${newRole}`);
-              
               profile = {
                 uid: authUser.uid,
                 email: authUser.email!,
                 displayName: authUser.displayName || authUser.email?.split('@')[0] || 'Novo Usuário',
-                photoURL: authUser.photoURL || undefined, // Save the photoURL if it exists
+                photoURL: authUser.photoURL || undefined,
                 role: newRole,
                 status: 'active',
               };
               await db.upsertUserProfile(profile);
             }
 
-            // ** SECURITY CHECK: Blocked users should not be able to log in **
             if (profile.status === 'blocked') {
               toast({
                 title: 'Acesso Negado',
@@ -75,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           } catch (error) {
             console.error("Error checking/creating user profile:", error);
-            setUser(null); // Fail safe
+            setUser(null);
           } finally {
             setLoading(false);
           }
@@ -84,17 +85,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         checkUserProfile();
 
       } else {
-        // User is signed out
         setUser(null);
         setLoading(false);
       }
     });
 
-    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, [toast]);
 
   const value = { user, loading };
+
+  // Render nothing on the server or before the client has mounted
+  if (!isClient) {
+    return null;
+  }
+  
+  if (loading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-background">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <span className="sr-only">Carregando...</span>
+      </div>
+    );
+  }
 
   return (
     <AuthContext.Provider value={value}>
