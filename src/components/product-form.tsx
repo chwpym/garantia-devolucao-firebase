@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect } from 'react';
@@ -51,6 +52,15 @@ export default function ProductForm({ onSave, editingProduct, onClear }: Product
 
   const handleSave = async (data: ProductFormValues) => {
     try {
+      // Fase 7: Validação de duplicidade
+      if (!editingProduct) { // Only check for duplicates when creating a new product
+        const existingProduct = await db.getProductByCode(data.codigo);
+        if (existingProduct) {
+            toast({ title: 'Código Duplicado', description: 'Já existe um produto cadastrado com este código.', variant: 'destructive'});
+            return;
+        }
+      }
+
       if (editingProduct?.id) {
         // Ao editar, não alteramos o código. Usamos o código original.
         const updatedProduct = { 
@@ -95,8 +105,7 @@ export default function ProductForm({ onSave, editingProduct, onClear }: Product
                 <Input 
                     placeholder="Código principal do produto" 
                     {...field} 
-                    // O campo agora é sempre habilitado, a lógica de bloqueio está no 'handleSave'.
-                    disabled={false} 
+                    disabled={!!editingProduct} 
                 />
               </FormControl>
               <FormMessage />

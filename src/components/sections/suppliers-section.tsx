@@ -120,7 +120,8 @@ export default function SuppliersSection() {
     return suppliers.filter(supplier => 
         supplier.nomeFantasia.toLowerCase().includes(lowercasedTerm) ||
         supplier.razaoSocial.toLowerCase().includes(lowercasedTerm) ||
-        (supplier.cnpj && supplier.cnpj.replace(/\D/g, '').includes(lowercasedTerm.replace(/\D/g, '')))
+        (supplier.cnpj && supplier.cnpj.replace(/\D/g, '').includes(lowercasedTerm.replace(/\D/g, ''))) ||
+        (supplier.codigoExterno && supplier.codigoExterno.toLowerCase().includes(lowercasedTerm))
     );
   }, [suppliers, searchTerm]);
 
@@ -253,7 +254,7 @@ export default function SuppliersSection() {
                <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                      placeholder="Buscar por Nome Fantasia, Razão Social ou CNPJ..."
+                      placeholder="Buscar por Nome Fantasia, Razão Social, CNPJ ou Cód. Externo..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="w-full pl-10"
@@ -264,7 +265,7 @@ export default function SuppliersSection() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <SortableHeader sortKey='id'>ID</SortableHeader>
+                  <SortableHeader sortKey='codigoExterno'>Cód. Externo</SortableHeader>
                   <SortableHeader sortKey='nomeFantasia'>Nome Fantasia</SortableHeader>
                   <SortableHeader sortKey='razaoSocial'>Razão Social</SortableHeader>
                   <SortableHeader sortKey='cnpj'>CNPJ</SortableHeader>
@@ -276,7 +277,7 @@ export default function SuppliersSection() {
                 {sortedSuppliers.length > 0 ? (
                   sortedSuppliers.map(supplier => (
                     <TableRow key={supplier.id}>
-                      <TableCell className="font-medium text-muted-foreground">{supplier.id}</TableCell>
+                      <TableCell>{supplier.codigoExterno || '-'}</TableCell>
                       <TableCell className="font-medium">{supplier.nomeFantasia}</TableCell>
                       <TableCell>{supplier.razaoSocial}</TableCell>
                       <TableCell>{formatCnpj(supplier.cnpj)}</TableCell>

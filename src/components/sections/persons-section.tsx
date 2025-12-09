@@ -323,7 +323,7 @@ export default function PersonsSection() {
                  <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                        placeholder="Buscar por nome, nome fantasia, CPF/CNPJ, telefone ou cidade..."
+                        placeholder="Buscar por nome, nome fantasia, CPF/CNPJ, telefone, cidade ou código externo..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-10"
@@ -334,7 +334,7 @@ export default function PersonsSection() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <SortableHeader sortKey='id'>ID</SortableHeader>
+                    <SortableHeader sortKey='codigoExterno'>Cód. Externo</SortableHeader>
                     <SortableHeader sortKey='nome'>Razão Social</SortableHeader>
                     <SortableHeader sortKey='nomeFantasia'>Nome Fantasia</SortableHeader>
                     <SortableHeader sortKey='cpfCnpj'>CPF/CNPJ</SortableHeader>
@@ -347,7 +347,7 @@ export default function PersonsSection() {
                   {sortedPersons.length > 0 ? (
                     sortedPersons.map(person => (
                       <TableRow key={person.id}>
-                        <TableCell className="font-medium text-muted-foreground">{person.id}</TableCell>
+                        <TableCell>{person.codigoExterno || '-'}</TableCell>
                         <TableCell className="font-medium">{person.nome}</TableCell>
                         <TableCell>{person.nomeFantasia || '-'}</TableCell>
                         <TableCell>{formatCpfCnpj(person.cpfCnpj)}</TableCell>
@@ -409,7 +409,3 @@ export default function PersonsSection() {
     </div>
   );
 }
-
-    
-
-    

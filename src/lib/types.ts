@@ -1,3 +1,4 @@
+
 'use client';
 
 export const WARRANTY_STATUSES = ['Aguardando Envio', 'Enviado para Análise', 'Aprovada - Peça Nova', 'Aprovada - Crédito NF', 'Aprovada - Crédito Boleto', 'Recusada'] as const;

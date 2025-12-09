@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Trash2 } from 'lucide-react';
+import { PlusCircle, Trash2, RotateCcw } from 'lucide-react';
 import type { ReturnStatus, Product, ItemDevolucao } from '@/lib/types';
 import { Combobox } from '../ui/combobox';
 import { DatePicker } from '../ui/date-picker';
@@ -21,6 +21,7 @@ import { Textarea } from '../ui/textarea';
 import { parseISO, isSameDay } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import ProductForm from '../product-form';
+import PersonForm from '../person-form';
 import { useAppStore } from '@/store/app-store';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Label } from '../ui/label';
@@ -152,6 +153,7 @@ function RecentDevolutionsList() {
 export default function DevolucaoRegisterSection({ editingId, onSave }: DevolucaoRegisterSectionProps) {
     const { persons, isDataLoaded, reloadData } = useAppStore();
     const [isProductModalOpen, setProductModalOpen] = useState(false);
+    const [isPersonModalOpen, setPersonModalOpen] = useState(false);
     
     const { toast } = useToast();
     const goBack = useAppStore(state => state.goBack);
@@ -259,11 +261,25 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
         goBack(); // Usa a ação do store para voltar
     }
 
+    const handleClearForm = () => {
+        form.reset(defaultFormValues);
+        toast({ title: 'Formulário Limpo', description: 'Você pode iniciar um novo cadastro.' });
+    };
+
     const handleProductSaved = () => {
         reloadData('products');
         setProductModalOpen(false);
-        // We don't have an active index here, so the user has to search again.
-        // This could be improved in the future.
+    };
+
+    const handlePersonSaved = (newPerson: any) => {
+        reloadData('persons');
+        setPersonModalOpen(false);
+        if (newPerson.tipo === 'Cliente' || newPerson.tipo === 'Ambos') {
+             form.setValue('cliente', newPerson.nome);
+        }
+        if (newPerson.tipo === 'Mecânico' || newPerson.tipo === 'Ambos') {
+             form.setValue('mecanico', newPerson.nome);
+        }
     };
 
     const handleProductSelect = (product: Product, index: number) => {
@@ -370,15 +386,20 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                             render={({ field }) => (
                                                 <FormItem className="flex flex-col">
                                                     <FormLabel>Cliente <span className='text-destructive'>*</span></FormLabel>
-                                                    <Combobox
-                                                        options={clientOptions}
-                                                        value={field.value ?? ''}
-                                                        onChange={field.onChange}
-                                                        placeholder="Selecione um cliente"
-                                                        searchPlaceholder="Buscar cliente..."
-                                                        notFoundMessage="Nenhum cliente encontrado."
-                                                        className="w-full"
-                                                    />
+                                                    <div className="flex items-center gap-2">
+                                                        <Combobox
+                                                            options={clientOptions}
+                                                            value={field.value ?? ''}
+                                                            onChange={field.onChange}
+                                                            placeholder="Selecione um cliente"
+                                                            searchPlaceholder="Buscar cliente..."
+                                                            notFoundMessage="Nenhum cliente encontrado."
+                                                            className="w-full"
+                                                        />
+                                                        <Button type="button" variant="outline" size="icon" className="flex-shrink-0" onClick={() => setPersonModalOpen(true)}>
+                                                            <PlusCircle className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
@@ -389,15 +410,20 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                             render={({ field }) => (
                                                 <FormItem className="flex flex-col">
                                                     <FormLabel>Mecânico <span className='text-muted-foreground text-xs'>(opcional)</span></FormLabel>
-                                                    <Combobox
-                                                        options={mechanicOptions}
-                                                        value={field.value ?? ''}
-                                                        onChange={(value) => field.onChange(value)}
-                                                        placeholder="Selecione um mecânico"
-                                                        searchPlaceholder="Buscar mecânico..."
-                                                        notFoundMessage="Nenhum mecânico encontrado."
-                                                        className="w-full"
-                                                    />
+                                                    <div className="flex items-center gap-2">
+                                                        <Combobox
+                                                            options={mechanicOptions}
+                                                            value={field.value ?? ''}
+                                                            onChange={(value) => field.onChange(value)}
+                                                            placeholder="Selecione um mecânico"
+                                                            searchPlaceholder="Buscar mecânico..."
+                                                            notFoundMessage="Nenhum mecânico encontrado."
+                                                            className="w-full"
+                                                        />
+                                                        <Button type="button" variant="outline" size="icon" className="flex-shrink-0" onClick={() => setPersonModalOpen(true)}>
+                                                            <PlusCircle className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
@@ -470,6 +496,10 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                     <Button type="button" variant="outline" onClick={handleCancel}>
                                         Cancelar
                                     </Button>
+                                    <Button type="button" variant="secondary" onClick={handleClearForm}>
+                                        <RotateCcw className="mr-2 h-4 w-4" />
+                                        Limpar
+                                    </Button>
                                     <Button type="submit" disabled={form.formState.isSubmitting}>
                                         {form.formState.isSubmitting ? "Salvando..." : (editingId ? 'Atualizar Devolução' : 'Salvar Devolução')}
                                     </Button>
@@ -489,6 +519,14 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                         <DialogTitle>Cadastrar Novo Produto</DialogTitle>
                     </DialogHeader>
                     <ProductForm onSave={handleProductSaved} onClear={() => setProductModalOpen(false)}/>
+                </DialogContent>
+            </Dialog>
+            <Dialog open={isPersonModalOpen} onOpenChange={setPersonModalOpen}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Cadastrar Novo Cliente/Mecânico</DialogTitle>
+                    </DialogHeader>
+                    <PersonForm onSave={handlePersonSaved} onClear={() => setPersonModalOpen(false)} />
                 </DialogContent>
             </Dialog>
         </>

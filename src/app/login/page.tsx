@@ -30,7 +30,7 @@ export default function LoginPage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true); // Estado para "Lembrar de mim"
+  const [rememberMe, setRememberMe] = useState(false); // Fase 16: Alterado para false
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),

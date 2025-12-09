@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -140,9 +141,21 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
 
   const handleSave = async (data: SupplierFormValues) => {
     try {
+      const cnpj = data.cnpj?.replace(/[^\d]/g, '') || '';
+      
+      // Fase 7: Validação de duplicidade
+      if (cnpj) {
+        const allSuppliers = await db.getAllSuppliers();
+        const isDuplicate = allSuppliers.some(s => s.cnpj === cnpj && s.id !== editingSupplier?.id);
+        if (isDuplicate) {
+            toast({ title: 'Erro de Duplicidade', description: 'Já existe um fornecedor com este CNPJ.', variant: 'destructive'});
+            return;
+        }
+      }
+
       const dataToSave = {
         ...data,
-        cnpj: data.cnpj?.replace(/[^\d]/g, '') || '',
+        cnpj,
         cidade: data.cidade || '',
       };
 

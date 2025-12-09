@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -99,9 +100,21 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
 
   const handleSave = async (data: PersonFormValues) => {
     try {
+      const doc = data.cpfCnpj?.replace(/\D/g, '') || '';
+      
+      // Fase 7: Validação de duplicidade
+      if (doc) {
+        const allPersons = await db.getAllPersons();
+        const isDuplicate = allPersons.some(p => p.cpfCnpj === doc && p.id !== editingPerson?.id);
+        if (isDuplicate) {
+            toast({ title: 'Erro de Duplicidade', description: 'Já existe um registro com este CPF/CNPJ.', variant: 'destructive'});
+            return;
+        }
+      }
+
       const dataToSave: Omit<Person, 'id'> = {
         ...data,
-        cpfCnpj: data.cpfCnpj?.replace(/\D/g, ''),
+        cpfCnpj: doc,
       };
 
       if (editingPerson?.id) {
