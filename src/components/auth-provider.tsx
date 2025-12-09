@@ -28,11 +28,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   
-  // State to prevent rendering on the server
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    setIsClient(true); // This runs only on the client
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isClient) return;
 
     const app = getFirebaseApp();
     const auth = getAuth(app);
@@ -91,24 +94,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, [toast]);
+  }, [toast, isClient]);
 
   const value = { user, loading };
 
-  // Render nothing on the server or before the client has mounted
   if (!isClient) {
     return null;
   }
   
-  if (loading) {
-    return (
-      <div className="flex h-screen w-screen items-center justify-center bg-background">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <span className="sr-only">Carregando...</span>
-      </div>
-    );
-  }
-
   return (
     <AuthContext.Provider value={value}>
       <AuthGuard>

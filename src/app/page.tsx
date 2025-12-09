@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, type ComponentType } from 'react';
+import { type ComponentType } from 'react';
 import AppLayout from '@/components/app-layout';
 import DashboardSection from '@/components/sections/dashboard-section';
 import RegisterSection from '@/components/sections/register-section';
@@ -22,8 +22,7 @@ import ProductsSection from '@/components/sections/products-section';
 import ProductReportSection from '@/components/sections/product-report-section';
 import { useAppStore } from '@/store/app-store';
 import UsersSection from '@/components/sections/users-section';
-import StatusSection from '@/components/sections/status-section'; // Nova importação
-import ClientOnly from '@/components/client-only';
+import StatusSection from '@/components/sections/status-section';
 
 export type RegisterMode = 'edit' | 'clone';
 
@@ -42,7 +41,7 @@ const viewComponents: { [key: string]: ComponentType<any> } = {
   backup: BackupSection,
   settings: SettingsSection,
   users: UsersSection,
-  statuses: StatusSection, // Nova view
+  statuses: StatusSection,
   'devolucao-register': DevolucaoRegisterSection,
   'devolucao-query': DevolucaoQuerySection,
   'devolucao-reports': DevolucaoReportSection,
