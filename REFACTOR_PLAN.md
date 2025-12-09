@@ -289,7 +289,9 @@ Este documento descreve o roteiro para refatorar e melhorar a arquitetura do có
 
 ---
 
-## Fase 14: Máscara Automática para Telefone (Dificuldade: Média)
+## Fase 14: Máscara Automática para Telefone (Concluída)
+
+**Status: Concluída**
 
 **Objetivo:** Implementar uma máscara de formatação automática para o campo de telefone.
 
@@ -307,7 +309,9 @@ Este documento descreve o roteiro para refatorar e melhorar a arquitetura do có
 
 ---
 
-## Fase 15: Múltiplos Contatos (Dificuldade: Alta)
+## Fase 15: Múltiplos Contatos (Concluída)
+
+**Status: Concluída**
 
 **Objetivo:** Permitir o cadastro de múltiplos telefones e emails para clientes, mecânicos e fornecedores.
 
