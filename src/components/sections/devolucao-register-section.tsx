@@ -462,6 +462,8 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                                     </FormItem>
                                                 )}
                                             />
+                                        </div>
+                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                             <FormField
                                                 name="requisicaoVenda"
                                                 control={form.control}
@@ -491,7 +493,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                                     </FormItem>
                                                 )}
                                             />
-                                             <FormField
+                                            <FormField
                                                 control={form.control}
                                                 name="status"
                                                 render={({ field }) => (
@@ -509,6 +511,8 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                                     </FormItem>
                                                 )}
                                             />
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <FormField
                                                 control={form.control}
                                                 name="dataVenda"
@@ -533,13 +537,13 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                             />
                                         </div>
                                          <DialogContent className="max-w-2xl">
-                                                <DialogHeader>
-                                                    <DialogTitle>Cadastrar Novo Cliente/Mecânico</DialogTitle>
-                                                    <DialogDescription>Preencha os dados abaixo para criar um novo registro.</DialogDescription>
-                                                </DialogHeader>
-                                                <div className='max-h-[80vh] overflow-y-auto pr-2'>
-                                                    <PersonForm onSave={handlePersonSaved} onClear={() => setPersonModalOpen(false)} />
-                                                </div>
+                                            <DialogHeader>
+                                                <DialogTitle>Cadastrar Novo Cliente/Mecânico</DialogTitle>
+                                                <DialogDescription>Preencha os dados abaixo para criar um novo registro.</DialogDescription>
+                                            </DialogHeader>
+                                            <div className='max-h-[80vh] overflow-y-auto pr-2'>
+                                                <PersonForm onSave={handlePersonSaved} onClear={() => setPersonModalOpen(false)} />
+                                            </div>
                                         </DialogContent>
                                     </Dialog>
                                     <FormField
