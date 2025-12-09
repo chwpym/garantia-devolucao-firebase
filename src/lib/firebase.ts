@@ -1,8 +1,9 @@
+
 'use client';
 
 import { initializeApp, getApps, getApp, type FirebaseApp, type FirebaseOptions } from 'firebase/app';
 import { getStorage } from 'firebase/storage';
-import { getAuth, GoogleAuthProvider, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { getAuth, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 
 // Esta configuração agora funciona tanto no servidor (durante o build) quanto no cliente.
 const firebaseConfig: FirebaseOptions = {
@@ -27,6 +28,5 @@ function getFirebaseApp(): FirebaseApp {
 const app = getFirebaseApp();
 const auth = getAuth(app);
 const storage = getStorage(app);
-const googleProvider = new GoogleAuthProvider();
 
-export { app, auth, storage, googleProvider, createUserWithEmailAndPassword, updateProfile, getFirebaseApp };
+export { app, auth, storage, createUserWithEmailAndPassword, updateProfile, getFirebaseApp };

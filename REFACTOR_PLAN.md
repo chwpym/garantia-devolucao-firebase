@@ -1,3 +1,4 @@
+
 # Plano de Refatoração do Synergia OS
 
 Este documento descreve o roteiro para refatorar e melhorar a arquitetura do código do aplicativo Synergia OS. As mudanças serão aplicadas em fases para garantir estabilidade e segurança.
@@ -342,6 +343,26 @@ Este documento descreve o roteiro para refatorar e melhorar a arquitetura do có
 
 **Benefícios:**
 *   **Segurança Aprimorada:** A persistência da sessão se torna uma ação explícita do usuário.
+
+---
+
+## Fase 17: Remoção do Login com Google (Concluída)
+
+**Status: Concluída**
+
+**Objetivo:** Simplificar a tela de login removendo a opção de autenticação com a conta Google.
+
+**Roteiro Detalhado:**
+1.  **Remover Lógica do Componente:**
+    *   **Arquivo:** `src/app/login/page.tsx`
+    *   **Lógica:** Remover o estado `isGoogleLoading`, a função `handleGoogleSignIn` e o JSX correspondente ao botão de login com Google.
+2.  **Limpar Configuração do Firebase:**
+    *   **Arquivo:** `src/lib/firebase.ts`
+    *   **Lógica:** Remover a importação do `GoogleAuthProvider` e a exportação da variável `googleProvider`, que não são mais necessárias.
+
+**Benefícios:**
+*   **Interface Limpa:** Reduz a complexidade visual da tela de login.
+*   **Manutenção Simplificada:** Menos código de autenticação para manter.
 
 ---
 
