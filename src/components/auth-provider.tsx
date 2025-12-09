@@ -9,6 +9,7 @@ import { type UserProfile } from '@/lib/types';
 import * as db from '@/lib/db';
 import { countUsers } from '@/lib/db-utils';
 import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
 
 // This new type combines Firebase Auth user with our custom profile data
@@ -94,6 +95,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [toast]);
 
   const value = { user, loading };
+
+  if (loading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-background">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <span className="sr-only">Carregando...</span>
+      </div>
+    );
+  }
 
   return (
     <AuthContext.Provider value={value}>
