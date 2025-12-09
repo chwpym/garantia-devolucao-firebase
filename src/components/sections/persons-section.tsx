@@ -334,7 +334,52 @@ export default function PersonsSection() {
                     />
                 </div>
             </div>
-            <div className="border rounded-md">
+
+            {/* Mobile View */}
+            <div className="md:hidden space-y-4">
+              {sortedPersons.length > 0 ? (
+                sortedPersons.map(person => (
+                  <div key={person.id} className="border p-4 rounded-lg flex flex-col gap-2">
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <span className="font-bold text-lg">{person.nome}</span>
+                            {person.nomeFantasia && <p className='text-sm text-muted-foreground'>{person.nomeFantasia}</p>}
+                        </div>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <span className="sr-only">Abrir menu</span>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleEditClick(person)}><Pencil className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setDeleteTarget(person)} className="text-destructive focus:text-destructive"><Trash2 className="mr-2 h-4 w-4" />Excluir</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                    <div className="text-sm"><span className="font-medium text-muted-foreground">CPF/CNPJ:</span> {formatCpfCnpj(person.cpfCnpj)}</div>
+                    <div className="text-sm"><span className="font-medium text-muted-foreground">Cód. Externo:</span> {person.codigoExterno || '-'}</div>
+                    <div className='flex flex-col gap-1 text-sm'>
+                        {person.telefones?.[0] && (
+                            <div className="flex items-center gap-1"><Phone className="h-3 w-3 text-muted-foreground" /> <span>{person.telefones[0].value}</span></div>
+                        )}
+                        {person.emails?.[0] && (
+                             <div className="flex items-center gap-1"><Mail className="h-3 w-3 text-muted-foreground" /> <span className="truncate">{person.emails[0].value}</span></div>
+                        )}
+                    </div>
+                    <Badge variant={getTypeVariant(person.tipo)} className="w-fit">{person.tipo}</Badge>
+                  </div>
+                ))
+              ) : (
+                <div className="h-24 text-center flex items-center justify-center">
+                    <p>{searchTerm ? 'Nenhum registro encontrado para a busca.' : 'Nenhum registro cadastrado.'}</p>
+                </div>
+              )}
+            </div>
+            
+            {/* Desktop View */}
+            <div className="hidden md:block border rounded-md">
               <Table>
                 <TableHeader>
                   <TableRow>
