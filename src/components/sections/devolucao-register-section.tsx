@@ -395,111 +395,122 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                     </div>
 
                                     {/* General Info */}
-                                    <div className='grid md:grid-cols-2 gap-4'>
-                                        <FormField
-                                            control={form.control}
-                                            name="cliente"
-                                            render={({ field }) => (
-                                                <FormItem className="flex flex-col">
-                                                    <FormLabel>Cliente <span className='text-destructive'>*</span></FormLabel>
-                                                    <div className="flex items-center gap-2">
-                                                        <Combobox
-                                                            options={clientOptions}
-                                                            value={field.value ?? ''}
-                                                            onChange={field.onChange}
-                                                            placeholder="Selecione um cliente"
-                                                            searchPlaceholder="Buscar cliente..."
-                                                            notFoundMessage="Nenhum cliente encontrado."
-                                                            className="w-full"
-                                                        />
-                                                        <DialogTrigger asChild>
-                                                            <Button type="button" variant="outline" size="icon" className="flex-shrink-0" onClick={() => setPersonModalOpen(true)}>
-                                                                <PlusCircle className="h-4 w-4" />
-                                                            </Button>
-                                                        </DialogTrigger>
-                                                    </div>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="mecanico"
-                                            render={({ field }) => (
-                                                <FormItem className="flex flex-col">
-                                                    <FormLabel>Mecânico <span className='text-muted-foreground text-xs'>(opcional)</span></FormLabel>
-                                                    <div className="flex items-center gap-2">
-                                                        <Combobox
-                                                            options={mechanicOptions}
-                                                            value={field.value ?? ''}
-                                                            onChange={(value) => field.onChange(value)}
-                                                            placeholder="Selecione um mecânico"
-                                                            searchPlaceholder="Buscar mecânico..."
-                                                            notFoundMessage="Nenhum mecânico encontrado."
-                                                            className="w-full"
-                                                        />
-                                                        <DialogTrigger asChild>
-                                                            <Button type="button" variant="outline" size="icon" className="flex-shrink-0" onClick={() => setPersonModalOpen(true)}>
-                                                                <PlusCircle className="h-4 w-4" />
-                                                            </Button>
-                                                        </DialogTrigger>
-                                                    </div>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            name="requisicaoVenda"
-                                            control={form.control}
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Requisição de Venda <span className='text-destructive'>*</span></FormLabel>
-                                                    <FormControl><Input {...field} /></FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="acaoRequisicao"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Ação na Requisição <span className='text-destructive'>*</span></FormLabel>
-                                                    <Select onValueChange={field.onChange} value={field.value}>
-                                                        <FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl>
-                                                        <SelectContent>
-                                                            {acaoRequisicaoOptions.map(opt => (
-                                                                <SelectItem key={opt.id} value={opt.nome}>{opt.nome}</SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="dataVenda"
-                                            render={({ field }) => (
-                                                <FormItem className="flex flex-col">
-                                                    <FormLabel>Data da Venda <span className='text-destructive'>*</span></FormLabel>
-                                                    <DatePicker date={field.value} setDate={field.onChange} />
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="dataDevolucao"
-                                            render={({ field }) => (
-                                                <FormItem className="flex flex-col">
-                                                    <FormLabel>Data da Devolução <span className='text-destructive'>*</span></FormLabel>
-                                                    <DatePicker date={field.value} setDate={field.onChange} />
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
+                                    <Dialog open={isPersonModalOpen} onOpenChange={setPersonModalOpen}>
+                                        <div className='grid md:grid-cols-2 gap-4'>
+                                            <FormField
+                                                control={form.control}
+                                                name="cliente"
+                                                render={({ field }) => (
+                                                    <FormItem className="flex flex-col">
+                                                        <FormLabel>Cliente <span className='text-destructive'>*</span></FormLabel>
+                                                        <div className="flex items-center gap-2">
+                                                            <Combobox
+                                                                options={clientOptions}
+                                                                value={field.value ?? ''}
+                                                                onChange={field.onChange}
+                                                                placeholder="Selecione um cliente"
+                                                                searchPlaceholder="Buscar cliente..."
+                                                                notFoundMessage="Nenhum cliente encontrado."
+                                                                className="w-full"
+                                                            />
+                                                            <DialogTrigger asChild>
+                                                                <Button type="button" variant="outline" size="icon" className="flex-shrink-0">
+                                                                    <PlusCircle className="h-4 w-4" />
+                                                                </Button>
+                                                            </DialogTrigger>
+                                                        </div>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name="mecanico"
+                                                render={({ field }) => (
+                                                    <FormItem className="flex flex-col">
+                                                        <FormLabel>Mecânico <span className='text-muted-foreground text-xs'>(opcional)</span></FormLabel>
+                                                        <div className="flex items-center gap-2">
+                                                            <Combobox
+                                                                options={mechanicOptions}
+                                                                value={field.value ?? ''}
+                                                                onChange={(value) => field.onChange(value)}
+                                                                placeholder="Selecione um mecânico"
+                                                                searchPlaceholder="Buscar mecânico..."
+                                                                notFoundMessage="Nenhum mecânico encontrado."
+                                                                className="w-full"
+                                                            />
+                                                            <DialogTrigger asChild>
+                                                                <Button type="button" variant="outline" size="icon" className="flex-shrink-0">
+                                                                    <PlusCircle className="h-4 w-4" />
+                                                                </Button>
+                                                            </DialogTrigger>
+                                                        </div>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                name="requisicaoVenda"
+                                                control={form.control}
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Requisição de Venda <span className='text-destructive'>*</span></FormLabel>
+                                                        <FormControl><Input {...field} /></FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name="acaoRequisicao"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Ação na Requisição <span className='text-destructive'>*</span></FormLabel>
+                                                        <Select onValueChange={field.onChange} value={field.value}>
+                                                            <FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl>
+                                                            <SelectContent>
+                                                                {acaoRequisicaoOptions.map(opt => (
+                                                                    <SelectItem key={opt.id} value={opt.nome}>{opt.nome}</SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name="dataVenda"
+                                                render={({ field }) => (
+                                                    <FormItem className="flex flex-col">
+                                                        <FormLabel>Data da Venda <span className='text-destructive'>*</span></FormLabel>
+                                                        <DatePicker date={field.value} setDate={field.onChange} />
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name="dataDevolucao"
+                                                render={({ field }) => (
+                                                    <FormItem className="flex flex-col">
+                                                        <FormLabel>Data da Devolução <span className='text-destructive'>*</span></FormLabel>
+                                                        <DatePicker date={field.value} setDate={field.onChange} />
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
+                                        <DialogContent className="max-w-2xl">
+                                            <DialogHeader>
+                                                <DialogTitle>Cadastrar Novo Cliente/Mecânico</DialogTitle>
+                                                <DialogDescription>Preencha os dados abaixo para criar um novo registro.</DialogDescription>
+                                            </DialogHeader>
+                                            <div className='max-h-[80vh] overflow-y-auto pr-2'>
+                                                <PersonForm onSave={handlePersonSaved} onClear={() => setPersonModalOpen(false)} />
+                                            </div>
+                                        </DialogContent>
+                                    </Dialog>
                                     <FormField
                                         name="observacaoGeral"
                                         control={form.control}
@@ -541,17 +552,6 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                         <DialogDescription>Preencha os dados do novo produto.</DialogDescription>
                     </DialogHeader>
                     <ProductForm onSave={handleProductSaved} onClear={() => setProductModalOpen(false)}/>
-                </DialogContent>
-            </Dialog>
-            <Dialog open={isPersonModalOpen} onOpenChange={setPersonModalOpen}>
-                <DialogContent className="max-w-3xl">
-                    <DialogHeader>
-                        <DialogTitle>Cadastrar Novo Cliente/Mecânico</DialogTitle>
-                        <DialogDescription>Preencha os dados abaixo para criar um novo registro.</DialogDescription>
-                    </DialogHeader>
-                     <div className='max-h-[80vh] overflow-y-auto pr-2'>
-                        <PersonForm onSave={handlePersonSaved} onClear={() => setPersonModalOpen(false)} />
-                    </div>
                 </DialogContent>
             </Dialog>
         </>
