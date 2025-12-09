@@ -13,7 +13,7 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Pie, PieChart as RechartsPi
 import { format, parseISO, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { Devolucao, ItemDevolucao, Warranty, WarrantyStatus } from '@/lib/types';
+import type { Devolucao, ItemDevolucao, Warranty, WarrantyStatus, CustomStatus } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -128,7 +128,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
     localStorage.setItem(DASHBOARD_TAB_KEY, value);
   };
 
-  const loadStats = useCallback(async () => {
+  const loadStats = useCallback(async (currentWarrantyStatuses: CustomStatus[]) => {
     setIsLoading(true);
     try {
       await db.initDB();
@@ -145,7 +145,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
           return acc + (warranty.quantidade ?? 0);
       }, 0);
       
-      const statusCounts = Object.fromEntries(warrantyStatuses.map(s => [s.nome, 0])) as Record<string, number>;
+      const statusCounts = Object.fromEntries(currentWarrantyStatuses.map(s => [s.nome, 0])) as Record<string, number>;
 
       let totalAprovadas = 0;
       let totalPendentes = 0;
@@ -180,7 +180,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
         .map(([name, value]) => ({ 
             name, 
             value, 
-            fill: warrantyStatuses.find(s => s.nome === name)?.cor || COLORS[name as WarrantyStatus] || '#8884d8' 
+            fill: currentWarrantyStatuses.find(s => s.nome === name)?.cor || COLORS[name as WarrantyStatus] || '#8884d8' 
         }))
       );
       
@@ -250,20 +250,20 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
     } finally {
       setIsLoading(false);
     }
-  }, [toast, warrantyStatuses]);
+  }, [toast]);
 
   useEffect(() => {
     const handleDataChanged = () => {
-        loadStats();
+        loadStats(warrantyStatuses);
     };
 
-    loadStats();
+    loadStats(warrantyStatuses);
     window.addEventListener('datachanged', handleDataChanged);
 
     return () => {
         window.removeEventListener('datachanged', handleDataChanged);
     };
-  }, [loadStats]);
+  }, [loadStats, warrantyStatuses]);
   
 
   return (
@@ -608,3 +608,4 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
     </div>
   );
 }
+
