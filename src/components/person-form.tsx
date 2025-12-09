@@ -225,7 +225,7 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSave)}>
-        <div className="space-y-6 px-1 max-h-[70vh] overflow-y-auto pr-4">
+        <div className="space-y-6">
           <FormField
             name="nome"
             control={form.control}

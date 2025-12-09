@@ -301,12 +301,12 @@ export default function PersonsSection() {
                             Cadastrar Novo
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-2xl">
+                    <DialogContent className="max-w-3xl">
                         <DialogHeader>
                             <DialogTitle>{editingPerson ? 'Editar Registro' : 'Novo Cliente/Mecânico'}</DialogTitle>
                             <DialogDescription>Preencha os dados abaixo.</DialogDescription>
                         </DialogHeader>
-                         <div className='py-4 max-h-[70vh] overflow-y-auto'>
+                         <div className='py-4 max-h-[80vh] overflow-y-auto pr-4'>
                              <PersonForm 
                                 onSave={handleSave}
                                 editingPerson={editingPerson}

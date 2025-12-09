@@ -236,17 +236,19 @@ export default function SuppliersSection() {
                       Cadastrar Fornecedor
                   </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
+              <DialogContent className="max-w-3xl">
                   <DialogHeader>
                       <DialogTitle>{editingSupplier ? 'Editar Fornecedor' : 'Novo Fornecedor'}</DialogTitle>
                       <DialogDescription>Preencha os dados do fornecedor abaixo.</DialogDescription>
                   </DialogHeader>
-                    <SupplierForm 
-                      onSave={handleSave} 
-                      editingSupplier={editingSupplier} 
-                      onClear={() => setEditingSupplier(null)} 
-                      isModal={true}
-                    />
+                    <div className="py-4 max-h-[80vh] overflow-y-auto pr-4">
+                        <SupplierForm 
+                        onSave={handleSave} 
+                        editingSupplier={editingSupplier} 
+                        onClear={() => setEditingSupplier(null)} 
+                        isModal={true}
+                        />
+                    </div>
               </DialogContent>
           </Dialog>
       </div>

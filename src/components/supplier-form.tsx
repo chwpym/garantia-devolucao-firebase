@@ -217,7 +217,7 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSave)}>
-        <div className="space-y-6 pt-4 max-h-[70vh] overflow-y-auto pr-4">
+        <div className="space-y-6 pt-4">
            <FormField
             name="cnpj"
             control={form.control}
