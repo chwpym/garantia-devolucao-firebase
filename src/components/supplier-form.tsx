@@ -88,7 +88,7 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
   });
 
   useEffect(() => {
-    const defaultVals = editingSupplier ? {
+    const valuesToReset = editingSupplier ? {
         ...editingSupplier,
         razaoSocial: editingSupplier.razaoSocial || '',
         nomeFantasia: editingSupplier.nomeFantasia || '',
@@ -101,7 +101,7 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
         telefones: editingSupplier.telefones?.length ? editingSupplier.telefones : [{ type: 'Comercial', value: '' }],
         emails: editingSupplier.emails?.length ? editingSupplier.emails : [{ type: 'Principal', value: '' }],
     } : defaultFormValues;
-    form.reset(defaultVals);
+    form.reset(valuesToReset);
   }, [editingSupplier, form]);
 
   const { isSubmitting } = form.formState;
@@ -151,9 +151,9 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
             throw new Error('CEP não encontrado');
         }
 
-        form.setValue('endereco', data.logradouro);
-        form.setValue('bairro', data.bairro);
-        form.setValue('cidade', `${data.localidade} - ${data.uf}`);
+        form.setValue('endereco', data.logradouro || '');
+        form.setValue('bairro', data.bairro || '');
+        form.setValue('cidade', `${data.localidade || ''} - ${data.uf || ''}`);
         toast({ title: "Sucesso", description: "Endereço preenchido automaticamente." });
     } catch (err) {
         toast({
@@ -179,10 +179,15 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
         }
       }
 
-      const dataToSave = {
-        ...data,
+      const dataToSave: Omit<Supplier, 'id'> = {
+        razaoSocial: data.razaoSocial,
+        nomeFantasia: data.nomeFantasia,
         cnpj,
         cidade: data.cidade || '',
+        codigoExterno: data.codigoExterno || '',
+        cep: data.cep || '',
+        endereco: data.endereco || '',
+        bairro: data.bairro || '',
         telefones: data.telefones?.filter(t => t.value),
         emails: data.emails?.filter(e => e.value),
       };

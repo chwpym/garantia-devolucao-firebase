@@ -103,7 +103,7 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
   });
 
   useEffect(() => {
-    const defaultVals = editingPerson ? {
+    const valuesToReset = editingPerson ? {
         ...editingPerson,
         nome: editingPerson.nome || '',
         nomeFantasia: editingPerson.nomeFantasia || '',
@@ -117,7 +117,7 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
         observacao: editingPerson.observacao || '',
         codigoExterno: editingPerson.codigoExterno || '',
     } : defaultFormValues;
-    form.reset(defaultVals);
+    form.reset(valuesToReset);
   }, [editingPerson, form]);
 
 
@@ -207,9 +207,9 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
             throw new Error('CEP não encontrado');
         }
 
-        form.setValue('endereco', data.logradouro);
-        form.setValue('bairro', data.bairro);
-        form.setValue('cidade', `${data.localidade} - ${data.uf}`);
+        form.setValue('endereco', data.logradouro || '');
+        form.setValue('bairro', data.bairro || '');
+        form.setValue('cidade', `${data.localidade || ''} - ${data.uf || ''}`);
         toast({ title: "Sucesso", description: "Endereço preenchido automaticamente." });
     } catch (err) {
         toast({
