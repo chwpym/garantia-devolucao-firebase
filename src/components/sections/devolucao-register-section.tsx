@@ -14,13 +14,13 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Trash2, RotateCcw } from 'lucide-react';
-import type { ReturnStatus, Product, ItemDevolucao } from '@/lib/types';
+import type { ReturnStatus, Product, ItemDevolucao, RequisitionAction } from '@/lib/types';
 import { Combobox } from '../ui/combobox';
 import { DatePicker } from '../ui/date-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '../ui/textarea';
 import { parseISO, isSameDay } from 'date-fns';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '../ui/dialog';
 import ProductForm from '../product-form';
 import PersonForm from '../person-form';
 import { useAppStore } from '@/store/app-store';
@@ -39,7 +39,7 @@ const devolucaoSchema = z.object({
     cliente: z.string().min(1, 'Cliente é obrigatório'),
     mecanico: z.string().optional(),
     requisicaoVenda: z.string().min(1, 'Requisição é obrigatória'),
-    acaoRequisicao: z.enum(['Alterada', 'Excluída'], { required_error: 'Selecione uma ação para a requisição' }),
+    acaoRequisicao: z.string({ required_error: 'Selecione uma ação para a requisição' }).min(1, 'Selecione uma ação para a requisição'),
     dataVenda: z.date({ required_error: 'Data da venda é obrigatória' }),
     dataDevolucao: z.date({ required_error: 'Data da devolução é obrigatória' }),
     observacaoGeral: z.string().optional(),
@@ -57,7 +57,7 @@ const defaultFormValues: DevolucaoFormValues = {
   cliente: '',
   mecanico: '',
   requisicaoVenda: '',
-  acaoRequisicao: 'Alterada', // Default value
+  acaoRequisicao: '',
   dataDevolucao: new Date(),
   dataVenda: new Date(),
   observacaoGeral: '',
@@ -152,22 +152,35 @@ function RecentDevolutionsList() {
 
 
 export default function DevolucaoRegisterSection({ editingId, onSave }: DevolucaoRegisterSectionProps) {
-    const { persons, isDataLoaded, reloadData } = useAppStore();
+    const { persons, isDataLoaded, reloadData, statuses } = useAppStore();
     const [isProductModalOpen, setProductModalOpen] = useState(false);
     const [isPersonModalOpen, setPersonModalOpen] = useState(false);
     
     const { toast } = useToast();
     const goBack = useAppStore(state => state.goBack);
+    
+    const acaoRequisicaoOptions = useMemo(() => {
+        return statuses.filter(s => s.aplicavelEm.includes('acaoRequisicao'));
+    }, [statuses]);
 
     const form = useForm<DevolucaoFormValues>({
         resolver: zodResolver(devolucaoSchema),
-        defaultValues: defaultFormValues,
+        defaultValues: {
+            ...defaultFormValues,
+            acaoRequisicao: acaoRequisicaoOptions.find(o => o.nome === 'Alterada')?.nome || '',
+        },
     });
 
     const { fields, append, remove, replace } = useFieldArray({
         control: form.control,
         name: 'itens',
     });
+    
+    useEffect(() => {
+        if (acaoRequisicaoOptions.length > 0 && !form.getValues('acaoRequisicao')) {
+            form.setValue('acaoRequisicao', acaoRequisicaoOptions[0].nome);
+        }
+    }, [acaoRequisicaoOptions, form]);
 
     const loadEditingData = useCallback(async (id: number) => {
         const data = await db.getDevolucaoById(id);
@@ -399,9 +412,11 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                                             notFoundMessage="Nenhum cliente encontrado."
                                                             className="w-full"
                                                         />
-                                                        <Button type="button" variant="outline" size="icon" className="flex-shrink-0" onClick={() => setPersonModalOpen(true)}>
-                                                            <PlusCircle className="h-4 w-4" />
-                                                        </Button>
+                                                        <DialogTrigger asChild>
+                                                            <Button type="button" variant="outline" size="icon" className="flex-shrink-0" onClick={() => setPersonModalOpen(true)}>
+                                                                <PlusCircle className="h-4 w-4" />
+                                                            </Button>
+                                                        </DialogTrigger>
                                                     </div>
                                                     <FormMessage />
                                                 </FormItem>
@@ -423,9 +438,11 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                                             notFoundMessage="Nenhum mecânico encontrado."
                                                             className="w-full"
                                                         />
-                                                        <Button type="button" variant="outline" size="icon" className="flex-shrink-0" onClick={() => setPersonModalOpen(true)}>
-                                                            <PlusCircle className="h-4 w-4" />
-                                                        </Button>
+                                                        <DialogTrigger asChild>
+                                                            <Button type="button" variant="outline" size="icon" className="flex-shrink-0" onClick={() => setPersonModalOpen(true)}>
+                                                                <PlusCircle className="h-4 w-4" />
+                                                            </Button>
+                                                        </DialogTrigger>
                                                     </div>
                                                     <FormMessage />
                                                 </FormItem>
@@ -451,8 +468,9 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                                     <Select onValueChange={field.onChange} value={field.value}>
                                                         <FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl>
                                                         <SelectContent>
-                                                            <SelectItem value="Alterada">Alterada</SelectItem>
-                                                            <SelectItem value="Excluída">Excluída</SelectItem>
+                                                            {acaoRequisicaoOptions.map(opt => (
+                                                                <SelectItem key={opt.id} value={opt.nome}>{opt.nome}</SelectItem>
+                                                            ))}
                                                         </SelectContent>
                                                     </Select>
                                                     <FormMessage />
@@ -526,12 +544,12 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                 </DialogContent>
             </Dialog>
             <Dialog open={isPersonModalOpen} onOpenChange={setPersonModalOpen}>
-                <DialogContent className="max-w-2xl">
+                <DialogContent className="max-w-3xl">
                     <DialogHeader>
                         <DialogTitle>Cadastrar Novo Cliente/Mecânico</DialogTitle>
                         <DialogDescription>Preencha os dados abaixo para criar um novo registro.</DialogDescription>
                     </DialogHeader>
-                    <div className='max-h-[80vh] overflow-y-auto pr-2'>
+                     <div className='max-h-[80vh] overflow-y-auto pr-2'>
                         <PersonForm onSave={handlePersonSaved} onClear={() => setPersonModalOpen(false)} />
                     </div>
                 </DialogContent>

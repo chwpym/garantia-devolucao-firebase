@@ -111,7 +111,7 @@ export interface Product {
 // --- Novas Estruturas para Devolução ---
 
 export type ReturnStatus = string; // Agora é dinâmico
-export type RequisitionAction = 'Alterada' | 'Excluída';
+export type RequisitionAction = string; // Agora é dinâmico
 
 export interface Devolucao {
     id?: number;
@@ -173,7 +173,7 @@ export interface UserProfile {
 }
 
 // --- Status Management ---
-export type StatusApplicability = 'garantia' | 'lote' | 'devolucao';
+export type StatusApplicability = 'garantia' | 'lote' | 'devolucao' | 'acaoRequisicao';
 
 export interface CustomStatus {
     id?: number;

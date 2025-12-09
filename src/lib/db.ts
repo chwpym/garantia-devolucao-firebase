@@ -122,19 +122,25 @@ export const initDB = async (): Promise<boolean> => {
                 const seedTransaction = db.transaction(STATUSES_STORE_NAME, 'readwrite');
                 const seedStore = seedTransaction.objectStore(STATUSES_STORE_NAME);
                 const initialStatuses: Omit<CustomStatus, 'id'>[] = [
+                    // Garantia
                     { nome: 'Aguardando Envio', cor: '#FBBF24', aplicavelEm: ['garantia'] },
                     { nome: 'Enviado para Análise', cor: '#3B82F6', aplicavelEm: ['garantia', 'lote'] },
                     { nome: 'Aprovada - Peça Nova', cor: '#22C55E', aplicavelEm: ['garantia'] },
                     { nome: 'Aprovada - Crédito NF', cor: '#8B5CF6', aplicavelEm: ['garantia'] },
                     { nome: 'Aprovada - Crédito Boleto', cor: '#15803D', aplicavelEm: ['garantia'] },
                     { nome: 'Recusada', cor: '#EF4444', aplicavelEm: ['garantia', 'lote'] },
+                    // Lote
                     { nome: 'Aberto', cor: '#6B7280', aplicavelEm: ['lote'] },
                     { nome: 'Aprovado Parcialmente', cor: '#16A34A', aplicavelEm: ['lote'] },
                     { nome: 'Aprovado Totalmente', cor: '#15803D', aplicavelEm: ['lote'] },
+                    // Devolução
                     { nome: 'Recebido', cor: '#6B7280', aplicavelEm: ['devolucao'] },
                     { nome: 'Aguardando Peças', cor: '#FBBF24', aplicavelEm: ['devolucao'] },
                     { nome: 'Finalizada', cor: '#22C55E', aplicavelEm: ['devolucao'] },
                     { nome: 'Cancelada', cor: '#EF4444', aplicavelEm: ['devolucao'] },
+                    // Ação na Requisição
+                    { nome: 'Alterada', cor: '#3B82F6', aplicavelEm: ['acaoRequisicao'] },
+                    { nome: 'Excluída', cor: '#EF4444', aplicavelEm: ['acaoRequisicao'] },
                 ];
                 let seedsAdded = 0;
                 initialStatuses.forEach(status => {

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -19,7 +20,8 @@ import { Checkbox } from './ui/checkbox';
 const applicabilityOptions: { id: StatusApplicability; label: string }[] = [
   { id: 'garantia', label: 'Garantias' },
   { id: 'lote', label: 'Lotes' },
-  { id: 'devolucao', label: 'Devoluções' },
+  { id: 'devolucao', label: 'Devoluções (Status)' },
+  { id: 'acaoRequisicao', label: 'Devoluções (Ação na Requisição)' },
 ];
 
 const formSchema = z.object({
