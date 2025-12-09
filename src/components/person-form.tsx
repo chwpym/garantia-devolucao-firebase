@@ -225,7 +225,7 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSave)}>
-        <div className="space-y-6">
+        <div className="space-y-6 pr-4">
           <FormField
             name="nome"
             control={form.control}
