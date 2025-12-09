@@ -23,6 +23,7 @@ import ProductReportSection from '@/components/sections/product-report-section';
 import { useAppStore } from '@/store/app-store';
 import UsersSection from '@/components/sections/users-section';
 import { useIsMobile } from '@/hooks/use-mobile';
+import ClientOnly from '@/components/client-only';
 
 
 export type RegisterMode = 'edit' | 'clone';
@@ -49,7 +50,7 @@ const viewComponents: { [key: string]: ComponentType<any> } = {
   calculators: CalculatorsSection,
 };
 
-export default function Home() {
+function PageContent() {
   const {
     activeView,
     selectedLoteId,
@@ -106,5 +107,14 @@ export default function Home() {
     <AppLayout>
       {renderContent()}
     </AppLayout>
+  );
+}
+
+
+export default function Home() {
+  return (
+    <ClientOnly>
+      <PageContent />
+    </ClientOnly>
   );
 }
