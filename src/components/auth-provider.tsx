@@ -1,7 +1,7 @@
 
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { onAuthStateChanged, type User, signOut } from 'firebase/auth';
 import { getAuth } from "firebase/auth";
 import { getFirebaseApp } from '@/lib/firebase';
@@ -10,10 +10,9 @@ import * as db from '@/lib/db';
 import { countUsers } from '@/lib/db-utils';
 import { useToast } from '@/hooks/use-toast';
 import { AuthGuard } from './auth-guard';
-import { Loader2 } from 'lucide-react';
 
 
-// This new type combines Firebase Auth user with our custom profile data
+// Este novo tipo combina o usuário do Firebase Auth com nossos dados de perfil personalizados
 export type AppUser = User & { profile: UserProfile };
 
 export interface AuthContextType {
@@ -98,8 +97,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = { user, loading };
 
-  if (!isClient) {
-    return null;
+  if (loading) {
+    return null; // Don't render anything until auth state is determined
   }
   
   return (
