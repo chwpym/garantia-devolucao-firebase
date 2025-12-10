@@ -1,9 +1,9 @@
 
+
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import type { Lote, Warranty, Supplier, WarrantyStatus } from '@/lib/types';
-import { WARRANTY_STATUSES } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -42,6 +42,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel"
 import { cn } from '@/lib/utils';
+import { useAppStore } from '@/store/app-store';
 
 
 interface LoteDetailSectionProps {
@@ -117,6 +118,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
   const [galleryPhotos, setGalleryPhotos] = useState<string[]>([]);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: SortableKeys, direction: 'ascending' | 'descending' } | null>({ key: 'id', direction: 'descending' });
+  const warrantyStatuses = useAppStore(state => state.statuses.filter(s => s.aplicavelEm.includes('garantia')));
   const { toast } = useToast();
 
   const loadLoteDetails = useCallback(async () => {
@@ -269,6 +271,12 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
   };
 
   const getWarrantyStatusClass = (status?: Warranty['status']): string => {
+    const customStatus = warrantyStatuses.find(s => s.nome === status);
+    if (customStatus) {
+        return ''; // A cor será aplicada via style
+    }
+    
+    // Fallback para status antigos
     switch (status) {
       case 'Aprovada - Peça Nova':
         return 'bg-accent-green text-accent-green-foreground';
@@ -286,6 +294,12 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
         return 'bg-secondary text-secondary-foreground';
     }
   };
+
+  const getWarrantyStatusStyle = (status?: Warranty['status']): React.CSSProperties => {
+    const customStatus = warrantyStatuses.find(s => s.nome === status);
+    return customStatus ? { backgroundColor: customStatus.cor, color: '#FFFFFF' } : {};
+  }
+
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -624,9 +638,9 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                        {WARRANTY_STATUSES.map(status => (
-                            <DropdownMenuItem key={status} onSelect={() => handleBulkStatusChange(status)}>
-                                Marcar como {status}
+                        {warrantyStatuses.map(status => (
+                            <DropdownMenuItem key={status.id} onSelect={() => handleBulkStatusChange(status.nome)}>
+                                Marcar como {status.nome}
                             </DropdownMenuItem>
                         ))}
                     </DropdownMenuContent>
@@ -687,7 +701,12 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                         <TableCell>{warranty.notaFiscalSaida || '-'}</TableCell>
                         <TableCell>{warranty.notaFiscalRetorno || '-'}</TableCell>
                         <TableCell>
-                          <Badge className={cn(getWarrantyStatusClass(warranty.status))}>{warranty.status || 'N/A'}</Badge>
+                          <Badge 
+                              className={cn(getWarrantyStatusClass(warranty.status))}
+                              style={getWarrantyStatusStyle(warranty.status)}
+                          >
+                              {warranty.status || 'N/A'}
+                          </Badge>
                         </TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
@@ -714,9 +733,9 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                                     </DropdownMenuSubTrigger>
                                     <DropdownMenuPortal>
                                         <DropdownMenuSubContent>
-                                            {WARRANTY_STATUSES.map(status => (
-                                                <DropdownMenuItem key={status} onClick={() => handleStatusChange(warranty, status)}>
-                                                    <span>{status}</span>
+                                            {warrantyStatuses.map(status => (
+                                                <DropdownMenuItem key={status.id} onClick={() => handleStatusChange(warranty, status.nome)}>
+                                                    <span>{status.nome}</span>
                                                 </DropdownMenuItem>
                                             ))}
                                         </DropdownMenuSubContent>
@@ -836,3 +855,4 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
     </div>
   );
 }
+

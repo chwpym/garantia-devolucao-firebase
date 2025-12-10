@@ -277,8 +277,8 @@ export function generatePersonsPdf(input: GeneratePersonsPdfInput): string {
     const tableBody = persons.map(person => [
         person.nome || '-',
         formatCnpj(person.cpfCnpj) || '-',
-        person.telefone || '-',
-        person.email || '-',
+        person.telefones?.[0]?.value || '-',
+        person.emails?.[0]?.value || '-',
         person.cidade || '-',
         person.tipo || '-',
     ]);

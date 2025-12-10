@@ -1,7 +1,8 @@
 
+
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -12,13 +13,12 @@ import { Bar, BarChart, CartesianGrid, XAxis, Pie, PieChart as RechartsPieChart,
 import { format, parseISO, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { Devolucao, ItemDevolucao, WarrantyStatus } from '@/lib/types';
+import type { Devolucao, ItemDevolucao, Warranty, WarrantyStatus, CustomStatus } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { WARRANTY_STATUSES } from '@/lib/types';
 import { useAppStore } from '@/store/app-store';
 
 
@@ -94,6 +94,8 @@ const DASHBOARD_TAB_KEY = 'synergia-dashboard-tab';
 
 export default function DashboardSection({ openTab: setActiveView }: DashboardSectionProps) {
   const handleEditDevolucao = useAppStore(state => state.handleEditDevolucao);
+  const handleEditWarranty = useAppStore(state => state.handleEditWarranty);
+  const warrantyStatuses = useAppStore(state => state.statuses.filter(s => s.aplicavelEm.includes('garantia')));
   const [activeTab, setActiveTab] = useState('garantias');
 
   // Estado para Garantias
@@ -102,6 +104,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
   const [statusData, setStatusData] = useState<StatusChartData[]>([]);
   const [supplierRanking, setSupplierRanking] = useState<RankingData[]>([]);
   const [personRanking, setPersonRanking] = useState<RankingData[]>([]);
+  const [recentWarranties, setRecentWarranties] = useState<Warranty[]>([]);
 
   // Estado para Devoluções
   const [devolucaoStats, setDevolucaoStats] = useState<DevolucaoStats | null>(null);
@@ -124,7 +127,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
     localStorage.setItem(DASHBOARD_TAB_KEY, value);
   };
 
-  const loadStats = useCallback(async () => {
+  const loadStats = useCallback(async (currentWarrantyStatuses: CustomStatus[]) => {
     setIsLoading(true);
     try {
       await db.initDB();
@@ -134,17 +137,20 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
       ]);
       
       // --- Cálculo de Garantias ---
-      const totalDefeitos = allWarranties.reduce((acc, warranty) => {
+      const sortedWarranties = allWarranties.sort((a,b) => parseISO(b.dataRegistro!).getTime() - parseISO(a.dataRegistro!).getTime());
+      setRecentWarranties(sortedWarranties.slice(0, 5));
+
+      const totalDefeitos = sortedWarranties.reduce((acc, warranty) => {
           return acc + (warranty.quantidade ?? 0);
       }, 0);
       
-      const statusCounts = Object.fromEntries(WARRANTY_STATUSES.map(s => [s, 0])) as Record<WarrantyStatus, number>;
+      const statusCounts = Object.fromEntries(currentWarrantyStatuses.map(s => [s.nome, 0])) as Record<string, number>;
 
       let totalAprovadas = 0;
       let totalPendentes = 0;
       let totalPagas = 0;
 
-      allWarranties.forEach(w => {
+      sortedWarranties.forEach(w => {
         if(w.status && statusCounts[w.status] !== undefined) {
             statusCounts[w.status]++;
         }
@@ -160,17 +166,21 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
       });
       
       setStats({
-        total: allWarranties.length,
+        total: sortedWarranties.length,
         totalDefeitos: totalDefeitos,
         pendentes: totalPendentes,
         aprovadas: totalAprovadas,
-        recusadas: statusCounts['Recusada'],
+        recusadas: statusCounts['Recusada'] || 0,
         pagas: totalPagas,
       });
       
       setStatusData(Object.entries(statusCounts)
         .filter(([, value]) => value > 0)
-        .map(([name, value]) => ({ name, value, fill: COLORS[name as WarrantyStatus] }))
+        .map(([name, value]) => ({ 
+            name, 
+            value, 
+            fill: currentWarrantyStatuses.find(s => s.nome === name)?.cor || COLORS[name as WarrantyStatus] || '#8884d8' 
+        }))
       );
       
       const now = new Date();
@@ -180,7 +190,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
           const monthKey = format(month, 'MMM/yy', { locale: ptBR });
           monthlyCounts[monthKey] = 0;
       }
-      allWarranties.forEach(w => {
+      sortedWarranties.forEach(w => {
           if (w.dataRegistro) {
               const monthKey = format(parseISO(w.dataRegistro), 'MMM/yy', { locale: ptBR });
               if (monthKey in monthlyCounts) {
@@ -190,14 +200,14 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
       });
       setMonthlyData(Object.entries(monthlyCounts).map(([name, total]) => ({ name, total })));
       const supplierCounts: Record<string, number> = {};
-      allWarranties.forEach(w => {
+      sortedWarranties.forEach(w => {
           if(w.fornecedor) {
             supplierCounts[w.fornecedor] = (supplierCounts[w.fornecedor] || 0) + 1;
           }
       });
       setSupplierRanking(Object.entries(supplierCounts).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, total]) => ({name, total})));
       const personCounts: Record<string, number> = {};
-       allWarranties.forEach(w => {
+       sortedWarranties.forEach(w => {
           if(w.cliente) personCounts[w.cliente] = (personCounts[w.cliente] || 0) + 1;
           if(w.mecanico && w.mecanico !== w.cliente) personCounts[w.mecanico] = (personCounts[w.mecanico] || 0) + 1;
       });
@@ -243,16 +253,16 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
 
   useEffect(() => {
     const handleDataChanged = () => {
-        loadStats();
+        loadStats(warrantyStatuses);
     };
 
-    loadStats();
+    loadStats(warrantyStatuses);
     window.addEventListener('datachanged', handleDataChanged);
 
     return () => {
         window.removeEventListener('datachanged', handleDataChanged);
     };
-  }, [loadStats]);
+  }, [loadStats, warrantyStatuses]);
   
 
   return (
@@ -347,11 +357,10 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                     </Card>
                 </div>
                 
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7 mt-6">
-                    <Card className="shadow-lg lg:col-span-2">
+                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7 mt-6">
+                     <Card className="shadow-lg lg:col-span-3 xl:col-span-2">
                         <CardHeader>
                             <CardTitle>Status das Garantias</CardTitle>
-                            <CardDescription>Distribuição dos status de todas as garantias.</CardDescription>
                         </CardHeader>
                         <CardContent>
                             {isLoading ? <Skeleton className="h-48 w-full" /> : (
@@ -363,14 +372,13 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                                                 <Cell key={`cell-${entry.name}`} fill={entry.fill} />
                                             ))}
                                         </Pie>
-                                        <ChartLegend content={<ChartLegendContent nameKey="name" />} />
                                     </RechartsPieChart>
                                 </ChartContainer>
                             )}
                         </CardContent>
                     </Card>
 
-                    <Card className="shadow-lg lg:col-span-5">
+                    <Card className="shadow-lg lg:col-span-4 xl:col-span-5">
                         <CardHeader>
                             <CardTitle>Garantias por Mês</CardTitle>
                             <CardDescription>Volume de registros nos últimos 12 meses.</CardDescription>
@@ -406,14 +414,15 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                         </CardHeader>
                         <CardContent>
                             {isLoading ? <Skeleton className="h-48 w-full" /> : (
-                                <div className='space-y-4'>
-                                    {supplierRanking.length > 0 ? supplierRanking.map(item => (
-                                        <div key={item.name} className='flex items-center justify-between'>
-                                            <span className='text-sm text-muted-foreground'>{item.name}</span>
-                                            <span className='font-bold'>{item.total}</span>
-                                        </div>
-                                    )) : <p className='text-sm text-muted-foreground text-center py-8'>Nenhum dado de fornecedor para exibir.</p>}
-                                </div>
+                                <ResponsiveContainer width="100%" height={200}>
+                                    <BarChart layout="vertical" data={supplierRanking.slice().reverse()}>
+                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                                        <XAxis type="number" hide />
+                                        <YAxis dataKey="name" type="category" width={150} tick={{ fontSize: 12 }} />
+                                        <ChartTooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent />} />
+                                        <Bar dataKey="total" fill="hsl(var(--chart-1))" radius={[0, 4, 4, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
                             )}
                         </CardContent>
                     </Card>
@@ -425,20 +434,73 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                             </div>
                             <CardDescription>Clientes e mecânicos com maior número de garantias.</CardDescription>
                         </CardHeader>
-                        <CardContent>
+                         <CardContent>
                             {isLoading ? <Skeleton className="h-48 w-full" /> : (
-                                <div className='space-y-4'>
-                                    {personRanking.length > 0 ? personRanking.map(item => (
-                                        <div key={item.name} className='flex items-center justify-between'>
-                                            <span className='text-sm text-muted-foreground'>{item.name}</span>
-                                            <span className='font-bold'>{item.total}</span>
-                                        </div>
-                                    )) : <p className='text-sm text-muted-foreground text-center py-8'>Nenhum dado de cliente/mecânico para exibir.</p>}
-                                </div>
+                                <ResponsiveContainer width="100%" height={200}>
+                                    <BarChart layout="vertical" data={personRanking.slice().reverse()}>
+                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                                        <XAxis type="number" hide />
+                                        <YAxis dataKey="name" type="category" width={150} tick={{ fontSize: 12 }} />
+                                        <ChartTooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent />} />
+                                        <Bar dataKey="total" fill="hsl(var(--chart-2))" radius={[0, 4, 4, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
                             )}
                         </CardContent>
                     </Card>
                 </div>
+                 <Card className="mt-6 shadow-lg">
+                    <CardHeader className="flex flex-row justify-between items-center">
+                        <div className="space-y-1">
+                            <CardTitle>Garantias Recentes</CardTitle>
+                            <CardDescription>As 5 garantias mais recentes registradas no sistema.</CardDescription>
+                        </div>
+                        <Button variant="outline" size="sm" onClick={() => setActiveView('query')}>
+                            Ver Todas
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                    </CardHeader>
+                    <CardContent>
+                        {isLoading ? <Skeleton className='h-48 w-full' /> : (
+                             <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Data</TableHead>
+                                        <TableHead>Produto</TableHead>
+                                        <TableHead>Fornecedor</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead className='w-[100px] text-right'>Ações</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {recentWarranties.length > 0 ? (
+                                        recentWarranties.map(item => (
+                                            <TableRow key={item.id}>
+                                                <TableCell>{item.dataRegistro ? format(parseISO(item.dataRegistro), 'dd/MM/yyyy') : '-'}</TableCell>
+                                                <TableCell>
+                                                    <div className='font-medium'>{item.codigo}</div>
+                                                    <div className='text-xs text-muted-foreground'>{item.descricao}</div>
+                                                </TableCell>
+                                                <TableCell className="font-medium">{item.fornecedor}</TableCell>
+                                                <TableCell><Badge variant="secondary">{item.status}</Badge></TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button variant="outline" size="sm" onClick={() => handleEditWarranty(item)}>
+                                                        <Pencil className="mr-2 h-4 w-4" />
+                                                        Editar
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={5} className="h-24 text-center">Nenhuma garantia registrada ainda.</TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        )}
+                    </CardContent>
+                </Card>
 
             </TabsContent>
             <TabsContent value="devolucoes" className="mt-6">
@@ -545,3 +607,5 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
     </div>
   );
 }
+
+
