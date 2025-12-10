@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -96,7 +96,12 @@ const DASHBOARD_TAB_KEY = 'synergia-dashboard-tab';
 export default function DashboardSection({ openTab: setActiveView }: DashboardSectionProps) {
   const handleEditDevolucao = useAppStore(state => state.handleEditDevolucao);
   const handleEditWarranty = useAppStore(state => state.handleEditWarranty);
-  const warrantyStatuses = useAppStore(state => state.statuses.filter(s => s.aplicavelEm.includes('garantia')));
+  const statusesFromStore = useAppStore(state => state.statuses);
+
+  const warrantyStatuses = useMemo(() => {
+    return statusesFromStore.filter(s => s.aplicavelEm.includes('garantia'));
+  }, [statusesFromStore]);
+
   const [activeTab, setActiveTab] = useState('garantias');
 
   // Estado para Garantias
@@ -265,7 +270,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
     };
   }, [loadStats, warrantyStatuses]);
   
-
+  
   return (
     <div className="space-y-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -608,4 +613,5 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
     </div>
   );
 }
+
 
