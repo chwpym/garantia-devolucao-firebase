@@ -8,23 +8,22 @@ import { useAuth } from '@/components/auth-provider';
 export function useAuthGuard() {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, loading, signOut } = useAuth();
+  const { user, loading } = useAuth();
 
   useEffect(() => {
-    if (loading) return; // Still loading, do nothing.
+    if (loading) return; // Aguarda a verificação da autenticação terminar.
 
     const isPublicPath = pathname === '/login' || pathname === '/signup';
 
-    // If user is logged in and on a public page, redirect to home.
-    if (user && isPublicPath) {
-      router.replace('/');
-    }
-
-    // If user is not logged in and on a protected page, redirect to login.
+    // Se o utilizador não está logado e tenta aceder a uma rota protegida, redireciona para o login.
     if (!user && !isPublicPath) {
       router.replace('/login');
     }
-    
+
+    // Se o utilizador está logado e tenta aceder a uma rota pública, redireciona para o dashboard.
+    if (user && isPublicPath) {
+      router.replace('/');
+    }
   }, [user, loading, pathname, router]);
 
   return {

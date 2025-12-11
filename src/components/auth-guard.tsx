@@ -8,7 +8,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { loading, isAuthenticated } = useAuthGuard();
 
   if (loading) {
-    // mostra um loader simples (render client-side only)
+    // Mostra um loader simples enquanto verifica a autenticação
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div role="status" aria-live="polite">Carregando...</div>
@@ -16,6 +16,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Se não autenticado, useAuthGuard já redirecionou; aqui retornamos null (ou um fallback).
+  // Se não autenticado, useAuthGuard já redirecionou; aqui retornamos null para não renderizar nada.
+  // Se autenticado, renderiza os children (a página protegida).
   return isAuthenticated ? <>{children}</> : null;
 }
