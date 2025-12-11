@@ -1003,3 +1003,145 @@ export const clearSimulations = (): Promise<void> => clearStore(SIMULATIONS_STOR
 // --- General Purpose ---
 // Note: clearUsers is not exported because it should be handled carefully
 export const clearUsers = (): Promise<void> => clearStore(USERS_STORE_NAME);
+
+// --- Local Auth Helpers (PBKDF2) ---
+function btoaUrlSafe(bytes: Uint8Array) {
+  const str = btoa(String.fromCharCode(...Array.from(bytes)));
+  return str.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function atobUrlSafeToBytes(s: string) {
+  s = s.replace(/-/g, '+').replace(/_/g, '/');
+  while (s.length % 4) s += '=';
+  const bin = atob(s);
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return arr;
+}
+async function generateSalt(length = 16) {
+  const salt = crypto.getRandomValues(new Uint8Array(length));
+  return btoaUrlSafe(salt);
+}
+async function deriveKey(password: string, saltBase64: string, iterations = 100000, keyLen = 32) {
+  const salt = atobUrlSafeToBytes(saltBase64);
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), { name: 'PBKDF2' }, false, ['deriveBits']);
+  const derivedBits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt: salt, iterations: iterations, hash: 'SHA-256' },
+    keyMaterial,
+    keyLen * 8
+  );
+  return new Uint8Array(derivedBits);
+}
+
+/**
+ * createLocalUser(email, password, extras?)
+ * - creates a new user in USERS_STORE_NAME
+ * - stores: uid (timestamp-random), email (lowercase), passwordHash, salt, role, status
+ */
+export const createLocalUser = (email: string, password: string, extras: Partial<UserProfile> = {}): Promise<UserProfile> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      await initDB();
+      const db = await getDB();
+      const tx = db.transaction(USERS_STORE_NAME, 'readwrite');
+      const store = tx.objectStore(USERS_STORE_NAME);
+
+      const normalizedEmail = email.toLowerCase().trim();
+      const idxReq = store.index('email').get(normalizedEmail);
+      idxReq.onsuccess = async () => {
+        if (idxReq.result) {
+          reject(new Error('user-exists'));
+          return;
+        }
+        const salt = await generateSalt();
+        const derived = await deriveKey(password, salt);
+        const user: UserProfile = {
+          uid: `${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
+          email: normalizedEmail,
+          displayName: extras.displayName ?? normalizedEmail.split('@')[0],
+          photoURL: extras.photoURL ?? undefined,
+          role: extras.role ?? 'user',
+          status: extras.status ?? 'active',
+          // store password fields (internal): passwordHash and salt
+          passwordHash: btoaUrlSafe(derived) as unknown as any,
+          salt,
+          createdAt: Date.now(),
+          ...extras,
+        } as any;
+
+        const addReq = store.add(user);
+        addReq.onsuccess = () => resolve(user);
+        addReq.onerror = () => reject(addReq.error);
+      };
+      idxReq.onerror = () => reject(idxReq.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+/**
+ * verifyLocalUser(email, password)
+ * - returns { ok: boolean, user?, reason? }
+ */
+export const verifyLocalUser = async (email: string, password: string): Promise<{ ok: boolean; user?: UserProfile; reason?: string }> => {
+  try {
+    await initDB();
+    const db = await getDB();
+    const tx = db.transaction(USERS_STORE_NAME, 'readonly');
+    const store = tx.objectStore(USERS_STORE_NAME);
+    const req = store.index('email').get(email.toLowerCase().trim());
+    return await new Promise((resolve, reject) => {
+      req.onsuccess = async () => {
+        const found = req.result as (UserProfile & { passwordHash?: string; salt?: string }) | undefined;
+        if (!found) return resolve({ ok: false, reason: 'user-not-found' });
+        if (found.status === 'blocked') return resolve({ ok: false, reason: 'user-blocked' });
+        if (!found.passwordHash || !found.salt) return resolve({ ok: false, reason: 'no-password' });
+        try {
+          const derived = await deriveKey(password, found.salt);
+          const derivedB64 = btoaUrlSafe(derived);
+          if (derivedB64 === found.passwordHash) {
+            const { passwordHash, salt, ...safe } = found as any;
+            return resolve({ ok: true, user: safe as UserProfile });
+          } else {
+            return resolve({ ok: false, reason: 'invalid-password' });
+          }
+        } catch (err) {
+          return resolve({ ok: false, reason: 'error' });
+        }
+      };
+      req.onerror = () => reject(req.error);
+    });
+  } catch (err) {
+    return { ok: false, reason: 'error' };
+  }
+};
+
+/**
+ * changeLocalPassword(email, oldPassword, newPassword)
+ */
+export const changeLocalPassword = async (email: string, oldPassword: string, newPassword: string): Promise<{ ok: boolean; reason?: string }> => {
+  try {
+    const ver = await verifyLocalUser(email, oldPassword);
+    if (!ver.ok) return { ok: false, reason: ver.reason };
+    const salt = await generateSalt();
+    const derived = await deriveKey(newPassword, salt);
+    const db = await getDB();
+    const tx = db.transaction(USERS_STORE_NAME, 'readwrite');
+    const store = tx.objectStore(USERS_STORE_NAME);
+    const getReq = store.get(ver.user!.uid);
+    return await new Promise((resolve, reject) => {
+      getReq.onsuccess = () => {
+        const rec = getReq.result;
+        rec.salt = salt;
+        rec.passwordHash = btoaUrlSafe(derived);
+        const putReq = store.put(rec);
+        putReq.onsuccess = () => resolve({ ok: true });
+        putReq.onerror = () => reject(putReq.error);
+      };
+      getReq.onerror = () => reject(getReq.error);
+    });
+  } catch (err) {
+    return { ok: false, reason: 'error' };
+  }
+};

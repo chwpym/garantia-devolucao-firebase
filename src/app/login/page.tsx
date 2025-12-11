@@ -4,8 +4,6 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { signInWithEmailAndPassword, type AuthError, setPersistence, browserSessionPersistence, indexedDBLocalPersistence } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 
@@ -16,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { Checkbox } from '@/components/ui/checkbox';
+import { verifyLocalUser } from '@/lib/db';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Por favor, insira um e-mail válido.' }),
@@ -36,27 +35,37 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
-      const persistence = rememberMe ? indexedDBLocalPersistence : browserSessionPersistence;
-      await setPersistence(auth, persistence);
-      
-      await signInWithEmailAndPassword(auth, data.email, data.password);
-      // O useAuthGuard agora cuidará do redirecionamento. 
-      // O estado de isLoading será resolvido quando o componente for desmontado.
-    } catch (error: unknown) {
-      const authError = error as AuthError;
-      console.error('Falha no login:', authError);
-      let errorMessage = 'Ocorreu um erro ao fazer login.';
-      if (authError.code === 'auth/invalid-credential' || authError.code === 'auth/user-not-found' || authError.code === 'auth/wrong-password') {
-          errorMessage = 'Credenciais inválidas. Verifique seu e-mail e senha.';
+      const res = await verifyLocalUser(data.email, data.password);
+      if (!res.ok) {
+        let msg = 'Ocorreu um erro ao fazer login.';
+        if (res.reason === 'user-not-found') msg = 'Usuário não encontrado.';
+        if (res.reason === 'invalid-password') msg = 'Senha incorreta.';
+        if (res.reason === 'user-blocked') msg = 'Conta bloqueada.';
+        if (res.reason === 'no-password') msg = 'Conta sem senha. Use recuperar senha.';
+        toast({ title: 'Falha no Login', description: msg, variant: 'destructive' });
+        setIsLoading(false); // Only set loading to false on error
+        return;
       }
-      toast({
-        title: 'Falha no Login',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-      setIsLoading(false); // Reseta o loading em caso de erro
+
+      // Login OK: salvar sessão
+      const session = { uid: res.user!.uid, email: res.user!.email, role: res.user!.role ?? 'user', createdAt: Date.now() };
+      if (rememberMe) {
+        localStorage.setItem('synergia_session', JSON.stringify(session));
+      } else {
+        sessionStorage.setItem('synergia_session', JSON.stringify(session));
+      }
+      
+      // We need to manually trigger a "login" event. A simple way is to reload.
+      // The AuthProvider will pick up the new session on reload.
+      window.location.href = '/';
+
+    } catch (err) {
+      console.error('Login error (local):', err);
+      toast({ title: 'Falha no Login', description: 'Erro interno', variant: 'destructive' });
+      setIsLoading(false);
     }
   };
+
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
