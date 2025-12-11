@@ -1,11 +1,10 @@
-
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { signInWithEmailAndPassword, type AuthError, onAuthStateChanged, setPersistence, browserSessionPersistence, indexedDBLocalPersistence } from 'firebase/auth';
+import { signInWithEmailAndPassword, type AuthError, setPersistence, browserSessionPersistence, indexedDBLocalPersistence } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
@@ -34,30 +33,20 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
-  // Listener para resetar o estado de loading caso o usuário seja deslogado (ex: bloqueado)
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        setIsLoading(false);
-      }
-    });
-    return () => unsubscribe();
-  }, []);
-
-
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
-      // Define a persistência ANTES de fazer o login
       const persistence = rememberMe ? indexedDBLocalPersistence : browserSessionPersistence;
       await setPersistence(auth, persistence);
+      
       await signInWithEmailAndPassword(auth, data.email, data.password);
-      // O AuthGuard cuidará do redirecionamento.
+      // O useAuthGuard agora cuidará do redirecionamento. 
+      // O estado de isLoading será resolvido quando o componente for desmontado.
     } catch (error: unknown) {
       const authError = error as AuthError;
       console.error('Falha no login:', authError);
       let errorMessage = 'Ocorreu um erro ao fazer login.';
-      if (authError.code === 'auth/invalid-credential') {
+      if (authError.code === 'auth/invalid-credential' || authError.code === 'auth/user-not-found' || authError.code === 'auth/wrong-password') {
           errorMessage = 'Credenciais inválidas. Verifique seu e-mail e senha.';
       }
       toast({
@@ -65,7 +54,7 @@ export default function LoginPage() {
         description: errorMessage,
         variant: 'destructive',
       });
-      setIsLoading(false);
+      setIsLoading(false); // Reseta o loading em caso de erro
     }
   };
 
