@@ -12,7 +12,6 @@ import React, {
 import { useToast } from '@/hooks/use-toast';
 import { initDB, getUserProfile } from '@/lib/db';
 import type { UserProfile } from '@/lib/types';
-import { AuthGuard } from './auth-guard';
 
 export interface LocalUser extends UserProfile {}
 
@@ -95,9 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider value={value}>
-      <AuthGuard>
-        {children}
-      </AuthGuard>
+      {children}
     </AuthContext.Provider>
   );
 }
