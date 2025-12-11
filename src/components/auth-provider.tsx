@@ -1,11 +1,17 @@
 
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+  useCallback,
+} from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { initDB, getUserProfile } from '@/lib/db';
 import type { UserProfile } from '@/lib/types';
-
 
 export interface LocalUser extends UserProfile {}
 
@@ -27,47 +33,75 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('synergia_session');
     sessionStorage.removeItem('synergia_session');
     setUser(null);
-    // Redirect to login page after sign out to ensure clean state
     if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
+      window.location.href = '/login';
     }
   }, []);
 
   const loadSession = useCallback(async () => {
     setLoading(true);
     try {
-        await initDB();
-        const raw = localStorage.getItem('synergia_session') || sessionStorage.getItem('synergia_session');
-        if (raw) {
-          const session = JSON.parse(raw);
-          const profile = await getUserProfile(session.uid || session.email);
-          if (profile) {
-              if (profile.status === 'blocked') {
-                toast({ title: 'Acesso Bloqueado', description: 'Sua conta foi desativada.', variant: 'destructive' });
-                signOut();
-              } else {
-                setUser(profile as LocalUser);
-              }
+      await initDB();
+      const raw =
+        localStorage.getItem('synergia_session') ||
+        sessionStorage.getItem('synergia_session');
+      if (raw) {
+        const session = JSON.parse(raw);
+        const profile = await getUserProfile(session.uid || session.email);
+        if (profile) {
+          if (profile.status === 'blocked') {
+            toast({
+              title: 'Acesso Bloqueado',
+              description: 'Sua conta foi desativada.',
+              variant: 'destructive',
+            });
+            signOut();
           } else {
-             signOut(); // Profile not found, clear session
+            setUser(profile as LocalUser);
           }
         } else {
-            setUser(null);
+          signOut(); // Profile not found, clear session
         }
-      } catch (err) {
-        console.error('AuthProvider init error', err);
-        toast({ title: 'Erro', description: 'Falha ao carregar sessão local', variant: 'destructive' });
-        signOut();
-      } finally {
-        setLoading(false);
+      } else {
+        setUser(null);
       }
+    } catch (err) {
+      console.error('AuthProvider init error', err);
+      toast({
+        title: 'Erro',
+        description: 'Falha ao carregar sessão local',
+        variant: 'destructive',
+      });
+      signOut();
+    } finally {
+      setLoading(false);
+    }
   }, [toast, signOut]);
-  
+
   useEffect(() => {
     loadSession();
+    // Adiciona um listener para o evento de 'storage' para sincronizar abas
+    const handleStorageChange = (event: StorageEvent) => {
+        if (event.key === 'synergia_session') {
+            loadSession();
+        }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+        window.removeEventListener('storage', handleStorageChange);
+    }
+
   }, [loadSession]);
 
-  return <AuthContext.Provider value={{ user, loading, signOut, refreshUser: loadSession }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{ user, loading, signOut, refreshUser: loadSession }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {

@@ -11,18 +11,20 @@ export function useAuthGuard() {
   const { user, loading, signOut } = useAuth();
 
   useEffect(() => {
-    if (loading) return; // ainda carregando -> não faz nada
+    if (loading) return; // Still loading, do nothing.
 
     const isPublicPath = pathname === '/login' || pathname === '/signup';
 
+    // If user is logged in and on a public page, redirect to home.
     if (user && isPublicPath) {
       router.replace('/');
     }
-    
+
+    // If user is not logged in and on a protected page, redirect to login.
     if (!user && !isPublicPath) {
-      // não autenticado e tentando acessar rota protegida -> redireciona
       router.replace('/login');
     }
+    
   }, [user, loading, pathname, router]);
 
   return {
