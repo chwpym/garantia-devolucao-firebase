@@ -1,12 +1,12 @@
-
 'use client';
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { createUserWithEmailAndPassword, updateProfile, type AuthError } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { useRouter } from 'next/navigation';
+
+import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 
@@ -27,6 +27,7 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 
 export default function SignupPage() {
   const { toast } = useToast();
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<SignupFormValues>({
@@ -36,29 +37,24 @@ export default function SignupPage() {
   const onSubmit = async (data: SignupFormValues) => {
     setIsLoading(true);
     try {
-      // 1. Create user in Firebase Authentication
-      const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
-      
-      // 2. Update Firebase Auth profile with display name
-      await updateProfile(userCredential.user, {
+      await db.createLocalUser(data.email, data.password, {
         displayName: data.displayName,
       });
 
-      // A LÓGICA DE CRIAÇÃO DO PERFIL LOCAL FOI MOVIDA PARA O AuthProvider
-      // para garantir que a verificação de 'primeiro usuário' seja feita corretamente.
-      
       toast({
         title: 'Cadastro realizado com sucesso!',
-        description: 'Você será redirecionado para o sistema.',
+        description: 'Você será redirecionado para a tela de login.',
       });
 
-      // O AuthGuard cuidará do redirecionamento automático para a página principal.
+      // Redirect to login page after a short delay
+      setTimeout(() => {
+        router.push('/login');
+      }, 1500);
 
     } catch (error: unknown) {
-      const authError = error as AuthError;
-      console.error('Falha no cadastro:', authError);
+      console.error('Falha no cadastro:', error);
       let errorMessage = 'Ocorreu um erro ao realizar o cadastro.';
-      if (authError.code === 'auth/email-already-in-use') {
+      if (error instanceof Error && error.message === 'user-exists') {
         errorMessage = 'Este e-mail já está em uso. Tente outro.';
       }
       toast({
