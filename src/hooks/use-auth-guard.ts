@@ -15,10 +15,16 @@ export function useAuthGuard() {
 
     const isPublicPath = pathname === '/login' || pathname === '/signup' || pathname.startsWith('/public');
 
+    // Se o utilizador NÃO está autenticado E está a tentar aceder a uma rota protegida
     if (!user && !isPublicPath) {
-      // não autenticado e tentando acessar rota protegida -> redireciona
       router.replace('/login');
     }
+    
+    // Se o utilizador ESTÁ autenticado E está numa página pública (login/signup)
+    if (user && isPublicPath) {
+      router.replace('/'); // Redireciona para a página principal (dashboard)
+    }
+
   }, [user, loading, pathname, router]);
 
   return {
