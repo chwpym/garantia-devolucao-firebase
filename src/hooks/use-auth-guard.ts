@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect } from 'react';
@@ -7,23 +8,21 @@ import { useAuth } from '@/components/auth-provider';
 export function useAuthGuard() {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
 
   useEffect(() => {
-    if (loading) return; // Aguarda o estado de autenticação ser resolvido
+    if (loading) return; // ainda carregando -> não faz nada
 
     const isPublicPath = pathname === '/login' || pathname === '/signup';
 
-    // Se NÃO está autenticado E está tentando acessar uma rota protegida
-    if (!user && !isPublicPath) {
-      router.replace('/login');
+    if (user && isPublicPath) {
+      router.replace('/');
     }
     
-    // Se ESTÁ autenticado E está em uma página pública (login/signup)
-    if (user && isPublicPath) {
-      router.replace('/'); // Redireciona para a página principal
+    if (!user && !isPublicPath) {
+      // não autenticado e tentando acessar rota protegida -> redireciona
+      router.replace('/login');
     }
-
   }, [user, loading, pathname, router]);
 
   return {
