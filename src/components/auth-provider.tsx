@@ -12,6 +12,7 @@ import React, {
 import { useToast } from '@/hooks/use-toast';
 import { initDB, getUserProfile } from '@/lib/db';
 import type { UserProfile } from '@/lib/types';
+import { AuthGuard } from './auth-guard';
 
 export interface LocalUser extends UserProfile {}
 
@@ -33,14 +34,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('synergia_session');
     sessionStorage.removeItem('synergia_session');
     setUser(null);
-    // O redirecionamento agora é responsabilidade do AuthGuard
     if (window.location.pathname !== '/login') {
       window.location.href = '/login';
     }
   }, []);
 
   const loadSession = useCallback(async () => {
-    // Não redefinir o loading para true aqui para evitar piscar a tela
     try {
       await initDB();
       const raw =
@@ -61,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(profile as LocalUser);
           }
         } else {
-          signOut(); // Profile não encontrado, limpa a sessão
+          signOut();
         }
       } else {
         setUser(null);
@@ -81,26 +80,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     loadSession();
-    // Adiciona um listener para o evento de 'storage' para sincronizar abas
     const handleStorageChange = (event: StorageEvent) => {
         if (event.key === 'synergia_session') {
             loadSession();
         }
     };
-
     window.addEventListener('storage', handleStorageChange);
-    
     return () => {
         window.removeEventListener('storage', handleStorageChange);
     }
-
   }, [loadSession]);
 
+  const value: AuthContextType = { user, loading, signOut, refreshUser: loadSession };
+
   return (
-    <AuthContext.Provider
-      value={{ user, loading, signOut, refreshUser: loadSession }}
-    >
-      {children}
+    <AuthContext.Provider value={value}>
+      <AuthGuard>
+        {children}
+      </AuthGuard>
     </AuthContext.Provider>
   );
 }
