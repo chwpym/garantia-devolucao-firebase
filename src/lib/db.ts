@@ -1043,36 +1043,47 @@ export const createLocalUser = (email: string, password: string, extras: Partial
     try {
       await initDB();
       const db = await getDB();
-      const tx = db.transaction(USERS_STORE_NAME, 'readwrite');
-      const store = tx.objectStore(USERS_STORE_NAME);
-
+      // First, check if the user exists in a separate, read-only transaction.
+      const checkTx = db.transaction(USERS_STORE_NAME, 'readonly');
+      const checkStore = checkTx.objectStore(USERS_STORE_NAME);
       const normalizedEmail = email.toLowerCase().trim();
-      const idxReq = store.index('email').get(normalizedEmail);
+      const idxReq = checkStore.index('email').get(normalizedEmail);
+
       idxReq.onsuccess = async () => {
         if (idxReq.result) {
           reject(new Error('user-exists'));
           return;
         }
-        const salt = await generateSalt();
-        const derived = await deriveKey(password, salt);
-        const user: UserProfile = {
-          uid: `${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
-          email: normalizedEmail,
-          displayName: extras.displayName ?? normalizedEmail.split('@')[0],
-          photoURL: extras.photoURL ?? undefined,
-          role: extras.role ?? 'user',
-          status: extras.status ?? 'active',
-          // store password fields (internal): passwordHash and salt
-          passwordHash: btoaUrlSafe(derived) as unknown as any,
-          salt,
-          createdAt: Date.now(),
-          ...extras,
-        } as any;
 
-        const addReq = store.add(user);
-        addReq.onsuccess = () => resolve(user);
-        addReq.onerror = () => reject(addReq.error);
+        // User doesn't exist, proceed with creation in a new read-write transaction.
+        try {
+            const salt = await generateSalt();
+            const derived = await deriveKey(password, salt);
+            const user: UserProfile = {
+                uid: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                email: normalizedEmail,
+                displayName: extras.displayName ?? normalizedEmail.split('@')[0],
+                photoURL: extras.photoURL ?? undefined,
+                role: extras.role ?? 'user',
+                status: extras.status ?? 'active',
+                // @ts-ignore
+                passwordHash: btoaUrlSafe(derived),
+                salt,
+                createdAt: Date.now(),
+                ...extras,
+            } as any;
+            
+            const writeTx = db.transaction(USERS_STORE_NAME, 'readwrite');
+            const writeStore = writeTx.objectStore(USERS_STORE_NAME);
+            const addReq = writeStore.add(user);
+
+            addReq.onsuccess = () => resolve(user);
+            addReq.onerror = () => reject(addReq.error);
+        } catch(err) {
+            reject(err);
+        }
       };
+
       idxReq.onerror = () => reject(idxReq.error);
     } catch (err) {
       reject(err);
