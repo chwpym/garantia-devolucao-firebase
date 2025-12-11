@@ -1,19 +1,21 @@
 
 'use client';
 
-import type { ReactNode } from 'react';
+import React from 'react';
 import { useAuthGuard } from '@/hooks/use-auth-guard';
 
-interface AuthGuardProps {
-  children: ReactNode;
-}
+export function AuthGuard({ children }: { children: React.ReactNode }) {
+  const { loading, isAuthenticated } = useAuthGuard();
 
-export function AuthGuard({ children }: AuthGuardProps) {
-  // The hook now handles all redirection logic.
-  // The isLoading check is moved to AuthProvider to avoid hydration issues.
-  const { isAuthenticated } = useAuthGuard();
-  
-  // If authenticated, render children. Otherwise, the hook has already
-  // initiated a redirect, so rendering null is safe and prevents content flashing.
+  if (loading) {
+    // mostra um loader simples (render client-side only)
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div role="status" aria-live="polite">Carregando...</div>
+      </div>
+    );
+  }
+
+  // Se não autenticado, useAuthGuard já redirecionou; aqui retornamos null (ou um fallback).
   return isAuthenticated ? <>{children}</> : null;
 }

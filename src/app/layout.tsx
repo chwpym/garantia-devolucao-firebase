@@ -9,7 +9,6 @@ import PwaUpdateAlert from '@/components/pwa-update-alert';
 import { AuthProvider } from '@/components/auth-provider';
 import ClientOnly from '@/components/client-only';
 
-
 const inter = Inter({
   subsets: ['latin'],
   display: 'swap',
@@ -39,18 +38,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={cn('font-sans', inter.variable)}>
+    <html lang="pt-BR" suppressHydrationWarning className={cn('font-sans', inter.variable)}>
       <head />
       <body className="font-body antialiased" suppressHydrationWarning>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <AuthProvider>
+        <AuthProvider>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             {children}
-          </AuthProvider>
-          <ClientOnly>
-            <Toaster />
-            <PwaUpdateAlert />
-          </ClientOnly>
-        </ThemeProvider>
+            <ClientOnly>
+              <Toaster />
+              <PwaUpdateAlert />
+            </ClientOnly>
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   );
