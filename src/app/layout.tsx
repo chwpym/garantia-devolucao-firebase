@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import PwaUpdateAlert from '@/components/pwa-update-alert';
 import { AuthProvider } from '@/components/auth-provider';
 import ClientOnly from '@/components/client-only';
+import ClientManifestInjector from '@/components/client-manifest';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -18,7 +19,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'Synergia OS',
   description: 'Sistema de Gestão Integrada',
-  manifest: '/manifest.json',
+  // manifest: '/manifest.json', // Removido para evitar problemas de CORS no Cloud Workstations
   icons: {
     icon: [
       { url: '/icon-192x192.png', type: 'image/png', sizes: '192x192' },
@@ -47,6 +48,7 @@ export default function RootLayout({
             <ClientOnly>
               <Toaster />
               <PwaUpdateAlert />
+              <ClientManifestInjector />
             </ClientOnly>
           </ThemeProvider>
         </AuthProvider>
