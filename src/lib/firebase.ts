@@ -2,7 +2,7 @@
 
 import { initializeApp, getApps, getApp, type FirebaseApp, type FirebaseOptions } from 'firebase/app';
 import { getStorage } from 'firebase/storage';
-import { getAuth, GoogleAuthProvider, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { getAuth, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 
 // Esta configuração agora funciona tanto no servidor (durante o build) quanto no cliente.
 const firebaseConfig: FirebaseOptions = {
@@ -18,15 +18,15 @@ const firebaseConfig: FirebaseOptions = {
 
 // Padrão Singleton para inicializar o Firebase apenas uma vez.
 function getFirebaseApp(): FirebaseApp {
-    if (getApps().length === 0) {
-        return initializeApp(firebaseConfig);
-    }
-    return getApp();
+  if (getApps().length === 0) {
+    return initializeApp(firebaseConfig);
+  }
+  return getApp();
 }
 
 const app = getFirebaseApp();
 const auth = getAuth(app);
 const storage = getStorage(app);
-const googleProvider = new GoogleAuthProvider();
 
-export { app, auth, storage, googleProvider, createUserWithEmailAndPassword, updateProfile, getFirebaseApp };
+
+export { app, auth, storage, createUserWithEmailAndPassword, updateProfile, getFirebaseApp };
