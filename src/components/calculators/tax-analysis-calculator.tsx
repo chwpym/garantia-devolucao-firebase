@@ -90,7 +90,7 @@ export default function TaxAnalysisCalculator() {
     const [nfeInfo, setNfeInfo] = useState<NfeInfo | null>(null);
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
-    
+
     const getIcmsData = (icmsGroup: IcmsGroup): { vICMS: number, vICMSST: number, pICMS: number, cst: string } => {
         let vICMS = 0, vICMSST = 0, pICMS = 0, cst = '';
 
@@ -100,18 +100,18 @@ export default function TaxAnalysisCalculator() {
         if (icmsKey) {
             const icmsContent = icmsGroup[icmsKey];
             if (icmsContent) {
-                 vICMS = parseFloat(icmsContent.vICMS) || 0;
-                 vICMSST = parseFloat(icmsContent.vICMSST || '0') || 0;
-                 pICMS = parseFloat(icmsContent.pICMS) || 0;
-                 cst = icmsContent.CST || icmsContent.CSOSN || '';
+                vICMS = parseFloat(icmsContent.vICMS) || 0;
+                vICMSST = parseFloat(icmsContent.vICMSST || '0') || 0;
+                pICMS = parseFloat(icmsContent.pICMS) || 0;
+                cst = icmsContent.CST || icmsContent.CSOSN || '';
             }
         }
         return { vICMS, vICMSST, pICMS, cst };
     }
-    
+
     const getIpiData = (ipiGroup: IpiGroup): { vIPI: number, pIPI: number } => {
         let vIPI = 0, pIPI = 0;
-        if(ipiGroup?.IPITrib) {
+        if (ipiGroup?.IPITrib) {
             vIPI = parseFloat(ipiGroup.IPITrib.vIPI) || 0;
             pIPI = parseFloat(ipiGroup.IPITrib.pIPI) || 0;
         }
@@ -147,7 +147,7 @@ export default function TaxAnalysisCalculator() {
                 const xmlData = e.target?.result as string;
                 const parser = new XMLParser({ ignoreAttributes: false, parseAttributeValue: true });
                 const jsonObj = parser.parse(xmlData) as NFeData;
-                
+
                 const infNFe: InfNFe | undefined = jsonObj?.nfeProc?.NFe?.infNFe || jsonObj?.NFe?.infNFe;
                 if (!infNFe) {
                     throw new Error("Estrutura do XML da NF-e inválida: <infNFe> não encontrado.");
@@ -172,18 +172,18 @@ export default function TaxAnalysisCalculator() {
                     totalNf: parseFloat(total.vNF) || 0,
                 };
                 setNfeInfo(newNfeInfo);
-                
+
                 const newItems: AnalyzedItem[] = dets.map((det, index: number) => {
                     const prod = det.prod;
                     const imposto = det.imposto;
-                    
+
                     const { vICMS, vICMSST, pICMS, cst } = getIcmsData(imposto?.ICMS);
                     const { vIPI, pIPI } = getIpiData(imposto?.IPI);
                     const { v: vPIS, p: pPis } = getPisCofinsData(imposto?.PIS);
                     const { v: vCofins, p: pCofins } = getPisCofinsData(imposto?.COFINS);
-                    
+
                     return {
-                        id: Date.now() + index,
+                        id: index,
                         description: prod.xProd || "",
                         ncm: prod.NCM || "",
                         cst: cst,
@@ -202,7 +202,7 @@ export default function TaxAnalysisCalculator() {
                         pCofins: pCofins
                     };
                 });
-                
+
                 setItems(newItems);
 
                 toast({
@@ -222,9 +222,9 @@ export default function TaxAnalysisCalculator() {
                     description: message,
                 });
             } finally {
-              if(fileInputRef.current) {
-                fileInputRef.current.value = "";
-              }
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = "";
+                }
             }
         };
         reader.readAsText(file, 'ISO-8859-1');
@@ -234,11 +234,11 @@ export default function TaxAnalysisCalculator() {
         setItems([]);
         setFileName(null);
         setNfeInfo(null);
-        if(fileInputRef.current) {
+        if (fileInputRef.current) {
             fileInputRef.current.value = "";
         }
     };
-    
+
     const totals = useMemo(() => {
         return items.reduce((acc, item) => {
             acc.totalCost += item.totalCost;
@@ -248,14 +248,14 @@ export default function TaxAnalysisCalculator() {
             acc.totalPis += item.pis;
             acc.totalCofins += item.cofins;
             return acc;
-        }, { 
+        }, {
             totalCost: 0, totalIcms: 0, totalIcmsSt: 0, totalIpi: 0, totalPis: 0, totalCofins: 0
         });
     }, [items]);
 
     const generatePdf = () => {
         const doc = new jsPDF({ orientation: "landscape" });
-        
+
         doc.setFontSize(18);
         doc.text("Análise de Impostos por NF-e", doc.internal.pageSize.getWidth() / 2, 22, { align: "center" });
 
@@ -283,7 +283,7 @@ export default function TaxAnalysisCalculator() {
             formatCurrency(item.cofins),
             `${formatNumber(item.pCofins)}%`,
         ]);
-        
+
         const foot: RowInput[] = [
             [
                 { content: 'Totais:', colSpan: 2, styles: { halign: 'right', fontStyle: 'bold' } },
@@ -315,7 +315,7 @@ export default function TaxAnalysisCalculator() {
                 doc.text(pageText, data.settings.margin.left, doc.internal.pageSize.height - 10);
             }
         });
-    
+
         doc.save(`analise_impostos_${nfeInfo?.nfeNumber || 'sem_numero'}.pdf`);
     };
 
@@ -336,22 +336,22 @@ export default function TaxAnalysisCalculator() {
                     <div className="flex items-center gap-2 p-2 border rounded-md bg-muted flex-1 sm:flex-none justify-between">
                         <span className="text-sm text-muted-foreground truncate" title={fileName}>{fileName}</span>
                         <Button variant="ghost" size="icon" onClick={clearData} className="h-6 w-6">
-                        <FileX className="h-4 w-4 text-destructive" />
+                            <FileX className="h-4 w-4 text-destructive" />
                         </Button>
                     </div>
                 )}
-                <Input 
-                    type="file" 
-                    ref={fileInputRef} 
+                <Input
+                    type="file"
+                    ref={fileInputRef}
                     onChange={handleImportXml}
-                    className="hidden" 
+                    className="hidden"
                     accept=".xml"
                 />
             </div>
-            
+
             {items.length > 0 && nfeInfo && (
                 <div className="p-4 border rounded-lg bg-muted">
-                     <h3 className="text-lg font-medium mb-2">Informações da NF-e</h3>
+                    <h3 className="text-lg font-medium mb-2">Informações da NF-e</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-2 text-sm">
                         <div><strong>Emitente:</strong> {nfeInfo.emitterName}</div>
                         <div><strong>CNPJ:</strong> {nfeInfo.emitterCnpj}</div>
@@ -367,9 +367,9 @@ export default function TaxAnalysisCalculator() {
                     </div>
                 </div>
             )}
-            
+
             {items.length > 0 && (
-                 <div className="w-full overflow-x-auto">
+                <div className="w-full overflow-x-auto">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -403,11 +403,11 @@ export default function TaxAnalysisCalculator() {
                                     <TableCell className="text-right text-muted-foreground">{formatNumber(item.pIcms)}%</TableCell>
                                     <TableCell className="text-right">{formatCurrency(item.icmsSt)}</TableCell>
                                     <TableCell className="text-right">{formatCurrency(item.ipi)}</TableCell>
-                                     <TableCell className="text-right text-muted-foreground">{formatNumber(item.pIpi)}%</TableCell>
+                                    <TableCell className="text-right text-muted-foreground">{formatNumber(item.pIpi)}%</TableCell>
                                     <TableCell className="text-right">{formatCurrency(item.pis)}</TableCell>
-                                     <TableCell className="text-right text-muted-foreground">{formatNumber(item.pPis)}%</TableCell>
+                                    <TableCell className="text-right text-muted-foreground">{formatNumber(item.pPis)}%</TableCell>
                                     <TableCell className="text-right">{formatCurrency(item.cofins)}</TableCell>
-                                     <TableCell className="text-right text-muted-foreground">{formatNumber(item.pCofins)}%</TableCell>
+                                    <TableCell className="text-right text-muted-foreground">{formatNumber(item.pCofins)}%</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
@@ -433,8 +433,8 @@ export default function TaxAnalysisCalculator() {
     );
 }
 
-    
 
-    
 
-    
+
+
+

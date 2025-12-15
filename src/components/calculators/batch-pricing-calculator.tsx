@@ -10,10 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Trash2, PlusCircle, Info, Printer, Upload, ChevronsRight } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatNumber } from "@/lib/utils";
@@ -47,7 +47,7 @@ export default function BatchPricingCalculator() {
 
         const { infNFe, det: dets } = data;
         const total = infNFe.total.ICMSTot;
-        
+
         const totalProdValue = parseFloat(total.vProd) || 0;
         const totalFrete = parseFloat(total.vFrete) || 0;
         const totalSeguro = parseFloat(total.vSeg) || 0;
@@ -62,10 +62,10 @@ export default function BatchPricingCalculator() {
             const itemTotalCost = parseFloat(prod.vProd) || 0;
 
             const itemWeight = totalProdValue > 0 ? itemTotalCost / totalProdValue : 0;
-            
+
             const ipiValor = parseFloat(imposto?.IPI?.IPITrib?.vIPI) || 0;
             const stValor = parseFloat(imposto?.ICMS?.ICMSST?.vICMSST) || 0;
-            
+
             const freteRateado = parseFloat(prod.vFrete) || (totalFrete * itemWeight) || 0;
             const seguroRateado = parseFloat(prod.vSeg) || (totalSeguro * itemWeight) || 0;
             const descontoTotal = parseFloat(prod.vDesc) || 0;
@@ -76,9 +76,9 @@ export default function BatchPricingCalculator() {
             const finalUnitCost = quantity > 0 ? finalTotalCost / quantity : 0;
             const impostosUnit = quantity > 0 ? totalImpostosItem / quantity : 0;
             const descontoUnit = quantity > 0 ? descontoTotal / quantity : 0;
-            
+
             return {
-                id: Date.now() + index,
+                id: index,
                 description: prod.xProd || "",
                 quantity: String(quantity),
                 originalCost: originalUnitCost.toFixed(2),
@@ -89,7 +89,7 @@ export default function BatchPricingCalculator() {
                 price: ""
             };
         });
-        
+
         setItems(newItems.length > 0 ? newItems : [{ id: 1, description: "", quantity: "1", originalCost: "", impostos: "", desconto: "", finalCost: "", margin: "", price: "" }]);
 
         toast({
@@ -97,7 +97,7 @@ export default function BatchPricingCalculator() {
             description: `${newItems.length} itens importados da NF-e.`,
         });
     };
-    
+
     const { handleFileChange, fileInputRef } = useNfeParser({ onNfeProcessed });
 
 
@@ -106,7 +106,7 @@ export default function BatchPricingCalculator() {
             const newItems = prevItems.map(item => {
                 if (item.id === id) {
                     const updatedItem = { ...item, [field]: value };
-                    
+
                     const finalCost = parseFloat(updatedItem.finalCost) || 0;
                     let margin = parseFloat(updatedItem.margin) || 0;
                     let price = parseFloat(updatedItem.price) || 0;
@@ -123,7 +123,7 @@ export default function BatchPricingCalculator() {
                         updatedItem.price = "";
                         updatedItem.margin = "";
                     }
-                    
+
                     return updatedItem;
                 }
                 return item;
@@ -157,7 +157,7 @@ export default function BatchPricingCalculator() {
                 return item;
             });
         });
-        
+
         toast({
             title: "Sucesso!",
             description: `Margem de ${formatNumber(marginValue)}% aplicada a todos os itens.`,
@@ -166,8 +166,8 @@ export default function BatchPricingCalculator() {
 
     const addItem = () => {
         setItems(prev => [
-        ...prev,
-        { id: Date.now(), description: "", quantity: "1", originalCost: "", impostos: "", desconto: "", finalCost: "", margin: "", price: "" },
+            ...prev,
+            { id: prev.length, description: "", quantity: "1", originalCost: "", impostos: "", desconto: "", finalCost: "", margin: "", price: "" },
         ]);
     };
 
@@ -195,8 +195,8 @@ export default function BatchPricingCalculator() {
 
 
     const generatePdf = () => {
-        const doc = new jsPDF({orientation: "landscape"});
-        
+        const doc = new jsPDF({ orientation: "landscape" });
+
         doc.setFontSize(18);
         doc.text("Precificação de Lote", 14, 22);
 
@@ -228,16 +228,16 @@ export default function BatchPricingCalculator() {
                 ]
             ],
             headStyles: { fillColor: [63, 81, 181] },
-            footStyles: { fillColor: [224, 224, 224], textColor: [0,0,0], fontStyle: 'bold' },
+            footStyles: { fillColor: [224, 224, 224], textColor: [0, 0, 0], fontStyle: 'bold' },
         });
-    
+
         doc.save("precificacao_lote.pdf");
     };
-        
+
     return (
         <div className="pt-4 space-y-4">
-             <div className="flex flex-col sm:flex-row flex-wrap gap-2 items-center">
-                 <Button onClick={generatePdf} disabled={items.length === 0 || (items.length === 1 && !items[0].description)}>
+            <div className="flex flex-col sm:flex-row flex-wrap gap-2 items-center">
+                <Button onClick={generatePdf} disabled={items.length === 0 || (items.length === 1 && !items[0].description)}>
                     <Printer className="mr-2 h-4 w-4" />
                     Gerar PDF
                 </Button>
@@ -260,115 +260,115 @@ export default function BatchPricingCalculator() {
                         <ChevronsRight className="h-4 w-4" />
                     </Button>
                 </div>
-                 <Input 
-                    type="file" 
-                    ref={fileInputRef} 
+                <Input
+                    type="file"
+                    ref={fileInputRef}
                     onChange={handleFileChange}
-                    className="hidden" 
+                    className="hidden"
                     accept=".xml"
                 />
             </div>
-            
+
             <div className="overflow-x-auto">
                 <Table>
-                <TableHeader className="bg-muted/50">
-                    <TableRow>
-                    <TableHead className="min-w-[250px]">Descrição</TableHead>
-                    <TableHead className="w-[80px]">Qtde</TableHead>
-                    <TableHead className="w-[120px]">C. Orig. Un.</TableHead>
-                    <TableHead className="w-[120px]">Impostos (+)</TableHead>
-                    <TableHead className="w-[120px]">Desconto (-)</TableHead>
-                    <TableHead className="w-[120px]">C. Final Un.</TableHead>
-                    <TableHead className="w-[120px]">Margem (%)</TableHead>
-                    <TableHead className="w-[120px]">Venda Un.</TableHead>
-                    <TableHead className="w-[120px]">Venda Total</TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {items.map(item => {
-                        const quantity = parseFloat(item.quantity) || 0;
-                        const price = parseFloat(item.price) || 0;
-                        const totalSale = quantity * price;
-                        return (
-                            <TableRow key={item.id}>
-                                <TableCell>
-                                    <Input type="text" placeholder="Nome do produto" value={item.description}
-                                    onChange={e => handleItemChange(item.id, 'description', e.target.value)} className="bg-input-calc" />
-                                </TableCell>
-                                <TableCell>
-                                    <Input type="text" inputMode="decimal" value={item.quantity}
-                                    onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} className="bg-input-calc" />
-                                </TableCell>
-                                <TableCell>
-                                    <Input type="text" inputMode="decimal" value={item.originalCost}
-                                    onChange={e => handleItemChange(item.id, 'originalCost', e.target.value)} className="bg-input-calc" />
-                                </TableCell>
-                                <TableCell>
-                                    <Input type="text" inputMode="decimal" value={item.impostos}
-                                    onChange={e => handleItemChange(item.id, 'impostos', e.target.value)} className="bg-input-calc" />
-                                </TableCell>
-                                <TableCell>
-                                    <Input type="text" inputMode="decimal" value={item.desconto}
-                                    onChange={e => handleItemChange(item.id, 'desconto', e.target.value)} className="bg-input-calc" />
-                                </TableCell>
-                                <TableCell>
-                                    <Input type="text" inputMode="decimal" value={item.finalCost}
-                                    onChange={e => handleItemChange(item.id, 'finalCost', e.target.value)} className="bg-input-calc" />
-                                </TableCell>
-                                <TableCell>
-                                    <Input type="text" inputMode="decimal" value={item.margin}
-                                    onChange={e => handleItemChange(item.id, 'margin', e.target.value)} className="bg-input-calc" />
-                                </TableCell>
-                                <TableCell>
-                                    <Input type="text" inputMode="decimal" value={item.price}
-                                    onChange={e => handleItemChange(item.id, 'price', e.target.value)} className="bg-input-calc" />
-                                </TableCell>
-                                <TableCell>
-                                    <div className="w-full h-10 px-3 py-2 rounded-md border border-input bg-muted flex items-center text-sm">
-                                        {formatCurrency(totalSale)}
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-                                    <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)} disabled={items.length <= 1}>
-                                        <Trash2 className="h-4 w-4 text-destructive" />
-                                    </Button>
-                                </TableCell>
-                            </TableRow>
-                        );
-                    })}
-                </TableBody>
-                <TableFooter className="bg-muted">
-                    <TableRow>
-                        <TableCell colSpan={6} className="text-right font-bold">Totais:</TableCell>
-                        <TableCell className="font-bold text-right">
-                            <div className="flex items-center justify-end space-x-2">
-                                <span>Média</span>
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Info className="h-4 w-4 text-muted-foreground" />
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                        <p>Média de margem sobre o custo total</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            </div>
-                        </TableCell>
-                        <TableCell className="font-bold">
-                            <div className="w-full h-10 px-3 py-2 rounded-md border border-input bg-muted flex items-center text-sm font-bold">
-                                {`${formatNumber(totals.averageMargin)}%`}
-                            </div>
-                        </TableCell>
-                        <TableCell className="font-bold">
-                            <div className="w-full h-10 px-3 py-2 rounded-md border border-input bg-muted flex items-center text-sm font-bold">
-                                {formatCurrency(totals.totalSaleValue)}
-                            </div>
-                        </TableCell>
-                        <TableCell></TableCell>
-                    </TableRow>
-                </TableFooter>
+                    <TableHeader className="bg-muted/50">
+                        <TableRow>
+                            <TableHead className="min-w-[250px]">Descrição</TableHead>
+                            <TableHead className="w-[80px]">Qtde</TableHead>
+                            <TableHead className="w-[120px]">C. Orig. Un.</TableHead>
+                            <TableHead className="w-[120px]">Impostos (+)</TableHead>
+                            <TableHead className="w-[120px]">Desconto (-)</TableHead>
+                            <TableHead className="w-[120px]">C. Final Un.</TableHead>
+                            <TableHead className="w-[120px]">Margem (%)</TableHead>
+                            <TableHead className="w-[120px]">Venda Un.</TableHead>
+                            <TableHead className="w-[120px]">Venda Total</TableHead>
+                            <TableHead className="w-[50px]"></TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {items.map(item => {
+                            const quantity = parseFloat(item.quantity) || 0;
+                            const price = parseFloat(item.price) || 0;
+                            const totalSale = quantity * price;
+                            return (
+                                <TableRow key={item.id}>
+                                    <TableCell>
+                                        <Input type="text" placeholder="Nome do produto" value={item.description}
+                                            onChange={e => handleItemChange(item.id, 'description', e.target.value)} className="bg-input-calc" />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Input type="text" inputMode="decimal" value={item.quantity}
+                                            onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} className="bg-input-calc" />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Input type="text" inputMode="decimal" value={item.originalCost}
+                                            onChange={e => handleItemChange(item.id, 'originalCost', e.target.value)} className="bg-input-calc" />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Input type="text" inputMode="decimal" value={item.impostos}
+                                            onChange={e => handleItemChange(item.id, 'impostos', e.target.value)} className="bg-input-calc" />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Input type="text" inputMode="decimal" value={item.desconto}
+                                            onChange={e => handleItemChange(item.id, 'desconto', e.target.value)} className="bg-input-calc" />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Input type="text" inputMode="decimal" value={item.finalCost}
+                                            onChange={e => handleItemChange(item.id, 'finalCost', e.target.value)} className="bg-input-calc" />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Input type="text" inputMode="decimal" value={item.margin}
+                                            onChange={e => handleItemChange(item.id, 'margin', e.target.value)} className="bg-input-calc" />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Input type="text" inputMode="decimal" value={item.price}
+                                            onChange={e => handleItemChange(item.id, 'price', e.target.value)} className="bg-input-calc" />
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="w-full h-10 px-3 py-2 rounded-md border border-input bg-muted flex items-center text-sm">
+                                            {formatCurrency(totalSale)}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)} disabled={items.length <= 1}>
+                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
+                    </TableBody>
+                    <TableFooter className="bg-muted">
+                        <TableRow>
+                            <TableCell colSpan={6} className="text-right font-bold">Totais:</TableCell>
+                            <TableCell className="font-bold text-right">
+                                <div className="flex items-center justify-end space-x-2">
+                                    <span>Média</span>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Info className="h-4 w-4 text-muted-foreground" />
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Média de margem sobre o custo total</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </div>
+                            </TableCell>
+                            <TableCell className="font-bold">
+                                <div className="w-full h-10 px-3 py-2 rounded-md border border-input bg-muted flex items-center text-sm font-bold">
+                                    {`${formatNumber(totals.averageMargin)}%`}
+                                </div>
+                            </TableCell>
+                            <TableCell className="font-bold">
+                                <div className="w-full h-10 px-3 py-2 rounded-md border border-input bg-muted flex items-center text-sm font-bold">
+                                    {formatCurrency(totals.totalSaleValue)}
+                                </div>
+                            </TableCell>
+                            <TableCell></TableCell>
+                        </TableRow>
+                    </TableFooter>
                 </Table>
             </div>
             <div className="flex flex-wrap gap-2">

@@ -38,7 +38,7 @@ export default function CostAnalysisCalculator() {
     const [items, setItems] = useState<AnalyzedItem[]>([]);
     const [nfeInfo, setNfeInfo] = useState<NfeInfo | null>(null);
     const { toast } = useToast();
-    
+
     const onNfeProcessed = (data: NfeData | null) => {
         if (!data) {
             setItems([]);
@@ -56,7 +56,7 @@ export default function CostAnalysisCalculator() {
             nfeNumber: infNFe.ide.nNF,
         };
         setNfeInfo(newNfeInfo);
-        
+
         const totalFrete = parseFloat(total.vFrete) || 0;
         const totalSeguro = parseFloat(total.vSeg) || 0;
         const totalDesconto = parseFloat(total.vDesc) || 0;
@@ -69,22 +69,22 @@ export default function CostAnalysisCalculator() {
             const quantity = parseFloat(prod.qCom) || 0;
             const unitCost = parseFloat(prod.vUnCom) || 0;
             const itemTotalCost = parseFloat(prod.vProd) || 0;
-            
+
             const itemWeight = totalProdValue > 0 ? itemTotalCost / totalProdValue : 0;
-            
+
             const ipiValor = parseFloat(imposto?.IPI?.IPITrib?.vIPI) || 0;
             const stValor = parseFloat(imposto?.ICMS?.ICMSST?.vICMSST) || 0;
-            
+
             const freteRateado = parseFloat(prod.vFrete) || (totalFrete * itemWeight) || 0;
             const seguroRateado = parseFloat(prod.vSeg) || (totalSeguro * itemWeight) || 0;
             const descontoRateado = parseFloat(prod.vDesc) || (totalDesconto * itemWeight) || 0;
             const outrasRateado = parseFloat(prod.vOutro) || (totalOutras * itemWeight) || 0;
-            
+
             const finalTotalCost = itemTotalCost + ipiValor + stValor + freteRateado + seguroRateado + outrasRateado - descontoRateado;
             const finalUnitCost = quantity > 0 ? finalTotalCost / quantity : 0;
-            
+
             return {
-                id: Date.now() + index,
+                id: index,
                 description: prod.xProd || "",
                 quantity: quantity,
                 unitCost: unitCost,
@@ -101,7 +101,7 @@ export default function CostAnalysisCalculator() {
                 convertedUnitCost: finalUnitCost,
             };
         });
-        
+
         setItems(newItems);
 
         toast({
@@ -109,7 +109,7 @@ export default function CostAnalysisCalculator() {
             description: `${newItems.length} itens importados e analisados da NF-e.`,
         });
     };
-    
+
     const { fileName, handleFileChange, clearNfeData, fileInputRef } = useNfeParser({ onNfeProcessed });
 
 
@@ -125,7 +125,7 @@ export default function CostAnalysisCalculator() {
             })
         );
     };
-    
+
     const totals = useMemo(() => {
         return items.reduce((acc, item) => {
             acc.totalCost += item.totalCost;
@@ -142,7 +142,7 @@ export default function CostAnalysisCalculator() {
 
     const generatePdf = () => {
         const doc = new jsPDF({ orientation: "landscape" });
-        
+
         doc.setFontSize(18);
         doc.text("Análise de Custo por NF-e", doc.internal.pageSize.getWidth() / 2, 22, { align: "center" });
 
@@ -165,24 +165,24 @@ export default function CostAnalysisCalculator() {
             formatCurrency(item.convertedUnitCost),
             formatCurrency(item.finalTotalCost),
         ]);
-        
+
         autoTable(doc, {
             startY: nfeInfo ? 50 : 30,
             head: head,
             body: body,
             foot: [
-                 [
+                [
                     { content: 'Totais:', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } },
                     { content: formatCurrency(totals.totalIPI), styles: { fontStyle: 'bold' } },
                     { content: formatCurrency(totals.totalST), styles: { fontStyle: 'bold' } },
-                    { content: '' }, 
-                    { content: '' }, 
+                    { content: '' },
+                    { content: '' },
                     { content: formatCurrency(totals.finalTotalCost), styles: { fontStyle: 'bold', fillColor: [232, 245, 233] } },
                 ]
             ],
             showFoot: 'lastPage',
             headStyles: { fillColor: [63, 81, 181] },
-            footStyles: { fillColor: [224, 224, 224], textColor: [0,0,0], fontStyle: 'bold' },
+            footStyles: { fillColor: [224, 224, 224], textColor: [0, 0, 0], fontStyle: 'bold' },
             didDrawPage: (data: NonNullable<UserOptions['didDrawPage']>['arguments'][0]) => {
                 const pageCount = doc.internal.pages.length;
                 doc.setFontSize(8);
@@ -193,7 +193,7 @@ export default function CostAnalysisCalculator() {
                 }
             }
         });
-    
+
         doc.save(`analise_custo_nfe_${nfeInfo?.nfeNumber || 'sem_numero'}.pdf`);
     };
 
@@ -215,15 +215,15 @@ export default function CostAnalysisCalculator() {
                     <div className="flex items-center gap-2 p-2 border rounded-md bg-muted flex-1 sm:flex-none justify-between">
                         <span className="text-sm text-muted-foreground truncate" title={fileName}>{fileName}</span>
                         <Button variant="ghost" size="icon" onClick={clearNfeData} className="h-6 w-6">
-                        <FileX className="h-4 w-4 text-destructive" />
+                            <FileX className="h-4 w-4 text-destructive" />
                         </Button>
                     </div>
                 )}
-                <Input 
-                    type="file" 
-                    ref={fileInputRef} 
+                <Input
+                    type="file"
+                    ref={fileInputRef}
                     onChange={handleFileChange}
-                    className="hidden" 
+                    className="hidden"
                     accept=".xml"
                 />
             </div>
@@ -240,7 +240,7 @@ export default function CostAnalysisCalculator() {
             )}
 
             {items.length > 0 && (
-                 <div className="w-full overflow-x-auto">
+                <div className="w-full overflow-x-auto">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -265,7 +265,7 @@ export default function CostAnalysisCalculator() {
                                 <TableRow key={item.id}>
                                     <TableCell className="font-medium text-xs sticky left-0 z-10">{item.description}</TableCell>
                                     <TableCell className="text-right">{formatNumber(item.quantity)}</TableCell>
-                                     <TableCell>
+                                    <TableCell>
                                         <Input
                                             type="text"
                                             inputMode="decimal"
