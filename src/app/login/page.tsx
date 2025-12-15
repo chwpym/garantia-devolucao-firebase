@@ -101,7 +101,7 @@ export default function LoginPage() {
                 id="password"
                 type="password"
                 {...form.register('password')}
-                disabled={isLoading || isGoogleLoading}
+                disabled={isLoading}
               />
               {form.formState.errors.password && (
                 <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>
@@ -112,7 +112,7 @@ export default function LoginPage() {
                 id="remember-me"
                 checked={rememberMe}
                 onCheckedChange={(checked) => setRememberMe(Boolean(checked))}
-                disabled={isLoading || isGoogleLoading}
+                disabled={isLoading}
               />
               <label
                 htmlFor="remember-me"
