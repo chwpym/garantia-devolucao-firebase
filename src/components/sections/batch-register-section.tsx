@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -41,11 +41,16 @@ export default function BatchRegisterSection() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [selectedSupplier, setSelectedSupplier] = useState<string>("");
   const { toast } = useToast();
+  const idCounterRef = useRef(1);
+
+  const getNextId = () => {
+    return idCounterRef.current++;
+  };
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      warranties: [{ id: Date.now(), quantidade: 1 }],
+      warranties: [{ id: getNextId(), quantidade: 1 }],
     },
   });
 
@@ -83,14 +88,14 @@ export default function BatchRegisterSection() {
 
   const onSubmit = async (data: FormValues) => {
     if (!selectedSupplier) {
-        toast({
-            title: "Fornecedor não selecionado",
-            description: "Por favor, selecione um fornecedor para o lote.",
-            variant: "destructive",
-        });
-        return;
+      toast({
+        title: "Fornecedor não selecionado",
+        description: "Por favor, selecione um fornecedor para o lote.",
+        variant: "destructive",
+      });
+      return;
     }
-      
+
     const validWarranties = data.warranties.filter(
       (w) => w.codigo || w.descricao
     );
@@ -136,7 +141,7 @@ export default function BatchRegisterSection() {
       });
       // Reset form to a single empty row
       form.reset({
-        warranties: [{ id: Date.now(), quantidade: 1 }],
+        warranties: [{ id: getNextId(), quantidade: 1 }],
       });
       window.dispatchEvent(new CustomEvent('datachanged'));
     } catch {
@@ -150,7 +155,7 @@ export default function BatchRegisterSection() {
 
   const clientOptions = useMemo(() => persons
     .filter(p => p.tipo === 'Cliente' || p.tipo === 'Ambos')
-    .map(c => ({ value: c.nome, label: c.nome })), 
+    .map(c => ({ value: c.nome, label: c.nome })),
     [persons]
   );
 
@@ -159,7 +164,7 @@ export default function BatchRegisterSection() {
     .map(m => ({ value: m.nome, label: m.nome })),
     [persons]
   );
-  
+
   const supplierOptions = useMemo(() => suppliers.map(s => ({ value: s.nomeFantasia, label: s.nomeFantasia })), [suppliers]);
 
   return (
@@ -180,19 +185,19 @@ export default function BatchRegisterSection() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <CardContent className="space-y-6">
-               <div className="max-w-sm space-y-2">
-                  <Label htmlFor="supplier-selector" className="font-semibold">
-                      Fornecedor <span className="text-destructive">*</span>
-                  </Label>
-                  <Combobox 
-                      options={supplierOptions}
-                      value={selectedSupplier}
-                      onChange={setSelectedSupplier}
-                      placeholder="Selecione um fornecedor"
-                      searchPlaceholder="Buscar fornecedor..."
-                      notFoundMessage="Nenhum encontrado."
-                      className="w-full"
-                  />
+              <div className="max-w-sm space-y-2">
+                <Label htmlFor="supplier-selector" className="font-semibold">
+                  Fornecedor <span className="text-destructive">*</span>
+                </Label>
+                <Combobox
+                  options={supplierOptions}
+                  value={selectedSupplier}
+                  onChange={setSelectedSupplier}
+                  placeholder="Selecione um fornecedor"
+                  searchPlaceholder="Buscar fornecedor..."
+                  notFoundMessage="Nenhum encontrado."
+                  className="w-full"
+                />
               </div>
 
               <div className="overflow-x-auto">
@@ -220,7 +225,7 @@ export default function BatchRegisterSection() {
                             render={({ field }) => <Input {...field} placeholder="Código do produto" />}
                           />
                         </TableCell>
-                         <TableCell className="p-1">
+                        <TableCell className="p-1">
                           <Controller
                             name={`warranties.${index}.descricao`}
                             control={form.control}
@@ -241,7 +246,7 @@ export default function BatchRegisterSection() {
                             render={({ field }) => <Input {...field} placeholder="Defeito apresentado" />}
                           />
                         </TableCell>
-                         <TableCell className="p-1">
+                        <TableCell className="p-1">
                           <Controller
                             name={`warranties.${index}.requisicaoVenda`}
                             control={form.control}
@@ -256,34 +261,34 @@ export default function BatchRegisterSection() {
                           />
                         </TableCell>
                         <TableCell className="p-1">
-                           <Controller
+                          <Controller
                             name={`warranties.${index}.cliente`}
                             control={form.control}
                             render={({ field }) => (
-                                <Combobox 
-                                    options={clientOptions}
-                                    value={field.value ?? ''}
-                                    onChange={field.onChange}
-                                    placeholder="Cliente"
-                                    searchPlaceholder="Buscar..."
-                                    notFoundMessage="Nenhum encontrado."
-                                />
+                              <Combobox
+                                options={clientOptions}
+                                value={field.value ?? ''}
+                                onChange={field.onChange}
+                                placeholder="Cliente"
+                                searchPlaceholder="Buscar..."
+                                notFoundMessage="Nenhum encontrado."
+                              />
                             )}
                           />
                         </TableCell>
                         <TableCell className="p-1">
-                           <Controller
+                          <Controller
                             name={`warranties.${index}.mecanico`}
                             control={form.control}
                             render={({ field }) => (
-                                <Combobox 
-                                    options={mechanicOptions}
-                                    value={field.value ?? ''}
-                                    onChange={field.onChange}
-                                    placeholder="Mecânico"
-                                    searchPlaceholder="Buscar..."
-                                    notFoundMessage="Nenhum encontrado."
-                                />
+                              <Combobox
+                                options={mechanicOptions}
+                                value={field.value ?? ''}
+                                onChange={field.onChange}
+                                placeholder="Mecânico"
+                                searchPlaceholder="Buscar..."
+                                notFoundMessage="Nenhum encontrado."
+                              />
                             )}
                           />
                         </TableCell>
@@ -308,7 +313,7 @@ export default function BatchRegisterSection() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => append({ id: Date.now(), quantidade: 1 })}
+                onClick={() => append({ id: getNextId(), quantidade: 1 })}
               >
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Adicionar Linha
