@@ -5,7 +5,7 @@
 import type { Warranty, Person, Supplier, Lote, LoteItem, CompanyData, Devolucao, ItemDevolucao, Product, PurchaseSimulation, UserProfile } from './types';
 
 const DB_NAME = 'GarantiasDB';
-const DB_VERSION = 8; // Incremented version
+const DB_VERSION = 9; // Updated to match existing database version
 
 const GARANTIAS_STORE_NAME = 'garantias';
 const PERSONS_STORE_NAME = 'persons';
