@@ -29,7 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const app = getFirebaseApp();
     const auth = getAuth(app);
-    
+
     const unsubscribe = onAuthStateChanged(auth, (authUser) => {
       if (authUser) {
         // User is signed in, now fetch or create profile
@@ -39,21 +39,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             let profile = await db.getUserProfile(authUser.uid);
 
             if (!profile) {
-              // Profile doesn't exist, create it.
+              // Profile doesn't exist.
+              // CHECK: Is this the first user ever?
               const userCount = await countUsers();
-              const newRole = userCount === 0 ? 'admin' : 'user';
 
-              console.log(`Creating profile for ${authUser.email}. User count: ${userCount}. New role: ${newRole}`);
-              
-              profile = {
-                uid: authUser.uid,
-                email: authUser.email!,
-                displayName: authUser.displayName || authUser.email?.split('@')[0] || 'Novo Usuário',
-                photoURL: authUser.photoURL || undefined, // Save the photoURL if it exists
-                role: newRole,
-                status: 'active',
-              };
-              await db.upsertUserProfile(profile);
+              if (userCount === 0) {
+                // First user -> Auto-create as ADMIN (Bootstrap)
+                const newRole = 'admin';
+                console.log(`Bootstrap: Creating first user (Admin) for ${authUser.email}`);
+
+                profile = {
+                  uid: authUser.uid,
+                  email: authUser.email!,
+                  displayName: authUser.displayName || authUser.email?.split('@')[0] || 'Admin',
+                  photoURL: authUser.photoURL || undefined,
+                  role: newRole,
+                  status: 'active',
+                };
+                await db.upsertUserProfile(profile);
+              } else {
+                // System already has users -> BLOCK unknown users (Closed System)
+                console.warn(`Access denied for ${authUser.email}. User not found in DB and system is not empty.`);
+                toast({
+                  title: 'Acesso Restrito',
+                  description: 'Usuário não cadastrado no sistema. Solicite acesso ao administrador.',
+                  variant: 'destructive',
+                  duration: 10000,
+                });
+                await signOut(auth);
+                setUser(null);
+                setLoading(false);
+                return;
+              }
             }
 
             // ** SECURITY CHECK: Blocked users should not be able to log in **
@@ -69,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               setLoading(false);
               return;
             }
-            
+
             setUser({ ...authUser, profile });
 
           } catch (error) {
@@ -103,9 +120,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 }
 
 export const useAuth = (): AuthContextType => {
-    const context = useContext(AuthContext);
-    if (context === undefined) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
-    return context;
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };
