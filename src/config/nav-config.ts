@@ -72,6 +72,7 @@ export const navConfig: NavItem[] = [
     adminOnly: true, // This whole section is for admins
     items: [
         { id: 'users', label: 'Gerenciar Usuários', icon: Users },
+        { id: 'status', label: 'Gerenciar Status', icon: UserCog }, // Using UserCog or Settings as icon
     ]
   }
 ];

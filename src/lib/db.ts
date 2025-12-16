@@ -18,6 +18,7 @@ const ITENS_DEVOLUCAO_STORE_NAME = 'itens_devolucao';
 const PRODUCTS_STORE_NAME = 'products';
 const SIMULATIONS_STORE_NAME = 'simulations';
 const USERS_STORE_NAME = 'users'; // New store for user profiles/roles
+const STATUSES_STORE_NAME = 'statuses';
 
 
 let dbPromise: Promise<IDBDatabase> | null = null;
@@ -32,25 +33,25 @@ const getDB = (): Promise<IDBDatabase> => {
         reject('IndexedDB is not supported.');
         return;
       }
-      
+
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 
       request.onupgradeneeded = (event) => {
         const dbInstance = (event.target as IDBOpenDBRequest).result;
-        
+
         if (!dbInstance.objectStoreNames.contains(GARANTIAS_STORE_NAME)) {
           const warrantyStore = dbInstance.createObjectStore(GARANTIAS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
           warrantyStore.createIndex('loteId', 'loteId', { unique: false });
         } else {
-            const transaction = (event.target as IDBOpenDBRequest).transaction;
-            if (transaction) {
-                const warrantyStore = transaction.objectStore(GARANTIAS_STORE_NAME);
-                if (!warrantyStore.indexNames.contains('loteId')) {
-                    warrantyStore.createIndex('loteId', 'loteId', { unique: false });
-                }
+          const transaction = (event.target as IDBOpenDBRequest).transaction;
+          if (transaction) {
+            const warrantyStore = transaction.objectStore(GARANTIAS_STORE_NAME);
+            if (!warrantyStore.indexNames.contains('loteId')) {
+              warrantyStore.createIndex('loteId', 'loteId', { unique: false });
             }
+          }
         }
-        
+
         if (!dbInstance.objectStoreNames.contains(PERSONS_STORE_NAME)) {
           dbInstance.createObjectStore(PERSONS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
         }
@@ -58,35 +59,40 @@ const getDB = (): Promise<IDBDatabase> => {
           dbInstance.createObjectStore(SUPPLIERS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
         }
         if (!dbInstance.objectStoreNames.contains(LOTES_STORE_NAME)) {
-            dbInstance.createObjectStore(LOTES_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+          dbInstance.createObjectStore(LOTES_STORE_NAME, { keyPath: 'id', autoIncrement: true });
         }
         if (!dbInstance.objectStoreNames.contains(LOTE_ITEMS_STORE_NAME)) {
-            const loteItemsStore = dbInstance.createObjectStore(LOTE_ITEMS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
-            loteItemsStore.createIndex('loteId', 'loteId', { unique: false });
+          const loteItemsStore = dbInstance.createObjectStore(LOTE_ITEMS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+          loteItemsStore.createIndex('loteId', 'loteId', { unique: false });
         }
         if (!dbInstance.objectStoreNames.contains(COMPANY_DATA_STORE_NAME)) {
           dbInstance.createObjectStore(COMPANY_DATA_STORE_NAME, { keyPath: 'id' });
         }
         if (!dbInstance.objectStoreNames.contains(DEVOLUCOES_STORE_NAME)) {
-            dbInstance.createObjectStore(DEVOLUCOES_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+          dbInstance.createObjectStore(DEVOLUCOES_STORE_NAME, { keyPath: 'id', autoIncrement: true });
         }
         if (!dbInstance.objectStoreNames.contains(ITENS_DEVOLUCAO_STORE_NAME)) {
-            const itensDevolucaoStore = dbInstance.createObjectStore(ITENS_DEVOLUCAO_STORE_NAME, { keyPath: 'id', autoIncrement: true });
-            itensDevolucaoStore.createIndex('devolucaoId', 'devolucaoId', { unique: false });
+          const itensDevolucaoStore = dbInstance.createObjectStore(ITENS_DEVOLUCAO_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+          itensDevolucaoStore.createIndex('devolucaoId', 'devolucaoId', { unique: false });
         }
         if (!dbInstance.objectStoreNames.contains(PRODUCTS_STORE_NAME)) {
-            const productStore = dbInstance.createObjectStore(PRODUCTS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
-            productStore.createIndex('codigo', 'codigo', { unique: true });
+          const productStore = dbInstance.createObjectStore(PRODUCTS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+          productStore.createIndex('codigo', 'codigo', { unique: true });
         }
         if (!dbInstance.objectStoreNames.contains(SIMULATIONS_STORE_NAME)) {
-            const simulationStore = dbInstance.createObjectStore(SIMULATIONS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
-            simulationStore.createIndex('nfeNumber', 'nfeInfo.nfeNumber', { unique: false });
-            simulationStore.createIndex('emitterName', 'nfeInfo.emitterName', { unique: false });
+          const simulationStore = dbInstance.createObjectStore(SIMULATIONS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+          simulationStore.createIndex('nfeNumber', 'nfeInfo.nfeNumber', { unique: false });
+          simulationStore.createIndex('emitterName', 'nfeInfo.emitterName', { unique: false });
         }
         // Create user profile store
         if (!dbInstance.objectStoreNames.contains(USERS_STORE_NAME)) {
-            const userStore = dbInstance.createObjectStore(USERS_STORE_NAME, { keyPath: 'uid' });
-            userStore.createIndex('email', 'email', { unique: true });
+          const userStore = dbInstance.createObjectStore(USERS_STORE_NAME, { keyPath: 'uid' });
+          userStore.createIndex('email', 'email', { unique: true });
+        }
+
+        // Create custom statuses store
+        if (!dbInstance.objectStoreNames.contains(STATUSES_STORE_NAME)) {
+          dbInstance.createObjectStore(STATUSES_STORE_NAME, { keyPath: 'id', autoIncrement: true });
         }
       };
 
@@ -150,12 +156,12 @@ export const getUserProfile = (uid: string): Promise<UserProfile | undefined> =>
 export const getAllUserProfiles = (): Promise<UserProfile[]> => {
   return new Promise(async (resolve, reject) => {
     try {
-        const store = await getStore(USERS_STORE_NAME, 'readonly');
-        const request = store.getAll();
-        request.onsuccess = () => resolve(request.result as UserProfile[]);
-        request.onerror = () => reject(request.error);
+      const store = await getStore(USERS_STORE_NAME, 'readonly');
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result as UserProfile[]);
+      request.onerror = () => reject(request.error);
     } catch (err) {
-        reject(err);
+      reject(err);
     }
   });
 };
@@ -180,12 +186,12 @@ export const upsertUserProfile = (profile: UserProfile): Promise<string> => {
 export const addWarranty = (warranty: Omit<Warranty, 'id'>): Promise<number> => {
   return new Promise(async (resolve, reject) => {
     try {
-        const store = await getStore(GARANTIAS_STORE_NAME, 'readwrite');
-        const request = store.add(warranty);
-        request.onsuccess = () => resolve(request.result as number);
-        request.onerror = () => reject(request.error);
-    } catch(err) {
-        reject(err);
+      const store = await getStore(GARANTIAS_STORE_NAME, 'readwrite');
+      const request = store.add(warranty);
+      request.onsuccess = () => resolve(request.result as number);
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
     }
   });
 };
@@ -193,12 +199,12 @@ export const addWarranty = (warranty: Omit<Warranty, 'id'>): Promise<number> => 
 export const getAllWarranties = (): Promise<Warranty[]> => {
   return new Promise(async (resolve, reject) => {
     try {
-        const store = await getStore(GARANTIAS_STORE_NAME, 'readonly');
-        const request = store.getAll();
-        request.onsuccess = () => resolve(request.result as Warranty[]);
-        request.onerror = () => reject(request.error);
+      const store = await getStore(GARANTIAS_STORE_NAME, 'readonly');
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result as Warranty[]);
+      request.onerror = () => reject(request.error);
     } catch (err) {
-        reject(err);
+      reject(err);
     }
   });
 };
@@ -222,27 +228,27 @@ export const getWarrantyById = (id: number): Promise<Warranty | undefined> => {
 
 
 export const getWarrantiesByIds = (ids: number[]): Promise<Warranty[]> => {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const allWarranties = await getAllWarranties();
-        const numericIds = ids.map(id => Number(id));
-        const filtered = allWarranties.filter(w => w.id && numericIds.includes(w.id));
-        resolve(filtered);
-      } catch (err) {
-        reject(err);
-      }
-    });
+  return new Promise(async (resolve, reject) => {
+    try {
+      const allWarranties = await getAllWarranties();
+      const numericIds = ids.map(id => Number(id));
+      const filtered = allWarranties.filter(w => w.id && numericIds.includes(w.id));
+      resolve(filtered);
+    } catch (err) {
+      reject(err);
+    }
+  });
 };
 
 export const updateWarranty = (warranty: Warranty): Promise<number> => {
-  return new Promise(async(resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
-        const store = await getStore(GARANTIAS_STORE_NAME, 'readwrite');
-        const request = store.put(warranty);
-        request.onsuccess = () => resolve(request.result as number);
-        request.onerror = () => reject(request.error);
+      const store = await getStore(GARANTIAS_STORE_NAME, 'readwrite');
+      const request = store.put(warranty);
+      request.onsuccess = () => resolve(request.result as number);
+      request.onerror = () => reject(request.error);
     } catch (err) {
-        reject(err);
+      reject(err);
     }
   });
 };
@@ -250,12 +256,12 @@ export const updateWarranty = (warranty: Warranty): Promise<number> => {
 export const deleteWarranty = (id: number): Promise<void> => {
   return new Promise(async (resolve, reject) => {
     try {
-        const store = await getStore(GARANTIAS_STORE_NAME, 'readwrite');
-        const request = store.delete(id);
-        request.onsuccess = () => resolve();
-        request.onerror = () => reject(request.error);
+      const store = await getStore(GARANTIAS_STORE_NAME, 'readwrite');
+      const request = store.delete(id);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
     } catch (err) {
-        reject(err);
+      reject(err);
     }
   });
 };
@@ -427,34 +433,34 @@ export const deleteLote = async (id: number): Promise<void> => {
     const deleteLoteRequest = lotesStore.delete(id);
 
     deleteLoteRequest.onerror = () => reject(deleteLoteRequest.error);
-    
+
     deleteLoteRequest.onsuccess = () => {
-        // 2. Unlink all warranties associated with this lote
-        const warrantyIndex = warrantiesStore.index('loteId');
-        const getWarrantiesRequest = warrantyIndex.getAll(id);
+      // 2. Unlink all warranties associated with this lote
+      const warrantyIndex = warrantiesStore.index('loteId');
+      const getWarrantiesRequest = warrantyIndex.getAll(id);
 
-        getWarrantiesRequest.onerror = () => reject(getWarrantiesRequest.error);
+      getWarrantiesRequest.onerror = () => reject(getWarrantiesRequest.error);
 
-        getWarrantiesRequest.onsuccess = () => {
-            const warrantiesToUpdate = getWarrantiesRequest.result;
-            if (warrantiesToUpdate.length === 0) {
-                resolve();
-                return;
+      getWarrantiesRequest.onsuccess = () => {
+        const warrantiesToUpdate = getWarrantiesRequest.result;
+        if (warrantiesToUpdate.length === 0) {
+          resolve();
+          return;
+        }
+
+        let updatedCount = 0;
+        warrantiesToUpdate.forEach(warranty => {
+          warranty.loteId = null; // or delete warranty.loteId;
+          const updateRequest = warrantiesStore.put(warranty);
+          updateRequest.onerror = () => reject(updateRequest.error);
+          updateRequest.onsuccess = () => {
+            updatedCount++;
+            if (updatedCount === warrantiesToUpdate.length) {
+              resolve();
             }
-
-            let updatedCount = 0;
-            warrantiesToUpdate.forEach(warranty => {
-                warranty.loteId = null; // or delete warranty.loteId;
-                const updateRequest = warrantiesStore.put(warranty);
-                updateRequest.onerror = () => reject(updateRequest.error);
-                updateRequest.onsuccess = () => {
-                    updatedCount++;
-                    if (updatedCount === warrantiesToUpdate.length) {
-                        resolve();
-                    }
-                };
-            });
-        };
+          };
+        });
+      };
     };
 
     transaction.onabort = () => reject(transaction.error);
@@ -479,17 +485,17 @@ export const addLoteItem = (loteItem: Omit<LoteItem, 'id'>): Promise<number> => 
 };
 
 export const getLoteItemsByLoteId = (loteId: number): Promise<LoteItem[]> => {
-    return new Promise(async (resolve, reject) => {
-        try {
-            const store = await getStore(LOTE_ITEMS_STORE_NAME, 'readonly');
-            const index = store.index('loteId');
-            const request = index.getAll(loteId);
-            request.onsuccess = () => resolve(request.result as LoteItem[]);
-            request.onerror = () => reject(request.error);
-        } catch(err) {
-            reject(err);
-        }
-    });
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(LOTE_ITEMS_STORE_NAME, 'readonly');
+      const index = store.index('loteId');
+      const request = index.getAll(loteId);
+      request.onsuccess = () => resolve(request.result as LoteItem[]);
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
 };
 
 export const deleteLoteItem = (id: number): Promise<void> => {
@@ -509,31 +515,31 @@ export const deleteLoteItem = (id: number): Promise<void> => {
 // --- Company Data Functions ---
 
 export const getCompanyData = (): Promise<CompanyData | null> => {
-    return new Promise(async (resolve, reject) => {
-        try {
-            const store = await getStore(COMPANY_DATA_STORE_NAME, 'readonly');
-            // We use a fixed ID of 1 for the single company record
-            const request = store.get(1);
-            request.onsuccess = () => resolve(request.result as CompanyData || null);
-            request.onerror = () => reject(request.error);
-        } catch (err) {
-            reject(err);
-        }
-    });
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(COMPANY_DATA_STORE_NAME, 'readonly');
+      // We use a fixed ID of 1 for the single company record
+      const request = store.get(1);
+      request.onsuccess = () => resolve(request.result as CompanyData || null);
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
 };
 
 export const updateCompanyData = (companyData: Omit<CompanyData, 'id'>): Promise<number> => {
-    return new Promise(async (resolve, reject) => {
-        try {
-            const store = await getStore(COMPANY_DATA_STORE_NAME, 'readwrite');
-            // We use a fixed ID of 1 to always update the same record
-            const request = store.put({ ...companyData, id: 1 });
-            request.onsuccess = () => resolve(request.result as number);
-            request.onerror = () => reject(request.error);
-        } catch (err) {
-            reject(err);
-        }
-    });
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(COMPANY_DATA_STORE_NAME, 'readwrite');
+      // We use a fixed ID of 1 to always update the same record
+      const request = store.put({ ...companyData, id: 1 });
+      request.onsuccess = () => resolve(request.result as number);
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
 };
 
 export const clearCompanyData = (): Promise<void> => clearStore(COMPANY_DATA_STORE_NAME);
@@ -549,7 +555,7 @@ export const addDevolucao = async (devolucao: Omit<Devolucao, 'id'>, itens: Omit
 
   return new Promise((resolve, reject) => {
     const request = devolucoesStore.add(devolucao);
-    
+
     request.onerror = () => reject(request.error);
 
     request.onsuccess = () => {
@@ -572,185 +578,185 @@ export const addDevolucao = async (devolucao: Omit<Devolucao, 'id'>, itens: Omit
         };
       });
     };
-    
+
     transaction.onabort = () => reject(transaction.error);
   });
 };
 
 export const updateDevolucao = async (devolucao: Devolucao, itens: (Omit<ItemDevolucao, 'devolucaoId'>)[]): Promise<void> => {
-    const db = await getDB();
-    const transaction = db.transaction([DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME], 'readwrite');
-    const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
-    const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
+  const db = await getDB();
+  const transaction = db.transaction([DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME], 'readwrite');
+  const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
+  const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
 
-    return new Promise((resolve, reject) => {
-        // 1. Update the main Devolucao object
-        const devRequest = devolucoesStore.put(devolucao);
-        devRequest.onerror = () => reject(devRequest.error);
+  return new Promise((resolve, reject) => {
+    // 1. Update the main Devolucao object
+    const devRequest = devolucoesStore.put(devolucao);
+    devRequest.onerror = () => reject(devRequest.error);
 
-        devRequest.onsuccess = () => {
-            const devolucaoId = devolucao.id!;
-            // 2. Clear existing items for this devolucao
-            const itemIndex = itensStore.index('devolucaoId');
-            const clearRequest = itemIndex.openCursor(IDBKeyRange.only(devolucaoId));
-            
-            clearRequest.onerror = () => reject(clearRequest.error);
-            clearRequest.onsuccess = (event) => {
-                const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
-                if (cursor) {
-                    cursor.delete();
-                    cursor.continue();
-                } else {
-                    // 3. Add the new/updated items
-                    if (itens.length === 0) {
-                        resolve();
-                        return;
-                    }
-                    let itemsAdded = 0;
-                    itens.forEach(item => {
-                         const itemToAdd: Omit<ItemDevolucao, 'id'> = {
-                            ...item,
-                            devolucaoId,
-                        };
-                        const itemRequest = itensStore.add(itemToAdd);
-                        itemRequest.onerror = () => reject(itemRequest.error);
-                        itemRequest.onsuccess = () => {
-                            itemsAdded++;
-                            if (itemsAdded === itens.length) {
-                                resolve();
-                            }
-                        };
-                    });
-                }
-            }
-        };
-        transaction.onabort = () => reject(transaction.error);
-    });
+    devRequest.onsuccess = () => {
+      const devolucaoId = devolucao.id!;
+      // 2. Clear existing items for this devolucao
+      const itemIndex = itensStore.index('devolucaoId');
+      const clearRequest = itemIndex.openCursor(IDBKeyRange.only(devolucaoId));
+
+      clearRequest.onerror = () => reject(clearRequest.error);
+      clearRequest.onsuccess = (event) => {
+        const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
+        if (cursor) {
+          cursor.delete();
+          cursor.continue();
+        } else {
+          // 3. Add the new/updated items
+          if (itens.length === 0) {
+            resolve();
+            return;
+          }
+          let itemsAdded = 0;
+          itens.forEach(item => {
+            const itemToAdd: Omit<ItemDevolucao, 'id'> = {
+              ...item,
+              devolucaoId,
+            };
+            const itemRequest = itensStore.add(itemToAdd);
+            itemRequest.onerror = () => reject(itemRequest.error);
+            itemRequest.onsuccess = () => {
+              itemsAdded++;
+              if (itemsAdded === itens.length) {
+                resolve();
+              }
+            };
+          });
+        }
+      }
+    };
+    transaction.onabort = () => reject(transaction.error);
+  });
 };
 
 
 export const getAllDevolucoes = async (): Promise<(Devolucao & { itens: ItemDevolucao[] })[]> => {
-    const db = await getDB();
-    const transaction = db.transaction([DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME], 'readonly');
-    const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
-    const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
-    const itensIndex = itensStore.index('devolucaoId');
+  const db = await getDB();
+  const transaction = db.transaction([DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME], 'readonly');
+  const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
+  const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
+  const itensIndex = itensStore.index('devolucaoId');
 
-    return new Promise((resolve, reject) => {
-        const devolucoesRequest = devolucoesStore.getAll();
-        
-        devolucoesRequest.onerror = () => reject(devolucoesRequest.error);
+  return new Promise((resolve, reject) => {
+    const devolucoesRequest = devolucoesStore.getAll();
 
-        devolucoesRequest.onsuccess = () => {
-            const devolucoes = devolucoesRequest.result as Devolucao[];
-            const result: (Devolucao & { itens: ItemDevolucao[] })[] = [];
-            let processedCount = 0;
+    devolucoesRequest.onerror = () => reject(devolucoesRequest.error);
 
-            if (devolucoes.length === 0) {
-                resolve([]);
-                return;
-            }
+    devolucoesRequest.onsuccess = () => {
+      const devolucoes = devolucoesRequest.result as Devolucao[];
+      const result: (Devolucao & { itens: ItemDevolucao[] })[] = [];
+      let processedCount = 0;
 
-            devolucoes.forEach(devolucao => {
-                const itensRequest = itensIndex.getAll(devolucao.id);
-                itensRequest.onerror = () => reject(itensRequest.error);
-                itensRequest.onsuccess = () => {
-                    result.push({ ...devolucao, itens: itensRequest.result });
-                    processedCount++;
-                    if (processedCount === devolucoes.length) {
-                        resolve(result);
-                    }
-                };
-            });
+      if (devolucoes.length === 0) {
+        resolve([]);
+        return;
+      }
+
+      devolucoes.forEach(devolucao => {
+        const itensRequest = itensIndex.getAll(devolucao.id);
+        itensRequest.onerror = () => reject(itensRequest.error);
+        itensRequest.onsuccess = () => {
+          result.push({ ...devolucao, itens: itensRequest.result });
+          processedCount++;
+          if (processedCount === devolucoes.length) {
+            resolve(result);
+          }
         };
-    });
+      });
+    };
+  });
 };
 
 export const getDevolucaoById = async (id: number): Promise<(Devolucao & { itens: ItemDevolucao[] }) | null> => {
-     const db = await getDB();
-    const transaction = db.transaction([DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME], 'readonly');
-    const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
-    const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
-    const itensIndex = itensStore.index('devolucaoId');
+  const db = await getDB();
+  const transaction = db.transaction([DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME], 'readonly');
+  const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
+  const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
+  const itensIndex = itensStore.index('devolucaoId');
 
-    return new Promise((resolve, reject) => {
-        const devRequest = devolucoesStore.get(id);
-        devRequest.onerror = () => reject(devRequest.error);
-        devRequest.onsuccess = () => {
-            const devolucao = devRequest.result as Devolucao;
-            if (!devolucao) {
-                resolve(null);
-                return;
-            }
+  return new Promise((resolve, reject) => {
+    const devRequest = devolucoesStore.get(id);
+    devRequest.onerror = () => reject(devRequest.error);
+    devRequest.onsuccess = () => {
+      const devolucao = devRequest.result as Devolucao;
+      if (!devolucao) {
+        resolve(null);
+        return;
+      }
 
-            const itensRequest = itensIndex.getAll(id);
-            itensRequest.onerror = () => reject(itensRequest.error);
-            itensRequest.onsuccess = () => {
-                resolve({ ...devolucao, itens: itensRequest.result });
-            };
-        };
-    });
+      const itensRequest = itensIndex.getAll(id);
+      itensRequest.onerror = () => reject(itensRequest.error);
+      itensRequest.onsuccess = () => {
+        resolve({ ...devolucao, itens: itensRequest.result });
+      };
+    };
+  });
 };
 
 
 export const deleteDevolucao = async (id: number): Promise<void> => {
-    const db = await getDB();
-    const transaction = db.transaction([DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME], 'readwrite');
-    const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
-    const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
+  const db = await getDB();
+  const transaction = db.transaction([DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME], 'readwrite');
+  const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
+  const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
 
-    return new Promise((resolve, reject) => {
-        // 1. Delete the main Devolucao object
-        const devRequest = devolucoesStore.delete(id);
-        devRequest.onerror = () => reject(devRequest.error);
+  return new Promise((resolve, reject) => {
+    // 1. Delete the main Devolucao object
+    const devRequest = devolucoesStore.delete(id);
+    devRequest.onerror = () => reject(devRequest.error);
 
-        devRequest.onsuccess = () => {
-            // 2. Delete associated items
-            const itemIndex = itensStore.index('devolucaoId');
-            const clearRequest = itemIndex.openCursor(IDBKeyRange.only(id));
-            
-            clearRequest.onerror = () => reject(clearRequest.error);
-            clearRequest.onsuccess = (event) => {
-                const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
-                if (cursor) {
-                    cursor.delete();
-                    cursor.continue();
-                } else {
-                    // When all items are deleted, resolve
-                    resolve();
-                }
-            };
-        };
+    devRequest.onsuccess = () => {
+      // 2. Delete associated items
+      const itemIndex = itensStore.index('devolucaoId');
+      const clearRequest = itemIndex.openCursor(IDBKeyRange.only(id));
 
-        transaction.onabort = () => reject(transaction.error);
-    });
+      clearRequest.onerror = () => reject(clearRequest.error);
+      clearRequest.onsuccess = (event) => {
+        const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
+        if (cursor) {
+          cursor.delete();
+          cursor.continue();
+        } else {
+          // When all items are deleted, resolve
+          resolve();
+        }
+      };
+    };
+
+    transaction.onabort = () => reject(transaction.error);
+  });
 };
 
 export const clearDevolucoes = async (): Promise<void> => {
-    const db = await getDB();
-    const transaction = db.transaction([DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME], 'readwrite');
-    const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
-    const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
+  const db = await getDB();
+  const transaction = db.transaction([DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME], 'readwrite');
+  const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
+  const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
 
-    return new Promise((resolve, reject) => {
-        const req1 = devolucoesStore.clear();
-        let success1 = false;
-        req1.onerror = () => reject(req1.error);
-        req1.onsuccess = () => {
-            success1 = true;
-            if (success2) resolve();
-        };
+  return new Promise((resolve, reject) => {
+    const req1 = devolucoesStore.clear();
+    let success1 = false;
+    req1.onerror = () => reject(req1.error);
+    req1.onsuccess = () => {
+      success1 = true;
+      if (success2) resolve();
+    };
 
-        const req2 = itensStore.clear();
-        let success2 = false;
-        req2.onerror = () => reject(req2.error);
-        req2.onsuccess = () => {
-            success2 = true;
-            if (success1) resolve();
-        };
+    const req2 = itensStore.clear();
+    let success2 = false;
+    req2.onerror = () => reject(req2.error);
+    req2.onsuccess = () => {
+      success2 = true;
+      if (success1) resolve();
+    };
 
-        transaction.onabort = () => reject(transaction.error);
-    });
+    transaction.onabort = () => reject(transaction.error);
+  });
 };
 
 
@@ -782,20 +788,20 @@ export const getAllProducts = (): Promise<Product[]> => {
 };
 
 export const getProductByCode = (codigo: string): Promise<Product | undefined> => {
-    return new Promise(async (resolve, reject) => {
-        if (!codigo) {
-            return resolve(undefined);
-        }
-        try {
-            const store = await getStore(PRODUCTS_STORE_NAME, 'readonly');
-            const index = store.index('codigo');
-            const request = index.get(codigo);
-            request.onsuccess = () => resolve(request.result as Product | undefined);
-            request.onerror = () => reject(request.error);
-        } catch(err) {
-            reject(err);
-        }
-    });
+  return new Promise(async (resolve, reject) => {
+    if (!codigo) {
+      return resolve(undefined);
+    }
+    try {
+      const store = await getStore(PRODUCTS_STORE_NAME, 'readonly');
+      const index = store.index('codigo');
+      const request = index.get(codigo);
+      request.onsuccess = () => resolve(request.result as Product | undefined);
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
 };
 
 export const updateProduct = (product: Product): Promise<number> => {
@@ -886,3 +892,59 @@ export const clearSimulations = (): Promise<void> => clearStore(SIMULATIONS_STOR
 // --- General Purpose ---
 // Note: clearUsers is not exported because it should be handled carefully
 export const clearUsers = (): Promise<void> => clearStore(USERS_STORE_NAME);
+
+// --- Custom Status Functions ---
+
+import type { CustomStatus } from './types';
+
+export const getAllStatuses = async (): Promise<CustomStatus[]> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(STATUSES_STORE_NAME, 'readonly');
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+export const addStatus = async (status: CustomStatus): Promise<number> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(STATUSES_STORE_NAME, 'readwrite');
+      const request = store.add(status);
+      request.onsuccess = () => resolve(request.result as number);
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+export const updateStatus = async (status: CustomStatus): Promise<void> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(STATUSES_STORE_NAME, 'readwrite');
+      const request = store.put(status);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+export const deleteStatus = async (id: number): Promise<void> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(STATUSES_STORE_NAME, 'readwrite');
+      const request = store.delete(id);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};

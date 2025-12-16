@@ -58,38 +58,38 @@ export interface Supplier {
 export type LoteStatus = 'Aberto' | 'Enviado' | 'Aprovado Parcialmente' | 'Aprovado Totalmente' | 'Recusado';
 
 export interface LoteAttachment {
-    name: string;
-    url: string; // Changed from dataUri to url
+  name: string;
+  url: string; // Changed from dataUri to url
 }
 
 export interface Lote {
-    id?: number;
-    nome: string;
-    fornecedor: string;
-    dataCriacao: string;
-    dataEnvio?: string;
-    notaFiscalSaida?: string;
-    notasFiscaisRetorno?: string;
-    status: LoteStatus;
-    attachments?: LoteAttachment[];
+  id?: number;
+  nome: string;
+  fornecedor: string;
+  dataCriacao: string;
+  dataEnvio?: string;
+  notaFiscalSaida?: string;
+  notasFiscaisRetorno?: string;
+  status: LoteStatus;
+  attachments?: LoteAttachment[];
 }
 
 export interface LoteItem {
-    id?: number;
-    loteId: number;
-    warrantyId: number;
+  id?: number;
+  loteId: number;
+  warrantyId: number;
 }
 
 export interface CompanyData {
-    id?: number;
-    nomeEmpresa?: string;
-    cnpj?: string;
-    cep?: string;
-    endereco?: string;
-    bairro?: string;
-    cidade?: string;
-    telefone?: string;
-    email?: string;
+  id?: number;
+  nomeEmpresa?: string;
+  cnpj?: string;
+  cep?: string;
+  endereco?: string;
+  bairro?: string;
+  cidade?: string;
+  telefone?: string;
+  email?: string;
 }
 
 export interface Product {
@@ -106,49 +106,49 @@ export type ReturnStatus = 'Recebido' | 'Aguardando Peças' | 'Finalizada' | 'Ca
 export type RequisitionAction = 'Alterada' | 'Excluída';
 
 export interface Devolucao {
-    id?: number;
-    cliente: string;
-    mecanico?: string;
-    requisicaoVenda: string;
-    acaoRequisicao: RequisitionAction;
-    dataVenda?: string;
-    dataDevolucao: string;
-    status: ReturnStatus;
-    observacaoGeral?: string;
+  id?: number;
+  cliente: string;
+  mecanico?: string;
+  requisicaoVenda: string;
+  acaoRequisicao: RequisitionAction;
+  dataVenda?: string;
+  dataDevolucao: string;
+  status: ReturnStatus;
+  observacaoGeral?: string;
 }
 
 export interface ItemDevolucao {
-    id?: number;
-    devolucaoId: number;
-    codigoPeca: string;
-    descricaoPeca: string;
-    quantidade: number;
+  id?: number;
+  devolucaoId: number;
+  codigoPeca: string;
+  descricaoPeca: string;
+  quantidade: number;
 }
 
 // --- Purchase Simulator ---
 export interface NfeInfo {
-    emitterName: string;
-    emitterCnpj: string;
-    emitterCity: string;
-    nfeNumber: string;
+  emitterName: string;
+  emitterCnpj: string;
+  emitterCity: string;
+  nfeNumber: string;
 }
 
 export interface SimulatedItemData {
-    code: string;
-    description: string;
-    originalQuantity: number;
-    simulatedQuantity: string;
-    finalUnitCost: number;
+  code: string;
+  description: string;
+  originalQuantity: number;
+  simulatedQuantity: string;
+  finalUnitCost: number;
 }
 
 export interface PurchaseSimulation {
-    id?: number;
-    simulationName: string;
-    nfeInfo: NfeInfo;
-    items: SimulatedItemData[];
-    originalTotalCost: number;
-    simulatedTotalCost: number;
-    createdAt: string;
+  id?: number;
+  simulationName: string;
+  nfeInfo: NfeInfo;
+  items: SimulatedItemData[];
+  originalTotalCost: number;
+  simulatedTotalCost: number;
+  createdAt: string;
 }
 
 // --- User Profile ---
@@ -162,4 +162,14 @@ export interface UserProfile {
   displayName?: string;
   photoURL?: string;
   status: UserStatus;
+}
+
+// --- Custom Status Management ---
+export type StatusApplicability = 'garantia' | 'lote' | 'devolucao' | 'acaoRequisicao';
+
+export interface CustomStatus {
+  id?: number;
+  nome: string;
+  cor: string;
+  aplicavelEm: StatusApplicability[];
 }

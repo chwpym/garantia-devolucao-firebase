@@ -58,18 +58,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 };
                 await db.upsertUserProfile(profile);
               } else {
-                // System already has users -> BLOCK unknown users (Closed System)
-                console.warn(`Access denied for ${authUser.email}. User not found in DB and system is not empty.`);
+                // System already has users -> Create as STANDARD USER
+                const newRole = 'user';
+                console.log(`Registration: Creating standard user for ${authUser.email}`);
+
+                profile = {
+                  uid: authUser.uid,
+                  email: authUser.email!,
+                  displayName: authUser.displayName || authUser.email?.split('@')[0] || 'Novo Usuário',
+                  photoURL: authUser.photoURL || undefined,
+                  role: newRole,
+                  status: 'active',
+                };
+                await db.upsertUserProfile(profile);
+
                 toast({
-                  title: 'Acesso Restrito',
-                  description: 'Usuário não cadastrado no sistema. Solicite acesso ao administrador.',
-                  variant: 'destructive',
-                  duration: 10000,
+                  title: 'Cadastro Realizado',
+                  description: 'Sua conta foi criada como Usuário Padrão.',
                 });
-                await signOut(auth);
-                setUser(null);
-                setLoading(false);
-                return;
               }
             }
 

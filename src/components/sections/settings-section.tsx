@@ -42,9 +42,9 @@ const formatCNPJ = (value: string) => {
     const cnpj = value.replace(/[^\d]/g, '');
     if (cnpj.length <= 11) {
         return cnpj
-        .replace(/(\d{2})(\d)/, '$1.$2')
-        .replace(/(\d{3})(\d)/, '$1.$2')
-        .replace(/(\d{3})(\d)/, '$1/$2');
+            .replace(/(\d{2})(\d)/, '$1.$2')
+            .replace(/(\d{3})(\d)/, '$1.$2')
+            .replace(/(\d{3})(\d)/, '$1/$2');
     }
     return cnpj
         .slice(0, 14)
@@ -59,7 +59,7 @@ export default function SettingsSection() {
         defaultValues: defaultFormValues,
     });
     const { isSubmitting } = form.formState;
-    
+
     useEffect(() => {
         async function loadCompanyData() {
             try {
@@ -81,7 +81,7 @@ export default function SettingsSection() {
         }
         loadCompanyData();
     }, [form, toast]);
-    
+
     const handleCepBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
         const cep = e.target.value.replace(/\D/g, '');
         if (cep.length !== 8) return;
@@ -90,7 +90,7 @@ export default function SettingsSection() {
         try {
             const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
             if (!response.ok) throw new Error('CEP não encontrado');
-            
+
             const data = await response.json();
             if (data.erro) {
                 throw new Error('CEP não encontrado');
@@ -121,7 +121,7 @@ export default function SettingsSection() {
                 title: "Sucesso!",
                 description: "Os dados da empresa foram salvos com sucesso.",
             });
-             window.dispatchEvent(new CustomEvent('datachanged'));
+            window.dispatchEvent(new CustomEvent('datachanged'));
         } catch (error) {
             console.error('Failed to save company data:', error);
             toast({
@@ -155,11 +155,11 @@ export default function SettingsSection() {
                                     name="nomeEmpresa"
                                     control={form.control}
                                     render={({ field }) => (
-                                    <FormItem className="md:col-span-2">
-                                        <FormLabel>Nome da Empresa</FormLabel>
-                                        <FormControl><Input placeholder="Minha Empresa Ltda" {...field} /></FormControl>
-                                        <FormMessage />
-                                    </FormItem>
+                                        <FormItem className="md:col-span-2">
+                                            <FormLabel>Nome da Empresa</FormLabel>
+                                            <FormControl><Input placeholder="Minha Empresa Ltda" {...field} /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
                                     )}
                                 />
                                 <FormField
@@ -167,48 +167,48 @@ export default function SettingsSection() {
                                     control={form.control}
                                     render={({ field }) => (
                                         <FormItem>
-                                        <FormLabel>CNPJ</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                            placeholder="00.000.000/0001-00"
-                                            {...field}
-                                            onChange={(e) => {
-                                                field.onChange(formatCNPJ(e.target.value));
-                                            }}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
+                                            <FormLabel>CNPJ</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="00.000.000/0001-00"
+                                                    {...field}
+                                                    onChange={(e) => {
+                                                        field.onChange(formatCNPJ(e.target.value));
+                                                    }}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
                                         </FormItem>
                                     )}
-                                    />
+                                />
                             </div>
 
                             <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-                                 <FormField
+                                <FormField
                                     name="cep"
                                     control={form.control}
                                     render={({ field }) => (
-                                    <FormItem className="md:col-span-1">
-                                        <FormLabel>CEP</FormLabel>
-                                        <FormControl>
-                                            <div className="relative">
-                                                <Input placeholder="00000-000" {...field} onBlur={handleCepBlur} />
-                                                {isFetchingCep && <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin" />}
-                                            </div>
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
+                                        <FormItem className="md:col-span-1">
+                                            <FormLabel>CEP</FormLabel>
+                                            <FormControl>
+                                                <div className="relative">
+                                                    <Input placeholder="00000-000" {...field} onBlur={handleCepBlur} />
+                                                    {isFetchingCep && <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin" />}
+                                                </div>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
                                     )}
                                 />
                                 <FormField
                                     name="endereco"
                                     control={form.control}
                                     render={({ field }) => (
-                                    <FormItem className="md:col-span-2">
-                                        <FormLabel>Endereço (Rua, Av, etc)</FormLabel>
-                                        <FormControl><Input placeholder="Rua Exemplo, 123" {...field} /></FormControl>
-                                        <FormMessage />
-                                    </FormItem>
+                                        <FormItem className="md:col-span-2">
+                                            <FormLabel>Endereço (Rua, Av, etc)</FormLabel>
+                                            <FormControl><Input placeholder="Rua Exemplo, 123" {...field} /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
                                     )}
                                 />
                             </div>
@@ -217,46 +217,46 @@ export default function SettingsSection() {
                                     name="bairro"
                                     control={form.control}
                                     render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Bairro</FormLabel>
-                                        <FormControl><Input placeholder="Centro" {...field} /></FormControl>
-                                        <FormMessage />
-                                    </FormItem>
+                                        <FormItem>
+                                            <FormLabel>Bairro</FormLabel>
+                                            <FormControl><Input placeholder="Centro" {...field} /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
                                     )}
                                 />
                                 <FormField
                                     name="cidade"
                                     control={form.control}
                                     render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Cidade/UF</FormLabel>
-                                        <FormControl><Input placeholder="São Paulo - SP" {...field} /></FormControl>
-                                        <FormMessage />
-                                    </FormItem>
+                                        <FormItem>
+                                            <FormLabel>Cidade/UF</FormLabel>
+                                            <FormControl><Input placeholder="São Paulo - SP" {...field} /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
                                     )}
                                 />
-                                 <FormField
+                                <FormField
                                     name="telefone"
                                     control={form.control}
                                     render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Telefone</FormLabel>
-                                        <FormControl><Input placeholder="(11) 99999-9999" {...field} /></FormControl>
-                                        <FormMessage />
-                                    </FormItem>
+                                        <FormItem>
+                                            <FormLabel>Telefone</FormLabel>
+                                            <FormControl><Input placeholder="(11) 99999-9999" {...field} /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
                                     )}
                                 />
                             </div>
-                           
-                             <FormField
+
+                            <FormField
                                 name="email"
                                 control={form.control}
                                 render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Email</FormLabel>
-                                    <FormControl><Input placeholder="contato@minhaempresa.com" {...field} /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
+                                    <FormItem>
+                                        <FormLabel>Email</FormLabel>
+                                        <FormControl><Input placeholder="contato@minhaempresa.com" {...field} /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
                                 )}
                             />
                         </CardContent>

@@ -22,6 +22,7 @@ import ProductsSection from '@/components/sections/products-section';
 import ProductReportSection from '@/components/sections/product-report-section';
 import { useAppStore } from '@/store/app-store';
 import UsersSection from '@/components/sections/users-section';
+import StatusSection from '@/components/sections/status-section';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 
@@ -42,6 +43,7 @@ const viewComponents: { [key: string]: ComponentType<any> } = {
   backup: BackupSection,
   settings: SettingsSection,
   users: UsersSection,
+  status: StatusSection, // New view mapping
   'devolucao-register': DevolucaoRegisterSection,
   'devolucao-query': DevolucaoQuerySection,
   'devolucao-reports': DevolucaoReportSection,
@@ -75,18 +77,18 @@ export default function Home() {
       case 'dashboard':
         return <DashboardSection openTab={setActiveView} />;
       case 'register':
-        return <RegisterSection 
-                    editingId={editingWarrantyId} 
-                    mode={registerMode} 
-                    onSave={(shouldNavigate: boolean) => handleWarrantySave(shouldNavigate)} 
-                    onClear={() => useAppStore.getState().clearEditingWarranty()}
-                />;
+        return <RegisterSection
+          editingId={editingWarrantyId}
+          mode={registerMode}
+          onSave={(shouldNavigate: boolean) => handleWarrantySave(shouldNavigate)}
+          onClear={() => useAppStore.getState().clearEditingWarranty()}
+        />;
       case 'query':
-        return <QuerySection 
-                    setActiveView={setActiveView}
-                    onEdit={handleEditWarranty} 
-                    onClone={handleCloneWarranty}
-                />;
+        return <QuerySection
+          setActiveView={setActiveView}
+          onEdit={handleEditWarranty}
+          onClone={handleCloneWarranty}
+        />;
       case 'loteDetail':
         return <LoteDetailSection loteId={selectedLoteId!} onBack={goBack} />;
       case 'devolucao-register':
@@ -94,12 +96,12 @@ export default function Home() {
       case 'devolucao-query':
         return <DevolucaoQuerySection onEdit={handleEditDevolucao} />;
       case 'lotes':
-          return <LotesSection onNavigateToLote={(loteId) => useAppStore.getState().handleNavigateToLote(loteId)} />;
+        return <LotesSection onNavigateToLote={(loteId) => useAppStore.getState().handleNavigateToLote(loteId)} />;
       default:
         return <Component />;
     }
   };
-  
+
   if (isMobile === undefined) return null;
 
   return (
