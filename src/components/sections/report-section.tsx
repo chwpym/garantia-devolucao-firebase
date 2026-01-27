@@ -4,6 +4,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import ReportGenerator from '@/components/report-generator';
 import type { Warranty, WarrantyStatus } from '@/lib/types';
+import { WARRANTY_STATUSES } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -17,12 +18,8 @@ import { addDays, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-<<<<<<< HEAD
-import { useAppStore } from '@/store/app-store';
-=======
 import { smartSearch } from '@/lib/search-utils';
 import { SearchInput } from '@/components/ui/search-input';
->>>>>>> feature/status-visual-pro
 
 export default function ReportSection() {
   const [warranties, setWarranties] = useState<Warranty[]>([]);
@@ -34,8 +31,6 @@ export default function ReportSection() {
     to: new Date(),
   });
   const { toast } = useToast();
-  const warrantyStatuses = useAppStore(state => state.statuses.filter(s => s.aplicavelEm.includes('garantia')));
-
 
   const loadWarranties = useCallback(async () => {
     try {
@@ -122,12 +117,6 @@ export default function ReportSection() {
   }, [warranties, selectedIds]);
 
   const getWarrantyStatusClass = (status?: WarrantyStatus): string => {
-    const customStatus = warrantyStatuses.find(s => s.nome === status);
-    if (customStatus) {
-        return ''; // A cor será aplicada via style
-    }
-    
-    // Fallback para status antigos
     switch (status) {
       case 'Aprovada - Peça Nova':
         return 'bg-accent-green text-accent-green-foreground';
@@ -140,17 +129,11 @@ export default function ReportSection() {
       case 'Enviado para Análise':
         return 'bg-accent-blue text-accent-blue-foreground';
       case 'Aguardando Envio':
-        return 'bg-amber-500 text-white';
+        return 'bg-third text-white';
       default:
         return 'bg-secondary text-secondary-foreground';
     }
   };
-
-  const getWarrantyStatusStyle = (status?: Warranty['status']): React.CSSProperties => {
-    const customStatus = warrantyStatuses.find(s => s.nome === status);
-    return customStatus ? { backgroundColor: customStatus.cor, color: '#FFFFFF' } : {};
-  }
-
 
   return (
     <div className="space-y-8">
@@ -162,30 +145,6 @@ export default function ReportSection() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-<<<<<<< HEAD
-           <div className="flex flex-col md:flex-row gap-4 mb-4">
-              <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                      placeholder="Buscar por código, descrição, requisições, fornecedor, cliente, defeito ou status..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10"
-                  />
-              </div>
-               <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as WarrantyStatus | 'Todos')}>
-                    <SelectTrigger className="w-full md:w-[280px]">
-                        <SelectValue placeholder="Filtrar por status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="Todos">Todos Status</SelectItem>
-                        {warrantyStatuses.map(status => (
-                          <SelectItem key={status.id} value={status.nome}>{status.nome}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-              <DatePickerWithRange date={dateRange} setDate={setDateRange} />
-=======
           <div className="flex flex-col md:flex-row gap-4 mb-4">
             <SearchInput
               placeholder="Buscar por código, descrição..."
@@ -207,7 +166,6 @@ export default function ReportSection() {
               </SelectContent>
             </Select>
             <DatePickerWithRange date={dateRange} setDate={setDateRange} />
->>>>>>> feature/status-visual-pro
           </div>
           <div className="border rounded-md">
             <Table>
@@ -244,16 +202,7 @@ export default function ReportSection() {
                       <TableCell>{warranty.cliente || '-'}</TableCell>
                       <TableCell>
                         {warranty.status ? (
-<<<<<<< HEAD
-                            <Badge 
-                              className={cn(getWarrantyStatusClass(warranty.status))}
-                              style={getWarrantyStatusStyle(warranty.status)}
-                            >
-                              {warranty.status}
-                            </Badge>
-=======
                           <Badge className={cn(getWarrantyStatusClass(warranty.status))}>{warranty.status}</Badge>
->>>>>>> feature/status-visual-pro
                         ) : (
                           <Badge variant="secondary">N/A</Badge>
                         )}

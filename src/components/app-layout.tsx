@@ -2,11 +2,11 @@
 
 'use client';
 
-import React, { useEffect, useCallback, useRef } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Settings, Menu, DatabaseBackup, ArrowLeft } from 'lucide-react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from './ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
 import MobileSidebar from './mobile-sidebar';
 import QuickShortcuts from './quick-shortcuts';
 import { useAppStore } from '@/store/app-store';
@@ -40,31 +40,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
     navigationHistory,
     goBack,
     loadInitialData,
-<<<<<<< HEAD
-  } = useAppStore();
-  
-  const isInitialLoadDone = useRef(false);
-
-  useEffect(() => {
-    // Garantir que a carga de dados e o listener sejam configurados apenas uma vez.
-    if (!isInitialLoadDone.current) {
-      const handleDataChanged = () => {
-        loadInitialData();
-      };
-
-      loadInitialData();
-      window.addEventListener('datachanged', handleDataChanged);
-      
-      isInitialLoadDone.current = true;
-
-      // Retornar a função de limpeza para o useEffect
-      return () => {
-        window.removeEventListener('datachanged', handleDataChanged);
-      };
-    }
-  }, [loadInitialData]);
-
-=======
   } = useAppStore(useShallow((state) => ({
     activeView: state.activeView,
     isMobileMenuOpen: state.isMobileMenuOpen,
@@ -92,7 +67,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
       window.removeEventListener('datachanged', handleDataChanged);
     };
   }, [handleDataChanged, loadInitialData]);
->>>>>>> feature/status-visual-pro
 
   const handleNavClick = (view: string) => {
     setActiveView(view, true); // Add to history when clicking nav items
@@ -131,14 +105,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
                       height={32}
                       className="h-8 w-8 rounded-md flex-shrink-0"
                     />
-                    <div>
-                      <SheetTitle className="text-2xl font-bold font-headline text-foreground whitespace-nowrap">
-                        Synergia OS
-                      </SheetTitle>
-                      <SheetDescription className="text-xs">
-                        Menu de navegação principal.
-                      </SheetDescription>
-                    </div>
+                    <SheetTitle className="text-2xl font-bold font-headline text-foreground whitespace-nowrap">
+                      Synergia OS
+                    </SheetTitle>
                   </SheetHeader>
                   <MobileSidebar
                     activeView={activeView}

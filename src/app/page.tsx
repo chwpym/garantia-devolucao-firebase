@@ -1,10 +1,6 @@
 
 'use client';
 
-<<<<<<< HEAD
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-=======
 import type { ComponentType } from 'react';
 import AppLayout from '@/components/app-layout';
 import DashboardSection from '@/components/sections/dashboard-section';
@@ -55,15 +51,8 @@ const viewComponents: { [key: string]: ComponentType<any> } = {
   'product-reports': ProductReportSection,
   calculators: CalculatorsSection,
 };
->>>>>>> feature/status-visual-pro
 
-// This is a temporary redirect component.
-// Since the main logic is now inside (protected),
-// the root page should redirect there.
 export default function Home() {
-<<<<<<< HEAD
-  const router = useRouter();
-=======
   const {
     activeView,
     selectedLoteId,
@@ -91,15 +80,9 @@ export default function Home() {
     handleCloneWarranty: state.handleCloneWarranty,
     handleWarrantySave: state.handleWarrantySave,
   })));
->>>>>>> feature/status-visual-pro
 
-  useEffect(() => {
-    router.replace('/dashboard');
-  }, [router]);
+  const isMobile = useIsMobile();
 
-<<<<<<< HEAD
-  return null; // or a loading spinner
-=======
   const renderContent = () => {
     const Component = viewComponents[activeView];
     if (!Component) return <DashboardSection openTab={setActiveView} />;
@@ -140,5 +123,4 @@ export default function Home() {
       {renderContent()}
     </AppLayout>
   );
->>>>>>> feature/status-visual-pro
 }

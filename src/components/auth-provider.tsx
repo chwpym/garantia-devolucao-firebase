@@ -1,64 +1,31 @@
 
 'use client';
 
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  ReactNode,
-  useCallback,
-} from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { onAuthStateChanged, type User, signOut } from 'firebase/auth';
+import { getAuth } from "firebase/auth";
+import { getFirebaseApp } from '@/lib/firebase';
+import { type UserProfile } from '@/lib/types';
+import * as db from '@/lib/db';
+import { countUsers } from '@/lib/db-utils';
 import { useToast } from '@/hooks/use-toast';
-import { initDB, getUserProfile } from '@/lib/db';
-import type { UserProfile } from '@/lib/types';
 
-export interface LocalUser extends UserProfile {}
+
+// This new type combines Firebase Auth user with our custom profile data
+export type AppUser = User & { profile: UserProfile };
 
 export interface AuthContextType {
-  user: LocalUser | null;
+  user: AppUser | null;
   loading: boolean;
-  signOut: () => void;
-  refreshUser: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType>({ user: null, loading: true });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<LocalUser | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-<<<<<<< HEAD
-  const signOut = useCallback(() => {
-    localStorage.removeItem('synergia_session');
-    sessionStorage.removeItem('synergia_session');
-    setUser(null);
-    if (window.location.pathname !== '/login') {
-      window.location.href = '/login';
-    }
-  }, []);
-
-  const loadSession = useCallback(async () => {
-    try {
-      await initDB();
-      const raw =
-        localStorage.getItem('synergia_session') ||
-        sessionStorage.getItem('synergia_session');
-      if (raw) {
-        const session = JSON.parse(raw);
-        const profile = await getUserProfile(session.uid || session.email);
-        if (profile) {
-          if (profile.status === 'blocked') {
-            toast({
-              title: 'Acesso Bloqueado',
-              description: 'Sua conta foi desativada.',
-              variant: 'destructive',
-            });
-            signOut();
-          } else {
-            setUser(profile as LocalUser);
-=======
   useEffect(() => {
     const app = getFirebaseApp();
     const auth = getAuth(app);
@@ -133,41 +100,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(null); // Fail safe
           } finally {
             setLoading(false);
->>>>>>> feature/status-visual-pro
           }
-        } else {
-          signOut();
-        }
+        };
+
+        checkUserProfile();
+
       } else {
+        // User is signed out
         setUser(null);
+        setLoading(false);
       }
-    } catch (err) {
-      console.error('AuthProvider init error', err);
-      toast({
-        title: 'Erro',
-        description: 'Falha ao carregar sessão local',
-        variant: 'destructive',
-      });
-      signOut();
-    } finally {
-      setLoading(false);
-    }
-  }, [toast, signOut]);
+    });
 
-  useEffect(() => {
-    loadSession();
-    const handleStorageChange = (event: StorageEvent) => {
-        if (event.key === 'synergia_session') {
-            loadSession();
-        }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => {
-        window.removeEventListener('storage', handleStorageChange);
-    }
-  }, [loadSession]);
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, [toast]);
 
-  const value: AuthContextType = { user, loading, signOut, refreshUser: loadSession };
+  const value = { user, loading };
 
   return (
     <AuthContext.Provider value={value}>
@@ -176,13 +125,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-<<<<<<< HEAD
-export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
-  return ctx;
-}
-=======
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {
@@ -190,4 +132,3 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
->>>>>>> feature/status-visual-pro
