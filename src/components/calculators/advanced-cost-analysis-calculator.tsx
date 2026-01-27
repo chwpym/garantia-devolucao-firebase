@@ -55,7 +55,7 @@ export default function AdvancedCostAnalysisCalculator() {
     const recalculateCosts = (currentItems: Omit<AnalyzedItem, 'finalUnitCost' | 'finalTotalCost' | 'convertedUnitCost'>[], regime: TaxRegime): AnalyzedItem[] => {
         return currentItems.map(item => {
             const baseTotalCost = item.totalCost + item.ipi + item.icmsST + item.frete + item.seguro + item.outras - item.desconto;
-            
+
             let finalTotalCost = baseTotalCost;
             if (regime === 'lucro_real') {
                 finalTotalCost -= (item.pis + item.cofins);
@@ -99,7 +99,7 @@ export default function AdvancedCostAnalysisCalculator() {
             totalGrossValue: totalProdValue + totalFrete + totalSeguro + totalOutras + totalST + totalIPI,
         };
         setNfeInfo(newNfeInfo);
-        
+
         const newItems: Omit<AnalyzedItem, 'finalUnitCost' | 'finalTotalCost' | 'convertedUnitCost'>[] = dets.map((det: NfeProductDetail, index: number) => {
             const prod = det.prod;
             const imposto = det.imposto;
@@ -107,7 +107,7 @@ export default function AdvancedCostAnalysisCalculator() {
             const quantity = parseFloat(prod.qCom) || 0;
             const unitCost = parseFloat(prod.vUnCom) || 0;
             const itemTotalCost = parseFloat(prod.vProd) || 0;
-            
+
             const itemWeight = totalProdValue > 0 ? itemTotalCost / totalProdValue : 0;
 
             const ipiValor = parseFloat(imposto?.IPI?.IPITrib?.vIPI) || 0;
@@ -119,9 +119,9 @@ export default function AdvancedCostAnalysisCalculator() {
             const seguroRateado = parseFloat(prod.vSeg) || (totalSeguro * itemWeight) || 0;
             const descontoRateado = parseFloat(prod.vDesc) || (totalDesconto * itemWeight) || 0;
             const outrasRateado = parseFloat(prod.vOutro) || (totalOutras * itemWeight) || 0;
-            
+
             return {
-                id: Date.now() + index,
+                id: index,
                 description: prod.xProd || "",
                 quantity: quantity,
                 unitCost: unitCost,
@@ -137,7 +137,7 @@ export default function AdvancedCostAnalysisCalculator() {
                 conversionFactor: "1",
             };
         });
-        
+
         setItems(recalculateCosts(newItems, taxRegime));
         setTaxRegime('lucro_real'); // Reset to default on new import
 
@@ -168,7 +168,7 @@ export default function AdvancedCostAnalysisCalculator() {
             })
         );
     };
-    
+
     const totals = useMemo(() => {
         return items.reduce((acc, item) => {
             acc.totalCost += item.totalCost;
@@ -182,20 +182,20 @@ export default function AdvancedCostAnalysisCalculator() {
             acc.totalCOFINS += item.cofins;
             acc.finalTotalCost += item.finalTotalCost;
             return acc;
-        }, { 
-            totalCost: 0, totalIPI: 0, totalST: 0, totalFrete: 0, totalSeguro: 0, 
-            totalDesconto: 0, totalOutras: 0, totalPIS: 0, totalCOFINS: 0, finalTotalCost: 0 
+        }, {
+            totalCost: 0, totalIPI: 0, totalST: 0, totalFrete: 0, totalSeguro: 0,
+            totalDesconto: 0, totalOutras: 0, totalPIS: 0, totalCOFINS: 0, finalTotalCost: 0
         });
     }, [items]);
 
     const totalWithoutPisCofins = useMemo(() => {
-        if(taxRegime === 'simples_nacional') return totals.finalTotalCost;
+        if (taxRegime === 'simples_nacional') return totals.finalTotalCost;
         return totals.finalTotalCost + totals.totalPIS + totals.totalCOFINS;
     }, [totals, taxRegime]);
 
     const generatePdf = () => {
         const doc = new jsPDF({ orientation: "landscape" });
-        
+
         doc.setFontSize(18);
         doc.text("Análise de Custo Avançada por NF-e", doc.internal.pageSize.getWidth() / 2, 22, { align: "center" });
 
@@ -227,9 +227,9 @@ export default function AdvancedCostAnalysisCalculator() {
             formatCurrency(item.convertedUnitCost),
             formatCurrency(item.finalTotalCost),
         ]);
-        
+
         const footStyles: Partial<Styles> = { fontStyle: 'bold', fillColor: [224, 224, 224], textColor: [0, 0, 0] };
-        
+
         const foot: RowInput[] = [
             [
                 { content: 'Totais:', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } },
@@ -241,7 +241,7 @@ export default function AdvancedCostAnalysisCalculator() {
                 { content: formatCurrency(totals.totalOutras), styles: { fontStyle: 'bold' } },
                 { content: formatCurrency(totals.totalPIS), styles: { fontStyle: 'bold' } },
                 { content: formatCurrency(totals.totalCOFINS), styles: { fontStyle: 'bold' } },
-                { content: '' }, 
+                { content: '' },
                 { content: '' },
                 { content: formatCurrency(totals.finalTotalCost), styles: { fontStyle: 'bold', fillColor: [232, 245, 233] } },
             ]
@@ -265,7 +265,7 @@ export default function AdvancedCostAnalysisCalculator() {
                 }
             }
         });
-    
+
         doc.save(`analise_custo_avancada_${nfeInfo?.nfeNumber || 'sem_numero'}.pdf`);
     };
 
@@ -286,23 +286,23 @@ export default function AdvancedCostAnalysisCalculator() {
                     <div className="flex items-center gap-2 p-2 border rounded-md bg-muted flex-1 sm:flex-none justify-between">
                         <span className="text-sm text-muted-foreground truncate" title={fileName}>{fileName}</span>
                         <Button variant="ghost" size="icon" onClick={clearNfeData} className="h-6 w-6">
-                        <FileX className="h-4 w-4 text-destructive" />
+                            <FileX className="h-4 w-4 text-destructive" />
                         </Button>
                     </div>
                 )}
-                <Input 
-                    type="file" 
-                    ref={fileInputRef} 
+                <Input
+                    type="file"
+                    ref={fileInputRef}
                     onChange={handleFileChange}
-                    className="hidden" 
+                    className="hidden"
                     accept=".xml"
                 />
             </div>
-            
+
             {items.length > 0 && nfeInfo && (
                 <div className="flex flex-col md:flex-row gap-4 md:items-center p-4 border rounded-lg bg-muted">
                     <div className="space-y-2 flex-1">
-                         <h3 className="text-lg font-medium">Informações da NF-e</h3>
+                        <h3 className="text-lg font-medium">Informações da NF-e</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-2 text-sm">
                             <div><strong>Emitente:</strong> {nfeInfo.emitterName}</div>
                             <div><strong>CNPJ:</strong> {nfeInfo.emitterCnpj}</div>
@@ -310,7 +310,7 @@ export default function AdvancedCostAnalysisCalculator() {
                             <div><strong>Total Bruto (s/ desc):</strong> {formatCurrency(nfeInfo.totalGrossValue)}</div>
                             <div className="font-semibold text-sm"><strong>Custo Total (sem crédito PIS/COFINS):</strong> <span className="font-bold ml-2">{formatCurrency(totalWithoutPisCofins)}</span></div>
                             <div className="font-semibold col-span-full">
-                                <strong>Custo Total Final ({taxRegime === 'lucro_real' ? 'c/ crédito PIS/COFINS' : 's/ crédito PIS/COFINS'}):</strong> 
+                                <strong>Custo Total Final ({taxRegime === 'lucro_real' ? 'c/ crédito PIS/COFINS' : 's/ crédito PIS/COFINS'}):</strong>
                                 <span className="font-bold text-primary ml-2">{formatCurrency(totals.finalTotalCost)}</span>
                             </div>
                         </div>
@@ -326,11 +326,11 @@ export default function AdvancedCostAnalysisCalculator() {
                                 <SelectItem value="simples_nacional">Simples Nacional (sem crédito PIS/COFINS)</SelectItem>
                             </SelectContent>
                         </Select>
-                         <p className="text-xs text-muted-foreground">Define se o PIS/COFINS será abatido do custo.</p>
+                        <p className="text-xs text-muted-foreground">Define se o PIS/COFINS será abatido do custo.</p>
                     </div>
                 </div>
             )}
-             {taxRegime === 'lucro_real' && items.length > 0 && (
+            {taxRegime === 'lucro_real' && items.length > 0 && (
                 <Alert>
                     <Info className="h-4 w-4" />
                     <AlertTitle>Cálculo de Custo para Lucro Real</AlertTitle>
@@ -342,7 +342,7 @@ export default function AdvancedCostAnalysisCalculator() {
 
 
             {items.length > 0 && (
-                 <div className="w-full overflow-x-auto">
+                <div className="w-full overflow-x-auto">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -416,4 +416,3 @@ export default function AdvancedCostAnalysisCalculator() {
     );
 }
 
-    

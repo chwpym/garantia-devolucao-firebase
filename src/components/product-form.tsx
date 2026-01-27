@@ -57,21 +57,35 @@ export default function ProductForm({ onSave, editingProduct, onClear }: Product
 
   const handleSave = async (data: ProductFormValues) => {
     try {
+<<<<<<< HEAD
       // Fase 7: Validação de duplicidade
       if (!editingProduct) { // Only check for duplicates when creating a new product
         const existingProduct = await db.getProductByCode(data.codigo);
         if (existingProduct) {
             toast({ title: 'Código Duplicado', description: 'Já existe um produto cadastrado com este código.', variant: 'destructive'});
             return;
+=======
+      // Validação de duplicidade ANTES de salvar
+      if (!editingProduct?.id) {
+        // Apenas valida ao criar novo produto (não ao editar)
+        const existing = await db.getProductByCode(data.codigo);
+        if (existing) {
+          toast({
+            title: 'Produto Duplicado',
+            description: `Já existe um produto com o código "${data.codigo}".`,
+            variant: 'destructive',
+          });
+          return;
+>>>>>>> feature/status-visual-pro
         }
       }
 
       if (editingProduct?.id) {
         // Ao editar, não alteramos o código. Usamos o código original.
-        const updatedProduct = { 
-            ...editingProduct, 
-            ...data, 
-            codigo: editingProduct.codigo 
+        const updatedProduct = {
+          ...editingProduct,
+          ...data,
+          codigo: editingProduct.codigo
         };
         await db.updateProduct(updatedProduct);
         toast({ title: 'Sucesso', description: 'Produto atualizado com sucesso.' });
@@ -86,86 +100,91 @@ export default function ProductForm({ onSave, editingProduct, onClear }: Product
       window.dispatchEvent(new CustomEvent('datachanged'));
     } catch (error) {
       console.error('Failed to save product:', error);
-      let description = 'Não foi possível salvar o produto.';
-      if (error instanceof Error && error.message.includes('ConstraintError')) {
-          description = 'Já existe um produto com este código. Por favor, use um código diferente.'
-      }
       toast({
         title: 'Erro ao Salvar',
-        description,
+        description: 'Não foi possível salvar o produto.',
         variant: 'destructive',
       });
     }
   };
-  
+
   const FormContent = (
-      <div className="space-y-4 pt-4">
+    <div className="space-y-4 pt-4">
+      <FormField
+        name="codigo"
+        control={form.control}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Código</FormLabel>
+            <FormControl>
+              <Input
+                placeholder="Código principal do produto"
+                {...field}
+                // O campo agora é sempre habilitado, a lógica de bloqueio está no 'handleSave'.
+                disabled={false}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        name="descricao"
+        control={form.control}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Descrição</FormLabel>
+            <FormControl>
+              <Input placeholder="Descrição detalhada do produto" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <div className='grid grid-cols-2 gap-4'>
         <FormField
-          name="codigo"
+          name="marca"
           control={form.control}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Código</FormLabel>
+              <FormLabel>Marca</FormLabel>
               <FormControl>
+<<<<<<< HEAD
                 <Input 
                     placeholder="Código principal do produto" 
                     {...field} 
                     disabled={!!editingProduct} 
                 />
+=======
+                <Input placeholder="Marca do produto" {...field} />
+>>>>>>> feature/status-visual-pro
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
         <FormField
-          name="descricao"
+          name="referencia"
           control={form.control}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Descrição</FormLabel>
+              <FormLabel>Referência</FormLabel>
               <FormControl>
-                <Input placeholder="Descrição detalhada do produto" {...field} />
+                <Input placeholder="Código de referência" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <div className='grid grid-cols-2 gap-4'>
-            <FormField
-            name="marca"
-            control={form.control}
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Marca</FormLabel>
-                <FormControl>
-                    <Input placeholder="Marca do produto" {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-            <FormField
-            name="referencia"
-            control={form.control}
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Referência</FormLabel>
-                <FormControl>
-                    <Input placeholder="Código de referência" {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-        </div>
       </div>
+    </div>
   );
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSave)}>
         {FormContent}
-        
+
         <DialogFooter className="pt-6">
           {onClear && <Button type="button" variant="outline" onClick={onClear}>Limpar</Button>}
           <Button type="submit" disabled={isSubmitting}>

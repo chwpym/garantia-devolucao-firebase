@@ -29,8 +29,8 @@ interface SimulatedItem {
     description: string;
     originalQuantity: number;
     simulatedQuantity: string;
-    unitCost: number; 
-    additionalCosts: number; 
+    unitCost: number;
+    additionalCosts: number;
     ipi: number;
     icmsST: number;
     frete: number;
@@ -69,9 +69,9 @@ interface NFeData {
 }
 
 interface jsPDFWithAutoTable extends jsPDF {
-  lastAutoTable: {
-    finalY: number;
-  };
+    lastAutoTable: {
+        finalY: number;
+    };
 }
 
 const formatCnpj = (value?: string | number) => {
@@ -106,9 +106,9 @@ export default function PurchaseSimulatorCalculator() {
         setIsLoadingSims(true);
         try {
             const sims = await db.getAllSimulations();
-            setSavedSimulations(sims.sort((a,b) => parseISO(b.createdAt).getTime() - parseISO(a.createdAt).getTime()));
+            setSavedSimulations(sims.sort((a, b) => parseISO(b.createdAt).getTime() - parseISO(a.createdAt).getTime()));
         } catch {
-             toast({ title: "Erro", description: "Não foi possível carregar as simulações salvas.", variant: "destructive" });
+            toast({ title: "Erro", description: "Não foi possível carregar as simulações salvas.", variant: "destructive" });
         } finally {
             setIsLoadingSims(false);
         }
@@ -121,7 +121,7 @@ export default function PurchaseSimulatorCalculator() {
     const calculateCosts = (item: Omit<SimulatedItem, 'id' | 'code' | 'description' | 'finalUnitCost' | 'originalTotalCost' | 'simulatedTotalCost'>) => {
         const totalAdditionalCosts = item.ipi + item.icmsST + item.frete + item.seguro + item.outras - item.desconto;
         const additionalCostsPerUnit = item.originalQuantity > 0 ? totalAdditionalCosts / item.originalQuantity : 0;
-        
+
         const finalUnitCost = item.unitCost + additionalCostsPerUnit;
         const originalTotalCost = finalUnitCost * item.originalQuantity;
         const simulatedTotalCost = finalUnitCost * (parseFloat(item.simulatedQuantity) || 0);
@@ -141,14 +141,14 @@ export default function PurchaseSimulatorCalculator() {
                 const xmlData = e.target?.result as string;
                 const parser = new XMLParser({ ignoreAttributes: false, parseAttributeValue: true });
                 const jsonObj = parser.parse(xmlData) as NFeData;
-                
+
                 const infNFe: InfNFe | undefined = jsonObj?.nfeProc?.NFe?.infNFe || jsonObj?.NFe?.infNFe;
                 if (!infNFe) throw new Error("Estrutura do XML da NF-e inválida.");
-                
+
                 const dets = Array.isArray(infNFe.det) ? infNFe.det : [infNFe.det];
                 const total = infNFe.total.ICMSTot;
                 const totalProdValue = parseFloat(total.vProd);
-                
+
                 const totalFrete = parseFloat(total.vFrete) || 0;
                 const totalSeguro = parseFloat(total.vSeg) || 0;
                 const totalDesconto = parseFloat(total.vDesc) || 0;
@@ -171,7 +171,7 @@ export default function PurchaseSimulatorCalculator() {
                     const imposto = det.imposto;
                     const itemTotalCost = parseFloat(prod.vProd);
                     const itemWeight = totalProdValue > 0 ? itemTotalCost / totalProdValue : 0;
-                    
+
                     const baseItem: Omit<SimulatedItem, 'id' | 'code' | 'description' | 'finalUnitCost' | 'originalTotalCost' | 'simulatedTotalCost'> = {
                         originalQuantity: parseFloat(prod.qCom),
                         simulatedQuantity: prod.qCom,
@@ -184,19 +184,19 @@ export default function PurchaseSimulatorCalculator() {
                         desconto: totalProdValue > 0 ? itemWeight * totalDesconto : 0,
                         outras: totalProdValue > 0 ? itemWeight * totalOutras : 0,
                     };
-                    
+
                     const costs = calculateCosts(baseItem);
                     calculatedOriginalTotal += costs.originalTotalCost;
 
                     return {
-                        id: Date.now() + index,
+                        id: index,
                         code: prod.cProd,
                         description: prod.xProd,
                         ...baseItem,
                         ...costs,
                     };
                 });
-                
+
                 setItems(newItems);
                 setOriginalNfeTotalCost(calculatedOriginalTotal);
 
@@ -206,12 +206,12 @@ export default function PurchaseSimulatorCalculator() {
                 clearData();
                 toast({ variant: "destructive", title: "Erro de Importação", description: "Não foi possível ler o arquivo XML." });
             } finally {
-              if(fileInputRef.current) fileInputRef.current.value = "";
+                if (fileInputRef.current) fileInputRef.current.value = "";
             }
         };
         reader.readAsText(file, 'ISO-8859-1');
     };
-    
+
     const handleQuantityChange = (id: number, value: string) => {
         setItems(prevItems => prevItems.map(item => {
             if (item.id === id) {
@@ -225,7 +225,7 @@ export default function PurchaseSimulatorCalculator() {
 
     const handleRemoveItem = (id: number) => {
         setItems(prevItems => prevItems.filter(item => item.id !== id));
-        toast({title: "Item removido da simulação."})
+        toast({ title: "Item removido da simulação." })
     };
 
     const clearData = useCallback(() => {
@@ -235,9 +235,9 @@ export default function PurchaseSimulatorCalculator() {
         setSimulationName("");
         setOriginalNfeTotalCost(0);
         setEditingSimulationId(null);
-        if(fileInputRef.current) fileInputRef.current.value = "";
+        if (fileInputRef.current) fileInputRef.current.value = "";
     }, []);
-    
+
     const handleClearSearch = () => {
         setSearchQuery("");
         setSavedSimsDateRange(undefined);
@@ -252,7 +252,7 @@ export default function PurchaseSimulatorCalculator() {
 
     const handleSaveSimulation = async () => {
         if (!nfeInfo || !simulationName) {
-            toast({ title: "Erro", description: "Dados insuficientes para salvar a simulação.", variant: "destructive"});
+            toast({ title: "Erro", description: "Dados insuficientes para salvar a simulação.", variant: "destructive" });
             return;
         }
 
@@ -274,17 +274,17 @@ export default function PurchaseSimulatorCalculator() {
         try {
             if (editingSimulationId) {
                 await db.updateSimulation({ ...simulationData, id: editingSimulationId });
-                toast({ title: "Sucesso!", description: `Simulação "${simulationName}" foi atualizada.`});
+                toast({ title: "Sucesso!", description: `Simulação "${simulationName}" foi atualizada.` });
             } else {
                 await db.addSimulation(simulationData);
-                toast({ title: "Sucesso!", description: `Simulação "${simulationName}" foi salva.`});
+                toast({ title: "Sucesso!", description: `Simulação "${simulationName}" foi salva.` });
             }
             loadSimulations();
             setActiveTab("saved");
             clearData();
         } catch (error) {
             console.error(error)
-            toast({ title: "Erro ao Salvar", description: "Não foi possível salvar a simulação.", variant: "destructive"});
+            toast({ title: "Erro ao Salvar", description: "Não foi possível salvar a simulação.", variant: "destructive" });
         }
     }
 
@@ -292,7 +292,7 @@ export default function PurchaseSimulatorCalculator() {
         const lowerCaseQuery = searchQuery.toLowerCase();
 
         return savedSimulations.filter(sim => {
-             // Date filter
+            // Date filter
             const { from, to } = savedSimsDateRange || {};
             if (from && sim.createdAt) {
                 if (parseISO(sim.createdAt) < from) return false;
@@ -312,8 +312,8 @@ export default function PurchaseSimulatorCalculator() {
             )
         });
     }, [savedSimulations, searchQuery, savedSimsDateRange]);
-    
-     const filteredTotals = useMemo(() => {
+
+    const filteredTotals = useMemo(() => {
         return filteredSimulations.reduce((acc, sim) => {
             acc.original += sim.originalTotalCost;
             acc.simulated += sim.simulatedTotalCost;
@@ -331,13 +331,13 @@ export default function PurchaseSimulatorCalculator() {
         const loadedItems = sim.items.map((item, index) => {
             const simulatedTotalCost = item.finalUnitCost * (parseFloat(item.simulatedQuantity) || 0);
             const originalTotalCost = item.finalUnitCost * item.originalQuantity;
-            
+
             const unitCostApproximation = item.finalUnitCost;
             const additionalCostsApproximation = 0;
 
             return {
                 ...item,
-                id: Date.now() + index, // Assign a temporary id for the UI
+                id: index, // Assign a temporary id for the UI
                 ipi: 0, icmsST: 0, frete: 0, seguro: 0, desconto: 0, outras: 0,
                 additionalCosts: additionalCostsApproximation,
                 unitCost: unitCostApproximation,
@@ -345,21 +345,21 @@ export default function PurchaseSimulatorCalculator() {
                 simulatedTotalCost
             };
         });
-        
+
         setItems(loadedItems);
         setActiveTab("simulator");
-        toast({ title: "Simulação Carregada", description: `"${sim.simulationName}" está pronta para edição.`});
+        toast({ title: "Simulação Carregada", description: `"${sim.simulationName}" está pronta para edição.` });
     };
 
     const handleDeleteSimulation = async () => {
         if (!deleteTarget) return;
         try {
             await db.deleteSimulation(deleteTarget.id!);
-            toast({ title: "Sucesso", description: "Simulação excluída."});
+            toast({ title: "Sucesso", description: "Simulação excluída." });
             setDeleteTarget(null);
             loadSimulations();
         } catch {
-            toast({ title: "Erro", description: "Não foi possível excluir a simulação.", variant: "destructive"});
+            toast({ title: "Erro", description: "Não foi possível excluir a simulação.", variant: "destructive" });
         }
     };
 
@@ -384,7 +384,7 @@ export default function PurchaseSimulatorCalculator() {
             formatCurrency(item.originalTotalCost),
             formatCurrency(item.simulatedTotalCost),
         ]);
-        
+
         autoTable(doc, {
             startY: 40,
             head: head,
@@ -399,16 +399,16 @@ export default function PurchaseSimulatorCalculator() {
         const finalY = doc.lastAutoTable.finalY + 10;
         doc.setFontSize(12);
         doc.text(`Economia Potencial: ${formatCurrency(originalNfeTotalCost - totals.simulatedTotalCost)}`, 14, finalY);
-    
+
         doc.save(`simulacao_compra_${nfeInfo?.nfeNumber || 'sem_numero'}.pdf`);
     };
-    
+
     const generateSavedSimulationsPdf = () => {
         if (filteredSimulations.length === 0) {
             toast({ title: "Aviso", description: "Não há dados para exportar." });
             return;
         }
-        
+
         const doc = new jsPDF();
         const pageWidth = doc.internal.pageSize.getWidth();
         const margin = 14;
@@ -426,17 +426,17 @@ export default function PurchaseSimulatorCalculator() {
             doc.setDrawColor(224, 224, 224);
             doc.setFillColor(250, 250, 250);
             doc.rect(x, cardY, cardWidth, cardHeight, 'FD');
-            
+
             doc.setFontSize(10);
             doc.setTextColor("#64748b");
             doc.text(title, x + cardWidth / 2, cardY + 8, { align: 'center' });
-            
+
             doc.setFontSize(14).setFont('helvetica', 'bold');
             doc.setTextColor(valueColor);
-           
+
             doc.text(value, x + cardWidth / 2, cardY + 18, { align: 'center' });
         };
-        
+
         drawCard(margin, "Custo Total Original", formatCurrency(filteredTotals.original));
         drawCard(margin + cardWidth + margin, "Custo Total Simulado", formatCurrency(filteredTotals.simulated), "#600BE8"); // Primary color
         drawCard(margin + (cardWidth + margin) * 2, "Economia Potencial Total", formatCurrency(filteredTotals.original - filteredTotals.simulated), "#16A34A"); // Accent-green color
@@ -453,7 +453,7 @@ export default function PurchaseSimulatorCalculator() {
             formatCurrency(sim.simulatedTotalCost),
             formatCurrency(sim.originalTotalCost - sim.simulatedTotalCost)
         ]);
-        
+
         autoTable(doc, {
             startY: cursorY,
             head: head,
@@ -487,7 +487,7 @@ export default function PurchaseSimulatorCalculator() {
                                 <Printer className="mr-2 h-4 w-4" />
                                 Gerar PDF
                             </Button>
-                             <Dialog>
+                            <Dialog>
                                 <DialogTrigger asChild>
                                     <Button variant="outline" disabled={items.length === 0}>
                                         {editingSimulationId ? <RefreshCw className="mr-2 h-4 w-4" /> : <Save className="mr-2 h-4 w-4" />}
@@ -506,14 +506,14 @@ export default function PurchaseSimulatorCalculator() {
                                     <DialogFooter>
                                         <DialogClose asChild>
                                             <Button type="button" onClick={handleSaveSimulation}>
-                                            {editingSimulationId ? <RefreshCw className="mr-2 h-4 w-4" /> : <Save className="mr-2 h-4 w-4" />}
-                                            {editingSimulationId ? 'Confirmar Atualização' : 'Salvar'}
+                                                {editingSimulationId ? <RefreshCw className="mr-2 h-4 w-4" /> : <Save className="mr-2 h-4 w-4" />}
+                                                {editingSimulationId ? 'Confirmar Atualização' : 'Salvar'}
                                             </Button>
                                         </DialogClose>
                                     </DialogFooter>
                                 </DialogContent>
                             </Dialog>
-                             {items.length > 0 && (
+                            {items.length > 0 && (
                                 <Button onClick={clearData} variant="destructive">
                                     <X className="mr-2 h-4 w-4" />
                                     Limpar
@@ -640,7 +640,7 @@ export default function PurchaseSimulatorCalculator() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                                 <Card>
                                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                         <CardTitle className="text-sm font-medium">Custo Total Original</CardTitle>
@@ -755,10 +755,10 @@ export default function PurchaseSimulatorCalculator() {
 
 
 
-    
-
-    
 
 
 
-    
+
+
+
+

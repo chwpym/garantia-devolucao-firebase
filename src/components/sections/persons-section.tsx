@@ -53,31 +53,43 @@ import { Badge } from '@/components/ui/badge';
 import { MoreHorizontal, Pencil, Trash2, PlusCircle, Download, Search, ArrowUpDown, Phone, Mail } from 'lucide-react';
 import PersonForm from '../person-form';
 import { Input } from '../ui/input';
+<<<<<<< HEAD
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+=======
+import { smartSearch } from '@/lib/search-utils';
+import { SearchInput } from '@/components/ui/search-input';
+import { usePersistedFilters } from '@/hooks/use-persisted-filters';
+>>>>>>> feature/status-visual-pro
 
 type SortableKeys = keyof Person;
 
 const formatCpfCnpj = (value?: string) => {
-    if (!value) return '-';
-    const cleaned = value.replace(/\D/g, '');
-    if (cleaned.length === 11) { // CPF
-        return cleaned.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-    }
-    if (cleaned.length === 14) { // CNPJ
-        return cleaned.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
-    }
-    return value;
+  if (!value) return '-';
+  const cleaned = value.replace(/\D/g, '');
+  if (cleaned.length === 11) { // CPF
+    return cleaned.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+  }
+  if (cleaned.length === 14) { // CNPJ
+    return cleaned.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+  }
+  return value;
 };
 
 
 export default function PersonsSection() {
   const [persons, setPersons] = useState<Person[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const initialFilters = useMemo(() => ({
+    searchTerm: '',
+    sortConfig: { key: 'nome' as SortableKeys, direction: 'ascending' as 'ascending' | 'descending' }
+  }), []);
+
+  const { filters, setFilters } = usePersistedFilters('persons-list', initialFilters);
+  const { searchTerm, sortConfig } = filters;
+
   const [editingPerson, setEditingPerson] = useState<Person | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Person | null>(null);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDbReady, setIsDbReady] = useState(false);
-  const [sortConfig, setSortConfig] = useState<{ key: SortableKeys, direction: 'ascending' | 'descending' } | null>({ key: 'nome', direction: 'ascending' });
   const { toast } = useToast();
 
   const loadPersons = useCallback(async () => {
@@ -114,19 +126,20 @@ export default function PersonsSection() {
       }
     }
     initializeDB();
-    
+
     window.addEventListener('datachanged', loadPersons);
     return () => {
       window.removeEventListener('datachanged', loadPersons);
     };
   }, [loadPersons, toast, isDbReady]);
-  
+
   const filteredPersons = useMemo(() => {
     const lowercasedTerm = searchTerm.toLowerCase().trim();
     if (!lowercasedTerm) {
       return persons;
     }
 
+<<<<<<< HEAD
     return persons.filter(person => {
       const cleanedSearchTerm = lowercasedTerm.replace(/\D/g, '');
       const name = person.nome?.toLowerCase() || '';
@@ -148,27 +161,32 @@ export default function PersonsSection() {
         externalCode.includes(lowercasedTerm)
       );
     });
+=======
+    return persons.filter(person =>
+      smartSearch(person, searchTerm, ['nome', 'nomeFantasia', 'cpfCnpj', 'telefone', 'cidade'])
+    );
+>>>>>>> feature/status-visual-pro
   }, [persons, searchTerm]);
-  
+
   const sortedPersons = useMemo(() => {
     const sortableItems = [...filteredPersons];
     if (sortConfig !== null) {
-        sortableItems.sort((a, b) => {
-            const valA = a[sortConfig.key];
-            const valB = b[sortConfig.key];
+      sortableItems.sort((a, b) => {
+        const valA = a[sortConfig.key];
+        const valB = b[sortConfig.key];
 
-            if (valA === undefined || valA === null) return 1;
-            if (valB === undefined || valB === null) return -1;
-            
-            let comparison = 0;
-            if (typeof valA === 'string' && typeof valB === 'string') {
-                comparison = valA.localeCompare(valB, 'pt-BR', { sensitivity: 'base' });
-            } else if (typeof valA === 'number' && typeof valB === 'number') {
-                comparison = valA - valB;
-            }
+        if (valA === undefined || valA === null) return 1;
+        if (valB === undefined || valB === null) return -1;
 
-            return sortConfig.direction === 'ascending' ? comparison : -comparison;
-        });
+        let comparison = 0;
+        if (typeof valA === 'string' && typeof valB === 'string') {
+          comparison = valA.localeCompare(valB, 'pt-BR', { sensitivity: 'base' });
+        } else if (typeof valA === 'number' && typeof valB === 'number') {
+          comparison = valA - valB;
+        }
+
+        return sortConfig.direction === 'ascending' ? comparison : -comparison;
+      });
     }
     return sortableItems;
   }, [filteredPersons, sortConfig]);
@@ -178,7 +196,7 @@ export default function PersonsSection() {
     setEditingPerson(null);
     setIsFormModalOpen(false);
   };
-  
+
   const handleEditClick = (person: Person) => {
     setEditingPerson(person);
     setIsFormModalOpen(true);
@@ -201,39 +219,39 @@ export default function PersonsSection() {
       });
     }
   };
-  
+
   const handleDeleteClick = () => {
     if (deleteTarget?.id) {
       handleDelete(deleteTarget.id);
     }
     setDeleteTarget(null);
   };
-  
+
   const handleGenerateReport = async () => {
     try {
-        const companyData = await db.getCompanyData();
-        const pdfDataUri = generatePersonsPdf({
-            persons,
-            companyData,
-        });
-        const link = document.createElement('a');
-        const date = new Date().toISOString().split('T')[0];
-        link.href = pdfDataUri;
-        link.download = `relatorio_clientes_${date}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast({
-          title: 'Sucesso',
-          description: 'Seu relatório de clientes foi gerado.',
-        });
+      const companyData = await db.getCompanyData();
+      const pdfDataUri = generatePersonsPdf({
+        persons,
+        companyData,
+      });
+      const link = document.createElement('a');
+      const date = new Date().toISOString().split('T')[0];
+      link.href = pdfDataUri;
+      link.download = `relatorio_clientes_${date}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast({
+        title: 'Sucesso',
+        description: 'Seu relatório de clientes foi gerado.',
+      });
     } catch (error) {
-         console.error('Failed to generate PDF:', error);
-        toast({
-            title: 'Erro ao Gerar PDF',
-            description: 'Não foi possível gerar o relatório. Tente novamente.',
-            variant: 'destructive',
-        });
+      console.error('Failed to generate PDF:', error);
+      toast({
+        title: 'Erro ao Gerar PDF',
+        description: 'Não foi possível gerar o relatório. Tente novamente.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -249,34 +267,35 @@ export default function PersonsSection() {
         return 'secondary';
     }
   };
-  
+
   const requestSort = (key: SortableKeys) => {
     let direction: 'ascending' | 'descending' = 'ascending';
     if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
-        direction = 'descending';
+      direction = 'descending';
     }
-    setSortConfig({ key, direction });
+    setFilters({ ...filters, sortConfig: { key, direction } });
   };
 
   const getSortIcon = (key: SortableKeys) => {
     if (!sortConfig || sortConfig.key !== key) {
-        return <ArrowUpDown className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-50" />;
+      return <ArrowUpDown className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-50" />;
     }
     return sortConfig.direction === 'ascending' ? '▲' : '▼';
   };
-  
+
   const SortableHeader = ({ sortKey, children }: { sortKey: SortableKeys, children: React.ReactNode }) => (
     <TableHead>
-        <Button variant="ghost" onClick={() => requestSort(sortKey)} className="group px-2">
-            {children}
-            {getSortIcon(sortKey)}
-        </Button>
+      <Button variant="ghost" onClick={() => requestSort(sortKey)} className="group px-2">
+        {children}
+        {getSortIcon(sortKey)}
+      </Button>
     </TableHead>
   );
 
 
   return (
     <div className='space-y-8'>
+<<<<<<< HEAD
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">Clientes e Mecânicos</h1>
@@ -315,8 +334,50 @@ export default function PersonsSection() {
                     </DialogContent>
                 </Dialog>
             </div>
+=======
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Clientes e Mecânicos</h1>
+          <p className="text-lg text-muted-foreground">
+            Gerencie seus clientes e mecânicos cadastrados.
+          </p>
+>>>>>>> feature/status-visual-pro
         </div>
+        <div className='flex gap-2'>
+          <Button variant="outline" onClick={handleGenerateReport} disabled={persons.length === 0}>
+            <Download className="mr-2 h-4 w-4" />
+            Gerar Relatório
+          </Button>
+          <Dialog open={isFormModalOpen} onOpenChange={(isOpen) => {
+            setIsFormModalOpen(isOpen);
+            if (!isOpen) {
+              setEditingPerson(null);
+            }
+          }}>
+            <DialogTrigger asChild>
+              <Button>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Cadastrar Novo
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>{editingPerson ? 'Editar Registro' : 'Novo Cliente/Mecânico'}</DialogTitle>
+                <DialogDescription>Preencha os dados abaixo.</DialogDescription>
+              </DialogHeader>
+              <div className='py-4 max-h-[70vh] overflow-y-auto'>
+                <PersonForm
+                  onSave={handleSave}
+                  editingPerson={editingPerson}
+                  onClear={() => setEditingPerson(null)}
+                />
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
 
+<<<<<<< HEAD
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle>Registros Cadastrados</CardTitle>
@@ -463,14 +524,83 @@ export default function PersonsSection() {
                     <TableRow>
                       <TableCell colSpan={7} className="h-24 text-center">
                         {searchTerm ? 'Nenhum registro encontrado para a busca realizada.' : 'Nenhum cliente ou mecânico cadastrado.'}
+=======
+      <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle>Registros Cadastrados</CardTitle>
+          <CardDescription>Lista de todos os clientes e mecânicos cadastrados no sistema.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-4">
+            <SearchInput
+              placeholder="Buscar por nome, nome fantasia, CPF/CNPJ, telefone ou cidade..."
+              value={searchTerm}
+              onChange={(e) => setFilters({ ...filters, searchTerm: e.target.value })}
+              onClear={() => setFilters({ ...filters, searchTerm: '' })}
+              className="w-full"
+              containerClassName="relative flex-1 max-w-full"
+            />
+          </div>
+          <div className="border rounded-md">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <SortableHeader sortKey='id'>ID</SortableHeader>
+                  <SortableHeader sortKey='nome'>Razão Social</SortableHeader>
+                  <SortableHeader sortKey='nomeFantasia'>Nome Fantasia</SortableHeader>
+                  <SortableHeader sortKey='cpfCnpj'>CPF/CNPJ</SortableHeader>
+                  <SortableHeader sortKey='telefone'>Telefone</SortableHeader>
+                  <SortableHeader sortKey='tipo'>Tipo</SortableHeader>
+                  <TableHead className="w-[50px] text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sortedPersons.length > 0 ? (
+                  sortedPersons.map(person => (
+                    <TableRow key={person.id}>
+                      <TableCell className="font-medium text-muted-foreground">{person.id}</TableCell>
+                      <TableCell className="font-medium">{person.nome}</TableCell>
+                      <TableCell>{person.nomeFantasia || '-'}</TableCell>
+                      <TableCell>{formatCpfCnpj(person.cpfCnpj)}</TableCell>
+                      <TableCell>{person.telefone || '-'}</TableCell>
+                      <TableCell>
+                        <Badge variant={getTypeVariant(person.tipo)}>{person.tipo}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Abrir menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEditClick(person)}>
+                              <Pencil className="mr-2 h-4 w-4" />
+                              Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setDeleteTarget(person)} className="text-destructive focus:text-destructive">
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Excluir
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+>>>>>>> feature/status-visual-pro
                       </TableCell>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-24 text-center">
+                      Nenhum registro encontrado para a busca realizada.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>

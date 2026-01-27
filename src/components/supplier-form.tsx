@@ -58,14 +58,14 @@ const defaultFormValues: SupplierFormValues = {
 };
 
 const formatCNPJ = (value: string) => {
-    if (!value) return '';
-    const cnpj = value.replace(/[^\d]/g, '');
-    return cnpj
-        .slice(0, 14)
-        .replace(/(\d{2})(\d)/, '$1.$2')
-        .replace(/(\d{3})(\d)/, '$1.$2')
-        .replace(/(\d{3})(\d)/, '$1/$2')
-        .replace(/(\d{4})(\d)/, '$1-$2');
+  if (!value) return '';
+  const cnpj = value.replace(/[^\d]/g, '');
+  return cnpj
+    .slice(0, 14)
+    .replace(/(\d{2})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1/$2')
+    .replace(/(\d{4})(\d)/, '$1-$2');
 };
 
 export default function SupplierForm({ onSave, editingSupplier, onClear, isModal = false }: SupplierFormProps) {
@@ -88,6 +88,7 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
   });
 
   useEffect(() => {
+<<<<<<< HEAD
     const valuesToReset: SupplierFormValues = editingSupplier ? {
         razaoSocial: editingSupplier.razaoSocial || '',
         nomeFantasia: editingSupplier.nomeFantasia || '',
@@ -99,6 +100,11 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
         codigoExterno: editingSupplier.codigoExterno || '',
         telefones: editingSupplier?.telefones?.length ? editingSupplier.telefones : [{ type: 'Comercial', value: '' }],
         emails: editingSupplier?.emails?.length ? editingSupplier.emails : [{ type: 'Principal', value: '' }],
+=======
+    const defaultVals = editingSupplier ? {
+      ...editingSupplier,
+      cnpj: editingSupplier.cnpj ? formatCNPJ(editingSupplier.cnpj) : '',
+>>>>>>> feature/status-visual-pro
     } : defaultFormValues;
     form.reset(valuesToReset);
   }, [editingSupplier, form]);
@@ -115,9 +121,9 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
     try {
       const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpj}`);
       if (!response.ok) throw new Error('CNPJ não encontrado ou API indisponível.');
-      
+
       const data = await response.json();
-      
+
       form.setValue('razaoSocial', data.razao_social || '');
       form.setValue('nomeFantasia', data.nome_fantasia || data.razao_social || '');
       form.setValue('cep', data.cep || '');
@@ -127,12 +133,12 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
       toast({ title: "Sucesso", description: "Dados do fornecedor preenchidos automaticamente." });
     } catch (err) {
       toast({
-          title: "Erro ao Buscar CNPJ",
-          description: err instanceof Error ? err.message : "Não foi possível buscar os dados do fornecedor.",
-          variant: "destructive"
+        title: "Erro ao Buscar CNPJ",
+        description: err instanceof Error ? err.message : "Não foi possível buscar os dados do fornecedor.",
+        variant: "destructive"
       });
     } finally {
-        setIsFetchingCnpj(false);
+      setIsFetchingCnpj(false);
     }
   };
 
@@ -142,26 +148,33 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
 
     setIsFetchingCep(true);
     try {
-        const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
-        if (!response.ok) throw new Error('CEP não encontrado');
-        
-        const data = await response.json();
-        if (data.erro) {
-            throw new Error('CEP não encontrado');
-        }
+      const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      if (!response.ok) throw new Error('CEP não encontrado');
 
+<<<<<<< HEAD
         form.setValue('endereco', data.logradouro || '');
         form.setValue('bairro', data.bairro || '');
         form.setValue('cidade', `${data.localidade || ''} - ${data.uf || ''}`);
         toast({ title: "Sucesso", description: "Endereço preenchido automaticamente." });
+=======
+      const data = await response.json();
+      if (data.erro) {
+        throw new Error('CEP não encontrado');
+      }
+
+      form.setValue('endereco', data.logradouro);
+      form.setValue('bairro', data.bairro);
+      form.setValue('cidade', `${data.localidade} - ${data.uf}`);
+      toast({ title: "Sucesso", description: "Endereço preenchido automaticamente." });
+>>>>>>> feature/status-visual-pro
     } catch (err) {
-        toast({
-            title: "Erro ao Buscar CEP",
-            description: err instanceof Error ? err.message : "Não foi possível buscar o endereço.",
-            variant: "destructive"
-        });
+      toast({
+        title: "Erro ao Buscar CEP",
+        description: err instanceof Error ? err.message : "Não foi possível buscar o endereço.",
+        variant: "destructive"
+      });
     } finally {
-        setIsFetchingCep(false);
+      setIsFetchingCep(false);
     }
   };
 
@@ -191,6 +204,22 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
         emails: data.emails?.filter(e => e.value),
       };
 
+      // Validação de duplicidade de CNPJ ANTES de salvar
+      if (!editingSupplier?.id && dataToSave.cnpj) {
+        // Apenas valida ao criar novo fornecedor (não ao editar)
+        const allSuppliers = await db.getAllSuppliers();
+        const existing = allSuppliers.find(s => s.cnpj === dataToSave.cnpj);
+
+        if (existing) {
+          toast({
+            title: 'CNPJ Duplicado',
+            description: `Já existe um fornecedor com o CNPJ "${formatCNPJ(dataToSave.cnpj)}".`,
+            variant: 'destructive',
+          });
+          return;
+        }
+      }
+
       if (editingSupplier?.id) {
         const updatedSupplier = { ...dataToSave, id: editingSupplier.id }
         await db.updateSupplier(updatedSupplier);
@@ -214,6 +243,7 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
     }
   };
 
+<<<<<<< HEAD
   return (
     <div className="py-4 overflow-y-auto pl-1 pr-4">
         <Form {...form}>
@@ -371,5 +401,121 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
         </form>
         </Form>
     </div>
+=======
+  const FormContent = (
+    <div className="space-y-4 pt-4">
+      <FormField
+        name="cnpj"
+        control={form.control}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>CNPJ</FormLabel>
+            <FormControl>
+              <div className="relative">
+                <Input
+                  placeholder="00.000.000/0000-00"
+                  {...field}
+                  onChange={(e) => field.onChange(formatCNPJ(e.target.value))}
+                  onBlur={handleCnpjBlur}
+                />
+                {isFetchingCnpj && <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin" />}
+              </div>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        name="nomeFantasia"
+        control={form.control}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Nome Fantasia</FormLabel>
+            <FormControl>
+              <Input placeholder="Nome da Empresa" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        name="razaoSocial"
+        control={form.control}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Razão Social</FormLabel>
+            <FormControl>
+              <Input placeholder="Razão Social Ltda." {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+        <FormField name="cep" control={form.control} render={({ field }) => (
+          <FormItem className="md:col-span-1">
+            <FormLabel>CEP</FormLabel>
+            <FormControl>
+              <div className="relative">
+                <Input placeholder="00000-000" {...field} onBlur={handleCepBlur} />
+                {isFetchingCep && <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin" />}
+              </div>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )} />
+        <FormField name="endereco" control={form.control} render={({ field }) => (
+          <FormItem className="md:col-span-2">
+            <FormLabel>Endereço</FormLabel>
+            <FormControl><Input placeholder="Rua Exemplo, 123" {...field} /></FormControl>
+            <FormMessage />
+          </FormItem>
+        )} />
+      </div>
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+        <FormField name="bairro" control={form.control} render={({ field }) => (
+          <FormItem>
+            <FormLabel>Bairro</FormLabel>
+            <FormControl><Input placeholder="Centro" {...field} /></FormControl>
+            <FormMessage />
+          </FormItem>
+        )} />
+        <FormField name="cidade" control={form.control} render={({ field }) => (
+          <FormItem>
+            <FormLabel>Cidade/UF</FormLabel>
+            <FormControl><Input placeholder="São Paulo - SP" {...field} /></FormControl>
+            <FormMessage />
+          </FormItem>
+        )} />
+      </div>
+    </div>
+  )
+
+  const FooterComponent = isModal ? DialogFooter : CardFooter;
+  const footerProps = isModal ? { className: 'pt-6' } : { className: 'flex justify-end gap-2 pr-0' };
+
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSave)}>
+        {isModal ? FormContent : <CardContent>{FormContent}</CardContent>}
+
+        <FooterComponent {...footerProps}>
+          {isModal && (
+            <DialogClose asChild>
+              <Button type="button" variant="outline">
+                Cancelar
+              </Button>
+            </DialogClose>
+          )}
+          {onClear && <Button type="button" variant="outline" onClick={onClear}>Limpar</Button>}
+          <Button type="submit" disabled={isSubmitting || isFetchingCnpj || isFetchingCep}>
+            {(isSubmitting || isFetchingCnpj || isFetchingCep) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            {editingSupplier ? 'Atualizar' : 'Salvar'}
+          </Button>
+        </FooterComponent>
+      </form>
+    </Form>
+>>>>>>> feature/status-visual-pro
   );
 }

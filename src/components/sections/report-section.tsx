@@ -17,7 +17,12 @@ import { addDays, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+<<<<<<< HEAD
 import { useAppStore } from '@/store/app-store';
+=======
+import { smartSearch } from '@/lib/search-utils';
+import { SearchInput } from '@/components/ui/search-input';
+>>>>>>> feature/status-visual-pro
 
 export default function ReportSection() {
   const [warranties, setWarranties] = useState<Warranty[]>([]);
@@ -46,14 +51,14 @@ export default function ReportSection() {
       });
     }
   }, [toast]);
-  
+
   useEffect(() => {
     loadWarranties();
   }, [loadWarranties]);
-  
+
   const filteredWarranties = useMemo(() => {
     const lowercasedTerm = searchTerm.toLowerCase();
-    
+
     return warranties.filter(warranty => {
       // Status filter
       if (statusFilter !== 'Todos' && warranty.status !== statusFilter) {
@@ -70,21 +75,22 @@ export default function ReportSection() {
         const toDate = addDays(to, 1);
         if (parseISO(warranty.dataRegistro) >= toDate) return false;
       }
-      
+
       // Search term filter
-      if (!lowercasedTerm) {
-        return true;
+      if (!smartSearch(warranty, searchTerm, [
+        'codigo',
+        'descricao',
+        'fornecedor',
+        'cliente',
+        'defeito',
+        'status',
+        'requisicaoVenda',
+        'requisicoesGarantia'
+      ])) {
+        return false;
       }
-      return (
-        warranty.codigo?.toLowerCase().includes(lowercasedTerm) ||
-        warranty.descricao?.toLowerCase().includes(lowercasedTerm) ||
-        warranty.fornecedor?.toLowerCase().includes(lowercasedTerm) ||
-        warranty.cliente?.toLowerCase().includes(lowercasedTerm) ||
-        warranty.defeito?.toLowerCase().includes(lowercasedTerm) ||
-        warranty.status?.toLowerCase().includes(lowercasedTerm) ||
-        warranty.requisicaoVenda?.toLowerCase().includes(lowercasedTerm) ||
-        warranty.requisicoesGarantia?.toLowerCase().includes(lowercasedTerm)
-      );
+
+      return true;
     });
   }, [searchTerm, warranties, dateRange, statusFilter]);
 
@@ -108,9 +114,9 @@ export default function ReportSection() {
       setSelectedIds(new Set());
     }
   };
-  
+
   const isAllSelected = filteredWarranties.length > 0 && selectedIds.size === filteredWarranties.length;
-  
+
   const selectedWarranties = useMemo(() => {
     return warranties.filter(w => w.id && selectedIds.has(w.id));
   }, [warranties, selectedIds]);
@@ -148,7 +154,7 @@ export default function ReportSection() {
 
   return (
     <div className="space-y-8">
-       <Card className="shadow-lg">
+      <Card className="shadow-lg">
         <CardHeader>
           <CardTitle>Seleção de Garantias para Relatório</CardTitle>
           <CardDescription>
@@ -156,6 +162,7 @@ export default function ReportSection() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+<<<<<<< HEAD
            <div className="flex flex-col md:flex-row gap-4 mb-4">
               <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -178,16 +185,39 @@ export default function ReportSection() {
                     </SelectContent>
                 </Select>
               <DatePickerWithRange date={dateRange} setDate={setDateRange} />
+=======
+          <div className="flex flex-col md:flex-row gap-4 mb-4">
+            <SearchInput
+              placeholder="Buscar por código, descrição..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onClear={() => setSearchTerm('')}
+              className="w-full"
+              containerClassName="flex-1 max-w-full"
+            />
+            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as WarrantyStatus | 'Todos')}>
+              <SelectTrigger className="w-full md:w-[280px]">
+                <SelectValue placeholder="Filtrar por status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Todos">Todos Status</SelectItem>
+                {WARRANTY_STATUSES.map(status => (
+                  <SelectItem key={status} value={status}>{status}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <DatePickerWithRange date={dateRange} setDate={setDateRange} />
+>>>>>>> feature/status-visual-pro
           </div>
           <div className="border rounded-md">
-             <Table>
+            <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[50px] text-center">
                     <Checkbox
-                        checked={isAllSelected}
-                        onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
-                        aria-label="Selecionar todos"
+                      checked={isAllSelected}
+                      onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
+                      aria-label="Selecionar todos"
                     />
                   </TableHead>
                   <TableHead>Código</TableHead>
@@ -203,9 +233,9 @@ export default function ReportSection() {
                     <TableRow key={warranty.id} data-state={selectedIds.has(warranty.id!) ? 'selected' : ''}>
                       <TableCell className="text-center">
                         <Checkbox
-                            checked={selectedIds.has(warranty.id!)}
-                            onCheckedChange={() => handleSelectionChange(warranty.id!)}
-                            aria-label={`Selecionar garantia ${warranty.codigo}`}
+                          checked={selectedIds.has(warranty.id!)}
+                          onCheckedChange={() => handleSelectionChange(warranty.id!)}
+                          aria-label={`Selecionar garantia ${warranty.codigo}`}
                         />
                       </TableCell>
                       <TableCell className="font-medium">{warranty.codigo || '-'}</TableCell>
@@ -214,14 +244,18 @@ export default function ReportSection() {
                       <TableCell>{warranty.cliente || '-'}</TableCell>
                       <TableCell>
                         {warranty.status ? (
+<<<<<<< HEAD
                             <Badge 
                               className={cn(getWarrantyStatusClass(warranty.status))}
                               style={getWarrantyStatusStyle(warranty.status)}
                             >
                               {warranty.status}
                             </Badge>
+=======
+                          <Badge className={cn(getWarrantyStatusClass(warranty.status))}>{warranty.status}</Badge>
+>>>>>>> feature/status-visual-pro
                         ) : (
-                            <Badge variant="secondary">N/A</Badge>
+                          <Badge variant="secondary">N/A</Badge>
                         )}
                       </TableCell>
                     </TableRow>
@@ -238,7 +272,7 @@ export default function ReportSection() {
           </div>
         </CardContent>
       </Card>
-      
+
       <ReportGenerator selectedWarranties={selectedWarranties} />
     </div>
   );

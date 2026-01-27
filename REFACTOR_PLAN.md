@@ -1,450 +1,248 @@
+# 🚀 Plano Completo de Refatoração - Synergia OS
 
-
-# Plano de Refatoração do Synergia OS
-
-Este documento descreve o roteiro para refatorar e melhorar a arquitetura do código do aplicativo Synergia OS. As mudanças serão aplicadas em fases para garantir estabilidade e segurança.
-
----
-
-## Fase 1: Fundações de UI e Navegação (Concluída)
-
-**Status: Concluída**
-
-**Objetivo:** Implementar uma navegação em abas para permitir a troca rápida entre funcionalidades e adicionar um sistema de navegação "Voltar" mais intuitivo.
-
-**Roteiro Detalhado:**
-1.  **Implementar Navegação em Abas:**
-    *   **Arquivo:** `src/store/app-store.ts`
-    *   **Arquivo:** `src/components/app-layout.tsx`
-    *   **Arquivo:** `src/app/page.tsx`
-2.  **Adicionar Botão "Voltar" Inteligente:**
-    *   **Arquivo:** `src/store/app-store.ts`
-    *   **Arquivo:** `src/components/app-layout.tsx`
+> **Versão:** 3.0 - COMPLETA  
+> **Data Criação:** 15/12/2025  
+> **Total de Fases:** 24  
+> **Tempo Estimado:** 60-78 horas (8-10 dias)
 
 ---
 
-## Fase 2: Melhorias de Usabilidade nas Garantias (Concluída)
+## 📊 Análise do Projeto
 
-**Status: Concluída**
+### Estrutura Atual
+```
+src/
+├── app/              6 arquivos
+├── components/       91 arquivos (20 sections)
+├── config/           1 arquivo
+├── firebase/         1 arquivo
+├── hooks/            6 arquivos
+├── lib/              7 arquivos
+├── store/            1 arquivo
+└── types/            1 arquivo
+```
 
-**Objetivo:** Enriquecer as telas de "Lotes" e "Consulta" com mais informações e funcionalidades de gerenciamento em massa.
+### Dependências
+- Next.js: 15.3.3 (⚠️ 15.5.9 disponível)
+- React: 18.3.1 ✅
+- Firebase: 10.12.3 ✅
+- Recharts: 2.15.1 ✅
 
-**Roteiro Detalhado:**
-1.  **Cards de Lote Informativos:**
-    *   **Arquivo:** `src/components/sections/lotes-section.tsx`
-2.  **Gerenciamento em Massa nos Detalhes do Lote:**
-    *   **Arquivo:** `src/components/sections/lote-detail-section.tsx`
-3.  **Novos Status e Filtros:**
-    *   **Arquivo:** `src/lib/types.ts`
-    *   **Arquivo:** `src/components/sections/query-section.tsx`
-
----
-
-## Fase 3: Melhorias de Fluxo de Cadastro e Performance (Concluída)
-
-**Status: Concluída**
-
-**Objetivo:** Otimizar a performance e o fluxo de trabalho nas telas de cadastro e consulta.
-
-**Roteiro Detalhado:**
-1.  **Manter na Tela de Cadastro:**
-    *   **Arquivo:** `src/store/app-store.ts`
-    *   **Arquivo:** `src/components/sections/register-section.tsx` e `devolucao-register-section.tsx`
-2.  **Otimizar Telas de Consulta:**
-    *   **Arquivo:** `src/components/sections/query-section.tsx` e `src/components/sections/devolucao-query-section.tsx`
+### Problemas Identificados
+- 🔴 6 arquivos com erros de hidratação (`Date.now()` / `Math.random()`)
+- 🟡 4 arquivos com `console.log` em produção
+- 🟡 Next.js desatualizado
 
 ---
 
-## Fase 4: Busca Inteligente e Melhorias de UI (Concluída)
+## 🎯 Resumo das Fases
 
-**Status: Concluída**
-
-**Objetivo:** Implementar uma busca mais flexível em todo o sistema e aplicar a paleta de cores para enriquecer a interface.
-
-**Roteiro Detalhado:**
-1.  **Busca Aprimorada nas Telas de Consulta:**
-    *   **Arquivo:** `src/components/sections/products-section.tsx`
-    *   **Arquivo:** `src/components/sections/persons-section.tsx`
-2.  **Busca Inteligente nos Formulários de Cadastro:**
-    *   **Arquivo:** `src/components/warranty-form.tsx` (Garantias)
-    *   **Arquivo:** `src/components/sections/devolucao-register-section.tsx` (Devoluções)
-    *   **Arquivo:** `src/components/sections/batch-register-section.tsx` (Garantia em Lote)
-3.  **Cards Coloridos e Visualmente Informativos:**
-    *   **Arquivo:** `src/components/sections/dashboard-section.tsx`
-    *   **Arquivo:** `src/components/sections/lotes-section.tsx`
-    *   **Arquivo:** `src/components/sections/calculators-section.tsx`
+| Prioridade | Fases | Tempo Total |
+|------------|-------|-------------|
+| 🔴 Crítica | 3 | 5-7 horas |
+| 🟠 Alta | 6 | 18-24 horas |
+| 🟡 Média | 11 | 28-36 horas |
+| 🟢 Baixa | 4 | 9-11 horas |
+| **TOTAL** | **24** | **60-78 horas** |
 
 ---
 
-## Fase 5: Aprimoramento de Segurança da Sessão (Concluída)
+## 🔴 FASES CRÍTICAS (Fazer Primeiro)
 
-**Status: Concluída**
+### Fase 1: Correção de Erros de Hidratação
+**Tempo:** 2-3 horas  
+**Arquivos:** 6 calculadoras + batch-register-section.tsx  
+**Objetivo:** Eliminar `Date.now()` e `Math.random()` que causam hydration errors
 
-**Objetivo:** Aumentar a segurança do sistema, dando ao usuário o controle sobre a persistência de sua sessão de login.
+### Fase 2: Segurança da Sessão
+**Tempo:** 1-2 horas  
+**Arquivos:** `login/page.tsx`  
+**Objetivo:** Checkbox "Lembrar de mim" com localStorage/sessionStorage
 
-**Roteiro Detalhado:**
-1.  **Adicionar Opção "Lembrar de mim":**
-    *   **Arquivo:** `src/app/login/page.tsx`
-2.  **Implementar Lógica de Persistência:**
-    *   **Arquivo:** `src/app/login/page.tsx`
-
----
-
-## Fase 6: Refinamento do Fluxo de Status de Garantia (Concluída)
-
-**Status: Concluída**
-
-**Objetivo:** Substituir o sistema de status de garantia por um fluxo mais detalhado e visualmente intuitivo, alinhado ao processo de negócio real.
-
-**Roteiro Detalhado:**
-1.  **Atualizar Definição de Status:**
-    *   **Arquivo:** `src/lib/types.ts`
-2.  **Ajustar Status Padrão:**
-    *   **Arquivo:** `src/components/warranty-form.tsx`
-3.  **Atualizar Componentes de UI:**
-    *   **Arquivo:** `src/components/warranty-form.tsx`
-    *   **Arquivo:** `src/components/lote-detail-section.tsx`
-4.  **Implementar Cores Visuais:**
-    *   **Arquivo:** `src/app/globals.css`
-    *   **Arquivos:** `src/components/warranty-table.tsx`, `src/components/lote-detail-section.tsx`
-
----
-# Novas Funcionalidades e Melhorias
-
-## Fase 6.5: Correção de Bugs de Cadastro e Seleção (Concluída)
-
-**Status: Concluída**
-
-**Objetivo:** Corrigir bugs críticos que impedem a seleção de registros recém-cadastrados e ajustar o comportamento da busca.
-
-**Roteiro Detalhado:**
-1.  **Correção do Carregamento de Dados:**
-    *   **Arquivo:** `src/store/app-store.ts`
-    *   **Lógica:** Modificar a ação `reloadData` no store para garantir que, ao salvar um novo registro (cliente, produto, etc.), a lista de dados correspondente seja imediatamente atualizada no estado global.
-2.  **Ajuste da Busca de Clientes/Mecânicos:**
-    *   **Arquivo:** `src/components/sections/persons-section.tsx`
-    *   **Lógica:** Refinar a função de filtro para que ela pesquise tanto no campo `nome` quanto no `nomeFantasia`. Garantir que, se nenhum resultado for encontrado, a tabela exiba a mensagem "Nenhum registro encontrado".
-3.  **Verificação Cruzada:**
-    *   **Arquivos:** `src/components/sections/devolucao-register-section.tsx` e `src/components/warranty-form.tsx`.
-    *   **Lógica:** Garantir que os componentes `Combobox` para Cliente e Mecânico em ambos os formulários estejam utilizando a lista de `persons` do `app-store`, garantindo que os novos registros apareçam e sejam selecionáveis.
-
-**Benefícios:**
-*   **Confiabilidade:** Restaura a funcionalidade essencial de cadastro e seleção.
-*   **Melhor Experiência:** Remove a frustração do usuário ao não conseguir usar um dado que acabou de cadastrar.
+### Fase 3: Validador de Duplicidade
+**Tempo:** 2 horas  
+**Arquivos:** `product-form.tsx`, `supplier-form.tsx`, `person-form.tsx`  
+**Objetivo:** Prevenir cadastros duplicados (código, CNPJ, CPF)
 
 ---
 
-## Fase 7: Validador de Duplicidade (Concluída)
+## 🟠 FASES ALTA PRIORIDADE
 
-**Status: Concluída**
+### Fase 4: Fundações de UI e Navegação
+**Tempo:** 2-3 horas  
+**Objetivo:** Navegação em abas + botão "Voltar" inteligente
 
-**Objetivo:** Impedir o cadastro de itens duplicados, avisando o usuário quando um código de produto, CNPJ de fornecedor ou CPF/CNPJ de cliente já existe.
+### Fase 5: Usabilidade em Garantias
+**Tempo:** 3-4 horas  
+**Objetivo:** Cards informativos + gerenciamento em massa
 
-**Roteiro Detalhado:**
-1.  **Validação de Produto:**
-    *   **Arquivo:** `src/components/product-form.tsx`.
-    *   **Lógica:** Na função `handleSave`, antes de chamar `db.addProduct`, realizar uma busca (`db.getProductByCode`) com o código do formulário. Se um produto for encontrado, exibir um `toast` de erro ("Já existe um produto com este código.") e interromper o salvamento.
-2.  **Validação de Fornecedor:**
-    *   **Arquivo:** `src/components/supplier-form.tsx`.
-    *   **Lógica:** Na função `handleSave`, antes de salvar, buscar todos os fornecedores (`db.getAllSuppliers`) e verificar se o CNPJ digitado (se houver) já existe na base de dados. Se sim, exibir um `toast` de erro e interromper.
-3.  **Validação de Cliente/Mecânico:**
-    *   **Arquivo:** `src/components/person-form.tsx`.
-    *   **Lógica:** Similar ao fornecedor, na função `handleSave`, buscar todas as pessoas (`db.getAllPersons`) e verificar se o CPF/CNPJ digitado (se houver) já existe. Se sim, exibir um `toast` de erro.
+### Fase 6: Busca Inteligente
+**Tempo:** 3-4 horas  
+**Objetivo:** Busca fuzzy + cards coloridos
 
-**Benefícios:**
-*   **Integridade dos Dados:** Garante que a base de dados permaneça limpa e sem registros duplicados.
-*   **Melhor Experiência:** Evita que o usuário cadastre a mesma informação duas vezes por engano.
+### Fase 7: Melhorias de Fluxo
+**Tempo:** 4-5 horas  
+**Objetivo:** Cadastro rápido (botão "+") + manter filtros
 
----
+### Fase 8: Dashboard Visual
+**Tempo:** 3-4 horas  
+**Objetivo:** Gráficos BarChart + painel de garantias recentes
 
-## Fase 8: Melhorias de Fluxo e Usabilidade (Concluída)
-
-**Status: Concluída**
-
-**Objetivo:** Aumentar a produtividade do usuário adicionando atalhos de cadastro e melhorando a experiência em telas de consulta.
-
-**Roteiro Detalhado:**
-1.  **Cadastro Rápido nos Formulários:**
-    *   **Arquivos:** `src/components/warranty-form.tsx` e `src/components/sections/devolucao-register-section.tsx`.
-    *   **UI:** Adicionar um botão "+" ao lado dos campos de seleção de Cliente, Mecânico e Fornecedor.
-    *   **Lógica:** Ao clicar no botão, abrir um `Dialog` (janela modal) contendo o formulário de cadastro correspondente (`PersonForm` ou `SupplierForm`). Após salvar, o novo registro deve ser automaticamente selecionado no formulário original.
-2.  **Manter Filtros na Consulta de Garantia:**
-    *   **Arquivo:** `src/store/app-store.ts` e `src/components/sections/query-section.tsx`.
-    *   **Lógica:** Modificar a forma como os dados são recarregados para que os estados dos filtros (termo de busca, período) não sejam resetados após uma edição ou exclusão.
-3.  **Botões para Limpar Formulários:**
-    *   **Arquivo:** `src/components/warranty-form.tsx` e `src/components/sections/devolucao-register-section.tsx`.
-    *   **UI:** Adicionar um botão "Limpar" ao lado do botão "Salvar".
-    *   **Lógica:** O `onClick` do botão chamará a função `form.reset()` para limpar todos os campos, facilitando o início de um novo cadastro.
-
-**Benefícios:**
-*   **Agilidade:** Reduz drasticamente o número de cliques e a navegação entre telas.
-*   **Fluxo Contínuo:** Permite que o usuário permaneça no contexto da tarefa que está executando.
+### Fase 9: Otimização de Cadastro Rápido
+**Tempo:** 2-3 horas  
+**Objetivo:** Auto-seleção após criar item
 
 ---
 
-## Fase 9: Campo "Código Externo" e Melhorias de Consulta (Concluída)
+## 🟡 FASES MÉDIA PRIORIDADE
 
-**Status: Concluída**
+### Fase 10: Performance
+**Tempo:** 2-3 horas  
+**Objetivo:** Virtualização de listas + lazy loading
 
-**Objetivo:** Adicionar um campo de código para clientes e fornecedores e melhorar a interface das consultas.
+### Fase 11: Status de Garantia
+**Tempo:** 2-3 horas  
+**Objetivo:** Sistema de status visual com cores
 
-**Roteiro Detalhado:**
-1.  **Atualizar Tipos:**
-    *   **Arquivo:** `src/lib/types.ts`.
-    *   **Lógica:** Adicionar o campo `codigoExterno?: string` às interfaces `Person` e `Supplier`.
-2.  **Atualizar Formulários:**
-    *   **Arquivo:** `src/components/person-form.tsx` e `src/components/supplier-form.tsx`.
-    *   **UI:** Adicionar um novo `FormField` para o `codigoExterno`.
-3.  **Atualizar Tabelas de Exibição e Busca:**
-    *   **Arquivos:** `src/components/sections/persons-section.tsx`, `src/components/sections/suppliers-section.tsx`.
-    *   **UI:** Adicionar uma nova coluna na tabela para exibir o `codigoExterno` e incluí-lo na lógica de busca.
-4.  **Botão "Editar" nas Devoluções do Dia:**
-    *   **Arquivo:** `src/components/sections/dashboard-section.tsx`.
-    *   **UI:** Adicionar uma coluna com um botão "Editar" na tabela de devoluções recentes no dashboard.
+### Fase 12: Código Externo
+**Tempo:** 2 horas  
+**Objetivo:** Campo `codigoExterno` para integração
 
-**Benefícios:**
-*   **Interoperabilidade:** Facilita a integração de dados com outros sistemas.
-*   **Acesso Rápido:** Melhora a usabilidade, permitindo encontrar registros por códigos alternativos e editar itens recentes diretamente do dashboard.
+### Fase 13: Máscara de Telefone
+**Tempo:** 1 hora  
+**Objetivo:** Formatação automática `(XX) XXXXX-XXXX`
 
----
+### Fase 14: Múltiplos Contatos
+**Tempo:** 3-4 horas  
+**Objetivo:** Arrays de telefones e emails
 
-## Fase 10: Preferências do Usuário e Segurança (Concluída)
+### Fase 15: UX Telas Vazias
+**Tempo:** 2 horas  
+**Objetivo:** Componente EmptyState reutilizável
 
-**Status: Concluída**
+### Fase 16: Limpeza de Console.log
+**Tempo:** 30 min  
+**Objetivo:** Remover logs de produção
 
-**Objetivo:** Permitir personalização da interface e ajustar comportamentos padrão para melhorar a segurança.
+### Fase 17: Atualizar Next.js
+**Tempo:** 1 hora  
+**Objetivo:** 15.3.3 → 15.5.9
 
-**Roteiro Detalhado:**
-1.  **Aba Fixa no Dashboard:**
-    *   **Arquivo:** `src/components/sections/dashboard-section.tsx`.
-    *   **Lógica:** Usar o `localStorage` para salvar a última aba selecionada ("Garantias" ou "Devoluções") e abri-la como padrão no próximo acesso.
-2.  **Comportamento Padrão do "Lembrar de mim":**
-    *   **Arquivo:** `src/app/login/page.tsx`.
-    *   **Lógica:** Alterar o estado inicial do checkbox "Lembrar de mim" na tela de login para `false` (desmarcado).
+### Fase 18: Status Dinâmicos (COMPLEXA)
+**Tempo:** 6-8 horas  
+**Objetivo:** CRUD de status customizáveis
 
-**Benefícios:**
-*   **Personalização:** Adapta o sistema ao fluxo de trabalho preferido do usuário.
-*   **Segurança Aprimorada:** O comportamento padrão se torna mais seguro, pois a sessão não persiste a menos que o usuário solicite.
+### Fase 19: Tempo Médio de Devolução (COMPLEXA)
+**Tempo:** 4-5 horas  
+**Objetivo:** Analytics de tempo de devolução por cliente
 
----
-
-## Fase 11: Cadastro de Status Dinâmicos (Dificuldade: Alta)
-
-**Objetivo:** Criar uma seção para que o administrador possa cadastrar, editar e excluir os status usados no sistema (garantias, lotes, etc.) e definir onde cada um pode ser usado.
-
-**Roteiro Detalhado:**
-1.  **Nova Tabela no Banco de Dados:**
-    *   **Arquivo:** `src/lib/db.ts`.
-    *   **Lógica:** Criar um novo `objectStore` chamado `statuses`. Cada objeto terá `id`, `nome`, `cor`, e um campo `aplicavelEm: ('garantia' | 'lote' | 'devolucao')[]`.
-2.  **CRUD de Status:**
-    *   **Arquivos:** Criar uma nova seção `src/components/sections/status-section.tsx` e um formulário `src/components/status-form.tsx`.
-    *   **UI:** A seção listará os status em uma tabela. O formulário permitirá criar/editar um status, incluindo um seletor de cor e checkboxes para definir onde ele é aplicável.
-    *   **Navegação:** Adicionar a nova seção ao menu em `src/config/nav-config.ts`.
-3.  **Refatorar Componentes `Select`:**
-    *   **Arquivos:** `src/components/warranty-form.tsx`, `src/components/lote-form.tsx`, etc.
-    *   **Lógica:** Modificar todos os `Select` de status. Em vez de usar uma lista fixa (`WARRANTY_STATUSES`), eles deverão buscar os status do banco de dados (`db.getAllStatuses()`) e filtrar com base no campo `aplicavelEm`.
-
-**Benefícios:**
-*   **Flexibilidade Total:** A empresa pode adaptar o sistema exatamente ao seu fluxo de trabalho, criando e nomeando as etapas como desejar.
-*   **Escalabilidade:** Facilita a adição de novos módulos que também precisem de status customizáveis no futuro.
+### Fase 20: Melhorias Consulta Devoluções
+**Tempo:** 1-2 horas  
+**Objetivo:** Hover dark mode + tooltip mecânico
 
 ---
 
-## Fase 12: Análise de Tempo Médio de Devolução (Dificuldade: Alta)
+## 🟢 FASES BAIXA PRIORIDADE (Polish)
 
-**Objetivo:** Calcular e exibir o tempo médio que cada cliente leva para devolver as peças após a compra.
+### Fase 21: Preferências do Usuário
+**Tempo:** 1 hora  
+**Objetivo:** Salvar aba preferida do dashboard
 
-**Roteiro Detalhado:**
-1.  **Lógica de Cálculo:**
-    *   **Arquivo:** `src/components/sections/devolucao-report-section.tsx`.
-    *   **Lógica:**
-        *   Na função que gera os relatórios, buscar todas as devoluções (`getAllDevolucoes`).
-        *   Agrupar as devoluções por cliente.
-        *   Para cada cliente, iterar sobre suas devoluções, calcular a diferença em dias entre `dataDevolucao` e `dataVenda` para cada uma.
-        *   Calcular a média de dias para cada cliente.
-2.  **Exibição dos Dados:**
-    *   **Arquivo:** `src/components/sections/devolucao-report-section.tsx`.
-    *   **UI:** Adicionar um novo `Card` ou Tabela na tela de relatórios de devolução para exibir o tempo médio por cliente.
+### Fase 22: Remover Login Google
+**Tempo:** 30 min  
+**Objetivo:** Simplificar tela de login
 
-**Benefícios:**
-*   **Inteligência de Negócio:** Fornece um indicador valioso sobre o comportamento dos clientes.
-*   **Análise Preditiva:** Ajuda a prever fluxos de devolução e a gerenciar melhor o estoque.
+### Fase 23: UI Polish
+**Tempo:** 3-4 horas  
+**Objetivo:** Consistência visual (botões, espaçamentos, tipografia)
+
+### Fase 24: Documentação e Testes
+**Tempo:** 4-5 horas  
+**Objetivo:** README + JSDoc + testes básicos
 
 ---
 
-## Fase 13: Melhorias na Consulta de Devoluções (Dificuldade: Média)
+## 🛡️ PROCEDIMENTOS DE SEGURANÇA
 
-**Objetivo:** Melhorar a visualização de dados na tela de consulta de devoluções.
+### Antes de Cada Fase
+```bash
+git checkout -b [tipo]/[nome-fase]
+git pull origin main
+```
 
-**Roteiro Detalhado:**
-1.  **Hover no Modo Escuro:**
-    *   **Arquivo:** `src/components/ui/table.tsx`.
-    *   **UI (CSS):** Analisar a classe `hover:bg-muted/50` aplicada à `TableRow`. Garantir que a cor da variável `--muted` no tema escuro (`globals.css`) tenha contraste suficiente para o efeito de hover ser visível.
-2.  **Ícone de Informação do Mecânico:**
-    *   **Arquivo:** `src/components/sections/devolucao-query-section.tsx`.
-    *   **UI:** Na `TableRow`, adicionar uma condição para renderizar um ícone (`<Info />` de `lucide-react`) ao lado do nome do cliente se `item.mecanico` existir e for diferente de `item.cliente`. Envolver este ícone com o componente `<Tooltip>` do Shadcn para exibir as informações.
+### Durante a Fase
+```bash
+# Commits incrementais
+git add [arquivo]
+git commit -m "[tipo]: [descrição]"
+```
 
-**Benefícios:**
-*   **Consistência de UI:** Garante que a experiência do usuário seja a mesma nos modos claro e escuro.
-*   **Acesso Rápido à Informação:** Permite que o usuário veja informações importantes sem precisar navegar para outra tela.
+### Após a Fase
+```bash
+npm run dev          # Testar
+npm run build        # Verificar build
+npm run typecheck    # Verificar tipos
+git checkout main
+git merge [branch]
+git push origin main
+```
 
----
-
-## Fase 14: Máscara Automática para Telefone (Concluída)
-
-**Status: Concluída**
-
-**Objetivo:** Implementar uma máscara de formatação automática para o campo de telefone.
-
-**Roteiro Detalhado:**
-1.  **Criar Função Utilitária:**
-    *   **Arquivo:** `src/lib/utils.ts`.
-    *   **Lógica:** Criar e exportar uma função `formatPhoneNumber(value: string)` que aplique a máscara `(XX) XXXXX-XXXX` ou `(XX) XXXX-XXXX`.
-2.  **Aplicar no Formulário:**
-    *   **Arquivo:** `src/components/person-form.tsx`.
-    *   **Lógica:** No `FormField` de telefone, usar a função `formatPhoneNumber` no `onChange`.
-
-**Benefícios:**
-*   **Código Limpo:** Centraliza a lógica de formatação.
-*   **Padronização de Dados:** Garante que todos os telefones sigam o mesmo formato.
+### Rollback de Emergência
+```bash
+git log --oneline
+git revert [commit-hash]
+git push origin main
+```
 
 ---
 
-## Fase 15: Múltiplos Contatos (Concluída)
+## 📋 ORDEM DE EXECUÇÃO RECOMENDADA
 
-**Status: Concluída**
+**Semana 1 - Crítico + Alta (Dias 1-5)**
+1. Fase 1: Hidratação (CRÍTICO)
+2. Fase 2: Segurança Sessão (CRÍTICO)
+3. Fase 3: Validador (CRÍTICO)
+4. Fase 4: Navegação
+5. Fase 5: Usabilidade Garantias
+6. Fase 6: Busca Inteligente
+7. Fase 7: Melhorias de Fluxo
+8. Fase 8: Dashboard Visual
+9. Fase 9: Cadastro Rápido
 
-**Objetivo:** Permitir o cadastro de múltiplos telefones e emails para clientes, mecânicos e fornecedores.
-
-**Roteiro Detalhado:**
-1.  **Atualizar Tipos:**
-    *   **Arquivo:** `src/lib/types.ts`.
-    *   **Lógica:** Criar `ContactInfo { type: string; value: string; }` e substituir os campos de telefone/email por `telefones?: ContactInfo[]` e `emails?: ContactInfo[]`.
-2.  **Formulários com Campos Dinâmicos:**
-    *   **Arquivos:** `src/components/person-form.tsx`, `src/components/supplier-form.tsx`.
-    *   **Lógica:** Usar `useFieldArray` de `react-hook-form` para adicionar/remover campos de contato.
-3.  **Atualizar Exibição:**
-    *   **Arquivos:** `src/components/sections/persons-section.tsx`, `src/components/sections/suppliers-section.tsx`.
-    *   **UI:** Mostrar o primeiro contato e usar `<Tooltip>` para exibir os demais.
-4.  **Atualizar Busca:**
-    *   **Lógica:** Aprimorar a busca para pesquisar nos arrays de contatos.
-
-**Benefícios:**
-*   **Flexibilidade:** Atende à necessidade real de ter múltiplos contatos.
-*   **Organização:** Permite categorizar os contatos (Comercial, Financeiro).
+**Semana 2 - Média + Baixa (Dias 6-10)**
+10-20. Fases Média Prioridade
+21-24. Fases Baixa Prioridade
 
 ---
 
-## Fase 16: Comportamento Padrão do "Lembrar de mim" (Concluída)
+## ✅ CHECKLIST GERAL
 
-**Status: Concluída**
+### Antes de Começar
+- [ ] Backup completo do projeto
+- [ ] Git configurado
+- [ ] Ambiente funcionando
+- [ ] Dependências instaladas
 
-**Objetivo:** Alterar o estado padrão do checkbox "Lembrar de mim" para desmarcado.
+### Para Cada Fase
+- [ ] Criar branch
+- [ ] Fazer mudanças incrementais
+- [ ] Testar após cada mudança
+- [ ] Verificar critérios de sucesso
+- [ ] Build de produção
+- [ ] Merge para main
 
-**Roteiro Detalhado:**
-1.  **Alterar Estado Inicial:**
-    *   **Arquivo:** `src/app/login/page.tsx`
-    *   **Lógica:** Alterar a declaração de estado `useState(true)` para `useState(false)`.
-
-**Benefícios:**
-*   **Segurança Aprimorada:** A persistência da sessão se torna uma ação explícita do usuário.
-
----
-
-## Fase 17: Remoção do Login com Google (Concluída)
-
-**Status: Concluída**
-
-**Objetivo:** Simplificar a tela de login removendo a opção de autenticação com a conta Google.
-
-**Roteiro Detalhado:**
-1.  **Remover Lógica do Componente:**
-    *   **Arquivo:** `src/app/login/page.tsx`
-    *   **Lógica:** Remover o estado `isGoogleLoading`, a função `handleGoogleSignIn` e o JSX correspondente ao botão de login com Google.
-2.  **Limpar Configuração do Firebase:**
-    *   **Arquivo:** `src/lib/firebase.ts`
-    *   **Lógica:** Remover a importação do `GoogleAuthProvider` e a exportação da variável `googleProvider`, que não são mais necessárias.
-
-**Benefícios:**
-*   **Interface Limpa:** Reduz a complexidade visual da tela de login.
-*   **Manutenção Simplificada:** Menos código de autenticação para manter.
+### Após Todas as Fases
+- [ ] Revisão geral
+- [ ] Testes de integração
+- [ ] Performance check
+- [ ] Deploy para produção
 
 ---
 
-## Fase 18: Dashboard Mais Visual e Informativo (Pendente)
-
-**Objetivo:** Substituir as listas de texto "Top 5" por gráficos mais visuais e adicionar um painel de "Garantias Recentes".
-
-**Roteiro Detalhado:**
-1.  **Gráficos para Rankings:**
-    *   **Arquivo:** `src/components/sections/dashboard-section.tsx`.
-    *   **Lógica:** Substituir as listas de `Top 5 Fornecedores` e `Top 5 Clientes/Mecânicos` por componentes `BarChart` da biblioteca `recharts`. Isso proporcionará uma leitura visual imediata dos dados.
-2.  **Painel de Garantias Recentes:**
-    *   **Arquivo:** `src/components/sections/dashboard-section.tsx`.
-    *   **Lógica:** Criar um novo `Card` que exibirá uma tabela com as 5 garantias mais recentes. Assim como no painel de devoluções, cada linha terá um botão "Editar" para acesso rápido ao formulário de edição.
-
-**Benefícios:**
-*   **Leitura Rápida:** Gráficos permitem identificar padrões e informações importantes de forma muito mais rápida que texto.
-*   **Acesso Direto:** O painel de garantias recentes agiliza o acesso a registros que frequentemente precisam de atenção.
+**Ver arquivo REFACTOR_PROGRESS.md para acompanhamento detalhado**
 
 ---
 
-## Fase 19: Melhoria da Experiência do Usuário (UX) em Telas Vazias (Pendente)
-
-**Objetivo:** Transformar telas de consulta vazias em guias úteis para o usuário.
-
-**Roteiro Detalhado:**
-1.  **Componente de "Estado Vazio":**
-    *   **Arquivos:** `lotes-section.tsx`, `persons-section.tsx`, `suppliers-section.tsx`, etc.
-    *   **Lógica:** Em cada tela de consulta, em vez de mostrar apenas "Nenhum registro encontrado", exibir um componente visual com um ícone, um título e um botão de ação.
-    *   **Exemplo (Lotes):** Mostrar um ícone `<Package>`, o título "Nenhum lote encontrado" e um botão "Criar Novo Lote".
-
-**Benefícios:**
-*   **Orientação ao Usuário:** Guia o usuário sobre qual é o próximo passo lógico a ser tomado.
-*   **Interface Amigável:** Evita a sensação de "beco sem saída" e torna a aplicação mais convidativa.
-
----
-
-## Fase 20: Otimização do Fluxo de Cadastro Rápido (Pendente)
-
-**Objetivo:** Aprimorar a funcionalidade de cadastro rápido ("+") para que o item recém-criado seja automaticamente selecionado.
-
-**Roteiro Detalhado:**
-1.  **Refatorar o `onSave`:**
-    *   **Arquivos:** `person-form.tsx`, `supplier-form.tsx`, `product-form.tsx`.
-    *   **Lógica:** Modificar a função `onSave` nestes formulários para que ela receba o objeto recém-criado como parâmetro.
-2.  **Atualizar o Formulário Principal:**
-    *   **Arquivos:** `warranty-form.tsx`, `devolucao-register-section.tsx`.
-    *   **Lógica:** A função que lida com o salvamento no modal (ex: `handlePersonSaved`) receberá o novo objeto (`newPerson`). Dentro dela, será chamada a função `form.setValue('cliente', newPerson.nome)` para preencher automaticamente o campo correspondente.
-
-**Benefícios:**
-*   **Eficiência Máxima:** Elimina um passo manual, tornando o fluxo de cadastro contínuo e muito mais rápido.
-*   **Experiência Inteligente:** O sistema "adivinha" a intenção do usuário, melhorando a satisfação.
-
----
-
-## Fase 21: Revisão de Consistência Visual (UI Polish) (Pendente)
-
-**Objetivo:** Realizar uma revisão geral da interface para garantir consistência em estilos, espaçamentos e componentes.
-
-**Roteiro Detalhado:**
-1.  **Análise de Componentes:** Revisar todos os `Card`, `Button`, `Input`, `Select` e `Dialog` da aplicação.
-2.  **Padronização de Ações:**
-    *   Garantir que botões de "Salvar" ou "Criar" sempre tenham a variante `default` (primária).
-    *   Botões de "Cancelar" ou "Limpar" tenham a variante `outline` ou `secondary`.
-    *   Ações de exclusão usem consistentemente a variante `destructive`.
-3.  **Ajuste de Espaçamentos:** Verificar `margin` e `padding` em todos os formulários e seções para garantir um ritmo visual consistente.
-4.  **Tipografia:** Garantir que `CardTitle` e `CardDescription` sejam usados de forma consistente para hierarquia de informação.
-
-**Benefícios:**
-*   **Profissionalismo:** Uma interface consistente transmite a sensação de um produto mais robusto e bem-acabado.
-*   **Previsibilidade:** O usuário aprende rapidamente como a interface funciona, pois os padrões se repetem.
----
-
-## Nota sobre Importação de Dados do Sistema Antigo
-
-Para facilitar a migração de dados de outros sistemas, a funcionalidade de "Backup / Restore" na tela de Backup deve ser utilizada.
-
-*   **Formato Ideal:** **JSON**. Este é o formato nativo que o sistema usa para backups e restaurações.
-*   **Ação Necessária:** Criar um arquivo `modelo-importacao.json` na raiz do projeto. Este arquivo servirá como um guia, contendo a estrutura exata de `products`, `persons` e `suppliers` que o sistema espera. Com base neste modelo, os dados de qualquer sistema antigo podem ser convertidos para o formato correto e importados com segurança, alimentando as tabelas de Clientes, Fornecedores e Produtos.
-
+**Última Atualização:** 15/12/2025  
+**Versão:** 3.0  
+**Status:** ✅ Pronto para iniciar

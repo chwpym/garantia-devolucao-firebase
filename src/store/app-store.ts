@@ -1,9 +1,8 @@
 
-
 'use client';
 
 import { create } from 'zustand';
-import type { Warranty, Person, Supplier, Product, CustomStatus } from '@/lib/types';
+import type { Warranty, Person, Supplier, Product, WarrantyStatus } from '@/lib/types';
 import * as db from '@/lib/db';
 
 export type RegisterMode = 'edit' | 'clone';
@@ -13,9 +12,8 @@ interface AppState {
   products: Product[];
   persons: Person[];
   suppliers: Supplier[];
-  statuses: CustomStatus[];
   isDataLoaded: boolean;
-  
+
   // Navigation and UI
   activeView: string;
   navigationHistory: string[];
@@ -30,11 +28,11 @@ interface AppState {
 
   // Actions
   loadInitialData: () => Promise<void>;
-  reloadData: (dataType?: 'products' | 'persons' | 'suppliers' | 'statuses') => Promise<void>;
+  reloadData: (dataType?: 'products' | 'persons' | 'suppliers') => Promise<void>;
   setActiveView: (viewId: string, shouldAddToHistory?: boolean) => void;
   goBack: () => void;
   setMobileMenuOpen: (isOpen: boolean) => void;
-  
+
   // Lote Navigation
   handleNavigateToLote: (loteId: number) => void;
 
@@ -48,10 +46,67 @@ interface AppState {
   handleWarrantySave: (shouldNavigate: boolean) => void;
   clearEditingWarranty: () => void;
 
+  // Filter persistence
+  filterStates: Record<string, any>;
+  setFilterState: (viewId: string, filters: any) => void;
+
   // Modal actions
   openNewLoteModal: () => void;
   setNewLoteModalOpen: (isOpen: boolean) => void;
 }
+
+const runDataMigration = async () => {
+  const MIGRATION_KEY = 'warranty_status_migration_v1';
+  if (typeof window !== 'undefined' && localStorage.getItem(MIGRATION_KEY)) {
+    return; // Migration already performed
+  }
+
+  console.log('Iniciando migração de status de garantias...');
+  try {
+    const warranties = await db.getAllWarranties();
+    let updatedCount = 0;
+
+    for (const warranty of warranties) {
+      let needsUpdate = false;
+      let newStatus: WarrantyStatus | undefined = warranty.status;
+
+      const oldStatus = warranty.status as unknown; // Treat as unknown for safe comparison
+
+      switch (oldStatus) {
+        case 'Em análise':
+          newStatus = 'Enviado para Análise';
+          needsUpdate = true;
+          break;
+        case 'Aprovada':
+          newStatus = 'Aprovada - Peça Nova';
+          needsUpdate = true;
+          break;
+        case 'Paga':
+          newStatus = 'Aprovada - Crédito Boleto';
+          needsUpdate = true;
+          break;
+      }
+
+      if (needsUpdate && newStatus) {
+        const updatedWarranty = { ...warranty, status: newStatus };
+        await db.updateWarranty(updatedWarranty);
+        updatedCount++;
+      }
+    }
+
+    if (updatedCount > 0) {
+      console.log(`Migração concluída! ${updatedCount} garantias foram atualizadas.`);
+    } else {
+      console.log('Nenhuma garantia precisou de migração.');
+    }
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(MIGRATION_KEY, 'completed');
+    }
+  } catch (error) {
+    console.error('Falha na migração de dados:', error);
+  }
+};
 
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -59,7 +114,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   products: [],
   persons: [],
   suppliers: [],
-  statuses: [],
   isDataLoaded: false,
   activeView: 'dashboard',
   navigationHistory: [],
@@ -69,23 +123,25 @@ export const useAppStore = create<AppState>((set, get) => ({
   editingDevolucaoId: null,
   editingWarrantyId: null,
   registerMode: 'edit',
+  filterStates: {},
 
   // --- DATA ACTIONS ---
   loadInitialData: async () => {
     try {
       await db.initDB();
-      const [products, persons, suppliers, statuses] = await Promise.all([
+      // Run data migration before loading data
+      await runDataMigration();
+
+      const [products, persons, suppliers] = await Promise.all([
         db.getAllProducts(),
         db.getAllPersons(),
         db.getAllSuppliers(),
-        db.getAllStatuses(),
       ]);
-      set({ 
+      set({
         products: products.sort((a, b) => a.descricao.localeCompare(b.descricao)),
         persons: persons.sort((a, b) => a.nome.localeCompare(b.nome)),
         suppliers: suppliers.sort((a, b) => a.nomeFantasia.localeCompare(b.nomeFantasia)),
-        statuses: statuses,
-        isDataLoaded: true 
+        isDataLoaded: true
       });
     } catch (error) {
       console.error("Failed to load initial app data:", error);
@@ -94,24 +150,20 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   reloadData: async (dataType) => {
     try {
-        if (!dataType || dataType === 'products') {
-            const products = await db.getAllProducts();
-            set({ products: [...products.sort((a, b) => a.descricao.localeCompare(b.descricao))] });
-        }
-        if (!dataType || dataType === 'persons') {
-            const persons = await db.getAllPersons();
-            set({ persons: [...persons.sort((a, b) => a.nome.localeCompare(b.nome))] });
-        }
-        if (!dataType || dataType === 'suppliers') {
-            const suppliers = await db.getAllSuppliers();
-            set({ suppliers: [...suppliers.sort((a, b) => a.nomeFantasia.localeCompare(b.nomeFantasia))] });
-        }
-        if (!dataType || dataType === 'statuses') {
-            const statuses = await db.getAllStatuses();
-            set({ statuses: [...statuses] });
-        }
+      if (!dataType || dataType === 'products') {
+        const products = await db.getAllProducts();
+        set({ products: products.sort((a, b) => a.descricao.localeCompare(b.descricao)) });
+      }
+      if (!dataType || dataType === 'persons') {
+        const persons = await db.getAllPersons();
+        set({ persons: persons.sort((a, b) => a.nome.localeCompare(b.nome)) });
+      }
+      if (!dataType || dataType === 'suppliers') {
+        const suppliers = await db.getAllSuppliers();
+        set({ suppliers: suppliers.sort((a, b) => a.nomeFantasia.localeCompare(b.nomeFantasia)) });
+      }
     } catch (error) {
-       console.error("Failed to reload data:", error);
+      console.error("Failed to reload data:", error);
     }
   },
 
@@ -133,7 +185,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       });
     }
   },
-  
+
   setMobileMenuOpen: (isOpen) => set({ isMobileMenuOpen: isOpen }),
 
   handleNavigateToLote: (loteId) => {
@@ -180,4 +232,11 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ isNewLoteModalOpen: true });
   },
   setNewLoteModalOpen: (isOpen: boolean) => set({ isNewLoteModalOpen: isOpen }),
+
+  setFilterState: (viewId, filters) => set(state => ({
+    filterStates: {
+      ...state.filterStates,
+      [viewId]: filters
+    }
+  })),
 }));

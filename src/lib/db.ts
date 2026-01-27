@@ -2,10 +2,10 @@
 
 'use client';
 
-import type { Warranty, Person, Supplier, Lote, LoteItem, CompanyData, Devolucao, ItemDevolucao, Product, PurchaseSimulation, UserProfile, CustomStatus } from './types';
+import type { Warranty, Person, Supplier, Lote, LoteItem, CompanyData, Devolucao, ItemDevolucao, Product, PurchaseSimulation, UserProfile } from './types';
 
 const DB_NAME = 'GarantiasDB';
-const DB_VERSION = 9; // Incremented version
+const DB_VERSION = 9; // Updated to match existing database version
 
 const GARANTIAS_STORE_NAME = 'garantias';
 const PERSONS_STORE_NAME = 'persons';
@@ -17,8 +17,8 @@ const DEVOLUCOES_STORE_NAME = 'devolucoes';
 const ITENS_DEVOLUCAO_STORE_NAME = 'itens_devolucao';
 const PRODUCTS_STORE_NAME = 'products';
 const SIMULATIONS_STORE_NAME = 'simulations';
-const USERS_STORE_NAME = 'users'; 
-const STATUSES_STORE_NAME = 'statuses'; // New store for custom statuses
+const USERS_STORE_NAME = 'users'; // New store for user profiles/roles
+const STATUSES_STORE_NAME = 'statuses';
 
 
 let dbPromise: Promise<IDBDatabase> | null = null;
@@ -33,25 +33,25 @@ const getDB = (): Promise<IDBDatabase> => {
         reject('IndexedDB is not supported.');
         return;
       }
-      
+
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 
       request.onupgradeneeded = (event) => {
         const dbInstance = (event.target as IDBOpenDBRequest).result;
-        
+
         if (!dbInstance.objectStoreNames.contains(GARANTIAS_STORE_NAME)) {
           const warrantyStore = dbInstance.createObjectStore(GARANTIAS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
           warrantyStore.createIndex('loteId', 'loteId', { unique: false });
         } else {
-            const transaction = (event.target as IDBOpenDBRequest).transaction;
-            if (transaction) {
-                const warrantyStore = transaction.objectStore(GARANTIAS_STORE_NAME);
-                if (!warrantyStore.indexNames.contains('loteId')) {
-                    warrantyStore.createIndex('loteId', 'loteId', { unique: false });
-                }
+          const transaction = (event.target as IDBOpenDBRequest).transaction;
+          if (transaction) {
+            const warrantyStore = transaction.objectStore(GARANTIAS_STORE_NAME);
+            if (!warrantyStore.indexNames.contains('loteId')) {
+              warrantyStore.createIndex('loteId', 'loteId', { unique: false });
             }
+          }
         }
-        
+
         if (!dbInstance.objectStoreNames.contains(PERSONS_STORE_NAME)) {
           dbInstance.createObjectStore(PERSONS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
         }
@@ -59,38 +59,40 @@ const getDB = (): Promise<IDBDatabase> => {
           dbInstance.createObjectStore(SUPPLIERS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
         }
         if (!dbInstance.objectStoreNames.contains(LOTES_STORE_NAME)) {
-            dbInstance.createObjectStore(LOTES_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+          dbInstance.createObjectStore(LOTES_STORE_NAME, { keyPath: 'id', autoIncrement: true });
         }
         if (!dbInstance.objectStoreNames.contains(LOTE_ITEMS_STORE_NAME)) {
-            const loteItemsStore = dbInstance.createObjectStore(LOTE_ITEMS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
-            loteItemsStore.createIndex('loteId', 'loteId', { unique: false });
+          const loteItemsStore = dbInstance.createObjectStore(LOTE_ITEMS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+          loteItemsStore.createIndex('loteId', 'loteId', { unique: false });
         }
         if (!dbInstance.objectStoreNames.contains(COMPANY_DATA_STORE_NAME)) {
           dbInstance.createObjectStore(COMPANY_DATA_STORE_NAME, { keyPath: 'id' });
         }
         if (!dbInstance.objectStoreNames.contains(DEVOLUCOES_STORE_NAME)) {
-            dbInstance.createObjectStore(DEVOLUCOES_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+          dbInstance.createObjectStore(DEVOLUCOES_STORE_NAME, { keyPath: 'id', autoIncrement: true });
         }
         if (!dbInstance.objectStoreNames.contains(ITENS_DEVOLUCAO_STORE_NAME)) {
-            const itensDevolucaoStore = dbInstance.createObjectStore(ITENS_DEVOLUCAO_STORE_NAME, { keyPath: 'id', autoIncrement: true });
-            itensDevolucaoStore.createIndex('devolucaoId', 'devolucaoId', { unique: false });
+          const itensDevolucaoStore = dbInstance.createObjectStore(ITENS_DEVOLUCAO_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+          itensDevolucaoStore.createIndex('devolucaoId', 'devolucaoId', { unique: false });
         }
         if (!dbInstance.objectStoreNames.contains(PRODUCTS_STORE_NAME)) {
-            const productStore = dbInstance.createObjectStore(PRODUCTS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
-            productStore.createIndex('codigo', 'codigo', { unique: true });
+          const productStore = dbInstance.createObjectStore(PRODUCTS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+          productStore.createIndex('codigo', 'codigo', { unique: true });
         }
         if (!dbInstance.objectStoreNames.contains(SIMULATIONS_STORE_NAME)) {
-            const simulationStore = dbInstance.createObjectStore(SIMULATIONS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
-            simulationStore.createIndex('nfeNumber', 'nfeInfo.nfeNumber', { unique: false });
-            simulationStore.createIndex('emitterName', 'nfeInfo.emitterName', { unique: false });
+          const simulationStore = dbInstance.createObjectStore(SIMULATIONS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+          simulationStore.createIndex('nfeNumber', 'nfeInfo.nfeNumber', { unique: false });
+          simulationStore.createIndex('emitterName', 'nfeInfo.emitterName', { unique: false });
         }
+        // Create user profile store
         if (!dbInstance.objectStoreNames.contains(USERS_STORE_NAME)) {
-            const userStore = dbInstance.createObjectStore(USERS_STORE_NAME, { keyPath: 'uid' });
-            userStore.createIndex('email', 'email', { unique: true });
+          const userStore = dbInstance.createObjectStore(USERS_STORE_NAME, { keyPath: 'uid' });
+          userStore.createIndex('email', 'email', { unique: true });
         }
+
+        // Create custom statuses store
         if (!dbInstance.objectStoreNames.contains(STATUSES_STORE_NAME)) {
-            const statusStore = dbInstance.createObjectStore(STATUSES_STORE_NAME, { keyPath: 'id', autoIncrement: true });
-            statusStore.createIndex('nome', 'nome', { unique: true });
+          dbInstance.createObjectStore(STATUSES_STORE_NAME, { keyPath: 'id', autoIncrement: true });
         }
       };
 
@@ -108,65 +110,8 @@ const getDB = (): Promise<IDBDatabase> => {
 
 export const initDB = async (): Promise<boolean> => {
   try {
-    const db = await getDB();
-    
-    // Seed initial statuses if the store is empty
-    const transaction = db.transaction(STATUSES_STORE_NAME, 'readonly');
-    const store = transaction.objectStore(STATUSES_STORE_NAME);
-    const countRequest = store.count();
-
-    return new Promise((resolve, reject) => {
-        transaction.oncomplete = () => {
-            if (countRequest.result === 0) {
-                console.log("Seeding initial statuses...");
-                const seedTransaction = db.transaction(STATUSES_STORE_NAME, 'readwrite');
-                const seedStore = seedTransaction.objectStore(STATUSES_STORE_NAME);
-                const initialStatuses: Omit<CustomStatus, 'id'>[] = [
-                    // Garantia
-                    { nome: 'Aguardando Envio', cor: '#FBBF24', aplicavelEm: ['garantia'] },
-                    { nome: 'Enviado para Análise', cor: '#3B82F6', aplicavelEm: ['garantia', 'lote'] },
-                    { nome: 'Aprovada - Peça Nova', cor: '#22C55E', aplicavelEm: ['garantia'] },
-                    { nome: 'Aprovada - Crédito NF', cor: '#8B5CF6', aplicavelEm: ['garantia'] },
-                    { nome: 'Aprovada - Crédito Boleto', cor: '#15803D', aplicavelEm: ['garantia'] },
-                    { nome: 'Recusada', cor: '#EF4444', aplicavelEm: ['garantia', 'lote'] },
-                    // Lote
-                    { nome: 'Aberto', cor: '#6B7280', aplicavelEm: ['lote'] },
-                    { nome: 'Aprovado Parcialmente', cor: '#16A34A', aplicavelEm: ['lote'] },
-                    { nome: 'Aprovado Totalmente', cor: '#15803D', aplicavelEm: ['lote'] },
-                    // Devolução
-                    { nome: 'Recebido', cor: '#6B7280', aplicavelEm: ['devolucao'] },
-                    { nome: 'Aguardando Peças', cor: '#FBBF24', aplicavelEm: ['devolucao'] },
-                    { nome: 'Finalizada', cor: '#22C55E', aplicavelEm: ['devolucao'] },
-                    { nome: 'Cancelada', cor: '#EF4444', aplicavelEm: ['devolucao'] },
-                    // Ação na Requisição
-                    { nome: 'Alterada', cor: '#3B82F6', aplicavelEm: ['acaoRequisicao'] },
-                    { nome: 'Excluída', cor: '#EF4444', aplicavelEm: ['acaoRequisicao'] },
-                ];
-                let seedsAdded = 0;
-                initialStatuses.forEach(status => {
-                    const addReq = seedStore.add(status);
-                    addReq.onsuccess = () => {
-                        seedsAdded++;
-                        if (seedsAdded === initialStatuses.length) {
-                             console.log("Initial statuses seeded successfully.");
-                             resolve(true);
-                        }
-                    };
-                    addReq.onerror = () => {
-                        console.error("Error seeding status:", addReq.error);
-                    };
-                });
-
-                seedTransaction.oncomplete = () => resolve(true);
-                seedTransaction.onerror = () => reject(seedTransaction.error);
-
-            } else {
-                resolve(true);
-            }
-        };
-        transaction.onerror = () => reject(transaction.error);
-    });
-
+    await getDB();
+    return true;
   } catch (e) {
     console.error(e);
     return false;
@@ -193,62 +138,6 @@ const clearStore = (storeName: string): Promise<void> => {
   });
 };
 
-// --- Custom Status Functions ---
-export const addStatus = (status: Omit<CustomStatus, 'id'>): Promise<number> => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const store = await getStore(STATUSES_STORE_NAME, 'readwrite');
-      const request = store.add(status);
-      request.onsuccess = () => resolve(request.result as number);
-      request.onerror = () => reject(request.error);
-    } catch(err) {
-        reject(err);
-    }
-  });
-};
-
-export const getAllStatuses = (): Promise<CustomStatus[]> => {
-  return new Promise(async (resolve, reject) => {
-    try {
-        const store = await getStore(STATUSES_STORE_NAME, 'readonly');
-        const request = store.getAll();
-        request.onsuccess = () => resolve(request.result as CustomStatus[]);
-        request.onerror = () => reject(request.error);
-    } catch (err) {
-        reject(err);
-    }
-  });
-};
-
-export const updateStatus = (status: CustomStatus): Promise<number> => {
-  return new Promise(async(resolve, reject) => {
-    try {
-        const store = await getStore(STATUSES_STORE_NAME, 'readwrite');
-        const request = store.put(status);
-        request.onsuccess = () => resolve(request.result as number);
-        request.onerror = () => reject(request.error);
-    } catch (err) {
-        reject(err);
-    }
-  });
-};
-
-export const deleteStatus = (id: number): Promise<void> => {
-  return new Promise(async (resolve, reject) => {
-    try {
-        const store = await getStore(STATUSES_STORE_NAME, 'readwrite');
-        const request = store.delete(id);
-        request.onsuccess = () => resolve();
-        request.onerror = () => reject(request.error);
-    } catch (err) {
-        reject(err);
-    }
-  });
-};
-
-export const clearStatuses = (): Promise<void> => clearStore(STATUSES_STORE_NAME);
-
-
 // --- User Profile Functions ---
 
 export const getUserProfile = (uid: string): Promise<UserProfile | undefined> => {
@@ -267,12 +156,12 @@ export const getUserProfile = (uid: string): Promise<UserProfile | undefined> =>
 export const getAllUserProfiles = (): Promise<UserProfile[]> => {
   return new Promise(async (resolve, reject) => {
     try {
-        const store = await getStore(USERS_STORE_NAME, 'readonly');
-        const request = store.getAll();
-        request.onsuccess = () => resolve(request.result as UserProfile[]);
-        request.onerror = () => reject(request.error);
+      const store = await getStore(USERS_STORE_NAME, 'readonly');
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result as UserProfile[]);
+      request.onerror = () => reject(request.error);
     } catch (err) {
-        reject(err);
+      reject(err);
     }
   });
 };
@@ -297,12 +186,12 @@ export const upsertUserProfile = (profile: UserProfile): Promise<string> => {
 export const addWarranty = (warranty: Omit<Warranty, 'id'>): Promise<number> => {
   return new Promise(async (resolve, reject) => {
     try {
-        const store = await getStore(GARANTIAS_STORE_NAME, 'readwrite');
-        const request = store.add(warranty);
-        request.onsuccess = () => resolve(request.result as number);
-        request.onerror = () => reject(request.error);
-    } catch(err) {
-        reject(err);
+      const store = await getStore(GARANTIAS_STORE_NAME, 'readwrite');
+      const request = store.add(warranty);
+      request.onsuccess = () => resolve(request.result as number);
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
     }
   });
 };
@@ -310,12 +199,12 @@ export const addWarranty = (warranty: Omit<Warranty, 'id'>): Promise<number> => 
 export const getAllWarranties = (): Promise<Warranty[]> => {
   return new Promise(async (resolve, reject) => {
     try {
-        const store = await getStore(GARANTIAS_STORE_NAME, 'readonly');
-        const request = store.getAll();
-        request.onsuccess = () => resolve(request.result as Warranty[]);
-        request.onerror = () => reject(request.error);
+      const store = await getStore(GARANTIAS_STORE_NAME, 'readonly');
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result as Warranty[]);
+      request.onerror = () => reject(request.error);
     } catch (err) {
-        reject(err);
+      reject(err);
     }
   });
 };
@@ -339,27 +228,27 @@ export const getWarrantyById = (id: number): Promise<Warranty | undefined> => {
 
 
 export const getWarrantiesByIds = (ids: number[]): Promise<Warranty[]> => {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const allWarranties = await getAllWarranties();
-        const numericIds = ids.map(id => Number(id));
-        const filtered = allWarranties.filter(w => w.id && numericIds.includes(w.id));
-        resolve(filtered);
-      } catch (err) {
-        reject(err);
-      }
-    });
+  return new Promise(async (resolve, reject) => {
+    try {
+      const allWarranties = await getAllWarranties();
+      const numericIds = ids.map(id => Number(id));
+      const filtered = allWarranties.filter(w => w.id && numericIds.includes(w.id));
+      resolve(filtered);
+    } catch (err) {
+      reject(err);
+    }
+  });
 };
 
 export const updateWarranty = (warranty: Warranty): Promise<number> => {
-  return new Promise(async(resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
-        const store = await getStore(GARANTIAS_STORE_NAME, 'readwrite');
-        const request = store.put(warranty);
-        request.onsuccess = () => resolve(request.result as number);
-        request.onerror = () => reject(request.error);
+      const store = await getStore(GARANTIAS_STORE_NAME, 'readwrite');
+      const request = store.put(warranty);
+      request.onsuccess = () => resolve(request.result as number);
+      request.onerror = () => reject(request.error);
     } catch (err) {
-        reject(err);
+      reject(err);
     }
   });
 };
@@ -367,12 +256,12 @@ export const updateWarranty = (warranty: Warranty): Promise<number> => {
 export const deleteWarranty = (id: number): Promise<void> => {
   return new Promise(async (resolve, reject) => {
     try {
-        const store = await getStore(GARANTIAS_STORE_NAME, 'readwrite');
-        const request = store.delete(id);
-        request.onsuccess = () => resolve();
-        request.onerror = () => reject(request.error);
+      const store = await getStore(GARANTIAS_STORE_NAME, 'readwrite');
+      const request = store.delete(id);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
     } catch (err) {
-        reject(err);
+      reject(err);
     }
   });
 };
@@ -544,34 +433,34 @@ export const deleteLote = async (id: number): Promise<void> => {
     const deleteLoteRequest = lotesStore.delete(id);
 
     deleteLoteRequest.onerror = () => reject(deleteLoteRequest.error);
-    
+
     deleteLoteRequest.onsuccess = () => {
-        // 2. Unlink all warranties associated with this lote
-        const warrantyIndex = warrantiesStore.index('loteId');
-        const getWarrantiesRequest = warrantyIndex.getAll(id);
+      // 2. Unlink all warranties associated with this lote
+      const warrantyIndex = warrantiesStore.index('loteId');
+      const getWarrantiesRequest = warrantyIndex.getAll(id);
 
-        getWarrantiesRequest.onerror = () => reject(getWarrantiesRequest.error);
+      getWarrantiesRequest.onerror = () => reject(getWarrantiesRequest.error);
 
-        getWarrantiesRequest.onsuccess = () => {
-            const warrantiesToUpdate = getWarrantiesRequest.result;
-            if (warrantiesToUpdate.length === 0) {
-                resolve();
-                return;
+      getWarrantiesRequest.onsuccess = () => {
+        const warrantiesToUpdate = getWarrantiesRequest.result;
+        if (warrantiesToUpdate.length === 0) {
+          resolve();
+          return;
+        }
+
+        let updatedCount = 0;
+        warrantiesToUpdate.forEach(warranty => {
+          warranty.loteId = null; // or delete warranty.loteId;
+          const updateRequest = warrantiesStore.put(warranty);
+          updateRequest.onerror = () => reject(updateRequest.error);
+          updateRequest.onsuccess = () => {
+            updatedCount++;
+            if (updatedCount === warrantiesToUpdate.length) {
+              resolve();
             }
-
-            let updatedCount = 0;
-            warrantiesToUpdate.forEach(warranty => {
-                warranty.loteId = null; // or delete warranty.loteId;
-                const updateRequest = warrantiesStore.put(warranty);
-                updateRequest.onerror = () => reject(updateRequest.error);
-                updateRequest.onsuccess = () => {
-                    updatedCount++;
-                    if (updatedCount === warrantiesToUpdate.length) {
-                        resolve();
-                    }
-                };
-            });
-        };
+          };
+        });
+      };
     };
 
     transaction.onabort = () => reject(transaction.error);
@@ -596,17 +485,17 @@ export const addLoteItem = (loteItem: Omit<LoteItem, 'id'>): Promise<number> => 
 };
 
 export const getLoteItemsByLoteId = (loteId: number): Promise<LoteItem[]> => {
-    return new Promise(async (resolve, reject) => {
-        try {
-            const store = await getStore(LOTE_ITEMS_STORE_NAME, 'readonly');
-            const index = store.index('loteId');
-            const request = index.getAll(loteId);
-            request.onsuccess = () => resolve(request.result as LoteItem[]);
-            request.onerror = () => reject(request.error);
-        } catch(err) {
-            reject(err);
-        }
-    });
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(LOTE_ITEMS_STORE_NAME, 'readonly');
+      const index = store.index('loteId');
+      const request = index.getAll(loteId);
+      request.onsuccess = () => resolve(request.result as LoteItem[]);
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
 };
 
 export const deleteLoteItem = (id: number): Promise<void> => {
@@ -626,31 +515,31 @@ export const deleteLoteItem = (id: number): Promise<void> => {
 // --- Company Data Functions ---
 
 export const getCompanyData = (): Promise<CompanyData | null> => {
-    return new Promise(async (resolve, reject) => {
-        try {
-            const store = await getStore(COMPANY_DATA_STORE_NAME, 'readonly');
-            // We use a fixed ID of 1 for the single company record
-            const request = store.get(1);
-            request.onsuccess = () => resolve(request.result as CompanyData || null);
-            request.onerror = () => reject(request.error);
-        } catch (err) {
-            reject(err);
-        }
-    });
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(COMPANY_DATA_STORE_NAME, 'readonly');
+      // We use a fixed ID of 1 for the single company record
+      const request = store.get(1);
+      request.onsuccess = () => resolve(request.result as CompanyData || null);
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
 };
 
 export const updateCompanyData = (companyData: Omit<CompanyData, 'id'>): Promise<number> => {
-    return new Promise(async (resolve, reject) => {
-        try {
-            const store = await getStore(COMPANY_DATA_STORE_NAME, 'readwrite');
-            // We use a fixed ID of 1 to always update the same record
-            const request = store.put({ ...companyData, id: 1 });
-            request.onsuccess = () => resolve(request.result as number);
-            request.onerror = () => reject(request.error);
-        } catch (err) {
-            reject(err);
-        }
-    });
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(COMPANY_DATA_STORE_NAME, 'readwrite');
+      // We use a fixed ID of 1 to always update the same record
+      const request = store.put({ ...companyData, id: 1 });
+      request.onsuccess = () => resolve(request.result as number);
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
 };
 
 export const clearCompanyData = (): Promise<void> => clearStore(COMPANY_DATA_STORE_NAME);
@@ -666,7 +555,7 @@ export const addDevolucao = async (devolucao: Omit<Devolucao, 'id'>, itens: Omit
 
   return new Promise((resolve, reject) => {
     const request = devolucoesStore.add(devolucao);
-    
+
     request.onerror = () => reject(request.error);
 
     request.onsuccess = () => {
@@ -689,185 +578,185 @@ export const addDevolucao = async (devolucao: Omit<Devolucao, 'id'>, itens: Omit
         };
       });
     };
-    
+
     transaction.onabort = () => reject(transaction.error);
   });
 };
 
 export const updateDevolucao = async (devolucao: Devolucao, itens: (Omit<ItemDevolucao, 'devolucaoId'>)[]): Promise<void> => {
-    const db = await getDB();
-    const transaction = db.transaction([DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME], 'readwrite');
-    const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
-    const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
+  const db = await getDB();
+  const transaction = db.transaction([DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME], 'readwrite');
+  const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
+  const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
 
-    return new Promise((resolve, reject) => {
-        // 1. Update the main Devolucao object
-        const devRequest = devolucoesStore.put(devolucao);
-        devRequest.onerror = () => reject(devRequest.error);
+  return new Promise((resolve, reject) => {
+    // 1. Update the main Devolucao object
+    const devRequest = devolucoesStore.put(devolucao);
+    devRequest.onerror = () => reject(devRequest.error);
 
-        devRequest.onsuccess = () => {
-            const devolucaoId = devolucao.id!;
-            // 2. Clear existing items for this devolucao
-            const itemIndex = itensStore.index('devolucaoId');
-            const clearRequest = itemIndex.openCursor(IDBKeyRange.only(devolucaoId));
-            
-            clearRequest.onerror = () => reject(clearRequest.error);
-            clearRequest.onsuccess = (event) => {
-                const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
-                if (cursor) {
-                    cursor.delete();
-                    cursor.continue();
-                } else {
-                    // 3. Add the new/updated items
-                    if (itens.length === 0) {
-                        resolve();
-                        return;
-                    }
-                    let itemsAdded = 0;
-                    itens.forEach(item => {
-                         const itemToAdd: Omit<ItemDevolucao, 'id'> = {
-                            ...item,
-                            devolucaoId,
-                        };
-                        const itemRequest = itensStore.add(itemToAdd);
-                        itemRequest.onerror = () => reject(itemRequest.error);
-                        itemRequest.onsuccess = () => {
-                            itemsAdded++;
-                            if (itemsAdded === itens.length) {
-                                resolve();
-                            }
-                        };
-                    });
-                }
-            }
-        };
-        transaction.onabort = () => reject(transaction.error);
-    });
+    devRequest.onsuccess = () => {
+      const devolucaoId = devolucao.id!;
+      // 2. Clear existing items for this devolucao
+      const itemIndex = itensStore.index('devolucaoId');
+      const clearRequest = itemIndex.openCursor(IDBKeyRange.only(devolucaoId));
+
+      clearRequest.onerror = () => reject(clearRequest.error);
+      clearRequest.onsuccess = (event) => {
+        const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
+        if (cursor) {
+          cursor.delete();
+          cursor.continue();
+        } else {
+          // 3. Add the new/updated items
+          if (itens.length === 0) {
+            resolve();
+            return;
+          }
+          let itemsAdded = 0;
+          itens.forEach(item => {
+            const itemToAdd: Omit<ItemDevolucao, 'id'> = {
+              ...item,
+              devolucaoId,
+            };
+            const itemRequest = itensStore.add(itemToAdd);
+            itemRequest.onerror = () => reject(itemRequest.error);
+            itemRequest.onsuccess = () => {
+              itemsAdded++;
+              if (itemsAdded === itens.length) {
+                resolve();
+              }
+            };
+          });
+        }
+      }
+    };
+    transaction.onabort = () => reject(transaction.error);
+  });
 };
 
 
 export const getAllDevolucoes = async (): Promise<(Devolucao & { itens: ItemDevolucao[] })[]> => {
-    const db = await getDB();
-    const transaction = db.transaction([DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME], 'readonly');
-    const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
-    const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
-    const itensIndex = itensStore.index('devolucaoId');
+  const db = await getDB();
+  const transaction = db.transaction([DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME], 'readonly');
+  const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
+  const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
+  const itensIndex = itensStore.index('devolucaoId');
 
-    return new Promise((resolve, reject) => {
-        const devolucoesRequest = devolucoesStore.getAll();
-        
-        devolucoesRequest.onerror = () => reject(devolucoesRequest.error);
+  return new Promise((resolve, reject) => {
+    const devolucoesRequest = devolucoesStore.getAll();
 
-        devolucoesRequest.onsuccess = () => {
-            const devolucoes = devolucoesRequest.result as Devolucao[];
-            const result: (Devolucao & { itens: ItemDevolucao[] })[] = [];
-            let processedCount = 0;
+    devolucoesRequest.onerror = () => reject(devolucoesRequest.error);
 
-            if (devolucoes.length === 0) {
-                resolve([]);
-                return;
-            }
+    devolucoesRequest.onsuccess = () => {
+      const devolucoes = devolucoesRequest.result as Devolucao[];
+      const result: (Devolucao & { itens: ItemDevolucao[] })[] = [];
+      let processedCount = 0;
 
-            devolucoes.forEach(devolucao => {
-                const itensRequest = itensIndex.getAll(devolucao.id);
-                itensRequest.onerror = () => reject(itensRequest.error);
-                itensRequest.onsuccess = () => {
-                    result.push({ ...devolucao, itens: itensRequest.result });
-                    processedCount++;
-                    if (processedCount === devolucoes.length) {
-                        resolve(result);
-                    }
-                };
-            });
+      if (devolucoes.length === 0) {
+        resolve([]);
+        return;
+      }
+
+      devolucoes.forEach(devolucao => {
+        const itensRequest = itensIndex.getAll(devolucao.id);
+        itensRequest.onerror = () => reject(itensRequest.error);
+        itensRequest.onsuccess = () => {
+          result.push({ ...devolucao, itens: itensRequest.result });
+          processedCount++;
+          if (processedCount === devolucoes.length) {
+            resolve(result);
+          }
         };
-    });
+      });
+    };
+  });
 };
 
 export const getDevolucaoById = async (id: number): Promise<(Devolucao & { itens: ItemDevolucao[] }) | null> => {
-     const db = await getDB();
-    const transaction = db.transaction([DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME], 'readonly');
-    const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
-    const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
-    const itensIndex = itensStore.index('devolucaoId');
+  const db = await getDB();
+  const transaction = db.transaction([DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME], 'readonly');
+  const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
+  const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
+  const itensIndex = itensStore.index('devolucaoId');
 
-    return new Promise((resolve, reject) => {
-        const devRequest = devolucoesStore.get(id);
-        devRequest.onerror = () => reject(devRequest.error);
-        devRequest.onsuccess = () => {
-            const devolucao = devRequest.result as Devolucao;
-            if (!devolucao) {
-                resolve(null);
-                return;
-            }
+  return new Promise((resolve, reject) => {
+    const devRequest = devolucoesStore.get(id);
+    devRequest.onerror = () => reject(devRequest.error);
+    devRequest.onsuccess = () => {
+      const devolucao = devRequest.result as Devolucao;
+      if (!devolucao) {
+        resolve(null);
+        return;
+      }
 
-            const itensRequest = itensIndex.getAll(id);
-            itensRequest.onerror = () => reject(itensRequest.error);
-            itensRequest.onsuccess = () => {
-                resolve({ ...devolucao, itens: itensRequest.result });
-            };
-        };
-    });
+      const itensRequest = itensIndex.getAll(id);
+      itensRequest.onerror = () => reject(itensRequest.error);
+      itensRequest.onsuccess = () => {
+        resolve({ ...devolucao, itens: itensRequest.result });
+      };
+    };
+  });
 };
 
 
 export const deleteDevolucao = async (id: number): Promise<void> => {
-    const db = await getDB();
-    const transaction = db.transaction([DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME], 'readwrite');
-    const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
-    const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
+  const db = await getDB();
+  const transaction = db.transaction([DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME], 'readwrite');
+  const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
+  const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
 
-    return new Promise((resolve, reject) => {
-        // 1. Delete the main Devolucao object
-        const devRequest = devolucoesStore.delete(id);
-        devRequest.onerror = () => reject(devRequest.error);
+  return new Promise((resolve, reject) => {
+    // 1. Delete the main Devolucao object
+    const devRequest = devolucoesStore.delete(id);
+    devRequest.onerror = () => reject(devRequest.error);
 
-        devRequest.onsuccess = () => {
-            // 2. Delete associated items
-            const itemIndex = itensStore.index('devolucaoId');
-            const clearRequest = itemIndex.openCursor(IDBKeyRange.only(id));
-            
-            clearRequest.onerror = () => reject(clearRequest.error);
-            clearRequest.onsuccess = (event) => {
-                const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
-                if (cursor) {
-                    cursor.delete();
-                    cursor.continue();
-                } else {
-                    // When all items are deleted, resolve
-                    resolve();
-                }
-            };
-        };
+    devRequest.onsuccess = () => {
+      // 2. Delete associated items
+      const itemIndex = itensStore.index('devolucaoId');
+      const clearRequest = itemIndex.openCursor(IDBKeyRange.only(id));
 
-        transaction.onabort = () => reject(transaction.error);
-    });
+      clearRequest.onerror = () => reject(clearRequest.error);
+      clearRequest.onsuccess = (event) => {
+        const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
+        if (cursor) {
+          cursor.delete();
+          cursor.continue();
+        } else {
+          // When all items are deleted, resolve
+          resolve();
+        }
+      };
+    };
+
+    transaction.onabort = () => reject(transaction.error);
+  });
 };
 
 export const clearDevolucoes = async (): Promise<void> => {
-    const db = await getDB();
-    const transaction = db.transaction([DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME], 'readwrite');
-    const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
-    const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
+  const db = await getDB();
+  const transaction = db.transaction([DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME], 'readwrite');
+  const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
+  const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
 
-    return new Promise((resolve, reject) => {
-        const req1 = devolucoesStore.clear();
-        let success1 = false;
-        req1.onerror = () => reject(req1.error);
-        req1.onsuccess = () => {
-            success1 = true;
-            if (success2) resolve();
-        };
+  return new Promise((resolve, reject) => {
+    const req1 = devolucoesStore.clear();
+    let success1 = false;
+    req1.onerror = () => reject(req1.error);
+    req1.onsuccess = () => {
+      success1 = true;
+      if (success2) resolve();
+    };
 
-        const req2 = itensStore.clear();
-        let success2 = false;
-        req2.onerror = () => reject(req2.error);
-        req2.onsuccess = () => {
-            success2 = true;
-            if (success1) resolve();
-        };
+    const req2 = itensStore.clear();
+    let success2 = false;
+    req2.onerror = () => reject(req2.error);
+    req2.onsuccess = () => {
+      success2 = true;
+      if (success1) resolve();
+    };
 
-        transaction.onabort = () => reject(transaction.error);
-    });
+    transaction.onabort = () => reject(transaction.error);
+  });
 };
 
 
@@ -899,20 +788,20 @@ export const getAllProducts = (): Promise<Product[]> => {
 };
 
 export const getProductByCode = (codigo: string): Promise<Product | undefined> => {
-    return new Promise(async (resolve, reject) => {
-        if (!codigo) {
-            return resolve(undefined);
-        }
-        try {
-            const store = await getStore(PRODUCTS_STORE_NAME, 'readonly');
-            const index = store.index('codigo');
-            const request = index.get(codigo);
-            request.onsuccess = () => resolve(request.result as Product | undefined);
-            request.onerror = () => reject(request.error);
-        } catch(err) {
-            reject(err);
-        }
-    });
+  return new Promise(async (resolve, reject) => {
+    if (!codigo) {
+      return resolve(undefined);
+    }
+    try {
+      const store = await getStore(PRODUCTS_STORE_NAME, 'readonly');
+      const index = store.index('codigo');
+      const request = index.get(codigo);
+      request.onsuccess = () => resolve(request.result as Product | undefined);
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
 };
 
 export const updateProduct = (product: Product): Promise<number> => {
@@ -1004,155 +893,58 @@ export const clearSimulations = (): Promise<void> => clearStore(SIMULATIONS_STOR
 // Note: clearUsers is not exported because it should be handled carefully
 export const clearUsers = (): Promise<void> => clearStore(USERS_STORE_NAME);
 
-// --- Local Auth Helpers (PBKDF2) ---
-function btoaUrlSafe(bytes: Uint8Array) {
-  const str = btoa(String.fromCharCode(...Array.from(bytes)));
-  return str.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-function atobUrlSafeToBytes(s: string) {
-  s = s.replace(/-/g, '+').replace(/_/g, '/');
-  while (s.length % 4) s += '=';
-  const bin = atob(s);
-  const arr = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-  return arr;
-}
-async function generateSalt(length = 16) {
-  const salt = crypto.getRandomValues(new Uint8Array(length));
-  return btoaUrlSafe(salt);
-}
-async function deriveKey(password: string, saltBase64: string, iterations = 100000, keyLen = 32) {
-  const salt = atobUrlSafeToBytes(saltBase64);
-  const enc = new TextEncoder();
-  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), { name: 'PBKDF2' }, false, ['deriveBits']);
-  const derivedBits = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', salt: salt, iterations: iterations, hash: 'SHA-256' },
-    keyMaterial,
-    keyLen * 8
-  );
-  return new Uint8Array(derivedBits);
-}
+// --- Custom Status Functions ---
 
-/**
- * createLocalUser(email, password, extras?)
- * - creates a new user in USERS_STORE_NAME
- * - stores: uid (timestamp-random), email (lowercase), passwordHash, salt, role, status
- */
-export const createLocalUser = (email: string, password: string, extras: Partial<UserProfile> = {}): Promise<UserProfile> => {
+import type { CustomStatus } from './types';
+
+export const getAllStatuses = async (): Promise<CustomStatus[]> => {
   return new Promise(async (resolve, reject) => {
     try {
-      await initDB();
-      const db = await getDB();
-      // First, check if the user exists in a separate, read-only transaction.
-      const checkTx = db.transaction(USERS_STORE_NAME, 'readonly');
-      const checkStore = checkTx.objectStore(USERS_STORE_NAME);
-      const normalizedEmail = email.toLowerCase().trim();
-      const idxReq = checkStore.index('email').get(normalizedEmail);
-
-      idxReq.onsuccess = async () => {
-        if (idxReq.result) {
-          reject(new Error('user-exists'));
-          return;
-        }
-
-        // User doesn't exist, proceed with creation in a new read-write transaction.
-        try {
-            const salt = await generateSalt();
-            const derived = await deriveKey(password, salt);
-            const user: UserProfile = {
-                uid: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-                email: normalizedEmail,
-                displayName: extras.displayName ?? normalizedEmail.split('@')[0],
-                photoURL: extras.photoURL ?? undefined,
-                role: extras.role ?? 'user',
-                status: extras.status ?? 'active',
-                // @ts-ignore
-                passwordHash: btoaUrlSafe(derived),
-                salt,
-                createdAt: Date.now(),
-                ...extras,
-            } as any;
-            
-            const writeTx = db.transaction(USERS_STORE_NAME, 'readwrite');
-            const writeStore = writeTx.objectStore(USERS_STORE_NAME);
-            const addReq = writeStore.add(user);
-
-            addReq.onsuccess = () => resolve(user);
-            addReq.onerror = () => reject(addReq.error);
-        } catch(err) {
-            reject(err);
-        }
-      };
-
-      idxReq.onerror = () => reject(idxReq.error);
+      const store = await getStore(STATUSES_STORE_NAME, 'readonly');
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
     } catch (err) {
       reject(err);
     }
   });
 };
 
-/**
- * verifyLocalUser(email, password)
- * - returns { ok: boolean, user?, reason? }
- */
-export const verifyLocalUser = async (email: string, password: string): Promise<{ ok: boolean; user?: UserProfile; reason?: string }> => {
-  try {
-    await initDB();
-    const db = await getDB();
-    const tx = db.transaction(USERS_STORE_NAME, 'readonly');
-    const store = tx.objectStore(USERS_STORE_NAME);
-    const req = store.index('email').get(email.toLowerCase().trim());
-    return await new Promise((resolve, reject) => {
-      req.onsuccess = async () => {
-        const found = req.result as (UserProfile & { passwordHash?: string; salt?: string }) | undefined;
-        if (!found) return resolve({ ok: false, reason: 'user-not-found' });
-        if (found.status === 'blocked') return resolve({ ok: false, reason: 'user-blocked' });
-        if (!found.passwordHash || !found.salt) return resolve({ ok: false, reason: 'no-password' });
-        try {
-          const derived = await deriveKey(password, found.salt);
-          const derivedB64 = btoaUrlSafe(derived);
-          if (derivedB64 === found.passwordHash) {
-            const { passwordHash, salt, ...safe } = found as any;
-            return resolve({ ok: true, user: safe as UserProfile });
-          } else {
-            return resolve({ ok: false, reason: 'invalid-password' });
-          }
-        } catch (err) {
-          return resolve({ ok: false, reason: 'error' });
-        }
-      };
-      req.onerror = () => reject(req.error);
-    });
-  } catch (err) {
-    return { ok: false, reason: 'error' };
-  }
+export const addStatus = async (status: CustomStatus): Promise<number> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(STATUSES_STORE_NAME, 'readwrite');
+      const request = store.add(status);
+      request.onsuccess = () => resolve(request.result as number);
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
 };
 
-/**
- * changeLocalPassword(email, oldPassword, newPassword)
- */
-export const changeLocalPassword = async (email: string, oldPassword: string, newPassword: string): Promise<{ ok: boolean; reason?: string }> => {
-  try {
-    const ver = await verifyLocalUser(email, oldPassword);
-    if (!ver.ok) return { ok: false, reason: ver.reason };
-    const salt = await generateSalt();
-    const derived = await deriveKey(newPassword, salt);
-    const db = await getDB();
-    const tx = db.transaction(USERS_STORE_NAME, 'readwrite');
-    const store = tx.objectStore(USERS_STORE_NAME);
-    const getReq = store.get(ver.user!.uid);
-    return await new Promise((resolve, reject) => {
-      getReq.onsuccess = () => {
-        const rec = getReq.result;
-        rec.salt = salt;
-        rec.passwordHash = btoaUrlSafe(derived);
-        const putReq = store.put(rec);
-        putReq.onsuccess = () => resolve({ ok: true });
-        putReq.onerror = () => reject(putReq.error);
-      };
-      getReq.onerror = () => reject(getReq.error);
-    });
-  } catch (err) {
-    return { ok: false, reason: 'error' };
-  }
+export const updateStatus = async (status: CustomStatus): Promise<void> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(STATUSES_STORE_NAME, 'readwrite');
+      const request = store.put(status);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+export const deleteStatus = async (id: number): Promise<void> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(STATUSES_STORE_NAME, 'readwrite');
+      const request = store.delete(id);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
 };

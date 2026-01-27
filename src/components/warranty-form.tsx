@@ -12,6 +12,7 @@ import Image from 'next/image';
 
 import type { Warranty, Person, Supplier, Product, WarrantyStatus, CustomStatus } from '@/lib/types';
 import { Button } from '@/components/ui/button';
+import { smartSearch } from '@/lib/search-utils';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -27,6 +28,7 @@ import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './ui/command';
 import ProductForm from './product-form';
 import { useAppStore } from '@/store/app-store';
+<<<<<<< HEAD
 import * as db from '@/lib/db';
 
 
@@ -52,38 +54,66 @@ const formSchema = z.object({
   dataRegistro: z.string().optional(),
   marca: z.string().optional(),
   referencia: z.string().optional(),
+=======
+import { WARRANTY_STATUSES } from '@/lib/types';
+import { QuickRegisterDialog } from './quick-register-dialog';
+
+
+const formSchema = z.object({
+    id: z.number().optional(),
+    codigo: z.string().optional(),
+    descricao: z.string().optional(),
+    fornecedor: z.string().optional(),
+    quantidade: z.coerce.number().min(0).optional(),
+    defeito: z.string().optional(),
+    requisicaoVenda: z.string().optional(),
+    requisicoesGarantia: z.string().optional(),
+    nfCompra: z.string().optional(),
+    valorCompra: z.string().optional(),
+    cliente: z.string().optional(),
+    mecanico: z.string().optional(),
+    notaFiscalSaida: z.string().optional(),
+    notaFiscalRetorno: z.string().optional(),
+    observacao: z.string().optional(),
+    status: z.enum(WARRANTY_STATUSES).optional(),
+    loteId: z.number().nullable().optional(),
+    photos: z.array(z.string()).optional(),
+    dataRegistro: z.string().optional(),
+    marca: z.string().optional(),
+    referencia: z.string().optional(),
+>>>>>>> feature/status-visual-pro
 });
 
 type WarrantyFormValues = z.infer<typeof formSchema>;
 
 interface WarrantyFormProps {
-  selectedWarranty: Warranty | null;
-  onSave: (data: Warranty, shouldNavigate: boolean) => Promise<void>;
-  onClear: () => void;
-  isModal?: boolean;
-  isClone?: boolean;
+    selectedWarranty: Warranty | null;
+    onSave: (data: Warranty, shouldNavigate: boolean) => Promise<void>;
+    onClear: () => void;
+    isModal?: boolean;
+    isClone?: boolean;
 }
 
 const defaultValues: WarrantyFormValues = {
-  codigo: '',
-  descricao: '',
-  fornecedor: '',
-  quantidade: 1,
-  defeito: '',
-  requisicaoVenda: '',
-  requisicoesGarantia: '',
-  nfCompra: '',
-  valorCompra: '',
-  cliente: '',
-  mecanico: '',
-  notaFiscalSaida: '',
-  notaFiscalRetorno: '',
-  observacao: '',
-  status: 'Aguardando Envio',
-  loteId: null,
-  photos: [],
-  marca: '',
-  referencia: '',
+    codigo: '',
+    descricao: '',
+    fornecedor: '',
+    quantidade: 1,
+    defeito: '',
+    requisicaoVenda: '',
+    requisicoesGarantia: '',
+    nfCompra: '',
+    valorCompra: '',
+    cliente: '',
+    mecanico: '',
+    notaFiscalSaida: '',
+    notaFiscalRetorno: '',
+    observacao: '',
+    status: 'Aguardando Envio',
+    loteId: null,
+    photos: [],
+    marca: '',
+    referencia: '',
 };
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -94,13 +124,12 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
     const { products, persons, suppliers, reloadData } = useAppStore();
     const [warrantyStatuses, setWarrantyStatuses] = useState<CustomStatus[]>([]);
 
-    const [isSupplierModalOpen, setSupplierModalOpen] = useState(false);
-    const [isPersonModalOpen, setPersonModalOpen] = useState(false);
-    const [isProductModalOpen, setProductModalOpen] = useState(false);
-    
+    const [quickRegisterType, setQuickRegisterType] = useState<'product' | 'supplier' | 'person' | null>(null);
+    const [isQuickRegisterOpen, setQuickRegisterOpen] = useState(false);
+
     const [productSearch, setProductSearch] = useState('');
     const [isProductPopoverOpen, setProductPopoverOpen] = useState(false);
-    
+
     const { toast } = useToast();
     const goBack = useAppStore(state => state.goBack);
 
@@ -121,12 +150,15 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
             photos: selectedWarranty.photos ?? [],
         } : defaultValues,
     });
-    
+
     const { watch, setValue } = form;
     const photos = watch('photos', []);
 
 
     const { isSubmitting } = form.formState;
+
+    const [shouldNavigate, setShouldNavigate] = useState(true);
+    const [lastSavedId, setLastSavedId] = useState<number | null>(null);
 
     const handleSubmit = async (values: WarrantyFormValues) => {
         const dataToSave: Warranty = {
@@ -137,20 +169,27 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
             photos: values.photos ?? [],
             dataRegistro: selectedWarranty?.dataRegistro && !isClone ? selectedWarranty.dataRegistro : new Date().toISOString(),
         };
-        const shouldNavigate = !!selectedWarranty; // Navega apenas se estiver editando/clonando
+
         await onSave(dataToSave, shouldNavigate);
-        if (!shouldNavigate) { // Limpa o form apenas se for um novo cadastro
+
+        if (!shouldNavigate) {
+            // Se for novo cadastro e quiser continuar, limpa o form
             form.reset(defaultValues);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+            toast({
+                title: 'Pronto para mais um!',
+                description: 'O formulário foi limpo para o próximo cadastro.',
+            });
         }
     };
-    
+
     const handleClear = () => {
-      if (selectedWarranty) {
-        goBack(); // If we were editing, go back
-      } else {
-        form.reset(defaultValues); // If it's a new form, just clear it
-      }
-      onClear();
+        if (selectedWarranty) {
+            goBack(); // If we were editing, go back
+        } else {
+            form.reset(defaultValues); // If it's a new form, just clear it
+        }
+        onClear();
     }
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -159,7 +198,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
             const formElements = Array.from(
                 formRef.current?.querySelectorAll('input, button, select, textarea') || []
             ) as HTMLElement[];
-            
+
             const focusable = formElements.filter(el => !el.hasAttribute('disabled') && !el.hasAttribute('readonly') && el.offsetParent !== null);
             const currentIndex = focusable.indexOf(e.target as HTMLElement);
             const nextElement = focusable[currentIndex + 1] as HTMLElement | undefined;
@@ -167,28 +206,22 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
             nextElement?.focus();
         }
     };
-    
+
+    const handleProductSaved = (newProduct: Product) => {
+        handleProductSelect(newProduct);
+    };
+
     const handleSupplierSaved = (newSupplier: Supplier) => {
-        reloadData('suppliers');
-        setSupplierModalOpen(false);
         form.setValue('fornecedor', newSupplier.nomeFantasia);
     };
 
     const handlePersonSaved = (newPerson: Person) => {
-        reloadData('persons');
-        setPersonModalOpen(false);
         if (newPerson.tipo === 'Cliente' || newPerson.tipo === 'Ambos') {
-             form.setValue('cliente', newPerson.nome);
+            form.setValue('cliente', newPerson.nome);
         }
         if (newPerson.tipo === 'Mecânico' || newPerson.tipo === 'Ambos') {
-             form.setValue('mecanico', newPerson.nome);
+            form.setValue('mecanico', newPerson.nome);
         }
-    };
-
-    const handleProductSaved = (newProduct: Product) => {
-        reloadData('products');
-        setProductModalOpen(false);
-        handleProductSelect(newProduct);
     };
 
     const handleProductSelect = (product: Product) => {
@@ -204,7 +237,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
         if (!files) return;
 
         const currentPhotos = form.getValues('photos') || [];
-        
+
         const filePromises = Array.from(files).map(file => {
             return new Promise<string>((resolve, reject) => {
                 if (file.size > MAX_FILE_SIZE) {
@@ -221,7 +254,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                 reader.readAsDataURL(file);
             });
         });
-        
+
         Promise.all(filePromises)
             .then(base64Files => {
                 setValue('photos', [...currentPhotos, ...base64Files], { shouldValidate: true });
@@ -233,8 +266,8 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                     variant: 'destructive',
                 });
             });
-        
-        if(event.target) event.target.value = '';
+
+        if (event.target) event.target.value = '';
     };
 
     const removePhoto = (index: number) => {
@@ -245,24 +278,32 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
     };
 
     const filteredProducts = productSearch
-        ? products.filter(p => {
-              const searchTerm = productSearch.toLowerCase();
-              const productCode = p.codigo || '';
-              const productDesc = p.descricao || '';
-              return productCode.toLowerCase().includes(searchTerm) || 
-                     productDesc.toLowerCase().includes(searchTerm);
-            }).slice(0, 5)
+        ? products.filter(p => smartSearch(p, productSearch, ['codigo', 'descricao', 'referencia', 'marca']))
+            .slice(0, 5)
         : [];
 
 
     const clients = persons.filter(p => p.tipo === 'Cliente' || p.tipo === 'Ambos');
     const mechanics = persons.filter(p => p.tipo === 'Mecânico' || p.tipo === 'Ambos');
 
-    const supplierOptions = suppliers.map(s => ({ value: s.nomeFantasia, label: s.nomeFantasia }));
-    const clientOptions = clients.map(c => ({ value: c.nome, label: c.nome }));
-    const mechanicOptions = mechanics.map(m => ({ value: m.nome, label: m.nome }));
+    const supplierOptions = suppliers.map(s => ({
+        value: s.nomeFantasia,
+        label: s.nomeFantasia,
+        keywords: [s.razaoSocial || '', s.cnpj || '']
+    }));
+    const clientOptions = clients.map(c => ({
+        value: c.nome,
+        label: c.nome,
+        keywords: [c.nomeFantasia || '', c.cpfCnpj || '']
+    }));
+    const mechanicOptions = mechanics.map(m => ({
+        value: m.nome,
+        label: m.nome,
+        keywords: [m.nomeFantasia || '', m.cpfCnpj || '']
+    }));
 
     const innerFormContent = (
+<<<<<<< HEAD
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} onKeyDown={handleKeyDown} ref={formRef}>
             <CardContent className="space-y-6 pt-6">
@@ -356,88 +397,111 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                                             </DialogContent>
                                         </Dialog>
                                     </div>
+=======
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)} onKeyDown={handleKeyDown} ref={formRef}>
+                <CardContent className="space-y-6 pt-6">
+                    <div className="space-y-4">
+                        <h3 className="text-lg font-medium text-foreground">Informações do Produto e Defeito</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <FormField name="codigo" control={form.control} render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Código</FormLabel>
+                                    <Popover open={isProductPopoverOpen} onOpenChange={setProductPopoverOpen}>
+                                        <PopoverTrigger asChild>
+                                            <FormControl>
+                                                <Input
+                                                    {...field}
+                                                    autoComplete="off"
+                                                    onChange={(e) => {
+                                                        field.onChange(e);
+                                                        setProductSearch(e.target.value);
+                                                        if (e.target.value) {
+                                                            setProductPopoverOpen(true);
+                                                        } else {
+                                                            setProductPopoverOpen(false);
+                                                        }
+                                                    }}
+                                                />
+                                            </FormControl>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                            <Command>
+                                                <CommandInput placeholder="Buscar produto..." value={productSearch} onValueChange={setProductSearch} />
+                                                <CommandList>
+                                                    <CommandEmpty>
+                                                        <div className='p-4 text-sm text-center'>
+                                                            <p>Nenhum produto encontrado.</p>
+                                                            <Button variant="link" type="button" onClick={() => {
+                                                                setQuickRegisterType('product');
+                                                                setQuickRegisterOpen(true);
+                                                                setProductPopoverOpen(false);
+                                                            }}>Cadastrar Novo Produto</Button>
+                                                        </div>
+                                                    </CommandEmpty>
+                                                    <CommandGroup>
+                                                        {filteredProducts.map((product) => (
+                                                            <CommandItem
+                                                                key={product.id}
+                                                                onSelect={() => handleProductSelect(product)}
+                                                            >
+                                                                {product.codigo} - {product.descricao}
+                                                            </CommandItem>
+                                                        ))}
+                                                    </CommandGroup>
+                                                </CommandList>
+                                            </Command>
+                                        </PopoverContent>
+                                    </Popover>
+>>>>>>> feature/status-visual-pro
                                     <FormMessage />
                                 </FormItem>
-                            )}
+                            )} />
+                            <FormField name="descricao" control={form.control} render={({ field }) => (
+                                <FormItem className="md:col-span-2"><FormLabel>Descrição</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            <FormField name="quantidade" control={form.control} render={({ field }) => (
+                                <FormItem><FormLabel>Quantidade</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            <FormField
+                                control={form.control}
+                                name="fornecedor"
+                                render={({ field }) => (
+                                    <FormItem className="md:col-span-2 flex flex-col">
+                                        <FormLabel>Fornecedor</FormLabel>
+                                        <div className="flex items-center gap-2">
+                                            <Combobox
+                                                options={supplierOptions}
+                                                value={field.value ?? ''}
+                                                onChange={field.onChange}
+                                                placeholder="Selecione um fornecedor"
+                                                searchPlaceholder="Buscar fornecedor..."
+                                                notFoundMessage="Nenhum fornecedor encontrado."
+                                                className="w-full"
+                                                onAddClick={() => {
+                                                    setQuickRegisterType('supplier');
+                                                    setQuickRegisterOpen(true);
+                                                }}
+                                                addLabel="Novo Fornecedor"
+                                            />
+                                        </div>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
                             />
                             <FormField name="defeito" control={form.control} render={({ field }) => (
-                            <FormItem className="md:col-span-2"><FormLabel>Defeito Apresentado</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
+                                <FormItem className="md:col-span-2"><FormLabel>Defeito Apresentado</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                        </div>
                     </div>
-                </div>
 
-                <Separator />
+                    <Separator />
 
-                <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-foreground">Fotos da Garantia</h3>
-                    <FormField
-                        control={form.control}
-                        name="photos"
-                        render={() => (
-                            <FormItem>
-                                <FormControl>
-                                  <div>
-                                    <input
-                                        type="file"
-                                        ref={fileInputRef}
-                                        multiple
-                                        accept="image/*"
-                                        className="hidden"
-                                        onChange={handleFileChange}
-                                    />
-                                    <Button 
-                                        type="button" 
-                                        variant="outline"
-                                        onClick={() => fileInputRef.current?.click()}
-                                    >
-                                        <Upload className="mr-2 h-4 w-4" />
-                                        Carregar Fotos
-                                    </Button>
-                                  </div>
-                                </FormControl>
-                                <FormMessage />
-                                {photos && photos.length > 0 && (
-                                    <div className="flex flex-wrap gap-4 mt-4">
-                                        {photos.map((photo, index) => (
-                                            <div key={index} className="relative w-32 h-32 rounded-md overflow-hidden border">
-                                                <Image 
-                                                    src={photo} 
-                                                    alt={`Preview ${index + 1}`} 
-                                                    fill={true}
-                                                    style={{ objectFit: 'cover' }}
-                                                />
-                                                <Button
-                                                    type="button"
-                                                    variant="destructive"
-                                                    size="icon"
-                                                    className="absolute top-1 right-1 h-6 w-6"
-                                                    onClick={() => removePhoto(index)}
-                                                >
-                                                    <XIcon className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                                {photos && photos.length === 0 && (
-                                    <div className="flex flex-col items-center justify-center text-center p-6 border-2 border-dashed rounded-lg text-muted-foreground">
-                                        <ImageIcon className="h-8 w-8 mb-2" />
-                                        <p>Nenhuma foto anexada.</p>
-                                        <p className="text-xs">Anexe fotos do produto, defeito ou nota fiscal.</p>
-                                    </div>
-                                )}
-                            </FormItem>
-                        )}
-                    />
-                </div>
-
-                <Separator />
-
-                <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-foreground">Dados Fiscais e de Venda</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="space-y-4">
+                        <h3 className="text-lg font-medium text-foreground">Fotos da Garantia</h3>
                         <FormField
                             control={form.control}
+<<<<<<< HEAD
                             name="cliente"
                             render={({ field }) => (
                                     <FormItem className="md:col-span-2 flex flex-col">
@@ -546,22 +610,70 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                                             ))}
                                         </SelectContent>
                                     </Select>
+=======
+                            name="photos"
+                            render={() => (
+                                <FormItem>
+                                    <FormControl>
+                                        <div>
+                                            <input
+                                                type="file"
+                                                ref={fileInputRef}
+                                                multiple
+                                                accept="image/*"
+                                                className="hidden"
+                                                onChange={handleFileChange}
+                                            />
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={() => fileInputRef.current?.click()}
+                                            >
+                                                <Upload className="mr-2 h-4 w-4" />
+                                                Carregar Fotos
+                                            </Button>
+                                        </div>
+                                    </FormControl>
+>>>>>>> feature/status-visual-pro
                                     <FormMessage />
+                                    {photos && photos.length > 0 && (
+                                        <div className="flex flex-wrap gap-4 mt-4">
+                                            {photos.map((photo, index) => (
+                                                <div key={index} className="relative w-32 h-32 rounded-md overflow-hidden border">
+                                                    <Image
+                                                        src={photo}
+                                                        alt={`Preview ${index + 1}`}
+                                                        fill={true}
+                                                        style={{ objectFit: 'cover' }}
+                                                    />
+                                                    <Button
+                                                        type="button"
+                                                        variant="destructive"
+                                                        size="icon"
+                                                        className="absolute top-1 right-1 h-6 w-6"
+                                                        onClick={() => removePhoto(index)}
+                                                    >
+                                                        <XIcon className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                    {photos && photos.length === 0 && (
+                                        <div className="flex flex-col items-center justify-center text-center p-6 border-2 border-dashed rounded-lg text-muted-foreground">
+                                            <ImageIcon className="h-8 w-8 mb-2" />
+                                            <p>Nenhuma foto anexada.</p>
+                                            <p className="text-xs">Anexe fotos do produto, defeito ou nota fiscal.</p>
+                                        </div>
+                                    )}
                                 </FormItem>
                             )}
-                            />
+                        />
                     </div>
-                </div>
-                
-                <Separator />
 
-                <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-foreground">Observações</h3>
-                    <FormField name="observacao" control={form.control} render={({ field }) => (
-                        <FormItem><FormControl><Textarea rows={2} placeholder="Adicione qualquer observação relevante aqui..." {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                </div>
+                    <Separator />
 
+<<<<<<< HEAD
             </CardContent>
             <CardFooter className="flex justify-end gap-2">
                 <Button type="button" variant="outline" onClick={handleClear}>
@@ -583,19 +695,167 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
             </DialogContent>
         </Dialog>
     </Form>
+=======
+                    <div className="space-y-4">
+                        <h3 className="text-lg font-medium text-foreground">Dados Fiscais e de Venda</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="cliente"
+                                render={({ field }) => (
+                                    <FormItem className="md:col-span-2 flex flex-col">
+                                        <FormLabel>Cliente</FormLabel>
+                                        <div className="flex items-center gap-2">
+                                            <Combobox
+                                                options={clientOptions}
+                                                value={field.value ?? ''}
+                                                onChange={field.onChange}
+                                                placeholder="Selecione um cliente"
+                                                searchPlaceholder="Buscar cliente..."
+                                                notFoundMessage="Nenhum cliente encontrado."
+                                                className="w-full"
+                                                onAddClick={() => {
+                                                    setQuickRegisterType('person');
+                                                    setQuickRegisterOpen(true);
+                                                }}
+                                                addLabel="Novo Cliente/Mecânico"
+                                            />
+                                        </div>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="mecanico"
+                                render={({ field }) => (
+                                    <FormItem className="md:col-span-2 flex flex-col">
+                                        <FormLabel>Mecânico</FormLabel>
+                                        <div className="flex items-center gap-2">
+                                            <Combobox
+                                                options={mechanicOptions}
+                                                value={field.value ?? ''}
+                                                onChange={field.onChange}
+                                                placeholder="Selecione um mecânico"
+                                                searchPlaceholder="Buscar mecânico..."
+                                                notFoundMessage="Nenhum mecânico encontrado."
+                                                className="w-full"
+                                                onAddClick={() => {
+                                                    setQuickRegisterType('person');
+                                                    setQuickRegisterOpen(true);
+                                                }}
+                                                addLabel="Novo Cliente/Mecânico"
+                                            />
+                                        </div>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField name="requisicaoVenda" control={form.control} render={({ field }) => (
+                                <FormItem><FormLabel>Requisição Venda</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            <FormField name="requisicoesGarantia" control={form.control} render={({ field }) => (
+                                <FormItem className="md:col-span-3"><FormLabel>Requisições Garantia</FormLabel><FormControl><Textarea rows={1} placeholder="Separe múltiplas requisições por vírgula" {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            <FormField name="nfCompra" control={form.control} render={({ field }) => (
+                                <FormItem><FormLabel>NF Compra</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            <FormField name="valorCompra" control={form.control} render={({ field }) => (
+                                <FormItem><FormLabel>Valor Compra</FormLabel><FormControl><Input placeholder="R$ 0,00" {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            <FormField name="notaFiscalSaida" control={form.control} render={({ field }) => (
+                                <FormItem><FormLabel>Nota Fiscal de Saída</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            <FormField name="notaFiscalRetorno" control={form.control} render={({ field }) => (
+                                <FormItem><FormLabel>Nota Fiscal de Retorno</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            <FormField
+                                control={form.control}
+                                name="status"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Status</FormLabel>
+                                        <Select onValueChange={field.onChange} value={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Selecione um status" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {WARRANTY_STATUSES.map(status => (
+                                                    <SelectItem key={status} value={status}>{status}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-4">
+                        <h3 className="text-lg font-medium text-foreground">Observações</h3>
+                        <FormField name="observacao" control={form.control} render={({ field }) => (
+                            <FormItem><FormControl><Textarea rows={2} placeholder="Adicione qualquer observação relevante aqui..." {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                    </div>
+
+                </CardContent>
+                <CardFooter className="flex justify-between items-center gap-2">
+                    <Button type="button" variant="ghost" onClick={handleClear} disabled={isSubmitting}>
+                        {selectedWarranty ? 'Cancelar' : 'Limpar'}
+                    </Button>
+                    <div className="flex gap-2">
+                        {!selectedWarranty && !isClone && (
+                            <Button
+                                type="submit"
+                                variant="outline"
+                                disabled={isSubmitting}
+                                onClick={() => setShouldNavigate(false)}
+                            >
+                                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                Salvar e Continuar
+                            </Button>
+                        )}
+                        <Button
+                            type="submit"
+                            disabled={isSubmitting}
+                            onClick={() => setShouldNavigate(true)}
+                        >
+                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            {selectedWarranty && !isClone ? 'Atualizar' : 'Salvar e Sair'}
+                        </Button>
+                    </div>
+                </CardFooter>
+            </form>
+            <QuickRegisterDialog
+                open={isQuickRegisterOpen}
+                onOpenChange={setQuickRegisterOpen}
+                type={quickRegisterType}
+                onSuccess={(item) => {
+                    if (quickRegisterType === 'product') handleProductSaved(item);
+                    if (quickRegisterType === 'supplier') handleSupplierSaved(item);
+                    if (quickRegisterType === 'person') handlePersonSaved(item);
+                }}
+            />
+        </Form>
+>>>>>>> feature/status-visual-pro
     );
 
     if (isModal) {
-      return <div>{innerFormContent}</div>;
+        return <div>{innerFormContent}</div>;
     }
 
     return (
-      <Card className="w-full shadow-lg">
-          <CardHeader>
-              <CardTitle>{selectedWarranty ? (isClone ? 'Clonar Garantia' : 'Editar Garantia') : 'Cadastrar Garantia'}</CardTitle>
-              <CardDescription>Preencha os detalhes da garantia abaixo. Use &quot;Enter&quot; para pular para o próximo campo.</CardDescription>
-          </CardHeader>
-          {innerFormContent}
-      </Card>
+        <Card className="w-full shadow-lg">
+            <CardHeader>
+                <CardTitle>{selectedWarranty ? (isClone ? 'Clonar Garantia' : 'Editar Garantia') : 'Cadastrar Garantia'}</CardTitle>
+                <CardDescription>Preencha os detalhes da garantia abaixo. Use &quot;Enter&quot; para pular para o próximo campo.</CardDescription>
+            </CardHeader>
+            {innerFormContent}
+        </Card>
     );
 }
