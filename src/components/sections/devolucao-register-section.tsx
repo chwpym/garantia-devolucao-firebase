@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -13,16 +12,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Trash2, RotateCcw } from 'lucide-react';
-import type { ReturnStatus, Product, ItemDevolucao, RequisitionAction } from '@/lib/types';
+import { PlusCircle, Trash2 } from 'lucide-react';
+import type { ReturnStatus, Product, ItemDevolucao } from '@/lib/types';
 import { Combobox } from '../ui/combobox';
 import { DatePicker } from '../ui/date-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '../ui/textarea';
 import { parseISO, isSameDay } from 'date-fns';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '../ui/dialog';
-import ProductForm from '../product-form';
-import PersonForm from '../person-form';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import { QuickRegisterDialog } from '../quick-register-dialog';
 import { useAppStore } from '@/store/app-store';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Label } from '../ui/label';
@@ -39,8 +37,7 @@ const devolucaoSchema = z.object({
     cliente: z.string().min(1, 'Cliente é obrigatório'),
     mecanico: z.string().optional(),
     requisicaoVenda: z.string().min(1, 'Requisição é obrigatória'),
-    acaoRequisicao: z.string({ required_error: 'Selecione uma ação para a requisição' }).min(1, 'Selecione uma ação para a requisição'),
-    status: z.string({ required_error: 'Selecione um status' }).min(1, 'Selecione um status'),
+    acaoRequisicao: z.enum(['Alterada', 'Excluída'], { required_error: 'Selecione uma ação para a requisição' }),
     dataVenda: z.date({ required_error: 'Data da venda é obrigatória' }),
     dataDevolucao: z.date({ required_error: 'Data da devolução é obrigatória' }),
     observacaoGeral: z.string().optional(),
@@ -54,14 +51,15 @@ interface DevolucaoRegisterSectionProps {
     onSave: () => void;
 }
 
-const defaultFormValues: Omit<DevolucaoFormValues, 'acaoRequisicao' | 'status'> & { acaoRequisicao?: string; status?: string } = {
-  cliente: '',
-  mecanico: '',
-  requisicaoVenda: '',
-  dataDevolucao: new Date(),
-  dataVenda: new Date(),
-  observacaoGeral: '',
-  itens: [{ codigoPeca: '', descricaoPeca: '', quantidade: 1 }],
+const defaultFormValues: DevolucaoFormValues = {
+    cliente: '',
+    mecanico: '',
+    requisicaoVenda: '',
+    acaoRequisicao: 'Alterada', // Default value
+    dataDevolucao: new Date(),
+    dataVenda: new Date(),
+    observacaoGeral: '',
+    itens: [{ codigoPeca: '', descricaoPeca: '', quantidade: 1 }],
 };
 
 type DevolucaoComItem = Awaited<ReturnType<typeof db.getAllDevolucoes>>[0] & { item: ItemDevolucao };
@@ -84,8 +82,8 @@ function RecentDevolutionsList() {
                 });
             });
         });
-        
-        setRecentItems(itemsComDevolucao.sort((a,b) => parseISO(b.dataDevolucao).getTime() - parseISO(a.dataDevolucao).getTime()));
+
+        setRecentItems(itemsComDevolucao.sort((a, b) => parseISO(b.dataDevolucao).getTime() - parseISO(a.dataDevolucao).getTime()));
         setIsLoading(false);
     }, []);
 
@@ -107,7 +105,7 @@ function RecentDevolutionsList() {
                 <CardDescription>Lista das devoluções registradas no dia selecionado.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-                 <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
                     <Label htmlFor="filter-date" className="shrink-0">Filtro por</Label>
                     <DatePicker date={filterDate} setDate={setFilterDate} />
                 </div>
@@ -152,43 +150,23 @@ function RecentDevolutionsList() {
 
 
 export default function DevolucaoRegisterSection({ editingId, onSave }: DevolucaoRegisterSectionProps) {
-    const { persons, isDataLoaded, reloadData, statuses } = useAppStore();
+    const { persons, isDataLoaded, reloadData } = useAppStore();
     const [isProductModalOpen, setProductModalOpen] = useState(false);
-    const [isPersonModalOpen, setPersonModalOpen] = useState(false);
-    
+    const [activeItemIndex, setActiveItemIndex] = useState<number | null>(null);
+    const [shouldExit, setShouldExit] = useState(true);
+
     const { toast } = useToast();
     const goBack = useAppStore(state => state.goBack);
-    
-    const acaoRequisicaoOptions = useMemo(() => {
-        return statuses.filter(s => s.aplicavelEm.includes('acaoRequisicao'));
-    }, [statuses]);
-
-    const devolutionStatusOptions = useMemo(() => {
-        return statuses.filter(s => s.aplicavelEm.includes('devolucao'));
-    }, [statuses]);
 
     const form = useForm<DevolucaoFormValues>({
         resolver: zodResolver(devolucaoSchema),
-        defaultValues: {
-            ...defaultFormValues,
-            acaoRequisicao: acaoRequisicaoOptions.find(o => o.nome === 'Alterada')?.nome || '',
-            status: devolutionStatusOptions[0]?.nome || 'Recebido',
-        },
+        defaultValues: defaultFormValues,
     });
 
     const { fields, append, remove, replace } = useFieldArray({
         control: form.control,
         name: 'itens',
     });
-    
-    useEffect(() => {
-        if (acaoRequisicaoOptions.length > 0 && !form.getValues('acaoRequisicao')) {
-            form.setValue('acaoRequisicao', acaoRequisicaoOptions[0].nome);
-        }
-        if(devolutionStatusOptions.length > 0 && !form.getValues('status')) {
-            form.setValue('status', devolutionStatusOptions[0].nome);
-        }
-    }, [acaoRequisicaoOptions, devolutionStatusOptions, form]);
 
     const loadEditingData = useCallback(async (id: number) => {
         const data = await db.getDevolucaoById(id);
@@ -197,9 +175,6 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                 ...data,
                 dataVenda: data.dataVenda ? parseISO(data.dataVenda) : new Date(),
                 dataDevolucao: data.dataDevolucao ? parseISO(data.dataDevolucao) : new Date(),
-                mecanico: data.mecanico || '',
-                observacaoGeral: data.observacaoGeral || '',
-                status: data.status || devolutionStatusOptions[0]?.nome || 'Recebido',
             });
             if (data.itens) {
                 replace(data.itens.map(item => ({ ...item, id: item.id || undefined })));
@@ -212,7 +187,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
             });
             onSave(); // Volta para a lista
         }
-    }, [form, onSave, replace, toast, devolutionStatusOptions]);
+    }, [form, onSave, replace, toast]);
 
 
     useEffect(() => {
@@ -223,6 +198,9 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
 
     const onSubmit = async (data: DevolucaoFormValues) => {
         try {
+            const currentDevolucao = editingId ? await db.getDevolucaoById(editingId) : null;
+            const currentStatus: ReturnStatus = currentDevolucao?.status || 'Recebido';
+
             const devolucaoBaseData = {
                 cliente: data.cliente,
                 mecanico: data.mecanico,
@@ -230,7 +208,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                 acaoRequisicao: data.acaoRequisicao,
                 dataVenda: data.dataVenda.toISOString(),
                 dataDevolucao: data.dataDevolucao.toISOString(),
-                status: data.status,
+                status: currentStatus,
                 observacaoGeral: data.observacaoGeral
             };
 
@@ -246,11 +224,16 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                     quantidade: item.quantidade || 1,
                 }));
                 await db.updateDevolucao(devolucaoData, itensData);
-                toast({
-                    title: 'Sucesso!',
-                    description: 'Devolução atualizada com sucesso.'
-                });
-                onSave();
+                if (shouldExit) {
+                    onSave();
+                } else {
+                    // Mantém dados comuns (cliente, mecânico, data, requisição) mas limpa os itens
+                    form.setValue('itens', [{ codigoPeca: '', descricaoPeca: '', quantidade: 1 }]);
+                    toast({
+                        title: 'Tudo pronto!',
+                        description: 'O cadastro foi atualizado e mantido para novas peças.'
+                    });
+                }
 
             } else {
                 const devolucaoData = {
@@ -262,16 +245,17 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                     quantidade: item.quantidade || 1,
                 }));
                 await db.addDevolucao(devolucaoData, itensData);
-                toast({
-                    title: 'Sucesso!',
-                    description: 'Devolução registrada com sucesso.'
-                });
-                form.reset({
-                    ...defaultFormValues,
-                    acaoRequisicao: acaoRequisicaoOptions.find(o => o.nome === 'Alterada')?.nome || '',
-                    status: devolutionStatusOptions[0]?.nome || 'Recebido',
-                });
-                window.dispatchEvent(new CustomEvent('datachanged')); // Notifica a lista para atualizar
+                if (shouldExit) {
+                    onSave();
+                } else {
+                    // Limpa apenas os itens para agilizar novo registro do mesmo cliente/requisicao
+                    form.setValue('itens', [{ codigoPeca: '', descricaoPeca: '', quantidade: 1 }]);
+                    window.dispatchEvent(new CustomEvent('datachanged'));
+                    toast({
+                        title: 'Cadastrado!',
+                        description: 'A devolução foi salva. Itens limpos para novo registro.'
+                    });
+                }
             }
         } catch (error) {
             console.error('Failed to save devolution:', error);
@@ -287,29 +271,13 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
         goBack(); // Usa a ação do store para voltar
     }
 
-    const handleClearForm = () => {
-        form.reset({
-            ...defaultFormValues,
-            acaoRequisicao: acaoRequisicaoOptions.find(o => o.nome === 'Alterada')?.nome || '',
-            status: devolutionStatusOptions[0]?.nome || 'Recebido',
-        });
-        toast({ title: 'Formulário Limpo', description: 'Você pode iniciar um novo cadastro.' });
-    };
-
-    const handleProductSaved = () => {
-        reloadData('products');
+    const handleProductSaved = (newProduct: Product) => {
+        if (activeItemIndex !== null) {
+            form.setValue(`itens.${activeItemIndex}.codigoPeca`, newProduct.codigo);
+            form.setValue(`itens.${activeItemIndex}.descricaoPeca`, newProduct.descricao);
+        }
         setProductModalOpen(false);
-    };
-
-    const handlePersonSaved = (newPerson: any) => {
-        reloadData('persons');
-        setPersonModalOpen(false);
-        if (newPerson.tipo === 'Cliente' || newPerson.tipo === 'Ambos') {
-             form.setValue('cliente', newPerson.nome);
-        }
-        if (newPerson.tipo === 'Mecânico' || newPerson.tipo === 'Ambos') {
-             form.setValue('mecanico', newPerson.nome);
-        }
+        setActiveItemIndex(null);
     };
 
     const handleProductSelect = (product: Product, index: number) => {
@@ -378,7 +346,10 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                                                             value={field.value}
                                                                             onProductSelect={(product) => handleProductSelect(product, index)}
                                                                             onInputChange={(value) => field.onChange(value)}
-                                                                            onAddNew={() => setProductModalOpen(true)}
+                                                                            onAddNew={() => {
+                                                                                setActiveItemIndex(index);
+                                                                                setProductModalOpen(true);
+                                                                            }}
                                                                             placeholder="Código da peça"
                                                                             searchPlaceholder="Buscar produto..."
                                                                             addEntityLabel="Cadastrar Novo Produto"
@@ -407,169 +378,132 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                             ))}
                                         </div>
                                     </div>
-                                    
-                                     <Dialog open={isPersonModalOpen} onOpenChange={setPersonModalOpen}>
-                                        <div className='grid md:grid-cols-2 gap-4'>
-                                            <FormField
-                                                control={form.control}
-                                                name="cliente"
-                                                render={({ field }) => (
-                                                    <FormItem className="flex flex-col">
-                                                        <FormLabel>Cliente <span className='text-destructive'>*</span></FormLabel>
-                                                        <div className="flex items-center gap-2">
-                                                            <Combobox
-                                                                options={clientOptions}
-                                                                value={field.value ?? ''}
-                                                                onChange={field.onChange}
-                                                                placeholder="Selecione um cliente"
-                                                                searchPlaceholder="Buscar cliente..."
-                                                                notFoundMessage="Nenhum cliente encontrado."
-                                                                className="w-full"
-                                                            />
-                                                            <DialogTrigger asChild>
-                                                                <Button type="button" variant="outline" size="icon" className="flex-shrink-0">
-                                                                    <PlusCircle className="h-4 w-4" />
-                                                                </Button>
-                                                            </DialogTrigger>
-                                                        </div>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control}
-                                                name="mecanico"
-                                                render={({ field }) => (
-                                                    <FormItem className="flex flex-col">
-                                                        <FormLabel>Mecânico <span className='text-muted-foreground text-xs'>(opcional)</span></FormLabel>
-                                                        <div className="flex items-center gap-2">
-                                                            <Combobox
-                                                                options={mechanicOptions}
-                                                                value={field.value ?? ''}
-                                                                onChange={(value) => field.onChange(value)}
-                                                                placeholder="Selecione um mecânico"
-                                                                searchPlaceholder="Buscar mecânico..."
-                                                                notFoundMessage="Nenhum mecânico encontrado."
-                                                                className="w-full"
-                                                            />
-                                                            <DialogTrigger asChild>
-                                                                <Button type="button" variant="outline" size="icon" className="flex-shrink-0">
-                                                                    <PlusCircle className="h-4 w-4" />
-                                                                </Button>
-                                                            </DialogTrigger>
-                                                        </div>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                        </div>
-                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                            <FormField
-                                                name="requisicaoVenda"
-                                                control={form.control}
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>Requisição de Venda <span className='text-destructive'>*</span></FormLabel>
-                                                        <FormControl><Input {...field} /></FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control}
-                                                name="acaoRequisicao"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>Ação na Requisição <span className='text-destructive'>*</span></FormLabel>
-                                                        <Select onValueChange={field.onChange} value={field.value}>
-                                                            <FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl>
-                                                            <SelectContent>
-                                                                {acaoRequisicaoOptions.map(opt => (
-                                                                    <SelectItem key={opt.id} value={opt.nome}>{opt.nome}</SelectItem>
-                                                                ))}
-                                                            </SelectContent>
-                                                        </Select>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control}
-                                                name="status"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>Status da Devolução <span className='text-destructive'>*</span></FormLabel>
-                                                        <Select onValueChange={field.onChange} value={field.value}>
-                                                            <FormControl><SelectTrigger><SelectValue placeholder="Selecione o status..." /></SelectTrigger></FormControl>
-                                                            <SelectContent>
-                                                                {devolutionStatusOptions.map(opt => (
-                                                                    <SelectItem key={opt.id} value={opt.nome}>{opt.nome}</SelectItem>
-                                                                ))}
-                                                            </SelectContent>
-                                                        </Select>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                        </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <FormField
-                                                control={form.control}
-                                                name="dataVenda"
-                                                render={({ field }) => (
-                                                    <FormItem className="flex flex-col">
-                                                        <FormLabel>Data da Venda <span className='text-destructive'>*</span></FormLabel>
-                                                        <DatePicker date={field.value} setDate={field.onChange} />
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control}
-                                                name="dataDevolucao"
-                                                render={({ field }) => (
-                                                    <FormItem className="flex flex-col">
-                                                        <FormLabel>Data da Devolução <span className='text-destructive'>*</span></FormLabel>
-                                                        <DatePicker date={field.value} setDate={field.onChange} />
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                        </div>
-                                         <DialogContent className="max-w-3xl">
-                                            <DialogHeader>
-                                                <DialogTitle>Cadastrar Novo Cliente/Mecânico</DialogTitle>
-                                                <DialogDescription>Preencha os dados abaixo para criar um novo registro.</DialogDescription>
-                                            </DialogHeader>
-                                            <div className='max-h-[80vh] overflow-y-auto pr-2'>
-                                                <PersonForm onSave={handlePersonSaved} onClear={() => setPersonModalOpen(false)} />
-                                            </div>
-                                        </DialogContent>
-                                    </Dialog>
+
+                                    {/* General Info */}
+                                    <div className='grid md:grid-cols-2 gap-4'>
+                                        <FormField
+                                            control={form.control}
+                                            name="cliente"
+                                            render={({ field }) => (
+                                                <FormItem className="flex flex-col">
+                                                    <FormLabel>Cliente <span className='text-destructive'>*</span></FormLabel>
+                                                    <Combobox
+                                                        options={clientOptions}
+                                                        value={field.value ?? ''}
+                                                        onChange={field.onChange}
+                                                        placeholder="Selecione um cliente"
+                                                        searchPlaceholder="Buscar cliente..."
+                                                        notFoundMessage="Nenhum cliente encontrado."
+                                                        className="w-full"
+                                                    />
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="mecanico"
+                                            render={({ field }) => (
+                                                <FormItem className="flex flex-col">
+                                                    <FormLabel>Mecânico <span className='text-muted-foreground text-xs'>(opcional)</span></FormLabel>
+                                                    <Combobox
+                                                        options={mechanicOptions}
+                                                        value={field.value ?? ''}
+                                                        onChange={(value) => field.onChange(value)}
+                                                        placeholder="Selecione um mecânico"
+                                                        searchPlaceholder="Buscar mecânico..."
+                                                        notFoundMessage="Nenhum mecânico encontrado."
+                                                        className="w-full"
+                                                    />
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            name="requisicaoVenda"
+                                            control={form.control}
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Requisição de Venda <span className='text-destructive'>*</span></FormLabel>
+                                                    <FormControl><Input {...field} /></FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="acaoRequisicao"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Ação na Requisição <span className='text-destructive'>*</span></FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value}>
+                                                        <FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl>
+                                                        <SelectContent>
+                                                            <SelectItem value="Alterada">Alterada</SelectItem>
+                                                            <SelectItem value="Excluída">Excluída</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="dataVenda"
+                                            render={({ field }) => (
+                                                <FormItem className="flex flex-col">
+                                                    <FormLabel>Data da Venda <span className='text-destructive'>*</span></FormLabel>
+                                                    <DatePicker date={field.value} setDate={field.onChange} />
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="dataDevolucao"
+                                            render={({ field }) => (
+                                                <FormItem className="flex flex-col">
+                                                    <FormLabel>Data da Devolução <span className='text-destructive'>*</span></FormLabel>
+                                                    <DatePicker date={field.value} setDate={field.onChange} />
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
                                     <FormField
                                         name="observacaoGeral"
                                         control={form.control}
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Observação Geral</FormLabel>
-                                                <FormControl><Textarea placeholder="Adicione uma observação geral sobre a devolução..." {...field} className="uppercase" /></FormControl>
+                                                <FormControl><Textarea placeholder="Adicione uma observação geral sobre a devolução..." {...field} /></FormControl>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
                                     />
 
                                 </CardContent>
-                                <CardFooter className="flex flex-col sm:flex-row sm:justify-end gap-2">
-                                    <Button type="button" variant="outline" onClick={handleCancel} className="w-full sm:w-auto">
+                                <CardFooter className="flex justify-between items-center gap-2">
+                                    <Button type="button" variant="ghost" onClick={handleCancel} disabled={form.formState.isSubmitting}>
                                         Cancelar
                                     </Button>
-                                    <Button type="button" variant="secondary" onClick={handleClearForm} className="w-full sm:w-auto">
-                                        <RotateCcw className="mr-2 h-4 w-4" />
-                                        Limpar
-                                    </Button>
-                                    <Button type="submit" disabled={form.formState.isSubmitting} className="w-full sm:w-auto">
-                                        {form.formState.isSubmitting ? "Salvando..." : (editingId ? 'Atualizar Devolução' : 'Salvar Devolução')}
-                                    </Button>
+                                    <div className="flex gap-2">
+                                        <Button
+                                            type="submit"
+                                            variant="outline"
+                                            disabled={form.formState.isSubmitting}
+                                            onClick={() => setShouldExit(false)}
+                                        >
+                                            {form.formState.isSubmitting ? "..." : "Salvar e Continuar"}
+                                        </Button>
+                                        <Button
+                                            type="submit"
+                                            disabled={form.formState.isSubmitting}
+                                            onClick={() => setShouldExit(true)}
+                                        >
+                                            {form.formState.isSubmitting ? "..." : (editingId ? 'Atualizar e Sair' : 'Salvar e Sair')}
+                                        </Button>
+                                    </div>
                                 </CardFooter>
                             </form>
                         </Form>
@@ -580,19 +514,12 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                 </div>
             </div>
 
-            <Dialog open={isProductModalOpen} onOpenChange={setProductModalOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Cadastrar Novo Produto</DialogTitle>
-                        <DialogDescription>Preencha os dados do novo produto.</DialogDescription>
-                    </DialogHeader>
-                    <ProductForm onSave={handleProductSaved} onClear={() => setProductModalOpen(false)}/>
-                </DialogContent>
-            </Dialog>
+            <QuickRegisterDialog
+                open={isProductModalOpen}
+                onOpenChange={setProductModalOpen}
+                type="product"
+                onSuccess={handleProductSaved}
+            />
         </>
     );
 }
-
-
-
-    

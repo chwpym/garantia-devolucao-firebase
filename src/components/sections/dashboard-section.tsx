@@ -1,34 +1,38 @@
 
+
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Wrench, ShieldCheck, Hourglass, BarChart3, ShieldX, Users, Building, DollarSign, Undo, Package, Pencil } from 'lucide-react';
+import { Wrench, ShieldCheck, Hourglass, BarChart3, ShieldX, Users, Building, DollarSign, Undo, Package } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Pie, PieChart as RechartsPieChart, Cell, ResponsiveContainer } from 'recharts';
-import { format, parseISO, subMonths } from 'date-fns';
+import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
+import { Bar, BarChart, CartesianGrid, XAxis, Pie, PieChart as RechartsPieChart, Cell } from 'recharts';
+import { format, parseISO, subMonths, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { Devolucao, ItemDevolucao, Warranty, WarrantyStatus, CustomStatus } from '@/lib/types';
+import type { Devolucao, ItemDevolucao, WarrantyStatus } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '../ui/status-badge';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Calendar as CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAppStore } from '@/store/app-store';
+import { WARRANTY_STATUSES, type Warranty } from '@/lib/types';
+import { DatePickerWithRange } from '../ui/date-range-picker';
+import { DateRange } from 'react-day-picker';
 
 
 // Tipos para Garantias
 interface DashboardStats {
-  total: number;
-  totalDefeitos: number;
-  pendentes: number;
-  aprovadas: number;
-  recusadas: number;
-  pagas: number;
+    total: number;
+    totalDefeitos: number;
+    pendentes: number;
+    aprovadas: number;
+    recusadas: number;
+    pagas: number;
 }
 
 interface MonthlyData {
@@ -58,27 +62,26 @@ interface DevolucaoStats {
 }
 
 interface DashboardSectionProps {
-    openTab: (view: string) => void;
+    openTab: (view: string, shouldAddToHistory?: boolean) => void;
 }
 
 
 const chartConfig = {
-  total: {
-    label: "Garantias",
-    color: "hsl(var(--chart-1))",
-  },
-  pendentes: {
-    label: "Pendentes",
-    color: "hsl(var(--chart-2))",
-  },
-  aprovadas: {
-    label: "Aprovadas",
-    color: "hsl(var(--chart-1))",
-  },
-  recusadas: {
-    label: "Recusadas",
-    color: "hsl(var(--chart-5))",
-  },
+    total: {
+        label: "Total",
+    },
+    pendentes: {
+        label: "Pendentes",
+        color: "hsl(var(--chart-2))",
+    },
+    aprovadas: {
+        label: "Aprovadas",
+        color: "hsl(var(--chart-1))",
+    },
+    recusadas: {
+        label: "Recusadas",
+        color: "hsl(var(--chart-5))",
+    },
 } satisfies ChartConfig
 
 const COLORS: Record<WarrantyStatus, string> = {
@@ -87,530 +90,528 @@ const COLORS: Record<WarrantyStatus, string> = {
     'Aprovada - Peça Nova': 'hsl(var(--accent-green))',
     'Aprovada - Crédito NF': 'hsl(var(--primary))',
     'Aprovada - Crédito Boleto': 'hsl(var(--accent-green-dark))',
-    'Recusada': 'hsl(var(--chart-5))',
+    'Recusada': 'hsl(var(--destructive))',
 };
 
-const DASHBOARD_TAB_KEY = 'synergia-dashboard-tab';
+const CHART_COLORS = [
+    'hsl(var(--primary))',
+    'hsl(var(--accent-blue))',
+    'hsl(var(--accent-green))',
+    'hsl(var(--accent-orange))',
+    'hsl(var(--accent-purple))',
+];
 
 export default function DashboardSection({ openTab: setActiveView }: DashboardSectionProps) {
-  const handleEditDevolucao = useAppStore(state => state.handleEditDevolucao);
-  const handleEditWarranty = useAppStore(state => state.handleEditWarranty);
-  const statusesFromStore = useAppStore(state => state.statuses);
+    // Estado para Garantias
+    const [stats, setStats] = useState<DashboardStats>({ total: 0, totalDefeitos: 0, pendentes: 0, aprovadas: 0, recusadas: 0, pagas: 0 });
+    const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
+    const [statusData, setStatusData] = useState<StatusChartData[]>([]);
+    const [supplierRanking, setSupplierRanking] = useState<RankingData[]>([]);
+    const [personRanking, setPersonRanking] = useState<RankingData[]>([]);
 
-  const warrantyStatuses = useMemo(() => {
-    return statusesFromStore.filter(s => s.aplicavelEm.includes('garantia'));
-  }, [statusesFromStore]);
+    // Estado para Devoluções
+    const [devolucaoStats, setDevolucaoStats] = useState<DevolucaoStats | null>(null);
+    const [recentDevolucoes, setRecentDevolucoes] = useState<DevolucaoFlat[]>([]);
+    const [recentWarranties, setRecentWarranties] = useState<Warranty[]>([]);
 
-  const [activeTab, setActiveTab] = useState('garantias');
+    const [dateRange, setDateRange] = useState<DateRange | undefined>({
+        from: subMonths(new Date(), 1),
+        to: new Date()
+    });
 
-  // Estado para Garantias
-  const [stats, setStats] = useState<DashboardStats>({ total: 0, totalDefeitos: 0, pendentes: 0, aprovadas: 0, recusadas: 0, pagas: 0 });
-  const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
-  const [statusData, setStatusData] = useState<StatusChartData[]>([]);
-  const [supplierRanking, setSupplierRanking] = useState<RankingData[]>([]);
-  const [personRanking, setPersonRanking] = useState<RankingData[]>([]);
-  const [recentWarranties, setRecentWarranties] = useState<Warranty[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const { toast } = useToast();
 
-  // Estado para Devoluções
-  const [devolucaoStats, setDevolucaoStats] = useState<DevolucaoStats | null>(null);
-  const [recentDevolucoes, setRecentDevolucoes] = useState<DevolucaoFlat[]>([]);
+    const loadStats = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            await db.initDB();
+            let [allWarranties, allDevolucoes] = await Promise.all([
+                db.getAllWarranties(),
+                db.getAllDevolucoes(),
+            ]);
 
-  const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
+            // Filtrar por data
+            if (dateRange?.from || dateRange?.to) {
+                const from = dateRange.from;
+                const to = dateRange.to ? addDays(dateRange.to, 1) : null;
 
-  useEffect(() => {
-    // Fase 10: Recuperar a última aba selecionada
-    const savedTab = localStorage.getItem(DASHBOARD_TAB_KEY);
-    if (savedTab) {
-        setActiveTab(savedTab);
-    }
-  }, []);
+                allWarranties = allWarranties.filter(w => {
+                    if (!w.dataRegistro) return false;
+                    const d = parseISO(w.dataRegistro);
+                    if (from && d < from) return false;
+                    if (to && d >= to) return false;
+                    return true;
+                });
 
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    // Fase 10: Salvar a aba selecionada
-    localStorage.setItem(DASHBOARD_TAB_KEY, value);
-  };
-
-  const loadStats = useCallback(async (currentWarrantyStatuses: CustomStatus[]) => {
-    setIsLoading(true);
-    try {
-      await db.initDB();
-      const [allWarranties, allDevolucoes] = await Promise.all([
-          db.getAllWarranties(),
-          db.getAllDevolucoes(),
-      ]);
-      
-      // --- Cálculo de Garantias ---
-      const sortedWarranties = allWarranties.sort((a,b) => parseISO(b.dataRegistro!).getTime() - parseISO(a.dataRegistro!).getTime());
-      setRecentWarranties(sortedWarranties.slice(0, 5));
-
-      const totalDefeitos = sortedWarranties.reduce((acc, warranty) => {
-          return acc + (warranty.quantidade ?? 0);
-      }, 0);
-      
-      const statusCounts = Object.fromEntries(currentWarrantyStatuses.map(s => [s.nome, 0])) as Record<string, number>;
-
-      let totalAprovadas = 0;
-      let totalPendentes = 0;
-      let totalPagas = 0;
-
-      sortedWarranties.forEach(w => {
-        if(w.status && statusCounts[w.status] !== undefined) {
-            statusCounts[w.status]++;
-        }
-        if (w.status?.startsWith('Aprovada')) {
-            totalAprovadas++;
-        }
-        if(w.status === 'Aguardando Envio' || w.status === 'Enviado para Análise') {
-            totalPendentes++;
-        }
-        if(w.status === 'Aprovada - Crédito Boleto') {
-            totalPagas++;
-        }
-      });
-      
-      setStats({
-        total: sortedWarranties.length,
-        totalDefeitos: totalDefeitos,
-        pendentes: totalPendentes,
-        aprovadas: totalAprovadas,
-        recusadas: statusCounts['Recusada'] || 0,
-        pagas: totalPagas,
-      });
-      
-      setStatusData(Object.entries(statusCounts)
-        .filter(([, value]) => value > 0)
-        .map(([name, value]) => ({ 
-            name, 
-            value, 
-            fill: currentWarrantyStatuses.find(s => s.nome === name)?.cor || COLORS[name as WarrantyStatus] || '#8884d8' 
-        }))
-      );
-      
-      const now = new Date();
-      const monthlyCounts: { [key: string]: number } = {};
-      for (let i = 11; i >= 0; i--) {
-          const month = subMonths(now, i);
-          const monthKey = format(month, 'MMM/yy', { locale: ptBR });
-          monthlyCounts[monthKey] = 0;
-      }
-      sortedWarranties.forEach(w => {
-          if (w.dataRegistro) {
-              const monthKey = format(parseISO(w.dataRegistro), 'MMM/yy', { locale: ptBR });
-              if (monthKey in monthlyCounts) {
-                  monthlyCounts[monthKey]++;
-              }
-          }
-      });
-      setMonthlyData(Object.entries(monthlyCounts).map(([name, total]) => ({ name, total })));
-      const supplierCounts: Record<string, number> = {};
-      sortedWarranties.forEach(w => {
-          if(w.fornecedor) {
-            supplierCounts[w.fornecedor] = (supplierCounts[w.fornecedor] || 0) + 1;
-          }
-      });
-      setSupplierRanking(Object.entries(supplierCounts).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, total]) => ({name, total})));
-      const personCounts: Record<string, number> = {};
-       sortedWarranties.forEach(w => {
-          if(w.cliente) personCounts[w.cliente] = (personCounts[w.cliente] || 0) + 1;
-          if(w.mecanico && w.mecanico !== w.cliente) personCounts[w.mecanico] = (personCounts[w.mecanico] || 0) + 1;
-      });
-      setPersonRanking(Object.entries(personCounts).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, total]) => ({name, total})));
-
-
-      // --- Cálculo de Devoluções ---
-        const flatItems = allDevolucoes.flatMap(d => d.itens.map(i => ({...i, dev: d})));
-
-        const sortedDevolucoes = allDevolucoes.sort((a, b) => {
-            if (!b.dataDevolucao || !a.dataDevolucao) return 0;
-            return parseISO(b.dataDevolucao).getTime() - parseISO(a.dataDevolucao).getTime()
-        });
-        const recentFlatDevolucoes = sortedDevolucoes.flatMap(devolucao => {
-            if (!devolucao.itens || allDevolucoes.length === 0) {
-                return [{ ...devolucao, id: devolucao.id! }];
+                allDevolucoes = allDevolucoes.filter(d => {
+                    if (!d.dataDevolucao) return false;
+                    const date = parseISO(d.dataDevolucao);
+                    if (from && date < from) return false;
+                    if (to && date >= to) return false;
+                    return true;
+                });
             }
-            return devolucao.itens.map(item => ({
-                ...devolucao, ...item, id: devolucao.id!, itemId: item.id!,
-            }));
-        }).slice(0, 5);
-        setRecentDevolucoes(recentFlatDevolucoes);
-        
-        setDevolucaoStats({
-            totalDevolucoes: allDevolucoes.length,
-            totalPecas: flatItems.reduce((acc, item) => acc + item.quantidade, 0),
-            clientesUnicos: new Set(allDevolucoes.map(d => d.cliente)).size,
-            mecanicosUnicos: new Set(allDevolucoes.map(d => d.mecanico).filter(Boolean)).size,
-        });
+
+            // --- Cálculo de Garantias ---
+            const totalDefeitos = allWarranties.reduce((acc, warranty) => {
+                return acc + (warranty.quantidade ?? 0);
+            }, 0);
+
+            const statusCounts = Object.fromEntries(WARRANTY_STATUSES.map(s => [s, 0])) as Record<WarrantyStatus, number>;
+
+            let totalAprovadas = 0;
+            let totalPendentes = 0;
+            let totalPagas = 0;
+
+            allWarranties.forEach(w => {
+                if (w.status && statusCounts[w.status] !== undefined) {
+                    statusCounts[w.status]++;
+                }
+                if (w.status?.startsWith('Aprovada')) {
+                    totalAprovadas++;
+                }
+                if (w.status === 'Aguardando Envio' || w.status === 'Enviado para Análise') {
+                    totalPendentes++;
+                }
+                if (w.status === 'Aprovada - Crédito Boleto') {
+                    totalPagas++;
+                }
+            });
+
+            setStats({
+                total: allWarranties.length,
+                totalDefeitos: totalDefeitos,
+                pendentes: totalPendentes,
+                aprovadas: totalAprovadas,
+                recusadas: statusCounts['Recusada'],
+                pagas: totalPagas,
+            });
+
+            setStatusData(Object.entries(statusCounts)
+                .filter(([, value]) => value > 0)
+                .map(([name, value]) => ({ name, value, fill: COLORS[name as WarrantyStatus] }))
+            );
+
+            const now = new Date();
+            const monthlyCounts: { [key: string]: number } = {};
+            for (let i = 11; i >= 0; i--) {
+                const month = subMonths(now, i);
+                const monthKey = format(month, 'MMM/yy', { locale: ptBR });
+                monthlyCounts[monthKey] = 0;
+            }
+            allWarranties.forEach(w => {
+                if (w.dataRegistro) {
+                    const monthKey = format(parseISO(w.dataRegistro), 'MMM/yy', { locale: ptBR });
+                    if (monthKey in monthlyCounts) {
+                        monthlyCounts[monthKey]++;
+                    }
+                }
+            });
+            setMonthlyData(Object.entries(monthlyCounts).map(([name, total]) => ({ name, total })));
+            const supplierCounts: Record<string, number> = {};
+            allWarranties.forEach(w => {
+                if (w.fornecedor) {
+                    supplierCounts[w.fornecedor] = (supplierCounts[w.fornecedor] || 0) + 1;
+                }
+            });
+            setSupplierRanking(Object.entries(supplierCounts).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, total]) => ({ name, total })));
+            const personCounts: Record<string, number> = {};
+            allWarranties.forEach(w => {
+                if (w.cliente) personCounts[w.cliente] = (personCounts[w.cliente] || 0) + 1;
+                if (w.mecanico && w.mecanico !== w.cliente) personCounts[w.mecanico] = (personCounts[w.mecanico] || 0) + 1;
+            });
+            setPersonRanking(Object.entries(personCounts).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, total]) => ({ name, total })));
 
 
-    } catch (error) {
-      console.error('Failed to load dashboard stats:', error);
-      toast({
-        title: 'Erro ao Carregar Estatísticas',
-        description: 'Não foi possível carregar os dados do dashboard.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
+            // --- Cálculo de Devoluções ---
+            const flatItems = allDevolucoes.flatMap(d => d.itens.map(i => ({ ...i, dev: d })));
 
-  useEffect(() => {
-    const handleDataChanged = () => {
-        loadStats(warrantyStatuses);
-    };
+            const sortedDevolucoes = allDevolucoes.sort((a, b) => {
+                if (!b.dataDevolucao || !a.dataDevolucao) return 0;
+                return parseISO(b.dataDevolucao).getTime() - parseISO(a.dataDevolucao).getTime()
+            });
+            const recentFlatDevolucoes = sortedDevolucoes.flatMap(devolucao => {
+                if (!devolucao.itens || allDevolucoes.length === 0) {
+                    return [{ ...devolucao, id: devolucao.id! }];
+                }
+                return devolucao.itens.map(item => ({
+                    ...devolucao, ...item, id: devolucao.id!, itemId: item.id!,
+                }));
+            }).slice(0, 5);
+            setRecentDevolucoes(recentFlatDevolucoes);
 
-    loadStats(warrantyStatuses);
-    window.addEventListener('datachanged', handleDataChanged);
+            setDevolucaoStats({
+                totalDevolucoes: allDevolucoes.length,
+                totalPecas: flatItems.reduce((acc, item) => acc + item.quantidade, 0),
+                clientesUnicos: new Set(allDevolucoes.map(d => d.cliente)).size,
+                mecanicosUnicos: new Set(allDevolucoes.map(d => d.mecanico).filter(Boolean)).size,
+            });
 
-    return () => {
-        window.removeEventListener('datachanged', handleDataChanged);
-    };
-  }, [loadStats, warrantyStatuses]);
-  
-  
-  return (
-    <div className="space-y-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-                <p className="text-lg text-muted-foreground">
-                    Um resumo das suas operações registradas.
-                </p>
+            const sortedWarranties = [...allWarranties].sort((a, b) => {
+                if (!b.dataRegistro || !a.dataRegistro) return 0;
+                return parseISO(b.dataRegistro).getTime() - parseISO(a.dataRegistro).getTime();
+            });
+            setRecentWarranties(sortedWarranties.slice(0, 5));
+
+
+        } catch (error) {
+            console.error('Failed to load dashboard stats:', error);
+            toast({
+                title: 'Erro ao Carregar Estatísticas',
+                description: 'Não foi possível carregar os dados do dashboard.',
+                variant: 'destructive',
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    }, [toast, dateRange]);
+
+    useEffect(() => {
+        const handleDataChanged = () => {
+            loadStats();
+        };
+
+        loadStats();
+        window.addEventListener('datachanged', handleDataChanged);
+
+        return () => {
+            window.removeEventListener('datachanged', handleDataChanged);
+        };
+    }, [loadStats]);
+
+
+    return (
+        <div className="space-y-8">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+                    <p className="text-lg text-muted-foreground">
+                        Visão analítica das suas operações.
+                    </p>
+                </div>
+                <div className="flex items-center gap-2 bg-card p-2 rounded-lg border shadow-sm">
+                    <CalendarIcon className="h-4 w-4 text-muted-foreground ml-2" />
+                    <DatePickerWithRange date={dateRange} setDate={setDateRange} />
+                </div>
             </div>
+
+            <Tabs defaultValue="garantias" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="garantias" className={cn("border-2 border-transparent data-[state=active]:border-primary")}>Garantias</TabsTrigger>
+                    <TabsTrigger value="devolucoes" className={cn("border-2 border-transparent data-[state=active]:border-[hsl(var(--accent-blue))]")}>Devoluções</TabsTrigger>
+                </TabsList>
+                <TabsContent value="garantias" className="mt-6 animate-in fade-in zoom-in-95 duration-300">
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
+                        <Card className="shadow-md hover:shadow-lg transition-all border-2 border-transparent hover:border-primary/50 group">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Total de Garantias</CardTitle>
+                                <BarChart3 className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                            </CardHeader>
+                            <CardContent>
+                                {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.total}</div>}
+                                <p className="text-xs text-muted-foreground">
+                                    No período selecionado
+                                </p>
+                            </CardContent>
+                        </Card>
+                        <Card className="shadow-md hover:shadow-lg transition-all border-2 border-transparent hover:border-[hsl(var(--chart-2))]/50 group">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Garantias Pendentes</CardTitle>
+                                <Hourglass className="h-4 w-4 text-muted-foreground group-hover:text-[hsl(var(--chart-2))] transition-colors" />
+                            </CardHeader>
+                            <CardContent>
+                                {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.pendentes}</div>}
+                                <p className="text-xs text-muted-foreground">
+                                    Aguardando envio ou análise
+                                </p>
+                            </CardContent>
+                        </Card>
+                        <Card className="shadow-md hover:border-accent-green transition-colors border-2 border-transparent">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Garantias Aprovadas</CardTitle>
+                                <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.aprovadas}</div>}
+                                <p className="text-xs text-muted-foreground">
+                                    Crédito ou peça nova recebida
+                                </p>
+                            </CardContent>
+                        </Card>
+                        <Card className="shadow-md hover:shadow-lg transition-all border-2 border-transparent hover:border-blue-500/50 group">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Garantias Pagas</CardTitle>
+                                <DollarSign className="h-4 w-4 text-muted-foreground group-hover:text-blue-500 transition-colors" />
+                            </CardHeader>
+                            <CardContent>
+                                {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.pagas}</div>}
+                                <p className="text-xs text-muted-foreground">
+                                    Finalizadas e pagas
+                                </p>
+                            </CardContent>
+                        </Card>
+                        <Card className="shadow-md hover:border-destructive transition-colors border-2 border-transparent">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Garantias Recusadas</CardTitle>
+                                <ShieldX className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.recusadas}</div>}
+                                <p className="text-xs text-muted-foreground">
+                                    Negadas pelo fornecedor
+                                </p>
+                            </CardContent>
+                        </Card>
+                        <Card className="shadow-md hover:border-[hsl(var(--chart-5))] transition-colors border-2 border-transparent">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Itens com Defeito</CardTitle>
+                                <Wrench className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.totalDefeitos}</div>}
+                                <p className="text-xs text-muted-foreground">
+                                    Soma das quantidades com defeito
+                                </p>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7 mt-6">
+                        <Card className="shadow-lg lg:col-span-2">
+                            <CardHeader>
+                                <CardTitle>Status das Garantias</CardTitle>
+                                <CardDescription>Distribuição dos status de todas as garantias.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                {isLoading ? <Skeleton className="h-48 w-full" /> : (
+                                    <ChartContainer config={chartConfig} className="mx-auto aspect-square h-[250px]">
+                                        <RechartsPieChart>
+                                            <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+                                            <Pie data={statusData} dataKey="value" nameKey="name" innerRadius={60} strokeWidth={5}>
+                                                {statusData.map((entry) => (
+                                                    <Cell key={`cell-${entry.name}`} fill={entry.fill} />
+                                                ))}
+                                            </Pie>
+                                            <ChartLegend content={<ChartLegendContent nameKey="name" />} />
+                                        </RechartsPieChart>
+                                    </ChartContainer>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        <Card className="shadow-lg lg:col-span-5">
+                            <CardHeader>
+                                <CardTitle>Garantias por Mês</CardTitle>
+                                <CardDescription>Volume de registros nos últimos 12 meses.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                {isLoading ? <Skeleton className="h-48 w-full" /> : (
+                                    <ChartContainer config={chartConfig} className="h-[250px] w-full">
+                                        <BarChart accessibilityLayer data={monthlyData}>
+                                            <CartesianGrid vertical={false} />
+                                            <XAxis
+                                                dataKey="name"
+                                                tickLine={false}
+                                                tickMargin={10}
+                                                axisLine={false}
+                                            />
+                                            <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
+                                            <Bar dataKey="total" fill="hsl(var(--primary))" radius={4} />
+                                        </BarChart>
+                                    </ChartContainer>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <div className="grid gap-6 md:grid-cols-2 mt-6">
+                        <Card className="shadow-lg">
+                            <CardHeader>
+                                <div className='flex items-center gap-2'>
+                                    <Building className="h-5 w-5 text-muted-foreground" />
+                                    <CardTitle>Top 5 Fornecedores com Garantias</CardTitle>
+                                </div>
+                                <CardDescription>Fornecedores com maior número de registros de garantia.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                {isLoading ? <Skeleton className="h-48 w-full" /> : (
+                                    <div className='space-y-4'>
+                                        {supplierRanking.length > 0 ? supplierRanking.map(item => (
+                                            <div key={item.name} className='flex items-center justify-between'>
+                                                <span className='text-sm text-muted-foreground'>{item.name}</span>
+                                                <span className='font-bold'>{item.total}</span>
+                                            </div>
+                                        )) : <p className='text-sm text-muted-foreground text-center py-8'>Nenhum dado de fornecedor para exibir.</p>}
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                        <Card className="shadow-lg">
+                            <CardHeader>
+                                <div className='flex items-center gap-2'>
+                                    <Users className="h-5 w-5 text-muted-foreground" />
+                                    <CardTitle>Top 5 Clientes/Mecânicos</CardTitle>
+                                </div>
+                                <CardDescription>Clientes e mecânicos com maior número de garantias.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                {isLoading ? <Skeleton className="h-48 w-full" /> : (
+                                    <div className='space-y-4'>
+                                        {personRanking.length > 0 ? personRanking.map(item => (
+                                            <div key={item.name} className='flex items-center justify-between'>
+                                                <span className='text-sm text-muted-foreground'>{item.name}</span>
+                                                <span className='font-bold'>{item.total}</span>
+                                            </div>
+                                        )) : <p className='text-sm text-muted-foreground text-center py-8'>Nenhum dado de cliente/mecânico para exibir.</p>}
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <Card className="mt-6 shadow-lg">
+                        <CardHeader className="flex flex-row justify-between items-center">
+                            <div className="space-y-1">
+                                <CardTitle>Garantias Recentes</CardTitle>
+                                <CardDescription>As 5 garantias mais recentes registradas em sistema.</CardDescription>
+                            </div>
+                            <Button variant="outline" size="sm" onClick={() => setActiveView('query')}>
+                                Ver Todas
+                                <ArrowRight className="ml-2 h-4 w-4" />
+                            </Button>
+                        </CardHeader>
+                        <CardContent>
+                            {isLoading ? <Skeleton className='h-48 w-full' /> : (
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Data</TableHead>
+                                            <TableHead>Código</TableHead>
+                                            <TableHead>Descrição</TableHead>
+                                            <TableHead>Fornecedor</TableHead>
+                                            <TableHead>Status</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {recentWarranties.length > 0 ? (
+                                            recentWarranties.map(w => (
+                                                <TableRow key={w.id}>
+                                                    <TableCell>{w.dataRegistro ? format(parseISO(w.dataRegistro), 'dd/MM/yyyy') : '-'}</TableCell>
+                                                    <TableCell className="font-mono text-xs">{w.codigo}</TableCell>
+                                                    <TableCell className="font-medium max-w-[200px] truncate">{w.descricao}</TableCell>
+                                                    <TableCell>{w.fornecedor}</TableCell>
+                                                    <TableCell>
+                                                        <StatusBadge type="warranty" status={w.status} />
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))
+                                        ) : (
+                                            <TableRow>
+                                                <TableCell colSpan={5} className="h-24 text-center">Nenhuma garantia registrada no período.</TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                </TabsContent>
+                <TabsContent value="devolucoes" className="mt-6 animate-in fade-in zoom-in-95 duration-300">
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                        <Card className="shadow-md hover:shadow-lg transition-all border-2 border-transparent hover:border-primary/50 group">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Total de Devoluções</CardTitle>
+                                <Undo className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                            </CardHeader>
+                            <CardContent>
+                                {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{devolucaoStats?.totalDevolucoes}</div>}
+                                <p className="text-xs text-muted-foreground">No período selecionado</p>
+                            </CardContent>
+                        </Card>
+                        <Card className="shadow-md hover:border-accent-blue transition-colors border-2 border-transparent">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Total de Peças</CardTitle>
+                                <Package className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{devolucaoStats?.totalPecas}</div>}
+                                <p className="text-xs text-muted-foreground">Itens devolvidos</p>
+                            </CardContent>
+                        </Card>
+                        <Card className="shadow-md hover:border-accent-green transition-colors border-2 border-transparent">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Clientes Únicos</CardTitle>
+                                <Users className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{devolucaoStats?.clientesUnicos}</div>}
+                                <p className="text-xs text-muted-foreground">Que fizeram devoluções</p>
+                            </CardContent>
+                        </Card>
+                        <Card className="shadow-md hover:border-[hsl(var(--third))] transition-colors border-2 border-transparent">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Mecânicos Únicos</CardTitle>
+                                <Building className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{devolucaoStats?.mecanicosUnicos}</div>}
+                                <p className="text-xs text-muted-foreground">Envolvidos em devoluções</p>
+                            </CardContent>
+                        </Card>
+                    </div>
+                    <Card className="mt-6 shadow-lg">
+                        <CardHeader className="flex flex-row justify-between items-center">
+                            <div className="space-y-1">
+                                <CardTitle>Devoluções Recentes</CardTitle>
+                                <CardDescription>As 5 devoluções mais recentes registradas no sistema.</CardDescription>
+                            </div>
+                            <Button variant="outline" size="sm" onClick={() => setActiveView('devolucao-query', true)}>
+                                Ver Todas
+                                <ArrowRight className="ml-2 h-4 w-4" />
+                            </Button>
+                        </CardHeader>
+                        <CardContent>
+                            {isLoading ? <Skeleton className='h-48 w-full' /> : (
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Data</TableHead>
+                                            <TableHead>Cliente</TableHead>
+                                            <TableHead>Peça</TableHead>
+                                            <TableHead className='text-center'>Quantidade</TableHead>
+                                            <TableHead>Requisição</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {recentDevolucoes.length > 0 ? (
+                                            recentDevolucoes.map(item => (
+                                                <TableRow key={`${item.id}-${item.itemId || 'no-item'}`}>
+                                                    <TableCell>{item.dataDevolucao ? format(parseISO(item.dataDevolucao), 'dd/MM/yyyy') : '-'}</TableCell>
+                                                    <TableCell className="font-medium">{item.cliente}</TableCell>
+                                                    <TableCell>
+                                                        <div className='font-medium'>{item.codigoPeca}</div>
+                                                        <div className='text-xs text-muted-foreground'>{item.descricaoPeca}</div>
+                                                    </TableCell>
+                                                    <TableCell className='text-center'>
+                                                        <Badge variant="secondary">{item.quantidade}</Badge>
+                                                    </TableCell>
+                                                    <TableCell>{item.requisicaoVenda}</TableCell>
+                                                </TableRow>
+                                            ))
+                                        ) : (
+                                            <TableRow>
+                                                <TableCell colSpan={5} className="h-24 text-center">Nenhuma devolução registrada ainda.</TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+            </Tabs>
         </div>
-
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="garantias" className={cn("border-2 border-transparent data-[state=active]:border-primary")}>Garantias</TabsTrigger>
-                <TabsTrigger value="devolucoes" className={cn("border-2 border-transparent data-[state=active]:border-[hsl(var(--accent-blue))]")}>Devoluções</TabsTrigger>
-            </TabsList>
-            <TabsContent value="garantias" className="mt-6">
-                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
-                    <Card className="shadow-md hover:border-primary transition-colors border-2 border-transparent">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Total de Garantias</CardTitle>
-                            <BarChart3 className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.total}</div>}
-                            <p className="text-xs text-muted-foreground">
-                                Total de registros no sistema
-                            </p>
-                        </CardContent>
-                    </Card>
-                    <Card className="shadow-md hover:border-[hsl(var(--chart-2))] transition-colors border-2 border-transparent">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Garantias Pendentes</CardTitle>
-                            <Hourglass className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.pendentes}</div>}
-                            <p className="text-xs text-muted-foreground">
-                                Aguardando envio ou análise
-                            </p>
-                        </CardContent>
-                    </Card>
-                    <Card className="shadow-md hover:border-accent-green transition-colors border-2 border-transparent">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Garantias Aprovadas</CardTitle>
-                            <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.aprovadas}</div>}
-                            <p className="text-xs text-muted-foreground">
-                                Crédito ou peça nova recebida
-                            </p>
-                        </CardContent>
-                    </Card>
-                    <Card className="shadow-md hover:border-blue-500 transition-colors border-2 border-transparent">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Garantias Pagas</CardTitle>
-                            <DollarSign className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.pagas}</div>}
-                            <p className="text-xs text-muted-foreground">
-                                Finalizadas e pagas ao cliente
-                            </p>
-                        </CardContent>
-                    </Card>
-                    <Card className="shadow-md hover:border-destructive transition-colors border-2 border-transparent">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Garantias Recusadas</CardTitle>
-                            <ShieldX className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.recusadas}</div>}
-                            <p className="text-xs text-muted-foreground">
-                                Negadas pelo fornecedor
-                            </p>
-                        </CardContent>
-                    </Card>
-                    <Card className="shadow-md hover:border-[hsl(var(--chart-5))] transition-colors border-2 border-transparent">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Itens com Defeito</CardTitle>
-                            <Wrench className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.totalDefeitos}</div>}
-                            <p className="text-xs text-muted-foreground">
-                                Soma das quantidades com defeito
-                            </p>
-                        </CardContent>
-                    </Card>
-                </div>
-                
-                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7 mt-6">
-                     <Card className="shadow-lg lg:col-span-3 xl:col-span-2">
-                        <CardHeader>
-                            <CardTitle>Status das Garantias</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            {isLoading ? <Skeleton className="h-48 w-full" /> : (
-                                <ChartContainer config={chartConfig} className="mx-auto aspect-square h-[250px]">
-                                    <RechartsPieChart>
-                                        <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-                                        <Pie data={statusData} dataKey="value" nameKey="name" innerRadius={60} strokeWidth={5}>
-                                            {statusData.map((entry) => (
-                                                <Cell key={`cell-${entry.name}`} fill={entry.fill} />
-                                            ))}
-                                        </Pie>
-                                    </RechartsPieChart>
-                                </ChartContainer>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    <Card className="shadow-lg lg:col-span-4 xl:col-span-5">
-                        <CardHeader>
-                            <CardTitle>Garantias por Mês</CardTitle>
-                            <CardDescription>Volume de registros nos últimos 12 meses.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {isLoading ? <Skeleton className="h-48 w-full" /> : (
-                                <ChartContainer config={chartConfig} className="h-[250px] w-full">
-                                    <BarChart accessibilityLayer data={monthlyData}>
-                                        <CartesianGrid vertical={false} />
-                                        <XAxis
-                                            dataKey="name"
-                                            tickLine={false}
-                                            tickMargin={10}
-                                            axisLine={false}
-                                        />
-                                        <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
-                                        <Bar dataKey="total" fill="hsl(var(--primary))" radius={4} />
-                                    </BarChart>
-                                </ChartContainer>
-                            )}
-                        </CardContent>
-                    </Card>
-                </div>
-                
-                <div className="grid gap-6 md:grid-cols-2 mt-6">
-                    <Card className="shadow-lg">
-                        <CardHeader>
-                            <div className='flex items-center gap-2'>
-                                <Building className="h-5 w-5 text-muted-foreground"/>
-                                <CardTitle>Top 5 Fornecedores com Garantias</CardTitle>
-                            </div>
-                            <CardDescription>Fornecedores com maior número de registros de garantia.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {isLoading ? <Skeleton className="h-48 w-full" /> : (
-                                <ResponsiveContainer width="100%" height={200}>
-                                    <BarChart layout="vertical" data={supplierRanking.slice().reverse()}>
-                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                                        <XAxis type="number" hide />
-                                        <YAxis dataKey="name" type="category" width={150} tick={{ fontSize: 12 }} />
-                                        <ChartTooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent />} />
-                                        <Bar dataKey="total" fill="hsl(var(--chart-1))" radius={[0, 4, 4, 0]} />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            )}
-                        </CardContent>
-                    </Card>
-                    <Card className="shadow-lg">
-                        <CardHeader>
-                            <div className='flex items-center gap-2'>
-                                <Users className="h-5 w-5 text-muted-foreground"/>
-                                <CardTitle>Top 5 Clientes/Mecânicos</CardTitle>
-                            </div>
-                            <CardDescription>Clientes e mecânicos com maior número de garantias.</CardDescription>
-                        </CardHeader>
-                         <CardContent>
-                            {isLoading ? <Skeleton className="h-48 w-full" /> : (
-                                <ResponsiveContainer width="100%" height={200}>
-                                    <BarChart layout="vertical" data={personRanking.slice().reverse()}>
-                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                                        <XAxis type="number" hide />
-                                        <YAxis dataKey="name" type="category" width={150} tick={{ fontSize: 12 }} />
-                                        <ChartTooltip cursor={{ fill: 'hsl(var(--muted))' }} content={<ChartTooltipContent />} />
-                                        <Bar dataKey="total" fill="hsl(var(--chart-2))" radius={[0, 4, 4, 0]} />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            )}
-                        </CardContent>
-                    </Card>
-                </div>
-                 <Card className="mt-6 shadow-lg">
-                    <CardHeader className="flex flex-row justify-between items-center">
-                        <div className="space-y-1">
-                            <CardTitle>Garantias Recentes</CardTitle>
-                            <CardDescription>As 5 garantias mais recentes registradas no sistema.</CardDescription>
-                        </div>
-                        <Button variant="outline" size="sm" onClick={() => setActiveView('query')}>
-                            Ver Todas
-                            <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
-                    </CardHeader>
-                    <CardContent>
-                        {isLoading ? <Skeleton className='h-48 w-full' /> : (
-                             <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Data</TableHead>
-                                        <TableHead>Produto</TableHead>
-                                        <TableHead>Fornecedor</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead className='w-[100px] text-right'>Ações</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {recentWarranties.length > 0 ? (
-                                        recentWarranties.map(item => (
-                                            <TableRow key={item.id}>
-                                                <TableCell>{item.dataRegistro ? format(parseISO(item.dataRegistro), 'dd/MM/yyyy') : '-'}</TableCell>
-                                                <TableCell>
-                                                    <div className='font-medium'>{item.codigo}</div>
-                                                    <div className='text-xs text-muted-foreground'>{item.descricao}</div>
-                                                </TableCell>
-                                                <TableCell className="font-medium">{item.fornecedor}</TableCell>
-                                                <TableCell><Badge variant="secondary">{item.status}</Badge></TableCell>
-                                                <TableCell className="text-right">
-                                                    <Button variant="outline" size="sm" onClick={() => handleEditWarranty(item)}>
-                                                        <Pencil className="mr-2 h-4 w-4" />
-                                                        Editar
-                                                    </Button>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    ) : (
-                                        <TableRow>
-                                            <TableCell colSpan={5} className="h-24 text-center">Nenhuma garantia registrada ainda.</TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        )}
-                    </CardContent>
-                </Card>
-
-            </TabsContent>
-            <TabsContent value="devolucoes" className="mt-6">
-                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <Card className="shadow-md hover:border-primary transition-colors border-2 border-transparent">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Total de Devoluções</CardTitle>
-                            <Undo className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{devolucaoStats?.totalDevolucoes}</div>}
-                            <p className="text-xs text-muted-foreground">Total de registros</p>
-                        </CardContent>
-                    </Card>
-                    <Card className="shadow-md hover:border-accent-blue transition-colors border-2 border-transparent">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Total de Peças</CardTitle>
-                            <Package className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{devolucaoStats?.totalPecas}</div>}
-                            <p className="text-xs text-muted-foreground">Itens devolvidos</p>
-                        </CardContent>
-                    </Card>
-                    <Card className="shadow-md hover:border-accent-green transition-colors border-2 border-transparent">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Clientes Únicos</CardTitle>
-                            <Users className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{devolucaoStats?.clientesUnicos}</div>}
-                             <p className="text-xs text-muted-foreground">Que fizeram devoluções</p>
-                        </CardContent>
-                    </Card>
-                    <Card className="shadow-md hover:border-[hsl(var(--third))] transition-colors border-2 border-transparent">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Mecânicos Únicos</CardTitle>
-                            <Building className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{devolucaoStats?.mecanicosUnicos}</div>}
-                            <p className="text-xs text-muted-foreground">Envolvidos em devoluções</p>
-                        </CardContent>
-                    </Card>
-                </div>
-                <Card className="mt-6 shadow-lg">
-                    <CardHeader className="flex flex-row justify-between items-center">
-                        <div className="space-y-1">
-                            <CardTitle>Devoluções Recentes</CardTitle>
-                            <CardDescription>As 5 devoluções mais recentes registradas no sistema.</CardDescription>
-                        </div>
-                        <Button variant="outline" size="sm" onClick={() => setActiveView('devolucao-query')}>
-                            Ver Todas
-                            <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
-                    </CardHeader>
-                    <CardContent>
-                        {isLoading ? <Skeleton className='h-48 w-full' /> : (
-                             <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Data</TableHead>
-                                        <TableHead>Cliente</TableHead>
-                                        <TableHead>Peça</TableHead>
-                                        <TableHead className='text-center'>Quantidade</TableHead>
-                                        <TableHead>Requisição</TableHead>
-                                        <TableHead className='w-[100px] text-right'>Ações</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {recentDevolucoes.length > 0 ? (
-                                        recentDevolucoes.map(item => (
-                                            <TableRow key={`${item.id}-${item.itemId || 'no-item'}`}>
-                                                <TableCell>{item.dataDevolucao ? format(parseISO(item.dataDevolucao), 'dd/MM/yyyy') : '-'}</TableCell>
-                                                <TableCell className="font-medium">{item.cliente}</TableCell>
-                                                <TableCell>
-                                                    <div className='font-medium'>{item.codigoPeca}</div>
-                                                    <div className='text-xs text-muted-foreground'>{item.descricaoPeca}</div>
-                                                </TableCell>
-                                                <TableCell className='text-center'>
-                                                    <Badge variant="secondary">{item.quantidade}</Badge>
-                                                </TableCell>
-                                                <TableCell>{item.requisicaoVenda}</TableCell>
-                                                <TableCell className="text-right">
-                                                    <Button variant="outline" size="sm" onClick={() => handleEditDevolucao(item.id)}>
-                                                        <Pencil className="mr-2 h-4 w-4" />
-                                                        Editar
-                                                    </Button>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    ) : (
-                                        <TableRow>
-                                            <TableCell colSpan={6} className="h-24 text-center">Nenhuma devolução registrada ainda.</TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        )}
-                    </CardContent>
-                </Card>
-            </TabsContent>
-        </Tabs>
-    </div>
-  );
+    );
 }
-
-    

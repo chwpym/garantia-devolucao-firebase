@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
@@ -50,16 +49,12 @@ import {
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MoreHorizontal, Pencil, Trash2, PlusCircle, Download, Search, ArrowUpDown, Phone, Mail } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, PlusCircle, Download, Search, ArrowUpDown } from 'lucide-react';
 import PersonForm from '../person-form';
 import { Input } from '../ui/input';
-<<<<<<< HEAD
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
-=======
 import { smartSearch } from '@/lib/search-utils';
 import { SearchInput } from '@/components/ui/search-input';
 import { usePersistedFilters } from '@/hooks/use-persisted-filters';
->>>>>>> feature/status-visual-pro
 
 type SortableKeys = keyof Person;
 
@@ -134,38 +129,12 @@ export default function PersonsSection() {
   }, [loadPersons, toast, isDbReady]);
 
   const filteredPersons = useMemo(() => {
-    const lowercasedTerm = searchTerm.toLowerCase().trim();
-    if (!lowercasedTerm) {
-      return persons;
-    }
+    const lowercasedTerm = searchTerm.toLowerCase();
+    if (!lowercasedTerm) return persons;
 
-<<<<<<< HEAD
-    return persons.filter(person => {
-      const cleanedSearchTerm = lowercasedTerm.replace(/\D/g, '');
-      const name = person.nome?.toLowerCase() || '';
-      const fantasyName = person.nomeFantasia?.toLowerCase() || '';
-      const doc = person.cpfCnpj?.replace(/\D/g, '') || '';
-      const city = person.cidade?.toLowerCase() || '';
-      const externalCode = person.codigoExterno?.toLowerCase() || '';
-
-      const hasMatchingPhone = person.telefones?.some(t => t.value.toLowerCase().includes(lowercasedTerm)) || false;
-      const hasMatchingEmail = person.emails?.some(e => e.value.toLowerCase().includes(lowercasedTerm)) || false;
-
-      return (
-        name.includes(lowercasedTerm) ||
-        fantasyName.includes(lowercasedTerm) ||
-        (cleanedSearchTerm && doc.includes(cleanedSearchTerm)) ||
-        hasMatchingPhone ||
-        hasMatchingEmail ||
-        city.includes(lowercasedTerm) ||
-        externalCode.includes(lowercasedTerm)
-      );
-    });
-=======
     return persons.filter(person =>
       smartSearch(person, searchTerm, ['nome', 'nomeFantasia', 'cpfCnpj', 'telefone', 'cidade'])
     );
->>>>>>> feature/status-visual-pro
   }, [persons, searchTerm]);
 
   const sortedPersons = useMemo(() => {
@@ -192,7 +161,7 @@ export default function PersonsSection() {
   }, [filteredPersons, sortConfig]);
 
 
-  const handleSave = (newPerson: Person) => {
+  const handleSave = () => {
     setEditingPerson(null);
     setIsFormModalOpen(false);
   };
@@ -295,53 +264,12 @@ export default function PersonsSection() {
 
   return (
     <div className='space-y-8'>
-<<<<<<< HEAD
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">Clientes e Mecânicos</h1>
-                <p className="text-lg text-muted-foreground">
-                    Gerencie seus clientes e mecânicos cadastrados.
-                </p>
-            </div>
-            <div className='flex gap-2'>
-                <Button variant="outline" onClick={handleGenerateReport} disabled={persons.length === 0}>
-                    <Download className="mr-2 h-4 w-4" />
-                    Gerar Relatório
-                </Button>
-                <Dialog open={isFormModalOpen} onOpenChange={(isOpen) => {
-                    setIsFormModalOpen(isOpen);
-                    if (!isOpen) {
-                        setEditingPerson(null);
-                    }
-                }}>
-                    <DialogTrigger asChild>
-                        <Button>
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Cadastrar Novo
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-3xl">
-                        <DialogHeader>
-                            <DialogTitle>{editingPerson ? 'Editar Registro' : 'Novo Cliente/Mecânico'}</DialogTitle>
-                            <DialogDescription>Preencha os dados abaixo.</DialogDescription>
-                        </DialogHeader>
-                         <div className='py-4 max-h-[80vh] overflow-y-auto pr-4'>
-                             <PersonForm 
-                                onSave={handleSave}
-                                editingPerson={editingPerson}
-                            />
-                        </div>
-                    </DialogContent>
-                </Dialog>
-            </div>
-=======
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Clientes e Mecânicos</h1>
           <p className="text-lg text-muted-foreground">
             Gerencie seus clientes e mecânicos cadastrados.
           </p>
->>>>>>> feature/status-visual-pro
         </div>
         <div className='flex gap-2'>
           <Button variant="outline" onClick={handleGenerateReport} disabled={persons.length === 0}>
@@ -377,154 +305,6 @@ export default function PersonsSection() {
         </div>
       </div>
 
-<<<<<<< HEAD
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle>Registros Cadastrados</CardTitle>
-            <CardDescription>Lista de todos os clientes e mecânicos cadastrados no sistema.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-4">
-                 <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        placeholder="Buscar por nome, CPF/CNPJ, telefone, email, etc..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10"
-                    />
-                </div>
-            </div>
-
-            {/* Mobile View */}
-            <div className="md:hidden space-y-4">
-              {sortedPersons.length > 0 ? (
-                sortedPersons.map(person => (
-                  <div key={person.id} className="border p-4 rounded-lg flex flex-col gap-2">
-                    <div className="flex justify-between items-start">
-                        <div>
-                            <span className="font-bold text-lg">{person.nome}</span>
-                            {person.nomeFantasia && <p className='text-sm text-muted-foreground'>{person.nomeFantasia}</p>}
-                        </div>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                    <span className="sr-only">Abrir menu</span>
-                                    <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleEditClick(person)}><Pencil className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setDeleteTarget(person)} className="text-destructive focus:text-destructive"><Trash2 className="mr-2 h-4 w-4" />Excluir</DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-                    <div className="text-sm"><span className="font-medium text-muted-foreground">CPF/CNPJ:</span> {formatCpfCnpj(person.cpfCnpj)}</div>
-                    <div className="text-sm"><span className="font-medium text-muted-foreground">Cód. Externo:</span> {person.codigoExterno || '-'}</div>
-                    <div className='flex flex-col gap-1 text-sm'>
-                        {person.telefones?.[0] && (
-                            <div className="flex items-center gap-1"><Phone className="h-3 w-3 text-muted-foreground" /> <span>{person.telefones[0].value}</span></div>
-                        )}
-                        {person.emails?.[0] && (
-                             <div className="flex items-center gap-1"><Mail className="h-3 w-3 text-muted-foreground" /> <span className="truncate">{person.emails[0].value}</span></div>
-                        )}
-                    </div>
-                    <Badge variant={getTypeVariant(person.tipo)} className="w-fit">{person.tipo}</Badge>
-                  </div>
-                ))
-              ) : (
-                <div className="h-24 text-center flex items-center justify-center">
-                    <p>{searchTerm ? 'Nenhum registro encontrado para a busca.' : 'Nenhum registro cadastrado.'}</p>
-                </div>
-              )}
-            </div>
-            
-            {/* Desktop View */}
-            <div className="hidden md:block border rounded-md">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <SortableHeader sortKey='codigoExterno'>Cód. Externo</SortableHeader>
-                    <SortableHeader sortKey='nome'>Razão Social</SortableHeader>
-                    <SortableHeader sortKey='nomeFantasia'>Nome Fantasia</SortableHeader>
-                    <SortableHeader sortKey='cpfCnpj'>CPF/CNPJ</SortableHeader>
-                    <TableHead>Contatos</TableHead>
-                    <SortableHeader sortKey='tipo'>Tipo</SortableHeader>
-                    <TableHead className="w-[50px] text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sortedPersons.length > 0 ? (
-                    sortedPersons.map(person => (
-                      <TableRow key={person.id}>
-                        <TableCell>{person.codigoExterno || '-'}</TableCell>
-                        <TableCell className="font-medium">{person.nome}</TableCell>
-                        <TableCell>{person.nomeFantasia || '-'}</TableCell>
-                        <TableCell>{formatCpfCnpj(person.cpfCnpj)}</TableCell>
-                        <TableCell>
-                          <div className='flex flex-col gap-1'>
-                            {person.telefones?.[0] && (
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <div className="flex items-center gap-1 cursor-pointer">
-                                                <Phone className="h-3 w-3 text-muted-foreground" /> 
-                                                <span>{person.telefones[0].value}</span>
-                                            </div>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            {person.telefones.map((t, i) => <p key={i}><strong>{t.type}:</strong> {t.value}</p>)}
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            )}
-                            {person.emails?.[0] && (
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <div className="flex items-center gap-1 cursor-pointer">
-                                                <Mail className="h-3 w-3 text-muted-foreground" />
-                                                <span className="truncate max-w-[150px]">{person.emails[0].value}</span>
-                                            </div>
-                                        </TooltipTrigger>
-                                         <TooltipContent>
-                                            {person.emails.map((e, i) => <p key={i}><strong>{e.type}:</strong> {e.value}</p>)}
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={getTypeVariant(person.tipo)}>{person.tipo}</Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Abrir menu</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleEditClick(person)}>
-                                <Pencil className="mr-2 h-4 w-4" />
-                                Editar
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => setDeleteTarget(person)} className="text-destructive focus:text-destructive">
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Excluir
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={7} className="h-24 text-center">
-                        {searchTerm ? 'Nenhum registro encontrado para a busca realizada.' : 'Nenhum cliente ou mecânico cadastrado.'}
-=======
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle>Registros Cadastrados</CardTitle>
@@ -585,7 +365,6 @@ export default function PersonsSection() {
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
->>>>>>> feature/status-visual-pro
                       </TableCell>
                     </TableRow>
                   ))

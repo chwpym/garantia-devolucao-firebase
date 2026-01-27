@@ -46,15 +46,11 @@ import {
 } from '@/components/ui/dialog';
 
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Pencil, Trash2, PlusCircle, Search, ArrowUpDown, Phone, Mail } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, PlusCircle, Search, ArrowUpDown } from 'lucide-react';
 import SupplierForm from '../supplier-form';
 import { Input } from '../ui/input';
-<<<<<<< HEAD
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
-=======
 import { smartSearch } from '@/lib/search-utils';
 import { SearchInput } from '@/components/ui/search-input';
->>>>>>> feature/status-visual-pro
 
 
 const formatCnpj = (value?: string) => {
@@ -123,19 +119,6 @@ export default function SuppliersSection() {
     const lowercasedTerm = searchTerm.toLowerCase();
     if (!lowercasedTerm) return suppliers;
 
-<<<<<<< HEAD
-    return suppliers.filter(supplier => {
-        const hasMatchingPhone = supplier.telefones?.some(t => t.value.toLowerCase().includes(lowercasedTerm)) || false;
-        const hasMatchingEmail = supplier.emails?.some(e => e.value.toLowerCase().includes(lowercasedTerm)) || false;
-
-        return supplier.nomeFantasia.toLowerCase().includes(lowercasedTerm) ||
-        supplier.razaoSocial.toLowerCase().includes(lowercasedTerm) ||
-        (supplier.cnpj && supplier.cnpj.replace(/\D/g, '').includes(lowercasedTerm.replace(/\D/g, ''))) ||
-        (supplier.codigoExterno && supplier.codigoExterno.toLowerCase().includes(lowercasedTerm)) ||
-        hasMatchingPhone ||
-        hasMatchingEmail;
-    });
-=======
     return suppliers.filter(supplier =>
       smartSearch(supplier, searchTerm, ['nomeFantasia', 'razaoSocial', 'cnpj'])
     );
@@ -151,7 +134,6 @@ export default function SuppliersSection() {
         containerClassName="max-w-full"
       />
     </div>
->>>>>>> feature/status-visual-pro
   }, [suppliers, searchTerm]);
 
   const sortedSuppliers = useMemo(() => {
@@ -240,41 +222,6 @@ export default function SuppliersSection() {
   return (
     <div className='space-y-8'>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-<<<<<<< HEAD
-          <div>
-              <h1 className="text-3xl font-bold tracking-tight">Fornecedores</h1>
-              <p className="text-lg text-muted-foreground">
-                  Gerencie seus fornecedores cadastrados.
-              </p>
-          </div>
-          <Dialog open={isFormModalOpen} onOpenChange={(isOpen) => {
-              setIsFormModalOpen(isOpen);
-              if (!isOpen) {
-                  setEditingSupplier(null);
-              }
-          }}>
-              <DialogTrigger asChild>
-                  <Button>
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                      Cadastrar Fornecedor
-                  </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-3xl">
-                  <DialogHeader>
-                      <DialogTitle>{editingSupplier ? 'Editar Fornecedor' : 'Novo Fornecedor'}</DialogTitle>
-                      <DialogDescription>Preencha os dados do fornecedor abaixo.</DialogDescription>
-                  </DialogHeader>
-                    <div className="py-4 max-h-[80vh] overflow-y-auto pr-4">
-                        <SupplierForm 
-                        onSave={handleSave} 
-                        editingSupplier={editingSupplier} 
-                        onClear={() => setEditingSupplier(null)} 
-                        isModal={true}
-                        />
-                    </div>
-              </DialogContent>
-          </Dialog>
-=======
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Fornecedores</h1>
           <p className="text-lg text-muted-foreground">
@@ -306,7 +253,6 @@ export default function SuppliersSection() {
             />
           </DialogContent>
         </Dialog>
->>>>>>> feature/status-visual-pro
       </div>
 
       <Card className="shadow-lg">
@@ -316,17 +262,6 @@ export default function SuppliersSection() {
         </CardHeader>
         <CardContent>
           <div className="mb-4">
-<<<<<<< HEAD
-               <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                      placeholder="Buscar por Nome, Razão Social, CNPJ, etc..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10"
-                  />
-              </div>
-=======
             <SearchInput
               placeholder="Buscar por Nome Fantasia, Razão Social ou CNPJ..."
               value={searchTerm}
@@ -335,80 +270,15 @@ export default function SuppliersSection() {
               className="w-full"
               containerClassName="max-w-full"
             />
->>>>>>> feature/status-visual-pro
           </div>
-          
-          {/* Mobile View */}
-          <div className="md:hidden space-y-4">
-            {sortedSuppliers.length > 0 ? (
-                sortedSuppliers.map((supplier) => (
-                    <div key={supplier.id} className="border p-4 rounded-lg flex flex-col gap-2">
-                         <div className="flex justify-between items-start">
-                            <span className="font-bold">{supplier.nomeFantasia}</span>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" className="h-8 w-8 p-0">
-                                        <span className="sr-only">Abrir menu</span>
-                                        <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => handleEditClick(supplier)}><Pencil className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => setDeleteTarget(supplier)} className="text-destructive focus:text-destructive"><Trash2 className="mr-2 h-4 w-4" />Excluir</DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        </div>
-                        <div className="text-sm text-muted-foreground">{supplier.razaoSocial}</div>
-                        <div className="text-sm"><span className="font-medium">CNPJ:</span> {formatCnpj(supplier.cnpj)}</div>
-                        <div className="text-sm"><span className="font-medium">Cidade:</span> {supplier.cidade || '-'}</div>
-                        <div className="text-sm"><span className="font-medium">Cód. Externo:</span> {supplier.codigoExterno || '-'}</div>
-                         <div className='flex flex-col gap-1 text-sm'>
-                            {supplier.telefones?.[0] && (
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <div className="flex items-center gap-1 cursor-pointer">
-                                                <Phone className="h-3 w-3 text-muted-foreground" /> 
-                                                <span>{supplier.telefones[0].value}</span>
-                                            </div>
-                                        </TooltipTrigger>
-                                        <TooltipContent>{supplier.telefones.map((t, i) => <p key={i}><strong>{t.type}:</strong> {t.value}</p>)}</TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            )}
-                            {supplier.emails?.[0] && (
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <div className="flex items-center gap-1 cursor-pointer">
-                                                <Mail className="h-3 w-3 text-muted-foreground" />
-                                                <span className="truncate max-w-[150px]">{supplier.emails[0].value}</span>
-                                            </div>
-                                        </TooltipTrigger>
-                                         <TooltipContent>{supplier.emails.map((e, i) => <p key={i}><strong>{e.type}:</strong> {e.value}</p>)}</TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            )}
-                          </div>
-                    </div>
-                ))
-            ) : (
-                 <div className="h-24 text-center flex items-center justify-center">
-                    <p>Nenhum fornecedor encontrado.</p>
-                </div>
-            )}
-          </div>
-          
-          {/* Desktop View */}
-          <div className="hidden md:block border rounded-md">
+          <div className="border rounded-md">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <SortableHeader sortKey='codigoExterno'>Cód. Externo</SortableHeader>
+                  <SortableHeader sortKey='id'>ID</SortableHeader>
                   <SortableHeader sortKey='nomeFantasia'>Nome Fantasia</SortableHeader>
                   <SortableHeader sortKey='razaoSocial'>Razão Social</SortableHeader>
                   <SortableHeader sortKey='cnpj'>CNPJ</SortableHeader>
-                  <TableHead>Contatos</TableHead>
                   <SortableHeader sortKey='cidade'>Cidade</SortableHeader>
                   <TableHead className="w-[50px] text-right">Ações</TableHead>
                 </TableRow>
@@ -417,44 +287,10 @@ export default function SuppliersSection() {
                 {sortedSuppliers.length > 0 ? (
                   sortedSuppliers.map(supplier => (
                     <TableRow key={supplier.id}>
-                      <TableCell>{supplier.codigoExterno || '-'}</TableCell>
+                      <TableCell className="font-medium text-muted-foreground">{supplier.id}</TableCell>
                       <TableCell className="font-medium">{supplier.nomeFantasia}</TableCell>
                       <TableCell>{supplier.razaoSocial}</TableCell>
                       <TableCell>{formatCnpj(supplier.cnpj)}</TableCell>
-                       <TableCell>
-                          <div className='flex flex-col gap-1'>
-                            {supplier.telefones?.[0] && (
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <div className="flex items-center gap-1 cursor-pointer">
-                                                <Phone className="h-3 w-3 text-muted-foreground" /> 
-                                                <span>{supplier.telefones[0].value}</span>
-                                            </div>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            {supplier.telefones.map((t, i) => <p key={i}><strong>{t.type}:</strong> {t.value}</p>)}
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            )}
-                            {supplier.emails?.[0] && (
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <div className="flex items-center gap-1 cursor-pointer">
-                                                <Mail className="h-3 w-3 text-muted-foreground" />
-                                                <span className="truncate max-w-[150px]">{supplier.emails[0].value}</span>
-                                            </div>
-                                        </TooltipTrigger>
-                                         <TooltipContent>
-                                            {supplier.emails.map((e, i) => <p key={i}><strong>{e.type}:</strong> {e.value}</p>)}
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            )}
-                          </div>
-                        </TableCell>
                       <TableCell>{supplier.cidade || '-'}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
@@ -480,7 +316,7 @@ export default function SuppliersSection() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
+                    <TableCell colSpan={6} className="h-24 text-center">
                       Nenhum fornecedor encontrado para a busca realizada.
                     </TableCell>
                   </TableRow>

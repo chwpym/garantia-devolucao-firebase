@@ -1,15 +1,19 @@
 
-
 'use client';
+
+import { SearchInput } from '@/components/ui/search-input';
+import { smartSearch } from '@/lib/search-utils';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import type { Lote, Warranty, Supplier, WarrantyStatus } from '@/lib/types';
+import { WARRANTY_STATUSES } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Package, Calendar, Building, FileText, MoreHorizontal, Pencil, Trash2, CheckSquare, FileDown, Camera, Image as ImageIcon, Link as LinkIcon, Download, ArrowUpDown } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '../ui/status-badge';
 import { format, parseISO } from 'date-fns';
 import Image from 'next/image';
 
@@ -42,7 +46,6 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel"
 import { cn } from '@/lib/utils';
-import { useAppStore } from '@/store/app-store';
 
 
 interface LoteDetailSectionProps {
@@ -58,47 +61,47 @@ const LOTE_PDF_DEFAULT_FIELDS = [
 ];
 
 const EditableObservationCell = ({ warranty, onSave }: { warranty: Warranty, onSave: (value: string) => void }) => {
-    const [value, setValue] = useState(warranty.observacao || '');
-    const [isEditing, setIsEditing] = useState(false);
+  const [value, setValue] = useState(warranty.observacao || '');
+  const [isEditing, setIsEditing] = useState(false);
 
-    const handleSave = () => {
-        setIsEditing(false);
-        if (value !== warranty.observacao) {
-            onSave(value);
-        }
+  const handleSave = () => {
+    setIsEditing(false);
+    if (value !== warranty.observacao) {
+      onSave(value);
     }
+  }
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            handleSave();
-        } else if (e.key === 'Escape') {
-            setIsEditing(false);
-            setValue(warranty.observacao || '');
-        }
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSave();
+    } else if (e.key === 'Escape') {
+      setIsEditing(false);
+      setValue(warranty.observacao || '');
     }
+  }
 
-    if (isEditing) {
-        return (
-            <Textarea
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                onBlur={handleSave}
-                onKeyDown={handleKeyDown}
-                autoFocus
-                className="text-sm"
-            />
-        )
-    }
-
+  if (isEditing) {
     return (
-        <div 
-            onClick={() => setIsEditing(true)} 
-            className="w-full h-full cursor-pointer min-h-[36px] p-2 rounded-md hover:bg-muted/50"
-        >
-            {value || <span className="text-muted-foreground">-</span>}
-        </div>
+      <Textarea
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={handleSave}
+        onKeyDown={handleKeyDown}
+        autoFocus
+        className="text-sm"
+      />
     )
+  }
+
+  return (
+    <div
+      onClick={() => setIsEditing(true)}
+      className="w-full h-full cursor-pointer min-h-[36px] p-2 rounded-md hover:bg-muted/50"
+    >
+      {value || <span className="text-muted-foreground">-</span>}
+    </div>
+  )
 }
 
 export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionProps) {
@@ -118,7 +121,6 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
   const [galleryPhotos, setGalleryPhotos] = useState<string[]>([]);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: SortableKeys, direction: 'ascending' | 'descending' } | null>({ key: 'id', direction: 'descending' });
-  const warrantyStatuses = useAppStore(state => state.statuses.filter(s => s.aplicavelEm.includes('garantia')));
   const { toast } = useToast();
 
   const loadLoteDetails = useCallback(async () => {
@@ -133,7 +135,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
       ]);
       const currentLote = allLotes.find((l) => l.id === loteId) || null;
       const associatedWarranties = allWarranties.filter((w) => w.loteId === loteId);
-      
+
       setLote(currentLote);
       setWarranties(associatedWarranties);
       setSuppliers(allSuppliers);
@@ -158,7 +160,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
 
   useEffect(() => {
     loadLoteDetails();
-     const handleDataChanged = () => {
+    const handleDataChanged = () => {
       loadLoteDetails();
     };
     window.addEventListener('datachanged', handleDataChanged);
@@ -167,38 +169,46 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
     };
   }, [loadLoteDetails]);
 
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredWarranties = useMemo(() => {
+    return warranties.filter(warranty =>
+      smartSearch(warranty, searchTerm, ['codigo', 'descricao', 'defeito', 'notaFiscalSaida', 'notaFiscalRetorno', 'status', 'observacao'])
+    );
+  }, [warranties, searchTerm]);
+
   const sortedWarranties = useMemo(() => {
-    const sortableItems = [...warranties];
+    const sortableItems = [...filteredWarranties];
     if (sortConfig !== null) {
-        sortableItems.sort((a, b) => {
-            const valA = a[sortConfig.key];
-            const valB = b[sortConfig.key];
+      sortableItems.sort((a, b) => {
+        const valA = a[sortConfig.key];
+        const valB = b[sortConfig.key];
 
-            if (valA === undefined || valA === null) return 1;
-            if (valB === undefined || valB === null) return -1;
-            
-            let comparison = 0;
-            if (typeof valA === 'string' && typeof valB === 'string') {
-                 if (sortConfig.key === 'dataRegistro') {
-                     comparison = parseISO(valA).getTime() - parseISO(valB).getTime();
-                } else {
-                    comparison = valA.localeCompare(valB, 'pt-BR', { sensitivity: 'base' });
-                }
-            } else if (typeof valA === 'number' && typeof valB === 'number') {
-                comparison = valA - valB;
-            }
+        if (valA === undefined || valA === null) return 1;
+        if (valB === undefined || valB === null) return -1;
 
-            return sortConfig.direction === 'ascending' ? comparison : -comparison;
-        });
+        let comparison = 0;
+        if (typeof valA === 'string' && typeof valB === 'string') {
+          if (sortConfig.key === 'dataRegistro') {
+            comparison = parseISO(valA).getTime() - parseISO(valB).getTime();
+          } else {
+            comparison = valA.localeCompare(valB, 'pt-BR', { sensitivity: 'base' });
+          }
+        } else if (typeof valA === 'number' && typeof valB === 'number') {
+          comparison = valA - valB;
+        }
+
+        return sortConfig.direction === 'ascending' ? comparison : -comparison;
+      });
     }
     return sortableItems;
-  }, [warranties, sortConfig]);
+  }, [filteredWarranties, sortConfig]);
 
   const handleEditClick = (warranty: Warranty) => {
     setEditingWarranty(warranty);
     setIsFormModalOpen(true);
   };
-  
+
   const handleEditLoteClick = () => {
     setIsLoteFormModalOpen(true);
   };
@@ -206,7 +216,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
   const handleRemoveClick = (warranty: Warranty) => {
     setWarrantyToRemove(warranty);
   };
-  
+
   const handleOpenGallery = (photos: string[]) => {
     setGalleryPhotos(photos);
     setIsGalleryOpen(true);
@@ -234,9 +244,9 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
       window.dispatchEvent(new CustomEvent('datachanged'));
     }
   };
-  
+
   const handleFormSave = async (formData: Warranty) => {
-     try {
+    try {
       if (formData.id) {
         await db.updateWarranty(formData);
         toast({ title: 'Sucesso', description: 'Garantia atualizada com sucesso.' });
@@ -244,7 +254,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
       setIsFormModalOpen(false);
       setEditingWarranty(null);
       window.dispatchEvent(new CustomEvent('datachanged'));
-    } catch (error)      {
+    } catch (error) {
       console.error('Failed to save warranty:', error);
       toast({
         title: 'Erro ao Salvar',
@@ -253,52 +263,13 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
       });
     }
   };
-  
+
   const handleLoteFormSave = () => {
     setIsLoteFormModalOpen(false);
     loadLoteDetails();
   }
 
 
-  const getStatusVariant = (status?: Lote['status']): 'secondary' | 'accent-blue' | 'accent-green' | 'destructive' | 'outline' => {
-    switch (status) {
-      case 'Enviado': return 'accent-blue';
-      case 'Aprovado Totalmente': return 'accent-green';
-      case 'Aprovado Parcialmente': return 'accent-green';
-      case 'Recusado': return 'destructive';
-      case 'Aberto': default: return 'secondary';
-    }
-  };
-
-  const getWarrantyStatusClass = (status?: Warranty['status']): string => {
-    const customStatus = warrantyStatuses.find(s => s.nome === status);
-    if (customStatus) {
-        return ''; // A cor será aplicada via style
-    }
-    
-    // Fallback para status antigos
-    switch (status) {
-      case 'Aprovada - Peça Nova':
-        return 'bg-accent-green text-accent-green-foreground';
-      case 'Aprovada - Crédito Boleto':
-        return 'bg-accent-green-dark text-accent-green-dark-foreground';
-      case 'Aprovada - Crédito NF':
-        return 'bg-primary text-primary-foreground';
-      case 'Recusada':
-        return 'bg-destructive text-destructive-foreground';
-      case 'Enviado para Análise':
-        return 'bg-accent-blue text-accent-blue-foreground';
-      case 'Aguardando Envio':
-        return 'bg-amber-500 text-white';
-      default:
-        return 'bg-secondary text-secondary-foreground';
-    }
-  };
-
-  const getWarrantyStatusStyle = (status?: Warranty['status']): React.CSSProperties => {
-    const customStatus = warrantyStatuses.find(s => s.nome === status);
-    return customStatus ? { backgroundColor: customStatus.cor, color: '#FFFFFF' } : {};
-  }
 
 
   const handleSelectAll = (checked: boolean) => {
@@ -318,80 +289,80 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
     }
     setSelectedWarrantyIds(newSet);
   };
-  
+
   const handleApplyNf = async (type: 'retorno' | 'saida') => {
     const nfValue = type === 'retorno' ? nfRetornoValue : nfSaidaValue;
     const fieldToUpdate = type === 'retorno' ? 'notaFiscalRetorno' : 'notaFiscalSaida';
-    
+
     if (selectedWarrantyIds.size === 0 || !nfValue) {
-        toast({
-            title: 'Ação inválida',
-            description: 'Selecione pelo menos uma garantia e insira o número da NF.',
-            variant: 'destructive'
-        });
-        return;
+      toast({
+        title: 'Ação inválida',
+        description: 'Selecione pelo menos uma garantia e insira o número da NF.',
+        variant: 'destructive'
+      });
+      return;
     }
 
     try {
-        const warrantiesToUpdate = warranties.filter(w => selectedWarrantyIds.has(w.id!));
-        for (const warranty of warrantiesToUpdate) {
-            const updatedWarranty = { ...warranty, [fieldToUpdate]: nfValue };
-            await db.updateWarranty(updatedWarranty);
-        }
-        toast({
-            title: 'Sucesso!',
-            description: `NF de ${type} ${nfValue} aplicada a ${selectedWarrantyIds.size} garantias.`,
-        });
+      const warrantiesToUpdate = warranties.filter(w => selectedWarrantyIds.has(w.id!));
+      for (const warranty of warrantiesToUpdate) {
+        const updatedWarranty = { ...warranty, [fieldToUpdate]: nfValue };
+        await db.updateWarranty(updatedWarranty);
+      }
+      toast({
+        title: 'Sucesso!',
+        description: `NF de ${type} ${nfValue} aplicada a ${selectedWarrantyIds.size} garantias.`,
+      });
 
-        if (type === 'retorno') {
-            setNfRetornoValue('');
-        } else {
-            setNfSaidaValue('');
-        }
-        
-        setSelectedWarrantyIds(new Set());
-        window.dispatchEvent(new CustomEvent('datachanged'));
+      if (type === 'retorno') {
+        setNfRetornoValue('');
+      } else {
+        setNfSaidaValue('');
+      }
+
+      setSelectedWarrantyIds(new Set());
+      window.dispatchEvent(new CustomEvent('datachanged'));
     } catch (error) {
-        console.error(`Failed to apply NF de ${type} to selected warranties:`, error);
-        toast({
-            title: 'Erro',
-            description: `Não foi possível aplicar a NF de ${type} às garantias selecionadas.`,
-            variant: 'destructive'
-        });
+      console.error(`Failed to apply NF de ${type} to selected warranties:`, error);
+      toast({
+        title: 'Erro',
+        description: `Não foi possível aplicar a NF de ${type} às garantias selecionadas.`,
+        variant: 'destructive'
+      });
     }
   };
-  
+
   const handleBulkStatusChange = async (status: WarrantyStatus) => {
     if (selectedWarrantyIds.size === 0) {
-        toast({
-            title: 'Nenhuma garantia selecionada',
-            description: 'Selecione as garantias na tabela para alterar o status.',
-            variant: 'destructive'
-        });
-        return;
+      toast({
+        title: 'Nenhuma garantia selecionada',
+        description: 'Selecione as garantias na tabela para alterar o status.',
+        variant: 'destructive'
+      });
+      return;
     }
 
     try {
-        const warrantiesToUpdate = warranties.filter(w => selectedWarrantyIds.has(w.id!));
-        for (const warranty of warrantiesToUpdate) {
-            const updatedWarranty = { ...warranty, status };
-            await db.updateWarranty(updatedWarranty);
-        }
-        toast({
-            title: 'Status Alterado em Massa!',
-            description: `${selectedWarrantyIds.size} garantias foram atualizadas para "${status}".`
-        });
-        setSelectedWarrantyIds(new Set());
-        window.dispatchEvent(new CustomEvent('datachanged'));
+      const warrantiesToUpdate = warranties.filter(w => selectedWarrantyIds.has(w.id!));
+      for (const warranty of warrantiesToUpdate) {
+        const updatedWarranty = { ...warranty, status };
+        await db.updateWarranty(updatedWarranty);
+      }
+      toast({
+        title: 'Status Alterado em Massa!',
+        description: `${selectedWarrantyIds.size} garantias foram atualizadas para "${status}".`
+      });
+      setSelectedWarrantyIds(new Set());
+      window.dispatchEvent(new CustomEvent('datachanged'));
     } catch (error) {
-        console.error(`Failed to apply bulk status change:`, error);
-        toast({
-            title: 'Erro',
-            description: 'Não foi possível alterar o status das garantias selecionadas.',
-            variant: 'destructive'
-        });
+      console.error(`Failed to apply bulk status change:`, error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível alterar o status das garantias selecionadas.',
+        variant: 'destructive'
+      });
     }
-};
+  };
 
 
   const handleStatusChange = async (warranty: Warranty, status: WarrantyStatus) => {
@@ -412,47 +383,47 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
       });
     }
   };
-  
+
   const handleObservationSave = async (warranty: Warranty, observation: string) => {
     try {
-        const updatedWarranty = { ...warranty, observacao: observation };
-        await db.updateWarranty(updatedWarranty);
-        toast({
-            title: 'Observação Atualizada',
-            description: 'A observação foi salva com sucesso.',
-        });
-        window.dispatchEvent(new CustomEvent('datachanged'));
+      const updatedWarranty = { ...warranty, observacao: observation };
+      await db.updateWarranty(updatedWarranty);
+      toast({
+        title: 'Observação Atualizada',
+        description: 'A observação foi salva com sucesso.',
+      });
+      window.dispatchEvent(new CustomEvent('datachanged'));
     } catch (error) {
-        console.error('Failed to update observation:', error);
-        toast({
-            title: 'Erro',
-            description: 'Não foi possível salvar a observação.',
-            variant: 'destructive'
-        });
+      console.error('Failed to update observation:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível salvar a observação.',
+        variant: 'destructive'
+      });
     }
   }
 
   const requestSort = (key: SortableKeys) => {
     let direction: 'ascending' | 'descending' = 'ascending';
     if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
-        direction = 'descending';
+      direction = 'descending';
     }
     setSortConfig({ key, direction });
   };
-  
+
   const getSortIcon = (key: SortableKeys) => {
     if (!sortConfig || sortConfig.key !== key) {
-        return <ArrowUpDown className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-50" />;
+      return <ArrowUpDown className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-50" />;
     }
     return sortConfig.direction === 'ascending' ? '▲' : '▼';
   };
 
   const SortableHeader = ({ sortKey, children, className }: { sortKey: SortableKeys, children: React.ReactNode, className?: string }) => (
     <TableHead className={className}>
-        <Button variant="ghost" onClick={() => requestSort(sortKey)} className="group px-2">
-            {children}
-            {getSortIcon(sortKey)}
-        </Button>
+      <Button variant="ghost" onClick={() => requestSort(sortKey)} className="group px-2">
+        {children}
+        {getSortIcon(sortKey)}
+      </Button>
     </TableHead>
   );
 
@@ -460,11 +431,11 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
 
   if (isLoading) {
     return (
-        <div className='space-y-4'>
-            <Skeleton className="h-10 w-48" />
-            <Skeleton className="h-40 w-full" />
-            <Skeleton className="h-80 w-full" />
-        </div>
+      <div className='space-y-4'>
+        <Skeleton className="h-10 w-48" />
+        <Skeleton className="h-40 w-full" />
+        <Skeleton className="h-80 w-full" />
+      </div>
     )
   }
 
@@ -484,328 +455,338 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
 
   return (
     <div className="space-y-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-                {/* O botão voltar foi movido para o layout principal */}
-            </div>
-            <div className='flex gap-2'>
-                <Button onClick={handleEditLoteClick}><Pencil className="mr-2 h-4 w-4"/> Editar Informações do Lote</Button>
-            </div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          {/* O botão voltar foi movido para o layout principal */}
+        </div>
+        <div className='flex gap-2'>
+          <Button onClick={handleEditLoteClick}><Pencil className="mr-2 h-4 w-4" /> Editar Informações do Lote</Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <Card>
             <CardHeader>
-                <CardTitle>Informações do Lote: {lote.nome}</CardTitle>
+              <CardTitle>Informações do Lote: {lote.nome}</CardTitle>
             </CardHeader>
             <CardContent className='grid md:grid-cols-2 lg:grid-cols-4 gap-6'>
-                <div className="flex items-center gap-3">
-                    <Building className="h-8 w-8 text-muted-foreground" />
-                    <div>
-                        <p className="text-sm text-muted-foreground">Fornecedor</p>
-                        <p className="font-medium">{lote.fornecedor}</p>
-                    </div>
+              <div className="flex items-center gap-3">
+                <Building className="h-8 w-8 text-muted-foreground" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Fornecedor</p>
+                  <p className="font-medium">{lote.fornecedor}</p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <Calendar className="h-8 w-8 text-muted-foreground" />
-                    <div>
-                        <p className="text-sm text-muted-foreground">Data de Criação</p>
-                        <p className="font-medium">{lote.dataCriacao ? format(parseISO(lote.dataCriacao), 'dd/MM/yyyy') : '-'}</p>
-                    </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Calendar className="h-8 w-8 text-muted-foreground" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Data de Criação</p>
+                  <p className="font-medium">{lote.dataCriacao ? format(parseISO(lote.dataCriacao), 'dd/MM/yyyy') : '-'}</p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <FileText className="h-8 w-8 text-muted-foreground" />
-                    <div>
-                        <p className="text-sm text-muted-foreground">NF(s) de Retorno</p>
-                        <p className="font-medium">{lote.notasFiscaisRetorno || 'Nenhuma'}</p>
-                    </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <FileText className="h-8 w-8 text-muted-foreground" />
+                <div>
+                  <p className="text-sm text-muted-foreground">NF(s) de Retorno</p>
+                  <p className="font-medium">{lote.notasFiscaisRetorno || 'Nenhuma'}</p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <Package className="h-8 w-8 text-muted-foreground" />
-                    <div>
-                        <p className="text-sm text-muted-foreground">Status</p>
-                        <Badge variant={getStatusVariant(lote.status)}>{lote.status}</Badge>
-                    </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Package className="h-8 w-8 text-muted-foreground" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Status</p>
+                  <StatusBadge type="lote" status={lote.status} />
                 </div>
+              </div>
             </CardContent>
           </Card>
         </div>
 
         <Card>
-            <CardHeader>
-                <CardTitle>Anexos</CardTitle>
-                <CardDescription>Arquivos de autorização do fornecedor.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                {lote.attachments && lote.attachments.length > 0 ? (
-                    <div className="space-y-2">
-                        {lote.attachments.map((att, index) => (
-                            <a
-                                key={index}
-                                href={att.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center justify-between text-sm p-2 bg-muted rounded-md hover:bg-muted/80 transition-colors"
-                            >
-                                <div className='flex items-center gap-2'>
-                                    <LinkIcon className='h-4 w-4' />
-                                    <span className='truncate' title={att.name}>{att.name}</span>
-                                </div>
-                                <Download className="h-4 w-4" />
-                            </a>
-                        ))}
+          <CardHeader>
+            <CardTitle>Anexos</CardTitle>
+            <CardDescription>Arquivos de autorização do fornecedor.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {lote.attachments && lote.attachments.length > 0 ? (
+              <div className="space-y-2">
+                {lote.attachments.map((att, index) => (
+                  <a
+                    key={index}
+                    href={att.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between text-sm p-2 bg-muted rounded-md hover:bg-muted/80 transition-colors"
+                  >
+                    <div className='flex items-center gap-2'>
+                      <LinkIcon className='h-4 w-4' />
+                      <span className='truncate' title={att.name}>{att.name}</span>
                     </div>
-                ) : (
-                    <p className="text-sm text-muted-foreground text-center py-4">Nenhum anexo encontrado.</p>
-                )}
-            </CardContent>
+                    <Download className="h-4 w-4" />
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">Nenhum anexo encontrado.</p>
+            )}
+          </CardContent>
         </Card>
       </div>
 
 
       <Card>
         <CardHeader className='flex flex-row justify-between items-center'>
-            <div>
-                <CardTitle>Itens no Lote</CardTitle>
-                <CardDescription>Lista de todas as garantias incluídas neste lote. Use os checkboxes para atualizar em massa.</CardDescription>
-            </div>
-            <Dialog open={isPdfModalOpen} onOpenChange={setIsPdfModalOpen}>
-                <DialogTrigger asChild>
-                    <Button>
-                        <FileDown className="mr-2 h-4 w-4" />
-                        Gerar Relatório do Lote
-                    </Button>
-                </DialogTrigger>
-                <DialogContent className='max-w-3xl'>
-                    <DialogHeader>
-                        <DialogTitle>Gerar PDF para este Lote</DialogTitle>
-                         <DialogDescription>
-                            Selecione as opções de layout e os campos que deseja incluir no relatório para o fornecedor.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className='py-4'>
-                        <ReportGenerator 
-                            selectedWarranties={warranties}
-                            title=""
-                            description=""
-                            supplierData={supplierData}
-                            defaultFields={LOTE_PDF_DEFAULT_FIELDS}
-                            loteId={lote.id}
-                        />
-                    </div>
-                </DialogContent>
-            </Dialog>
+          <div>
+            <CardTitle>Itens no Lote</CardTitle>
+            <CardDescription>Lista de todas as garantias incluídas neste lote. Use os checkboxes para atualizar em massa.</CardDescription>
+          </div>
+          <Dialog open={isPdfModalOpen} onOpenChange={setIsPdfModalOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <FileDown className="mr-2 h-4 w-4" />
+                Gerar Relatório do Lote
+              </Button>
+            </DialogTrigger>
+            <DialogContent className='max-w-3xl'>
+              <DialogHeader>
+                <DialogTitle>Gerar PDF para este Lote</DialogTitle>
+                <DialogDescription>
+                  Selecione as opções de layout e os campos que deseja incluir no relatório para o fornecedor.
+                </DialogDescription>
+              </DialogHeader>
+              <div className='py-4'>
+                <ReportGenerator
+                  selectedWarranties={warranties}
+                  title=""
+                  description=""
+                  supplierData={supplierData}
+                  defaultFields={LOTE_PDF_DEFAULT_FIELDS}
+                  loteId={lote.id}
+                />
+              </div>
+            </DialogContent>
+          </Dialog>
         </CardHeader>
         <CardContent>
-            <div className="grid md:grid-cols-2 gap-6 mb-4">
-                <div className='p-4 border rounded-lg space-y-2'>
-                     <Label htmlFor="nf-saida">NF de Saída (Envio)</Label>
-                    <div className="flex flex-col sm:flex-row gap-2">
-                        <Input
-                            id="nf-saida"
-                            placeholder="Nº da NF de Saída"
-                            value={nfSaidaValue}
-                            onChange={(e) => setNfSaidaValue(e.target.value)}
-                        />
-                        <Button onClick={() => handleApplyNf('saida')} disabled={selectedWarrantyIds.size === 0}>
-                            Aplicar NF aos {selectedWarrantyIds.size > 0 ? `(${selectedWarrantyIds.size})` : ''} selecionados
-                        </Button>
-                    </div>
-                </div>
-                 <div className='p-4 border rounded-lg space-y-2'>
-                    <Label htmlFor="nf-retorno">NF de Retorno (Recebimento)</Label>
-                    <div className="flex flex-col sm:flex-row gap-2">
-                        <Input
-                            id="nf-retorno"
-                            placeholder="Nº da NF de Retorno"
-                            value={nfRetornoValue}
-                            onChange={(e) => setNfRetornoValue(e.target.value)}
-                        />
-                        <Button onClick={() => handleApplyNf('retorno')} disabled={selectedWarrantyIds.size === 0}>
-                            Aplicar NF aos {selectedWarrantyIds.size > 0 ? `(${selectedWarrantyIds.size})` : ''} selecionados
-                        </Button>
-                    </div>
-                 </div>
+          <div className="grid md:grid-cols-2 gap-6 mb-4">
+            <div className='p-4 border rounded-lg space-y-2 col-span-2'>
+              <div className="flex justify-between items-center">
+                <Label>Buscar no Lote</Label>
+                <span className="text-xs text-muted-foreground">
+                  Exibindo {filteredWarranties.length} de {warranties.length}
+                </span>
+              </div>
+              <SearchInput
+                placeholder="Buscar por código, descrição, NF..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onClear={() => setSearchTerm('')}
+                className="w-full"
+              />
             </div>
-            
-            <div className="mb-4 flex items-center gap-2">
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" disabled={selectedWarrantyIds.size === 0}>
-                            <CheckSquare className="mr-2 h-4 w-4" />
-                            Alterar Status em Massa {selectedWarrantyIds.size > 0 ? `(${selectedWarrantyIds.size})` : ''}
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                        {warrantyStatuses.map(status => (
-                            <DropdownMenuItem key={status.id} onSelect={() => handleBulkStatusChange(status.nome)}>
-                                Marcar como {status.nome}
-                            </DropdownMenuItem>
-                        ))}
-                    </DropdownMenuContent>
-                </DropdownMenu>
+            <div className='p-4 border rounded-lg space-y-2'>
+              <Label htmlFor="nf-saida">NF de Saída (Envio)</Label>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Input
+                  id="nf-saida"
+                  placeholder="Nº da NF de Saída"
+                  value={nfSaidaValue}
+                  onChange={(e) => setNfSaidaValue(e.target.value)}
+                />
+                <Button onClick={() => handleApplyNf('saida')} disabled={selectedWarrantyIds.size === 0}>
+                  Aplicar NF aos {selectedWarrantyIds.size > 0 ? `(${selectedWarrantyIds.size})` : ''} selecionados
+                </Button>
+              </div>
             </div>
-            
-             <div className="border rounded-md">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[50px] text-center">
+            <div className='p-4 border rounded-lg space-y-2'>
+              <Label htmlFor="nf-retorno">NF de Retorno (Recebimento)</Label>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Input
+                  id="nf-retorno"
+                  placeholder="Nº da NF de Retorno"
+                  value={nfRetornoValue}
+                  onChange={(e) => setNfRetornoValue(e.target.value)}
+                />
+                <Button onClick={() => handleApplyNf('retorno')} disabled={selectedWarrantyIds.size === 0}>
+                  Aplicar NF aos {selectedWarrantyIds.size > 0 ? `(${selectedWarrantyIds.size})` : ''} selecionados
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-4 flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" disabled={selectedWarrantyIds.size === 0}>
+                  <CheckSquare className="mr-2 h-4 w-4" />
+                  Alterar Status em Massa {selectedWarrantyIds.size > 0 ? `(${selectedWarrantyIds.size})` : ''}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {WARRANTY_STATUSES.map(status => (
+                  <DropdownMenuItem key={status} onSelect={() => handleBulkStatusChange(status)}>
+                    Marcar como {status}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          <div className="border rounded-md">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[50px] text-center">
+                    <Checkbox
+                      checked={isAllSelected}
+                      onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
+                      aria-label="Selecionar todos"
+                    />
+                  </TableHead>
+                  <SortableHeader sortKey='id' className="w-16">Fotos</SortableHeader>
+                  <SortableHeader sortKey='codigo'>Código</SortableHeader>
+                  <SortableHeader sortKey='descricao'>Descrição</SortableHeader>
+                  <SortableHeader sortKey='defeito'>Defeito</SortableHeader>
+                  <SortableHeader sortKey='observacao' className="w-[300px]">Observação de Retorno</SortableHeader>
+                  <SortableHeader sortKey='notaFiscalSaida'>NF Saída</SortableHeader>
+                  <SortableHeader sortKey='notaFiscalRetorno'>NF Retorno</SortableHeader>
+                  <SortableHeader sortKey='status'>Status</SortableHeader>
+                  <TableHead className="w-[50px] text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sortedWarranties.length > 0 ? (
+                  sortedWarranties.map(warranty => (
+                    <TableRow key={warranty.id} data-state={selectedWarrantyIds.has(warranty.id!) ? "selected" : ""}>
+                      <TableCell className="text-center">
                         <Checkbox
-                            checked={isAllSelected}
-                            onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
-                            aria-label="Selecionar todos"
+                          checked={selectedWarrantyIds.has(warranty.id!)}
+                          onCheckedChange={() => handleRowSelect(warranty.id!)}
+                          aria-label={`Selecionar garantia ${warranty.codigo}`}
                         />
-                    </TableHead>
-                    <SortableHeader sortKey='id' className="w-16">Fotos</SortableHeader>
-                    <SortableHeader sortKey='codigo'>Código</SortableHeader>
-                    <SortableHeader sortKey='descricao'>Descrição</SortableHeader>
-                    <SortableHeader sortKey='defeito'>Defeito</SortableHeader>
-                    <SortableHeader sortKey='observacao' className="w-[300px]">Observação de Retorno</SortableHeader>
-                    <SortableHeader sortKey='notaFiscalSaida'>NF Saída</SortableHeader>
-                    <SortableHeader sortKey='notaFiscalRetorno'>NF Retorno</SortableHeader>
-                    <SortableHeader sortKey='status'>Status</SortableHeader>
-                    <TableHead className="w-[50px] text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sortedWarranties.length > 0 ? (
-                    sortedWarranties.map(warranty => (
-                      <TableRow key={warranty.id} data-state={selectedWarrantyIds.has(warranty.id!) ? "selected" : ""}>
-                        <TableCell className="text-center">
-                            <Checkbox
-                                checked={selectedWarrantyIds.has(warranty.id!)}
-                                onCheckedChange={() => handleRowSelect(warranty.id!)}
-                                aria-label={`Selecionar garantia ${warranty.codigo}`}
-                            />
-                        </TableCell>
-                        <TableCell>
-                             {warranty.photos && warranty.photos.length > 0 ? (
-                                <Button variant="ghost" size="icon" onClick={() => handleOpenGallery(warranty.photos!)}>
-                                    <Camera className="h-5 w-5" />
-                                </Button>
-                            ) : (
-                                <span className="flex justify-center text-muted-foreground">-</span>
-                            )}
-                        </TableCell>
-                        <TableCell className="font-medium">{warranty.codigo || '-'}</TableCell>
-                        <TableCell>{warranty.descricao || '-'}</TableCell>
-                        <TableCell>{warranty.defeito || '-'}</TableCell>
-                        <TableCell>
-                            <EditableObservationCell 
-                                warranty={warranty}
-                                onSave={(value) => handleObservationSave(warranty, value)}
-                            />
-                        </TableCell>
-                        <TableCell>{warranty.notaFiscalSaida || '-'}</TableCell>
-                        <TableCell>{warranty.notaFiscalRetorno || '-'}</TableCell>
-                        <TableCell>
-                          <Badge 
-                              className={cn(getWarrantyStatusClass(warranty.status))}
-                              style={getWarrantyStatusStyle(warranty.status)}
-                          >
-                              {warranty.status || 'N/A'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Abrir menu</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleEditClick(warranty)}>
-                                <Pencil className="mr-2 h-4 w-4" />
-                                Editar Garantia
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleRemoveClick(warranty)} className="text-destructive focus:text-destructive">
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Remover do Lote
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                                <DropdownMenuSub>
-                                    <DropdownMenuSubTrigger>
-                                        <CheckSquare className="mr-2 h-4 w-4" />
-                                        <span>Alterar Status</span>
-                                    </DropdownMenuSubTrigger>
-                                    <DropdownMenuPortal>
-                                        <DropdownMenuSubContent>
-                                            {warrantyStatuses.map(status => (
-                                                <DropdownMenuItem key={status.id} onClick={() => handleStatusChange(warranty, status.nome)}>
-                                                    <span>{status.nome}</span>
-                                                </DropdownMenuItem>
-                                            ))}
-                                        </DropdownMenuSubContent>
-                                    </DropdownMenuPortal>
-                                </DropdownMenuSub>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={10} className="h-24 text-center">
-                        Nenhuma garantia adicionada a este lote ainda.
+                      </TableCell>
+                      <TableCell>
+                        {warranty.photos && warranty.photos.length > 0 ? (
+                          <Button variant="ghost" size="icon" onClick={() => handleOpenGallery(warranty.photos!)}>
+                            <Camera className="h-5 w-5" />
+                          </Button>
+                        ) : (
+                          <span className="flex justify-center text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="font-medium">{warranty.codigo || '-'}</TableCell>
+                      <TableCell>{warranty.descricao || '-'}</TableCell>
+                      <TableCell>{warranty.defeito || '-'}</TableCell>
+                      <TableCell>
+                        <EditableObservationCell
+                          warranty={warranty}
+                          onSave={(value) => handleObservationSave(warranty, value)}
+                        />
+                      </TableCell>
+                      <TableCell>{warranty.notaFiscalSaida || '-'}</TableCell>
+                      <TableCell>{warranty.notaFiscalRetorno || '-'}</TableCell>
+                      <TableCell>
+                        <StatusBadge type="warranty" status={warranty.status} />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Abrir menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEditClick(warranty)}>
+                              <Pencil className="mr-2 h-4 w-4" />
+                              Editar Garantia
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleRemoveClick(warranty)} className="text-destructive focus:text-destructive">
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Remover do Lote
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuSub>
+                              <DropdownMenuSubTrigger>
+                                <CheckSquare className="mr-2 h-4 w-4" />
+                                <span>Alterar Status</span>
+                              </DropdownMenuSubTrigger>
+                              <DropdownMenuPortal>
+                                <DropdownMenuSubContent>
+                                  {WARRANTY_STATUSES.map(status => (
+                                    <DropdownMenuItem key={status} onClick={() => handleStatusChange(warranty, status)}>
+                                      <span>{status}</span>
+                                    </DropdownMenuItem>
+                                  ))}
+                                </DropdownMenuSubContent>
+                              </DropdownMenuPortal>
+                            </DropdownMenuSub>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={10} className="h-24 text-center">
+                      {searchTerm ? 'Nenhuma garantia encontrada para esta busca.' : 'Nenhuma garantia adicionada a este lote ainda.'}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
-      
+
       {/* Modal for editing warranty */}
       <Dialog open={isFormModalOpen} onOpenChange={setIsFormModalOpen}>
         <DialogContent className="max-w-4xl">
-            <DialogHeader>
-                <DialogTitle>Editar Garantia</DialogTitle>
-                <DialogDescription>
-                    Faça as alterações necessárias na garantia abaixo.
-                </DialogDescription>
-            </DialogHeader>
-            <div className='py-4 max-h-[70vh] overflow-y-auto'>
-                 <WarrantyForm 
-                    selectedWarranty={editingWarranty}
-                    onSave={handleFormSave}
-                    onClear={() => {
-                        setIsFormModalOpen(false);
-                        setEditingWarranty(null);
-                    }}
-                    isModal={true}
-                 />
-            </div>
+          <DialogHeader>
+            <DialogTitle>Editar Garantia</DialogTitle>
+            <DialogDescription>
+              Faça as alterações necessárias na garantia abaixo.
+            </DialogDescription>
+          </DialogHeader>
+          <div className='py-4 max-h-[70vh] overflow-y-auto'>
+            <WarrantyForm
+              selectedWarranty={editingWarranty}
+              onSave={handleFormSave}
+              onClear={() => {
+                setIsFormModalOpen(false);
+                setEditingWarranty(null);
+              }}
+              isModal={true}
+            />
+          </div>
         </DialogContent>
       </Dialog>
-      
+
       {/* Modal for editing lote */}
       <Dialog open={isLoteFormModalOpen} onOpenChange={setIsLoteFormModalOpen}>
         <DialogContent>
-            <DialogHeader>
-                <DialogTitle>Editar Lote</DialogTitle>
-                <DialogDescription>
-                    Atualize as informações do lote, como o status ou as notas fiscais de retorno.
-                </DialogDescription>
-            </DialogHeader>
-            <LoteForm
-                onSave={handleLoteFormSave}
-                editingLote={lote}
-                suppliers={suppliers}
-            />
+          <DialogHeader>
+            <DialogTitle>Editar Lote</DialogTitle>
+            <DialogDescription>
+              Atualize as informações do lote, como o status ou as notas fiscais de retorno.
+            </DialogDescription>
+          </DialogHeader>
+          <LoteForm
+            onSave={handleLoteFormSave}
+            editingLote={lote}
+            suppliers={suppliers}
+          />
         </DialogContent>
       </Dialog>
-      
+
       {/* Alert dialog for removing warranty from lote */}
       <AlertDialog open={!!warrantyToRemove} onOpenChange={(open) => !open && setWarrantyToRemove(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Remover Garantia do Lote?</AlertDialogTitle>
             <AlertDialogDescription>
-              Você tem certeza que deseja remover a garantia (Código: <span className="font-bold">{warrantyToRemove?.codigo || 'N/A'}</span>) deste lote? 
+              Você tem certeza que deseja remover a garantia (Código: <span className="font-bold">{warrantyToRemove?.codigo || 'N/A'}</span>) deste lote?
               A garantia não será excluída, apenas desvinculada, e seu status voltará para &quot;Aguardando Envio&quot;.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -817,40 +798,40 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      
-       {/* Photo Gallery Modal */}
-        <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
-            <DialogContent className="max-w-3xl">
-                <DialogHeader>
-                    <DialogTitle>Galeria de Fotos</DialogTitle>
-                    <DialogDescription>Fotos anexadas à garantia.</DialogDescription>
-                </DialogHeader>
-                 {galleryPhotos.length > 0 ? (
-                    <Carousel className="w-full">
-                        <CarouselContent>
-                            {galleryPhotos.map((photo, index) => (
-                                <CarouselItem key={index}>
-                                    <div className="p-1">
-                                        <Card>
-                                            <CardContent className="flex aspect-video items-center justify-center p-0 overflow-hidden rounded-lg">
-                                                <Image src={photo} alt={`Foto ${index + 1}`} width={800} height={600} style={{ objectFit: 'contain', width: '100%', height: '100%' }} />
-                                            </CardContent>
-                                        </Card>
-                                    </div>
-                                </CarouselItem>
-                            ))}
-                        </CarouselContent>
-                        <CarouselPrevious />
-                        <CarouselNext />
-                    </Carousel>
-                 ) : (
-                    <div className="flex flex-col items-center justify-center text-center p-10 border-2 border-dashed rounded-lg text-muted-foreground">
-                        <ImageIcon className="h-10 w-10 mb-2" />
-                        <p>Nenhuma foto encontrada para esta garantia.</p>
+
+      {/* Photo Gallery Modal */}
+      <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Galeria de Fotos</DialogTitle>
+            <DialogDescription>Fotos anexadas à garantia.</DialogDescription>
+          </DialogHeader>
+          {galleryPhotos.length > 0 ? (
+            <Carousel className="w-full">
+              <CarouselContent>
+                {galleryPhotos.map((photo, index) => (
+                  <CarouselItem key={index}>
+                    <div className="p-1">
+                      <Card>
+                        <CardContent className="flex aspect-video items-center justify-center p-0 overflow-hidden rounded-lg">
+                          <Image src={photo} alt={`Foto ${index + 1}`} width={800} height={600} style={{ objectFit: 'contain', width: '100%', height: '100%' }} />
+                        </CardContent>
+                      </Card>
                     </div>
-                 )}
-            </DialogContent>
-        </Dialog>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+          ) : (
+            <div className="flex flex-col items-center justify-center text-center p-10 border-2 border-dashed rounded-lg text-muted-foreground">
+              <ImageIcon className="h-10 w-10 mb-2" />
+              <p>Nenhuma foto encontrada para esta garantia.</p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
     </div>
   );

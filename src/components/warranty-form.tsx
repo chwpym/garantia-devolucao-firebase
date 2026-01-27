@@ -1,8 +1,7 @@
 
-
 'use client';
 
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -10,7 +9,7 @@ import { Loader2, PlusCircle, Upload, X as XIcon, Image as ImageIcon } from 'luc
 import Image from 'next/image';
 
 
-import type { Warranty, Person, Supplier, Product, WarrantyStatus, CustomStatus } from '@/lib/types';
+import type { Warranty, Person, Supplier, Product, WarrantyStatus } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { smartSearch } from '@/lib/search-utils';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,7 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import SupplierForm from './supplier-form';
 import PersonForm from './person-form';
 import { Combobox } from './ui/combobox';
@@ -28,33 +27,6 @@ import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './ui/command';
 import ProductForm from './product-form';
 import { useAppStore } from '@/store/app-store';
-<<<<<<< HEAD
-import * as db from '@/lib/db';
-
-
-const formSchema = z.object({
-  id: z.number().optional(),
-  codigo: z.string().optional(),
-  descricao: z.string().optional(),
-  fornecedor: z.string().optional(),
-  quantidade: z.coerce.number().min(0).optional(),
-  defeito: z.string().optional(),
-  requisicaoVenda: z.string().optional(),
-  requisicoesGarantia: z.string().optional(),
-  nfCompra: z.string().optional(),
-  valorCompra: z.string().optional(),
-  cliente: z.string().optional(),
-  mecanico: z.string().optional(),
-  notaFiscalSaida: z.string().optional(),
-  notaFiscalRetorno: z.string().optional(),
-  observacao: z.string().optional(),
-  status: z.string().optional(),
-  loteId: z.number().nullable().optional(),
-  photos: z.array(z.string()).optional(),
-  dataRegistro: z.string().optional(),
-  marca: z.string().optional(),
-  referencia: z.string().optional(),
-=======
 import { WARRANTY_STATUSES } from '@/lib/types';
 import { QuickRegisterDialog } from './quick-register-dialog';
 
@@ -81,7 +53,6 @@ const formSchema = z.object({
     dataRegistro: z.string().optional(),
     marca: z.string().optional(),
     referencia: z.string().optional(),
->>>>>>> feature/status-visual-pro
 });
 
 type WarrantyFormValues = z.infer<typeof formSchema>;
@@ -122,7 +93,6 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
     const formRef = useRef<HTMLFormElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { products, persons, suppliers, reloadData } = useAppStore();
-    const [warrantyStatuses, setWarrantyStatuses] = useState<CustomStatus[]>([]);
 
     const [quickRegisterType, setQuickRegisterType] = useState<'product' | 'supplier' | 'person' | null>(null);
     const [isQuickRegisterOpen, setQuickRegisterOpen] = useState(false);
@@ -133,13 +103,6 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
     const { toast } = useToast();
     const goBack = useAppStore(state => state.goBack);
 
-    useEffect(() => {
-        const fetchStatuses = async () => {
-            const allStatuses = await db.getAllStatuses();
-            setWarrantyStatuses(allStatuses.filter(s => s.aplicavelEm.includes('garantia')));
-        };
-        fetchStatuses();
-    }, []);
 
     const form = useForm<WarrantyFormValues>({
         resolver: zodResolver(formSchema),
@@ -303,101 +266,6 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
     }));
 
     const innerFormContent = (
-<<<<<<< HEAD
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} onKeyDown={handleKeyDown} ref={formRef}>
-            <CardContent className="space-y-6 pt-6">
-                <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-foreground">Informações do Produto e Defeito</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <FormField name="codigo" control={form.control} render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Código</FormLabel>
-                                <Popover open={isProductPopoverOpen} onOpenChange={setProductPopoverOpen}>
-                                    <PopoverTrigger asChild>
-                                        <FormControl>
-                                            <Input 
-                                                {...field}
-                                                autoComplete="off"
-                                                onChange={(e) => {
-                                                    field.onChange(e);
-                                                    setProductSearch(e.target.value);
-                                                    if (e.target.value) {
-                                                        setProductPopoverOpen(true);
-                                                    } else {
-                                                        setProductPopoverOpen(false);
-                                                    }
-                                                }}
-                                            />
-                                        </FormControl>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                        <Command>
-                                            <CommandInput placeholder="Buscar produto..." value={productSearch} onValueChange={setProductSearch} />
-                                            <CommandList>
-                                                <CommandEmpty>
-                                                    <div className='p-4 text-sm text-center'>
-                                                        <p>Nenhum produto encontrado.</p>
-                                                         <Button variant="link" type="button" onClick={() => setProductModalOpen(true)}>Cadastrar Novo Produto</Button>
-                                                    </div>
-                                                </CommandEmpty>
-                                                <CommandGroup>
-                                                    {filteredProducts.map((product) => (
-                                                        <CommandItem
-                                                            key={product.id}
-                                                            onSelect={() => handleProductSelect(product)}
-                                                        >
-                                                            {product.codigo} - {product.descricao}
-                                                        </CommandItem>
-                                                    ))}
-                                                </CommandGroup>
-                                            </CommandList>
-                                        </Command>
-                                    </PopoverContent>
-                                </Popover>
-                                <FormMessage />
-                            </FormItem>
-                        )} />
-                        <FormField name="descricao" control={form.control} render={({ field }) => (
-                            <FormItem className="md:col-span-2"><FormLabel>Descrição</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <FormField name="quantidade" control={form.control} render={({ field }) => (
-                        <FormItem><FormLabel>Quantidade</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <FormField
-                            control={form.control}
-                            name="fornecedor"
-                            render={({ field }) => (
-                                <FormItem className="md:col-span-2 flex flex-col">
-                                    <FormLabel>Fornecedor</FormLabel>
-                                    <div className="flex items-center gap-2">
-                                            <Combobox
-                                            options={supplierOptions}
-                                            value={field.value ?? ''}
-                                            onChange={field.onChange}
-                                            placeholder="Selecione um fornecedor"
-                                            searchPlaceholder="Buscar fornecedor..."
-                                            notFoundMessage="Nenhum fornecedor encontrado."
-                                            className="w-full"
-                                        />
-                                        <Dialog open={isSupplierModalOpen} onOpenChange={setSupplierModalOpen}>
-                                            <DialogTrigger asChild>
-                                                <Button variant="outline" size="icon" className="flex-shrink-0">
-                                                    <PlusCircle className="h-4 w-4" />
-                                                </Button>
-                                            </DialogTrigger>
-                                            <DialogContent className="max-w-2xl">
-                                                <DialogHeader>
-                                                    <DialogTitle>Cadastrar Novo Fornecedor</DialogTitle>
-                                                    <DialogDescription>Preencha os dados do novo fornecedor.</DialogDescription>
-                                                </DialogHeader>
-                                                <div className="max-h-[80vh] overflow-y-auto pr-2">
-                                                    <SupplierForm onSave={handleSupplierSaved} isModal />
-                                                </div>
-                                            </DialogContent>
-                                        </Dialog>
-                                    </div>
-=======
         <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} onKeyDown={handleKeyDown} ref={formRef}>
                 <CardContent className="space-y-6 pt-6">
@@ -453,7 +321,6 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                                             </Command>
                                         </PopoverContent>
                                     </Popover>
->>>>>>> feature/status-visual-pro
                                     <FormMessage />
                                 </FormItem>
                             )} />
@@ -501,116 +368,6 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                         <h3 className="text-lg font-medium text-foreground">Fotos da Garantia</h3>
                         <FormField
                             control={form.control}
-<<<<<<< HEAD
-                            name="cliente"
-                            render={({ field }) => (
-                                    <FormItem className="md:col-span-2 flex flex-col">
-                                    <FormLabel>Cliente</FormLabel>
-                                    <div className="flex items-center gap-2">
-                                            <Combobox
-                                            options={clientOptions}
-                                            value={field.value ?? ''}
-                                            onChange={field.onChange}
-                                            placeholder="Selecione um cliente"
-                                            searchPlaceholder="Buscar cliente..."
-                                            notFoundMessage="Nenhum cliente encontrado."
-                                            className="w-full"
-                                        />
-                                            <Dialog open={isPersonModalOpen} onOpenChange={setPersonModalOpen}>
-                                            <DialogTrigger asChild>
-                                                <Button variant="outline" size="icon" className="flex-shrink-0">
-                                                    <PlusCircle className="h-4 w-4" />
-                                                </Button>
-                                            </DialogTrigger>
-                                            <DialogContent className="max-w-2xl">
-                                                <DialogHeader>
-                                                    <DialogTitle>Cadastrar Novo Cliente/Mecânico</DialogTitle>
-                                                    <DialogDescription>Preencha os dados do novo registro.</DialogDescription>
-                                                </DialogHeader>
-                                                <div className='max-h-[80vh] overflow-y-auto pr-2'>
-                                                  <PersonForm onSave={handlePersonSaved} onClear={() => setPersonModalOpen(false)} />
-                                                </div>
-                                            </DialogContent>
-                                        </Dialog>
-                                    </div>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                            />
-                        <FormField
-                            control={form.control}
-                            name="mecanico"
-                            render={({ field }) => (
-                                <FormItem className="md:col-span-2 flex flex-col">
-                                    <FormLabel>Mecânico</FormLabel>
-                                    <div className="flex items-center gap-2">
-                                        <Combobox
-                                            options={mechanicOptions}
-                                            value={field.value ?? ''}
-                                            onChange={field.onChange}
-                                            placeholder="Selecione um mecânico"
-                                            searchPlaceholder="Buscar mecânico..."
-                                            notFoundMessage="Nenhum mecânico encontrado."
-                                            className="w-full"
-                                        />
-                                        <Dialog open={isPersonModalOpen} onOpenChange={setPersonModalOpen}>
-                                            <DialogTrigger asChild>
-                                                <Button variant="outline" size="icon" className="flex-shrink-0">
-                                                    <PlusCircle className="h-4 w-4" />
-                                                </Button>
-                                            </DialogTrigger>
-                                            <DialogContent className="max-w-2xl">
-                                                    <DialogHeader>
-                                                    <DialogTitle>Cadastrar Novo Cliente/Mecânico</DialogTitle>
-                                                    <DialogDescription>Preencha os dados do novo registro.</DialogDescription>
-                                                    </DialogHeader>
-                                                    <div className='max-h-[80vh] overflow-y-auto pr-2'>
-                                                        <PersonForm onSave={handlePersonSaved} onClear={() => setPersonModalOpen(false)} />
-                                                    </div>
-                                            </DialogContent>
-                                        </Dialog>
-                                    </div>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                            />
-                        <FormField name="requisicaoVenda" control={form.control} render={({ field }) => (
-                            <FormItem><FormLabel>Requisição Venda</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <FormField name="requisicoesGarantia" control={form.control} render={({ field }) => (
-                            <FormItem className="md:col-span-3"><FormLabel>Requisições Garantia</FormLabel><FormControl><Textarea rows={1} placeholder="Separe múltiplas requisições por vírgula" {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <FormField name="nfCompra" control={form.control} render={({ field }) => (
-                        <FormItem><FormLabel>NF Compra</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <FormField name="valorCompra" control={form.control} render={({ field }) => (
-                            <FormItem><FormLabel>Valor Compra</FormLabel><FormControl><Input placeholder="R$ 0,00" {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <FormField name="notaFiscalSaida" control={form.control} render={({ field }) => (
-                            <FormItem><FormLabel>Nota Fiscal de Saída</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <FormField name="notaFiscalRetorno" control={form.control} render={({ field }) => (
-                            <FormItem><FormLabel>Nota Fiscal de Retorno</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <FormField
-                            control={form.control}
-                            name="status"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Status</FormLabel>
-                                    <Select onValueChange={field.onChange} value={field.value}>
-                                        <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Selecione um status" />
-                                        </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {warrantyStatuses.map(status => (
-                                                <SelectItem key={status.id} value={status.nome}>{status.nome}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-=======
                             name="photos"
                             render={() => (
                                 <FormItem>
@@ -634,7 +391,6 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                                             </Button>
                                         </div>
                                     </FormControl>
->>>>>>> feature/status-visual-pro
                                     <FormMessage />
                                     {photos && photos.length > 0 && (
                                         <div className="flex flex-wrap gap-4 mt-4">
@@ -673,29 +429,6 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
 
                     <Separator />
 
-<<<<<<< HEAD
-            </CardContent>
-            <CardFooter className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={handleClear}>
-                    {selectedWarranty ? 'Cancelar' : 'Limpar'}
-                </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    {selectedWarranty && !isClone ? 'Atualizar' : 'Salvar'}
-                </Button>
-            </CardFooter>
-        </form>
-         <Dialog open={isProductModalOpen} onOpenChange={setProductModalOpen}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Cadastrar Novo Produto</DialogTitle>
-                    <DialogDescription>Preencha os dados do novo produto.</DialogDescription>
-                </DialogHeader>
-                <ProductForm onSave={handleProductSaved} onClear={() => setProductModalOpen(false)} />
-            </DialogContent>
-        </Dialog>
-    </Form>
-=======
                     <div className="space-y-4">
                         <h3 className="text-lg font-medium text-foreground">Dados Fiscais e de Venda</h3>
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -842,7 +575,6 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                 }}
             />
         </Form>
->>>>>>> feature/status-visual-pro
     );
 
     if (isModal) {

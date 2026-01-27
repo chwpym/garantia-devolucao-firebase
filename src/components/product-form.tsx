@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect } from 'react';
@@ -45,26 +44,13 @@ export default function ProductForm({ onSave, editingProduct, onClear }: Product
   });
 
   useEffect(() => {
-    const defaultVals = editingProduct ? {
-      ...editingProduct,
-      referencia: editingProduct.referencia || '',
-      marca: editingProduct.marca || ''
-    } : defaultFormValues;
-    form.reset(defaultVals);
+    form.reset(editingProduct || defaultFormValues);
   }, [editingProduct, form]);
 
   const { isSubmitting } = form.formState;
 
   const handleSave = async (data: ProductFormValues) => {
     try {
-<<<<<<< HEAD
-      // Fase 7: Validação de duplicidade
-      if (!editingProduct) { // Only check for duplicates when creating a new product
-        const existingProduct = await db.getProductByCode(data.codigo);
-        if (existingProduct) {
-            toast({ title: 'Código Duplicado', description: 'Já existe um produto cadastrado com este código.', variant: 'destructive'});
-            return;
-=======
       // Validação de duplicidade ANTES de salvar
       if (!editingProduct?.id) {
         // Apenas valida ao criar novo produto (não ao editar)
@@ -76,7 +62,6 @@ export default function ProductForm({ onSave, editingProduct, onClear }: Product
             variant: 'destructive',
           });
           return;
->>>>>>> feature/status-visual-pro
         }
       }
 
@@ -149,15 +134,7 @@ export default function ProductForm({ onSave, editingProduct, onClear }: Product
             <FormItem>
               <FormLabel>Marca</FormLabel>
               <FormControl>
-<<<<<<< HEAD
-                <Input 
-                    placeholder="Código principal do produto" 
-                    {...field} 
-                    disabled={!!editingProduct} 
-                />
-=======
                 <Input placeholder="Marca do produto" {...field} />
->>>>>>> feature/status-visual-pro
               </FormControl>
               <FormMessage />
             </FormItem>
