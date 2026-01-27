@@ -1,7 +1,7 @@
 
 'use client';
 
-import { type ComponentType } from 'react';
+import type { ComponentType } from 'react';
 import AppLayout from '@/components/app-layout';
 import DashboardSection from '@/components/sections/dashboard-section';
 import RegisterSection from '@/components/sections/register-section';
@@ -21,8 +21,11 @@ import BatchRegisterSection from '@/components/sections/batch-register-section';
 import ProductsSection from '@/components/sections/products-section';
 import ProductReportSection from '@/components/sections/product-report-section';
 import { useAppStore } from '@/store/app-store';
+import { useShallow } from 'zustand/react/shallow';
 import UsersSection from '@/components/sections/users-section';
 import StatusSection from '@/components/sections/status-section';
+import { useIsMobile } from '@/hooks/use-mobile';
+
 
 export type RegisterMode = 'edit' | 'clone';
 
@@ -41,7 +44,7 @@ const viewComponents: { [key: string]: ComponentType<any> } = {
   backup: BackupSection,
   settings: SettingsSection,
   users: UsersSection,
-  statuses: StatusSection,
+  status: StatusSection, // New view mapping
   'devolucao-register': DevolucaoRegisterSection,
   'devolucao-query': DevolucaoQuerySection,
   'devolucao-reports': DevolucaoReportSection,
@@ -49,7 +52,7 @@ const viewComponents: { [key: string]: ComponentType<any> } = {
   calculators: CalculatorsSection,
 };
 
-export default function HomePage() {
+export default function Home() {
   const {
     activeView,
     selectedLoteId,
@@ -63,7 +66,22 @@ export default function HomePage() {
     handleEditWarranty,
     handleCloneWarranty,
     handleWarrantySave,
-  } = useAppStore();
+  } = useAppStore(useShallow((state) => ({
+    activeView: state.activeView,
+    selectedLoteId: state.selectedLoteId,
+    editingDevolucaoId: state.editingDevolucaoId,
+    editingWarrantyId: state.editingWarrantyId,
+    registerMode: state.registerMode,
+    setActiveView: state.setActiveView,
+    goBack: state.goBack,
+    handleEditDevolucao: state.handleEditDevolucao,
+    handleDevolucaoSaved: state.handleDevolucaoSaved,
+    handleEditWarranty: state.handleEditWarranty,
+    handleCloneWarranty: state.handleCloneWarranty,
+    handleWarrantySave: state.handleWarrantySave,
+  })));
+
+  const isMobile = useIsMobile();
 
   const renderContent = () => {
     const Component = viewComponents[activeView];
@@ -73,18 +91,18 @@ export default function HomePage() {
       case 'dashboard':
         return <DashboardSection openTab={setActiveView} />;
       case 'register':
-        return <RegisterSection 
-                    editingId={editingWarrantyId} 
-                    mode={registerMode} 
-                    onSave={(shouldNavigate: boolean) => handleWarrantySave(shouldNavigate)} 
-                    onClear={() => useAppStore.getState().clearEditingWarranty()}
-                />;
+        return <RegisterSection
+          editingId={editingWarrantyId}
+          mode={registerMode}
+          onSave={(shouldNavigate: boolean) => handleWarrantySave(shouldNavigate)}
+          onClear={() => useAppStore.getState().clearEditingWarranty()}
+        />;
       case 'query':
-        return <QuerySection 
-                    setActiveView={setActiveView}
-                    onEdit={handleEditWarranty} 
-                    onClone={handleCloneWarranty}
-                />;
+        return <QuerySection
+          setActiveView={setActiveView}
+          onEdit={handleEditWarranty}
+          onClone={handleCloneWarranty}
+        />;
       case 'loteDetail':
         return <LoteDetailSection loteId={selectedLoteId!} onBack={goBack} />;
       case 'devolucao-register':
@@ -92,12 +110,14 @@ export default function HomePage() {
       case 'devolucao-query':
         return <DevolucaoQuerySection onEdit={handleEditDevolucao} />;
       case 'lotes':
-          return <LotesSection onNavigateToLote={(loteId) => useAppStore.getState().handleNavigateToLote(loteId)} />;
+        return <LotesSection onNavigateToLote={(loteId) => useAppStore.getState().handleNavigateToLote(loteId)} />;
       default:
         return <Component />;
     }
   };
-  
+
+  if (isMobile === undefined) return null;
+
   return (
     <AppLayout>
       {renderContent()}
