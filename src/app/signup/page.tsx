@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 
-import * as db from '@/lib/db';
+import { auth, createUserWithEmailAndPassword, updateProfile } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 
@@ -37,26 +37,36 @@ export default function SignupPage() {
   const onSubmit = async (data: SignupFormValues) => {
     setIsLoading(true);
     try {
-      await db.createLocalUser(data.email, data.password, {
+      // 1. Cria o usuário no Firebase Authentication
+      const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+
+      // 2. Atualiza o perfil no Firebase (opcional, para ter o nome disponível imediatamente)
+      await updateProfile(userCredential.user, {
         displayName: data.displayName,
       });
 
       toast({
         title: 'Cadastro realizado com sucesso!',
-        description: 'Você será redirecionado para a tela de login.',
+        description: 'Sua conta foi criada. Você será redirecionado para o login.',
       });
 
-      // Redirect to login page after a short delay
+      // Redireciona para o login após um curto delay
       setTimeout(() => {
         router.push('/login');
-      }, 1500);
+      }, 2000);
 
-    } catch (error: unknown) {
-      console.error('Falha no cadastro:', error);
+    } catch (error: any) {
+      console.error('Falha no cadastro Firebase:', error);
       let errorMessage = 'Ocorreu um erro ao realizar o cadastro.';
-      if (error instanceof Error && error.message === 'user-exists') {
-        errorMessage = 'Este e-mail já está em uso. Tente outro.';
+
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = 'Este e-mail já está em uso.';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'A senha é muito fraca.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'E-mail inválido.';
       }
+
       toast({
         title: 'Falha no Cadastro',
         description: errorMessage,
