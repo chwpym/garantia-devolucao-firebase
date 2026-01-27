@@ -155,17 +155,21 @@ export default function BatchRegisterSection() {
 
   const clientOptions = useMemo(() => persons
     .filter(p => p.tipo === 'Cliente' || p.tipo === 'Ambos')
-    .map(c => ({ value: c.nome, label: c.nome })),
+    .map(c => ({ value: c.nome, label: c.nome, keywords: [c.nomeFantasia || '', c.cpfCnpj || ''] })),
     [persons]
   );
 
   const mechanicOptions = useMemo(() => persons
     .filter(p => p.tipo === 'Mecânico' || p.tipo === 'Ambos')
-    .map(m => ({ value: m.nome, label: m.nome })),
+    .map(m => ({ value: m.nome, label: m.nome, keywords: [m.nomeFantasia || '', m.cpfCnpj || ''] })),
     [persons]
   );
 
-  const supplierOptions = useMemo(() => suppliers.map(s => ({ value: s.nomeFantasia, label: s.nomeFantasia })), [suppliers]);
+  const supplierOptions = useMemo(() => suppliers.map(s => ({
+    value: s.nomeFantasia,
+    label: s.nomeFantasia,
+    keywords: [s.razaoSocial || '', s.cnpj || '']
+  })), [suppliers]);
 
   return (
     <div className="w-full space-y-8">

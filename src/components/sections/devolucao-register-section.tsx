@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '../ui/textarea';
 import { parseISO, isSameDay } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
-import ProductForm from '../product-form';
+import { QuickRegisterDialog } from '../quick-register-dialog';
 import { useAppStore } from '@/store/app-store';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Label } from '../ui/label';
@@ -52,14 +52,14 @@ interface DevolucaoRegisterSectionProps {
 }
 
 const defaultFormValues: DevolucaoFormValues = {
-  cliente: '',
-  mecanico: '',
-  requisicaoVenda: '',
-  acaoRequisicao: 'Alterada', // Default value
-  dataDevolucao: new Date(),
-  dataVenda: new Date(),
-  observacaoGeral: '',
-  itens: [{ codigoPeca: '', descricaoPeca: '', quantidade: 1 }],
+    cliente: '',
+    mecanico: '',
+    requisicaoVenda: '',
+    acaoRequisicao: 'Alterada', // Default value
+    dataDevolucao: new Date(),
+    dataVenda: new Date(),
+    observacaoGeral: '',
+    itens: [{ codigoPeca: '', descricaoPeca: '', quantidade: 1 }],
 };
 
 type DevolucaoComItem = Awaited<ReturnType<typeof db.getAllDevolucoes>>[0] & { item: ItemDevolucao };
@@ -82,8 +82,8 @@ function RecentDevolutionsList() {
                 });
             });
         });
-        
-        setRecentItems(itemsComDevolucao.sort((a,b) => parseISO(b.dataDevolucao).getTime() - parseISO(a.dataDevolucao).getTime()));
+
+        setRecentItems(itemsComDevolucao.sort((a, b) => parseISO(b.dataDevolucao).getTime() - parseISO(a.dataDevolucao).getTime()));
         setIsLoading(false);
     }, []);
 
@@ -105,7 +105,7 @@ function RecentDevolutionsList() {
                 <CardDescription>Lista das devoluções registradas no dia selecionado.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-                 <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
                     <Label htmlFor="filter-date" className="shrink-0">Filtro por</Label>
                     <DatePicker date={filterDate} setDate={setFilterDate} />
                 </div>
@@ -152,7 +152,9 @@ function RecentDevolutionsList() {
 export default function DevolucaoRegisterSection({ editingId, onSave }: DevolucaoRegisterSectionProps) {
     const { persons, isDataLoaded, reloadData } = useAppStore();
     const [isProductModalOpen, setProductModalOpen] = useState(false);
-    
+    const [activeItemIndex, setActiveItemIndex] = useState<number | null>(null);
+    const [shouldExit, setShouldExit] = useState(true);
+
     const { toast } = useToast();
     const goBack = useAppStore(state => state.goBack);
 
@@ -222,11 +224,16 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                     quantidade: item.quantidade || 1,
                 }));
                 await db.updateDevolucao(devolucaoData, itensData);
-                toast({
-                    title: 'Sucesso!',
-                    description: 'Devolução atualizada com sucesso.'
-                });
-                onSave();
+                if (shouldExit) {
+                    onSave();
+                } else {
+                    // Mantém dados comuns (cliente, mecânico, data, requisição) mas limpa os itens
+                    form.setValue('itens', [{ codigoPeca: '', descricaoPeca: '', quantidade: 1 }]);
+                    toast({
+                        title: 'Tudo pronto!',
+                        description: 'O cadastro foi atualizado e mantido para novas peças.'
+                    });
+                }
 
             } else {
                 const devolucaoData = {
@@ -238,12 +245,17 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                     quantidade: item.quantidade || 1,
                 }));
                 await db.addDevolucao(devolucaoData, itensData);
-                toast({
-                    title: 'Sucesso!',
-                    description: 'Devolução registrada com sucesso.'
-                });
-                form.reset(defaultFormValues);
-                window.dispatchEvent(new CustomEvent('datachanged')); // Notifica a lista para atualizar
+                if (shouldExit) {
+                    onSave();
+                } else {
+                    // Limpa apenas os itens para agilizar novo registro do mesmo cliente/requisicao
+                    form.setValue('itens', [{ codigoPeca: '', descricaoPeca: '', quantidade: 1 }]);
+                    window.dispatchEvent(new CustomEvent('datachanged'));
+                    toast({
+                        title: 'Cadastrado!',
+                        description: 'A devolução foi salva. Itens limpos para novo registro.'
+                    });
+                }
             }
         } catch (error) {
             console.error('Failed to save devolution:', error);
@@ -259,11 +271,13 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
         goBack(); // Usa a ação do store para voltar
     }
 
-    const handleProductSaved = () => {
-        reloadData('products');
+    const handleProductSaved = (newProduct: Product) => {
+        if (activeItemIndex !== null) {
+            form.setValue(`itens.${activeItemIndex}.codigoPeca`, newProduct.codigo);
+            form.setValue(`itens.${activeItemIndex}.descricaoPeca`, newProduct.descricao);
+        }
         setProductModalOpen(false);
-        // We don't have an active index here, so the user has to search again.
-        // This could be improved in the future.
+        setActiveItemIndex(null);
     };
 
     const handleProductSelect = (product: Product, index: number) => {
@@ -332,7 +346,10 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                                                             value={field.value}
                                                                             onProductSelect={(product) => handleProductSelect(product, index)}
                                                                             onInputChange={(value) => field.onChange(value)}
-                                                                            onAddNew={() => setProductModalOpen(true)}
+                                                                            onAddNew={() => {
+                                                                                setActiveItemIndex(index);
+                                                                                setProductModalOpen(true);
+                                                                            }}
                                                                             placeholder="Código da peça"
                                                                             searchPlaceholder="Buscar produto..."
                                                                             addEntityLabel="Cadastrar Novo Produto"
@@ -466,13 +483,27 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                     />
 
                                 </CardContent>
-                                <CardFooter className="flex justify-end gap-2">
-                                    <Button type="button" variant="outline" onClick={handleCancel}>
+                                <CardFooter className="flex justify-between items-center gap-2">
+                                    <Button type="button" variant="ghost" onClick={handleCancel} disabled={form.formState.isSubmitting}>
                                         Cancelar
                                     </Button>
-                                    <Button type="submit" disabled={form.formState.isSubmitting}>
-                                        {form.formState.isSubmitting ? "Salvando..." : (editingId ? 'Atualizar Devolução' : 'Salvar Devolução')}
-                                    </Button>
+                                    <div className="flex gap-2">
+                                        <Button
+                                            type="submit"
+                                            variant="outline"
+                                            disabled={form.formState.isSubmitting}
+                                            onClick={() => setShouldExit(false)}
+                                        >
+                                            {form.formState.isSubmitting ? "..." : "Salvar e Continuar"}
+                                        </Button>
+                                        <Button
+                                            type="submit"
+                                            disabled={form.formState.isSubmitting}
+                                            onClick={() => setShouldExit(true)}
+                                        >
+                                            {form.formState.isSubmitting ? "..." : (editingId ? 'Atualizar e Sair' : 'Salvar e Sair')}
+                                        </Button>
+                                    </div>
                                 </CardFooter>
                             </form>
                         </Form>
@@ -483,14 +514,12 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                 </div>
             </div>
 
-            <Dialog open={isProductModalOpen} onOpenChange={setProductModalOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Cadastrar Novo Produto</DialogTitle>
-                    </DialogHeader>
-                    <ProductForm onSave={handleProductSaved} onClear={() => setProductModalOpen(false)}/>
-                </DialogContent>
-            </Dialog>
+            <QuickRegisterDialog
+                open={isProductModalOpen}
+                onOpenChange={setProductModalOpen}
+                type="product"
+                onSuccess={handleProductSaved}
+            />
         </>
     );
 }

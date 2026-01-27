@@ -10,6 +10,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './ui
 import MobileSidebar from './mobile-sidebar';
 import QuickShortcuts from './quick-shortcuts';
 import { useAppStore } from '@/store/app-store';
+import { useShallow } from 'zustand/react/shallow';
 import { UserNav } from './user-nav';
 import { ThemeToggle } from './theme-toggle';
 
@@ -39,7 +40,15 @@ export default function AppLayout({ children }: AppLayoutProps) {
     navigationHistory,
     goBack,
     loadInitialData,
-  } = useAppStore();
+  } = useAppStore(useShallow((state) => ({
+    activeView: state.activeView,
+    isMobileMenuOpen: state.isMobileMenuOpen,
+    setMobileMenuOpen: state.setMobileMenuOpen,
+    setActiveView: state.setActiveView,
+    navigationHistory: state.navigationHistory,
+    goBack: state.goBack,
+    loadInitialData: state.loadInitialData,
+  })));
 
   const handleDataChanged = useCallback(() => {
     loadInitialData();

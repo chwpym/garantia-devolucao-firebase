@@ -49,15 +49,17 @@ import { Button } from '@/components/ui/button';
 import { MoreHorizontal, Pencil, Trash2, PlusCircle, Search, ArrowUpDown } from 'lucide-react';
 import SupplierForm from '../supplier-form';
 import { Input } from '../ui/input';
+import { smartSearch } from '@/lib/search-utils';
+import { SearchInput } from '@/components/ui/search-input';
 
 
 const formatCnpj = (value?: string) => {
-    if (!value) return '-';
-    const cleaned = value.replace(/\D/g, '');
-    if (cleaned.length === 14) { // CNPJ
-        return cleaned.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
-    }
-    return value;
+  if (!value) return '-';
+  const cleaned = value.replace(/\D/g, '');
+  if (cleaned.length === 14) { // CNPJ
+    return cleaned.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+  }
+  return value;
 };
 
 type SortableKeys = keyof Supplier;
@@ -106,47 +108,57 @@ export default function SuppliersSection() {
       }
     }
     initializeDB();
-    
+
     window.addEventListener('datachanged', loadSuppliers);
     return () => {
       window.removeEventListener('datachanged', loadSuppliers);
     };
   }, [loadSuppliers, toast, isDbReady]);
-  
+
   const filteredSuppliers = useMemo(() => {
     const lowercasedTerm = searchTerm.toLowerCase();
     if (!lowercasedTerm) return suppliers;
 
-    return suppliers.filter(supplier => 
-        supplier.nomeFantasia.toLowerCase().includes(lowercasedTerm) ||
-        supplier.razaoSocial.toLowerCase().includes(lowercasedTerm) ||
-        (supplier.cnpj && supplier.cnpj.replace(/\D/g, '').includes(lowercasedTerm.replace(/\D/g, '')))
+    return suppliers.filter(supplier =>
+      smartSearch(supplier, searchTerm, ['nomeFantasia', 'razaoSocial', 'cnpj'])
     );
+
+    // ... (in JSX)
+    <div className="mb-4">
+      <SearchInput
+        placeholder="Buscar por Nome Fantasia, Razão Social ou CNPJ..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        onClear={() => setSearchTerm('')}
+        className="w-full"
+        containerClassName="max-w-full"
+      />
+    </div>
   }, [suppliers, searchTerm]);
 
   const sortedSuppliers = useMemo(() => {
     const sortableItems = [...filteredSuppliers];
     if (sortConfig !== null) {
-        sortableItems.sort((a, b) => {
-            const valA = a[sortConfig.key];
-            const valB = b[sortConfig.key];
+      sortableItems.sort((a, b) => {
+        const valA = a[sortConfig.key];
+        const valB = b[sortConfig.key];
 
-            if (valA === undefined || valA === null) return 1;
-            if (valB === undefined || valB === null) return -1;
-            
-            if (typeof valA === 'string' && typeof valB === 'string') {
-                return valA.localeCompare(valB, 'pt-BR') * (sortConfig.direction === 'ascending' ? 1 : -1);
-            }
-            if (typeof valA === 'number' && typeof valB === 'number') {
-                return (valA - valB) * (sortConfig.direction === 'ascending' ? 1 : -1);
-            }
+        if (valA === undefined || valA === null) return 1;
+        if (valB === undefined || valB === null) return -1;
 
-            return 0;
-        });
+        if (typeof valA === 'string' && typeof valB === 'string') {
+          return valA.localeCompare(valB, 'pt-BR') * (sortConfig.direction === 'ascending' ? 1 : -1);
+        }
+        if (typeof valA === 'number' && typeof valB === 'number') {
+          return (valA - valB) * (sortConfig.direction === 'ascending' ? 1 : -1);
+        }
+
+        return 0;
+      });
     }
     return sortableItems;
   }, [filteredSuppliers, sortConfig]);
-  
+
 
   const handleSave = () => {
     setEditingSupplier(null);
@@ -175,72 +187,72 @@ export default function SuppliersSection() {
       });
     }
   };
-  
+
   const handleDeleteClick = () => {
     if (deleteTarget?.id) {
       handleDelete(deleteTarget.id);
     }
     setDeleteTarget(null);
   };
-  
+
   const requestSort = (key: SortableKeys) => {
     let direction: 'ascending' | 'descending' = 'ascending';
     if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
-        direction = 'descending';
+      direction = 'descending';
     }
     setSortConfig({ key, direction });
   };
 
   const getSortIcon = (key: SortableKeys) => {
     if (!sortConfig || sortConfig.key !== key) {
-        return <ArrowUpDown className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-50" />;
+      return <ArrowUpDown className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-50" />;
     }
     return sortConfig.direction === 'ascending' ? '▲' : '▼';
   };
-  
+
   const SortableHeader = ({ sortKey, children }: { sortKey: SortableKeys, children: React.ReactNode }) => (
     <TableHead>
-        <Button variant="ghost" onClick={() => requestSort(sortKey)} className="group px-2">
-            {children}
-            {getSortIcon(sortKey)}
-        </Button>
+      <Button variant="ghost" onClick={() => requestSort(sortKey)} className="group px-2">
+        {children}
+        {getSortIcon(sortKey)}
+      </Button>
     </TableHead>
   );
 
   return (
     <div className='space-y-8'>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-              <h1 className="text-3xl font-bold tracking-tight">Fornecedores</h1>
-              <p className="text-lg text-muted-foreground">
-                  Gerencie seus fornecedores cadastrados.
-              </p>
-          </div>
-          <Dialog open={isFormModalOpen} onOpenChange={(isOpen) => {
-              setIsFormModalOpen(isOpen);
-              if (!isOpen) {
-                  setEditingSupplier(null);
-              }
-          }}>
-              <DialogTrigger asChild>
-                  <Button>
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                      Cadastrar Fornecedor
-                  </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                      <DialogTitle>{editingSupplier ? 'Editar Fornecedor' : 'Novo Fornecedor'}</DialogTitle>
-                      <DialogDescription>Preencha os dados do fornecedor abaixo.</DialogDescription>
-                  </DialogHeader>
-                    <SupplierForm 
-                      onSave={handleSave} 
-                      editingSupplier={editingSupplier} 
-                      onClear={() => setEditingSupplier(null)} 
-                      isModal={true}
-                    />
-              </DialogContent>
-          </Dialog>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Fornecedores</h1>
+          <p className="text-lg text-muted-foreground">
+            Gerencie seus fornecedores cadastrados.
+          </p>
+        </div>
+        <Dialog open={isFormModalOpen} onOpenChange={(isOpen) => {
+          setIsFormModalOpen(isOpen);
+          if (!isOpen) {
+            setEditingSupplier(null);
+          }
+        }}>
+          <DialogTrigger asChild>
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Cadastrar Fornecedor
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>{editingSupplier ? 'Editar Fornecedor' : 'Novo Fornecedor'}</DialogTitle>
+              <DialogDescription>Preencha os dados do fornecedor abaixo.</DialogDescription>
+            </DialogHeader>
+            <SupplierForm
+              onSave={handleSave}
+              editingSupplier={editingSupplier}
+              onClear={() => setEditingSupplier(null)}
+              isModal={true}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
 
       <Card className="shadow-lg">
@@ -250,15 +262,14 @@ export default function SuppliersSection() {
         </CardHeader>
         <CardContent>
           <div className="mb-4">
-               <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                      placeholder="Buscar por Nome Fantasia, Razão Social ou CNPJ..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10"
-                  />
-              </div>
+            <SearchInput
+              placeholder="Buscar por Nome Fantasia, Razão Social ou CNPJ..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onClear={() => setSearchTerm('')}
+              className="w-full"
+              containerClassName="max-w-full"
+            />
           </div>
           <div className="border rounded-md">
             <Table>

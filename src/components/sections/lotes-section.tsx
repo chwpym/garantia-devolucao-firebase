@@ -1,13 +1,14 @@
 
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { Lote, Supplier } from '@/lib/types';
 import * as db from '@/lib/db';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Pencil, Trash2, Package, Calendar, Building, FileText, CheckCircle, ShieldX, Hourglass, DollarSign } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, Package, Calendar, Building, FileText, CheckCircle, ShieldX, Hourglass, DollarSign, Search } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import LoteForm from '../lote-form';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -28,27 +29,38 @@ import {
 } from '@/components/ui/alert-dialog';
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '../ui/status-badge';
 import { useAppStore } from '@/store/app-store';
 import { cn } from '@/lib/utils';
+import { smartSearch } from '@/lib/search-utils';
+import { SearchInput } from '@/components/ui/search-input';
+import { usePersistedFilters } from '@/hooks/use-persisted-filters';
 
 
 interface LotesSectionProps {
-    onNavigateToLote: (loteId: number) => void;
+  onNavigateToLote: (loteId: number) => void;
 }
 
 interface LoteWithStats extends Lote {
-    itemCount: number;
-    statusCounts: {
-        aprovados: number;
-        recusados: number;
-        pendentes: number;
-        pagos: number;
-    };
+  itemCount: number;
+  statusCounts: {
+    aprovados: number;
+    recusados: number;
+    pendentes: number;
+    pagos: number;
+  };
 }
 
 
 export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
   const [lotes, setLotes] = useState<LoteWithStats[]>([]);
+  const initialFilters = useMemo(() => ({
+    searchTerm: '',
+    sortConfig: { key: 'dataCriacao' as keyof Lote, direction: 'descending' as 'ascending' | 'descending' }
+  }), []);
+
+  const { filters, setFilters } = usePersistedFilters('lotes-list', initialFilters);
+  const { searchTerm, sortConfig } = filters;
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [editingLote, setEditingLote] = useState<Lote | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Lote | null>(null);
@@ -72,17 +84,17 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
       ]);
 
       const lotesWithCounts: LoteWithStats[] = allLotes.map(lote => {
-          const loteWarranties = allWarranties.filter(w => w.loteId === lote.id);
-          const itemCount = loteWarranties.length;
-          
-          const statusCounts = {
-            aprovados: loteWarranties.filter(w => w.status?.startsWith('Aprovada')).length,
-            recusados: loteWarranties.filter(w => w.status === 'Recusada').length,
-            pagos: loteWarranties.filter(w => w.status === 'Aprovada - Crédito Boleto').length,
-            pendentes: loteWarranties.filter(w => w.status === 'Aguardando Envio' || w.status === 'Enviado para Análise').length,
-          };
+        const loteWarranties = allWarranties.filter(w => w.loteId === lote.id);
+        const itemCount = loteWarranties.length;
 
-          return { ...lote, itemCount, statusCounts };
+        const statusCounts = {
+          aprovados: loteWarranties.filter(w => w.status?.startsWith('Aprovada')).length,
+          recusados: loteWarranties.filter(w => w.status === 'Recusada').length,
+          pagos: loteWarranties.filter(w => w.status === 'Aprovada - Crédito Boleto').length,
+          pendentes: loteWarranties.filter(w => w.status === 'Aguardando Envio' || w.status === 'Enviado para Análise').length,
+        };
+
+        return { ...lote, itemCount, statusCounts };
       });
 
       setLotes(lotesWithCounts.sort((a, b) => parseISO(b.dataCriacao).getTime() - parseISO(a.dataCriacao).getTime()));
@@ -96,9 +108,9 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
       });
     }
   }, [toast]);
-  
+
   useEffect(() => {
-    if(isNewLoteModalOpen) {
+    if (isNewLoteModalOpen) {
       handleOpenModal();
     }
   }, [isNewLoteModalOpen, handleOpenModal]);
@@ -107,20 +119,20 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
     loadData();
     window.addEventListener('datachanged', loadData);
     return () => {
-        window.removeEventListener('datachanged', loadData);
+      window.removeEventListener('datachanged', loadData);
     };
   }, [loadData]);
-  
+
   const handleSave = () => {
     setNewLoteModalOpen(false);
     setEditingLote(null);
   };
-  
+
   const handleEdit = (lote: Lote) => {
     setEditingLote(lote);
     setNewLoteModalOpen(true);
   };
-  
+
   const handleDeleteConfirm = async () => {
     if (!deleteTarget?.id) return;
     try {
@@ -135,20 +147,17 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
         variant: 'destructive',
       });
     } finally {
-        setDeleteTarget(null);
+      setDeleteTarget(null);
     }
   };
-  
 
-  const getStatusVariant = (status: Lote['status']) => {
-    switch (status) {
-      case 'Enviado': return 'accent-blue';
-      case 'Aprovado Totalmente': return 'accent-green';
-      case 'Aprovado Parcialmente': return 'accent-green';
-      case 'Recusado': return 'destructive';
-      case 'Aberto': default: return 'secondary';
-    }
-  };
+
+
+
+
+  const filteredLotes = lotes.filter(lote =>
+    smartSearch(lote, searchTerm, ['nome', 'fornecedor', 'notasFiscaisRetorno', 'id'])
+  );
 
 
   return (
@@ -161,32 +170,86 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
           </p>
         </div>
       </div>
-      
-      {lotes.length > 0 ? (
+
+      {/* --- Summary Cards --- */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total de Lotes</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{lotes.length}</div>
+            <p className="text-xs text-muted-foreground">Cadastrados</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Abertos</CardTitle>
+            <Hourglass className="h-4 w-4 text-amber-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{lotes.filter(l => l.status === 'Aberto').length}</div>
+            <p className="text-xs text-muted-foreground">Em montagem</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Enviados</CardTitle>
+            <CheckCircle className="h-4 w-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{lotes.filter(l => l.status === 'Enviado').length}</div>
+            <p className="text-xs text-muted-foreground">Aguardando retorno</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Finalizados</CardTitle>
+            <DollarSign className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{lotes.filter(l => ['Aprovado Totalmente', 'Aprovado Parcialmente', 'Recusado'].includes(l.status)).length}</div>
+            <p className="text-xs text-muted-foreground">Processados</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* --- Filters --- */}
+      <div className="flex items-center gap-4">
+        <SearchInput
+          placeholder="Buscar lotes..."
+          value={searchTerm}
+          onChange={(e) => setFilters({ ...filters, searchTerm: e.target.value })}
+          onClear={() => setFilters({ ...filters, searchTerm: '' })}
+        />
+      </div>
+
+      {filteredLotes.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {lotes.map((lote) => (
-            <Card 
-                key={lote.id} 
-                className={cn(
-                    "flex flex-col shadow-md hover:border-primary transition-colors cursor-pointer border-2",
-                    lote.status === 'Enviado' ? 'border-accent-blue' :
-                    lote.status === 'Recusado' ? 'border-destructive' :
+          {filteredLotes.map((lote) => (
+            <Card
+              key={lote.id}
+              className={cn(
+                "flex flex-col shadow-md hover:border-primary transition-colors cursor-pointer border-2",
+                lote.status === 'Enviado' ? 'border-accent-blue' :
+                  lote.status === 'Recusado' ? 'border-destructive' :
                     lote.status === 'Aprovado Totalmente' || lote.status === 'Aprovado Parcialmente' ? 'border-accent-green' :
-                    'border-transparent'
-                )}
-                onClick={() => onNavigateToLote(lote.id!)}
+                      'border-transparent'
+              )}
+              onClick={() => onNavigateToLote(lote.id!)}
             >
               <CardHeader className="flex flex-row items-start justify-between">
                 <div>
-                   <CardTitle className="text-xl">
-                        <span className="text-muted-foreground font-normal">Lote #{lote.id}</span>
-                        <br />
-                        {lote.nome}
-                   </CardTitle>
-                   <CardDescription className="flex items-center gap-2 pt-2">
-                        <Building className="h-4 w-4" /> 
-                        {lote.fornecedor}
-                   </CardDescription>
+                  <CardTitle className="text-xl">
+                    <span className="text-muted-foreground font-normal">Lote #{lote.id}</span>
+                    <br />
+                    {lote.nome}
+                  </CardTitle>
+                  <CardDescription className="flex items-center gap-2 pt-2">
+                    <Building className="h-4 w-4" />
+                    {lote.fornecedor}
+                  </CardDescription>
                 </div>
                 <DropdownMenu onOpenChange={(open) => { if (open) { event?.stopPropagation(); } }}>
                   <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
@@ -196,11 +259,11 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={(e) => {e.stopPropagation(); handleEdit(lote);}}>
+                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEdit(lote); }}>
                       <Pencil className="mr-2 h-4 w-4" />
                       Editar
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={(e) => {e.stopPropagation(); setDeleteTarget(lote);}} className="text-destructive focus:text-destructive">
+                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setDeleteTarget(lote); }} className="text-destructive focus:text-destructive">
                       <Trash2 className="mr-2 h-4 w-4" />
                       Excluir
                     </DropdownMenuItem>
@@ -208,56 +271,71 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
                 </DropdownMenu>
               </CardHeader>
               <CardContent className="flex-grow space-y-4">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Package className="h-4 w-4" />
-                    <span>{lote.itemCount} Itens no lote</span>
-                  </div>
-                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Calendar className="h-4 w-4" />
-                    <span>Criado em: {lote.dataCriacao ? format(parseISO(lote.dataCriacao), 'dd/MM/yyyy') : '-'}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                     <FileText className="h-4 w-4" />
-                     <span>NF de Retorno: {lote.notasFiscaisRetorno || 'N/D'}</span>
-                  </div>
-                    <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t">
-                        <div className='flex items-center gap-1.5'><CheckCircle className='h-3 w-3 text-green-500' /> Aprovados: <span className='font-bold'>{lote.statusCounts.aprovados}</span></div>
-                        <div className='flex items-center gap-1.5'><ShieldX className='h-3 w-3 text-red-500' /> Recusados: <span className='font-bold'>{lote.statusCounts.recusados}</span></div>
-                        <div className='flex items-center gap-1.5'><DollarSign className='h-3 w-3 text-blue-500' /> Pagos (Boleto): <span className='font-bold'>{lote.statusCounts.pagos}</span></div>
-                        <div className='flex items-center gap-1.5'><Hourglass className='h-3 w-3 text-amber-500' /> Pendentes: <span className='font-bold'>{lote.statusCounts.pendentes}</span></div>
-                    </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Package className="h-4 w-4" />
+                  <span>{lote.itemCount} Itens no lote</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Calendar className="h-4 w-4" />
+                  <span>Criado em: {lote.dataCriacao ? format(parseISO(lote.dataCriacao), 'dd/MM/yyyy') : '-'}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <FileText className="h-4 w-4" />
+                  <span>NF de Retorno: {lote.notasFiscaisRetorno || 'N/D'}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t">
+                  <div className='flex items-center gap-1.5'><CheckCircle className='h-3 w-3 text-green-500' /> Aprovados: <span className='font-bold'>{lote.statusCounts.aprovados}</span></div>
+                  <div className='flex items-center gap-1.5'><ShieldX className='h-3 w-3 text-red-500' /> Recusados: <span className='font-bold'>{lote.statusCounts.recusados}</span></div>
+                  <div className='flex items-center gap-1.5'><DollarSign className='h-3 w-3 text-blue-500' /> Pagos (Boleto): <span className='font-bold'>{lote.statusCounts.pagos}</span></div>
+                  <div className='flex items-center gap-1.5'><Hourglass className='h-3 w-3 text-amber-500' /> Pendentes: <span className='font-bold'>{lote.statusCounts.pendentes}</span></div>
+                </div>
               </CardContent>
               <CardFooter>
-                 <Badge variant={getStatusVariant(lote.status)}>{lote.status}</Badge>
+                <StatusBadge type="lote" status={lote.status} />
               </CardFooter>
             </Card>
           ))}
         </div>
       ) : (
-         <div className="text-center py-16 border-2 border-dashed rounded-lg">
-            <Package className="mx-auto h-12 w-12 text-muted-foreground" />
-            <h2 className="mt-4 text-xl font-semibold">Nenhum lote de garantia encontrado</h2>
-            <p className="text-muted-foreground mt-2">
-              Clique em &quot;Novo Lote&quot; no menu superior para começar a agrupar suas garantias.
-            </p>
-         </div>
+        <div className="text-center py-16 border-2 border-dashed rounded-lg">
+          {searchTerm ? (
+            <>
+              <Search className="mx-auto h-12 w-12 text-muted-foreground" />
+              <h2 className="mt-4 text-xl font-semibold">Nenhum resultado encontrado</h2>
+              <p className="text-muted-foreground mt-2">
+                Não encontramos lotes correspondentes a &quot;{searchTerm}&quot;.
+              </p>
+              <Button variant="link" onClick={() => setFilters({ ...filters, searchTerm: '' })} className="mt-2 text-primary">
+                Limpar filtro
+              </Button>
+            </>
+          ) : (
+            <>
+              <Package className="mx-auto h-12 w-12 text-muted-foreground" />
+              <h2 className="mt-4 text-xl font-semibold">Nenhum lote de garantia encontrado</h2>
+              <p className="text-muted-foreground mt-2">
+                Clique em &quot;Novo Lote&quot; no menu superior para começar a agrupar suas garantias.
+              </p>
+            </>
+          )}
+        </div>
       )}
-      
-       <Dialog open={isNewLoteModalOpen} onOpenChange={setNewLoteModalOpen}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>{editingLote ? 'Editar Lote' : 'Criar Novo Lote de Garantia'}</DialogTitle>
-                    <DialogDescription>
-                        Dê um nome ao lote e selecione o fornecedor para agrupar as garantias.
-                    </DialogDescription>
-                </DialogHeader>
-                <LoteForm
-                    onSave={handleSave}
-                    editingLote={editingLote}
-                    suppliers={suppliers}
-                />
-            </DialogContent>
-        </Dialog>
+
+      <Dialog open={isNewLoteModalOpen} onOpenChange={setNewLoteModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingLote ? 'Editar Lote' : 'Criar Novo Lote de Garantia'}</DialogTitle>
+            <DialogDescription>
+              Dê um nome ao lote e selecione o fornecedor para agrupar as garantias.
+            </DialogDescription>
+          </DialogHeader>
+          <LoteForm
+            onSave={handleSave}
+            editingLote={editingLote}
+            suppliers={suppliers}
+          />
+        </DialogContent>
+      </Dialog>
 
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>

@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, Pencil, Trash2, Copy, ArrowUpDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from './ui/status-badge';
 import { Checkbox } from './ui/checkbox';
 import { cn } from '@/lib/utils';
 
@@ -37,66 +38,48 @@ export default function WarrantyTable({ warranties, selectedIds, onSelectionChan
     setDeleteTarget(null);
   };
 
-  const getWarrantyStatusClass = (status?: WarrantyStatus): string => {
-    switch (status) {
-      case 'Aprovada - Peça Nova':
-        return 'bg-accent-green text-accent-green-foreground';
-      case 'Aprovada - Crédito Boleto':
-        return 'bg-accent-green-dark text-accent-green-dark-foreground';
-      case 'Aprovada - Crédito NF':
-        return 'bg-primary text-primary-foreground';
-      case 'Recusada':
-        return 'bg-destructive text-destructive-foreground';
-      case 'Enviado para Análise':
-        return 'bg-accent-blue text-accent-blue-foreground';
-      case 'Aguardando Envio':
-        return 'bg-amber-500 text-white';
-      default:
-        return 'bg-secondary text-secondary-foreground';
-    }
-  };
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-        onSelectionChange(new Set(warranties.map(w => w.id!)));
+      onSelectionChange(new Set(warranties.map(w => w.id!)));
     } else {
-        onSelectionChange(new Set());
+      onSelectionChange(new Set());
     }
   };
 
   const handleRowSelect = (id: number) => {
     const newSet = new Set(selectedIds);
     if (newSet.has(id)) {
-        newSet.delete(id);
+      newSet.delete(id);
     } else {
-        newSet.add(id);
+      newSet.add(id);
     }
     onSelectionChange(newSet);
   };
-  
+
   const isAllSelected = warranties.length > 0 && selectedIds.size === warranties.length;
 
   const requestSort = (key: SortableKeys) => {
     let direction: 'ascending' | 'descending' = 'ascending';
     if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
-        direction = 'descending';
+      direction = 'descending';
     }
     onSort({ key, direction });
   };
-  
+
   const getSortIcon = (key: SortableKeys) => {
     if (!sortConfig || sortConfig.key !== key) {
-        return <ArrowUpDown className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-50" />;
+      return <ArrowUpDown className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-50" />;
     }
     return sortConfig.direction === 'ascending' ? '▲' : '▼';
   };
-  
+
   const SortableHeader = ({ sortKey, children, className }: { sortKey: SortableKeys, children: React.ReactNode, className?: string }) => (
     <TableHead className={className}>
-        <Button variant="ghost" onClick={() => requestSort(sortKey)} className="group px-2">
-            {children}
-            {getSortIcon(sortKey)}
-        </Button>
+      <Button variant="ghost" onClick={() => requestSort(sortKey)} className="group px-2">
+        {children}
+        {getSortIcon(sortKey)}
+      </Button>
     </TableHead>
   );
 
@@ -108,9 +91,9 @@ export default function WarrantyTable({ warranties, selectedIds, onSelectionChan
             <TableRow>
               <TableHead className="w-[50px] text-center">
                 <Checkbox
-                    checked={isAllSelected}
-                    onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
-                    aria-label="Selecionar todos"
+                  checked={isAllSelected}
+                  onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
+                  aria-label="Selecionar todos"
                 />
               </TableHead>
               <SortableHeader sortKey="dataRegistro">Data</SortableHeader>
@@ -128,13 +111,13 @@ export default function WarrantyTable({ warranties, selectedIds, onSelectionChan
             {warranties.length > 0 ? (
               warranties.map(warranty => (
                 <TableRow key={warranty.id} data-state={selectedIds.has(warranty.id!) ? 'selected' : ''}>
-                   <TableCell className="text-center">
-                        <Checkbox
-                            checked={selectedIds.has(warranty.id!)}
-                            onCheckedChange={() => handleRowSelect(warranty.id!)}
-                            aria-label={`Selecionar garantia ${warranty.codigo}`}
-                        />
-                      </TableCell>
+                  <TableCell className="text-center">
+                    <Checkbox
+                      checked={selectedIds.has(warranty.id!)}
+                      onCheckedChange={() => handleRowSelect(warranty.id!)}
+                      aria-label={`Selecionar garantia ${warranty.codigo}`}
+                    />
+                  </TableCell>
                   <TableCell>
                     {warranty.dataRegistro ? format(parseISO(warranty.dataRegistro), 'dd/MM/yyyy') : '-'}
                   </TableCell>
@@ -145,35 +128,31 @@ export default function WarrantyTable({ warranties, selectedIds, onSelectionChan
                   <TableCell>{warranty.cliente || '-'}</TableCell>
                   <TableCell>{warranty.notaFiscalRetorno || '-'}</TableCell>
                   <TableCell>
-                    {warranty.status ? (
-                        <Badge className={cn(getWarrantyStatusClass(warranty.status))}>{warranty.status}</Badge>
-                    ) : (
-                        <Badge variant="secondary">N/A</Badge>
-                    )}
+                    <StatusBadge type="warranty" status={warranty.status} />
                   </TableCell>
                   <TableCell className="text-right">
-                     <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Abrir menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => onEdit(warranty)}>
-                            <Pencil className="mr-2 h-4 w-4" />
-                            Editar
-                          </DropdownMenuItem>
-                           <DropdownMenuItem onClick={() => onClone(warranty)}>
-                            <Copy className="mr-2 h-4 w-4" />
-                            Clonar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setDeleteTarget(warranty)} className="text-destructive focus:text-destructive">
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Excluir
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Abrir menu</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => onEdit(warranty)}>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onClone(warranty)}>
+                          <Copy className="mr-2 h-4 w-4" />
+                          Clonar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setDeleteTarget(warranty)} className="text-destructive focus:text-destructive">
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Excluir
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))
@@ -187,7 +166,7 @@ export default function WarrantyTable({ warranties, selectedIds, onSelectionChan
           </TableBody>
         </Table>
       </div>
-      
+
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>

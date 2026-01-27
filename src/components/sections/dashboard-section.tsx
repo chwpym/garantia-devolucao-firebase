@@ -10,16 +10,19 @@ import { Wrench, ShieldCheck, Hourglass, BarChart3, ShieldX, Users, Building, Do
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, Pie, PieChart as RechartsPieChart, Cell } from 'recharts';
-import { format, parseISO, subMonths } from 'date-fns';
+import { format, parseISO, subMonths, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Devolucao, ItemDevolucao, WarrantyStatus } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '../ui/status-badge';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Calendar as CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { WARRANTY_STATUSES } from '@/lib/types';
+import { WARRANTY_STATUSES, type Warranty } from '@/lib/types';
+import { DatePickerWithRange } from '../ui/date-range-picker';
+import { DateRange } from 'react-day-picker';
 
 
 // Tipos para Garantias
@@ -87,8 +90,16 @@ const COLORS: Record<WarrantyStatus, string> = {
     'Aprovada - Peça Nova': 'hsl(var(--accent-green))',
     'Aprovada - Crédito NF': 'hsl(var(--primary))',
     'Aprovada - Crédito Boleto': 'hsl(var(--accent-green-dark))',
-    'Recusada': 'hsl(var(--chart-5))',
+    'Recusada': 'hsl(var(--destructive))',
 };
+
+const CHART_COLORS = [
+    'hsl(var(--primary))',
+    'hsl(var(--accent-blue))',
+    'hsl(var(--accent-green))',
+    'hsl(var(--accent-orange))',
+    'hsl(var(--accent-purple))',
+];
 
 export default function DashboardSection({ openTab: setActiveView }: DashboardSectionProps) {
     // Estado para Garantias
@@ -101,6 +112,12 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
     // Estado para Devoluções
     const [devolucaoStats, setDevolucaoStats] = useState<DevolucaoStats | null>(null);
     const [recentDevolucoes, setRecentDevolucoes] = useState<DevolucaoFlat[]>([]);
+    const [recentWarranties, setRecentWarranties] = useState<Warranty[]>([]);
+
+    const [dateRange, setDateRange] = useState<DateRange | undefined>({
+        from: subMonths(new Date(), 1),
+        to: new Date()
+    });
 
     const [isLoading, setIsLoading] = useState(true);
     const { toast } = useToast();
@@ -109,10 +126,32 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
         setIsLoading(true);
         try {
             await db.initDB();
-            const [allWarranties, allDevolucoes] = await Promise.all([
+            let [allWarranties, allDevolucoes] = await Promise.all([
                 db.getAllWarranties(),
                 db.getAllDevolucoes(),
             ]);
+
+            // Filtrar por data
+            if (dateRange?.from || dateRange?.to) {
+                const from = dateRange.from;
+                const to = dateRange.to ? addDays(dateRange.to, 1) : null;
+
+                allWarranties = allWarranties.filter(w => {
+                    if (!w.dataRegistro) return false;
+                    const d = parseISO(w.dataRegistro);
+                    if (from && d < from) return false;
+                    if (to && d >= to) return false;
+                    return true;
+                });
+
+                allDevolucoes = allDevolucoes.filter(d => {
+                    if (!d.dataDevolucao) return false;
+                    const date = parseISO(d.dataDevolucao);
+                    if (from && date < from) return false;
+                    if (to && date >= to) return false;
+                    return true;
+                });
+            }
 
             // --- Cálculo de Garantias ---
             const totalDefeitos = allWarranties.reduce((acc, warranty) => {
@@ -209,6 +248,12 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                 mecanicosUnicos: new Set(allDevolucoes.map(d => d.mecanico).filter(Boolean)).size,
             });
 
+            const sortedWarranties = [...allWarranties].sort((a, b) => {
+                if (!b.dataRegistro || !a.dataRegistro) return 0;
+                return parseISO(b.dataRegistro).getTime() - parseISO(a.dataRegistro).getTime();
+            });
+            setRecentWarranties(sortedWarranties.slice(0, 5));
+
 
         } catch (error) {
             console.error('Failed to load dashboard stats:', error);
@@ -220,7 +265,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
         } finally {
             setIsLoading(false);
         }
-    }, [toast]);
+    }, [toast, dateRange]);
 
     useEffect(() => {
         const handleDataChanged = () => {
@@ -242,8 +287,12 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
                     <p className="text-lg text-muted-foreground">
-                        Um resumo das suas operações registradas.
+                        Visão analítica das suas operações.
                     </p>
+                </div>
+                <div className="flex items-center gap-2 bg-card p-2 rounded-lg border shadow-sm">
+                    <CalendarIcon className="h-4 w-4 text-muted-foreground ml-2" />
+                    <DatePickerWithRange date={dateRange} setDate={setDateRange} />
                 </div>
             </div>
 
@@ -252,24 +301,24 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                     <TabsTrigger value="garantias" className={cn("border-2 border-transparent data-[state=active]:border-primary")}>Garantias</TabsTrigger>
                     <TabsTrigger value="devolucoes" className={cn("border-2 border-transparent data-[state=active]:border-[hsl(var(--accent-blue))]")}>Devoluções</TabsTrigger>
                 </TabsList>
-                <TabsContent value="garantias" className="mt-6">
+                <TabsContent value="garantias" className="mt-6 animate-in fade-in zoom-in-95 duration-300">
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
-                        <Card className="shadow-md hover:border-primary transition-colors border-2 border-transparent">
+                        <Card className="shadow-md hover:shadow-lg transition-all border-2 border-transparent hover:border-primary/50 group">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">Total de Garantias</CardTitle>
-                                <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                                <BarChart3 className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                             </CardHeader>
                             <CardContent>
                                 {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.total}</div>}
                                 <p className="text-xs text-muted-foreground">
-                                    Total de registros no sistema
+                                    No período selecionado
                                 </p>
                             </CardContent>
                         </Card>
-                        <Card className="shadow-md hover:border-[hsl(var(--chart-2))] transition-colors border-2 border-transparent">
+                        <Card className="shadow-md hover:shadow-lg transition-all border-2 border-transparent hover:border-[hsl(var(--chart-2))]/50 group">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">Garantias Pendentes</CardTitle>
-                                <Hourglass className="h-4 w-4 text-muted-foreground" />
+                                <Hourglass className="h-4 w-4 text-muted-foreground group-hover:text-[hsl(var(--chart-2))] transition-colors" />
                             </CardHeader>
                             <CardContent>
                                 {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.pendentes}</div>}
@@ -290,15 +339,15 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                                 </p>
                             </CardContent>
                         </Card>
-                        <Card className="shadow-md hover:border-blue-500 transition-colors border-2 border-transparent">
+                        <Card className="shadow-md hover:shadow-lg transition-all border-2 border-transparent hover:border-blue-500/50 group">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">Garantias Pagas</CardTitle>
-                                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                                <DollarSign className="h-4 w-4 text-muted-foreground group-hover:text-blue-500 transition-colors" />
                             </CardHeader>
                             <CardContent>
                                 {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.pagas}</div>}
                                 <p className="text-xs text-muted-foreground">
-                                    Finalizadas e pagas ao cliente
+                                    Finalizadas e pagas
                                 </p>
                             </CardContent>
                         </Card>
@@ -421,17 +470,64 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                         </Card>
                     </div>
 
+                    <Card className="mt-6 shadow-lg">
+                        <CardHeader className="flex flex-row justify-between items-center">
+                            <div className="space-y-1">
+                                <CardTitle>Garantias Recentes</CardTitle>
+                                <CardDescription>As 5 garantias mais recentes registradas em sistema.</CardDescription>
+                            </div>
+                            <Button variant="outline" size="sm" onClick={() => setActiveView('query')}>
+                                Ver Todas
+                                <ArrowRight className="ml-2 h-4 w-4" />
+                            </Button>
+                        </CardHeader>
+                        <CardContent>
+                            {isLoading ? <Skeleton className='h-48 w-full' /> : (
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Data</TableHead>
+                                            <TableHead>Código</TableHead>
+                                            <TableHead>Descrição</TableHead>
+                                            <TableHead>Fornecedor</TableHead>
+                                            <TableHead>Status</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {recentWarranties.length > 0 ? (
+                                            recentWarranties.map(w => (
+                                                <TableRow key={w.id}>
+                                                    <TableCell>{w.dataRegistro ? format(parseISO(w.dataRegistro), 'dd/MM/yyyy') : '-'}</TableCell>
+                                                    <TableCell className="font-mono text-xs">{w.codigo}</TableCell>
+                                                    <TableCell className="font-medium max-w-[200px] truncate">{w.descricao}</TableCell>
+                                                    <TableCell>{w.fornecedor}</TableCell>
+                                                    <TableCell>
+                                                        <StatusBadge type="warranty" status={w.status} />
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))
+                                        ) : (
+                                            <TableRow>
+                                                <TableCell colSpan={5} className="h-24 text-center">Nenhuma garantia registrada no período.</TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            )}
+                        </CardContent>
+                    </Card>
+
                 </TabsContent>
-                <TabsContent value="devolucoes" className="mt-6">
+                <TabsContent value="devolucoes" className="mt-6 animate-in fade-in zoom-in-95 duration-300">
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                        <Card className="shadow-md hover:border-primary transition-colors border-2 border-transparent">
+                        <Card className="shadow-md hover:shadow-lg transition-all border-2 border-transparent hover:border-primary/50 group">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">Total de Devoluções</CardTitle>
-                                <Undo className="h-4 w-4 text-muted-foreground" />
+                                <Undo className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                             </CardHeader>
                             <CardContent>
                                 {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{devolucaoStats?.totalDevolucoes}</div>}
-                                <p className="text-xs text-muted-foreground">Total de registros</p>
+                                <p className="text-xs text-muted-foreground">No período selecionado</p>
                             </CardContent>
                         </Card>
                         <Card className="shadow-md hover:border-accent-blue transition-colors border-2 border-transparent">

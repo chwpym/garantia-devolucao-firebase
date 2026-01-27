@@ -33,6 +33,9 @@ import AddToLoteDialog from '../add-to-lote-dialog';
 import { Combobox } from '../ui/combobox';
 import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
+import { smartSearch } from '@/lib/search-utils';
+import { SearchInput } from '@/components/ui/search-input';
+import { usePersistedFilters } from '@/hooks/use-persisted-filters';
 
 
 interface QuerySectionProps {
@@ -50,11 +53,18 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
   const [openLotes, setOpenLotes] = useState<Lote[]>([]);
   const [isLoteDialogOpen, setIsLoteDialogOpen] = useState(false);
   const [isDbReady, setIsDbReady] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({ from: new Date(new Date().setDate(new Date().getDate() - 30)), to: new Date() });
-  const [clientFilter, setClientFilter] = useState('');
-  const [showInLote, setShowInLote] = useState(false);
-  const [sortConfig, setSortConfig] = useState<{ key: SortableKeys, direction: 'ascending' | 'descending' } | null>({ key: 'id', direction: 'descending' });
+  const [visibleCount, setVisibleCount] = useState(50);
+  const initialFilters = useMemo(() => ({
+    searchTerm: '',
+    dateRange: { from: new Date(new Date().setDate(new Date().getDate() - 30)), to: new Date() } as DateRange | undefined,
+    clientFilter: '',
+    showInLote: false,
+    sortConfig: { key: 'id' as SortableKeys, direction: 'descending' as 'ascending' | 'descending' }
+  }), []);
+
+  const { filters, setFilters } = usePersistedFilters('query-warranties', initialFilters);
+  const { searchTerm, dateRange, clientFilter, showInLote, sortConfig } = filters;
+
   const { toast } = useToast();
 
   const loadData = useCallback(async () => {
@@ -155,20 +165,20 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
       }
 
       // Search term filter
-      if (!lowercasedTerm) {
-        return true;
+      if (!smartSearch(warranty, searchTerm, [
+        'codigo',
+        'descricao',
+        'fornecedor',
+        'cliente',
+        'defeito',
+        'status',
+        'requisicaoVenda',
+        'requisicoesGarantia',
+        'notaFiscalRetorno'
+      ])) {
+        return false;
       }
-      return (
-        warranty.codigo?.toLowerCase().includes(lowercasedTerm) ||
-        warranty.descricao?.toLowerCase().includes(lowercasedTerm) ||
-        warranty.fornecedor?.toLowerCase().includes(lowercasedTerm) ||
-        warranty.cliente?.toLowerCase().includes(lowercasedTerm) ||
-        warranty.defeito?.toLowerCase().includes(lowercasedTerm) ||
-        warranty.status?.toLowerCase().includes(lowercasedTerm) ||
-        warranty.requisicaoVenda?.toLowerCase().includes(lowercasedTerm) ||
-        warranty.requisicoesGarantia?.toLowerCase().includes(lowercasedTerm) ||
-        warranty.notaFiscalRetorno?.toLowerCase().includes(lowercasedTerm)
-      );
+      return true;
     });
   }, [searchTerm, warranties, dateRange, clientFilter, showInLote]);
 
@@ -206,10 +216,14 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
   );
 
   const clearFilters = () => {
-    setSearchTerm('');
-    setDateRange(undefined);
-    setClientFilter('');
-    setShowInLote(false);
+    setFilters({
+      searchTerm: '',
+      dateRange: { from: new Date(new Date().setDate(new Date().getDate() - 30)), to: new Date() },
+      clientFilter: '',
+      showInLote: false,
+      sortConfig: { key: 'id', direction: 'descending' }
+    });
+    setVisibleCount(50);
   }
 
   const handleAddToLote = async (loteId: number) => {
@@ -353,26 +367,28 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por código, descrição, cliente..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10"
-              />
-            </div>
+            <SearchInput
+              placeholder="Buscar por código, descrição, cliente..."
+              value={searchTerm}
+              onChange={(e) => setFilters({ ...filters, searchTerm: e.target.value })}
+              onClear={() => setFilters({ ...filters, searchTerm: '' })}
+              className="w-full"
+              containerClassName="relative flex-1 max-w-full"
+            />
             <div className='flex flex-col md:flex-row gap-4'>
               <Combobox
                 options={clientOptions}
                 value={clientFilter}
-                onChange={setClientFilter}
+                onChange={(val) => setFilters({ ...filters, clientFilter: val })}
                 placeholder="Filtrar por cliente..."
                 searchPlaceholder='Buscar cliente...'
                 notFoundMessage='Nenhum cliente encontrado.'
                 className='w-full'
               />
-              <DatePickerWithRange date={dateRange} setDate={setDateRange} />
+              <DatePickerWithRange
+                date={dateRange}
+                setDate={(range) => setFilters({ ...filters, dateRange: range })}
+              />
             </div>
           </div>
 
@@ -383,7 +399,7 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
                 <Checkbox
                   id="showInLote"
                   checked={showInLote}
-                  onCheckedChange={(checked) => setShowInLote(Boolean(checked))}
+                  onCheckedChange={(checked) => setFilters({ ...filters, showInLote: Boolean(checked) })}
                 />
                 <Label htmlFor="showInLote" className="text-sm font-medium cursor-pointer">Mostrar itens em lotes</Label>
               </div>
@@ -430,16 +446,36 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
             </div>
           </div>
 
-          <WarrantyTable
-            warranties={sortedWarranties}
-            selectedIds={selectedIds}
-            onSelectionChange={setSelectedIds}
-            onEdit={onEdit}
-            onClone={onClone}
-            onDelete={handleDelete}
-            sortConfig={sortConfig}
-            onSort={setSortConfig}
-          />
+          <div className="space-y-4">
+            <WarrantyTable
+              warranties={sortedWarranties.slice(0, visibleCount)}
+              selectedIds={selectedIds}
+              onSelectionChange={setSelectedIds}
+              onEdit={onEdit}
+              onClone={onClone}
+              onDelete={handleDelete}
+              sortConfig={sortConfig}
+              onSort={(config) => setFilters({ ...filters, sortConfig: config as any })}
+            />
+
+            {visibleCount < sortedWarranties.length && (
+              <div className="flex justify-center pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setVisibleCount(prev => prev + 50)}
+                  className="w-full max-w-xs"
+                >
+                  Carregar Mais (Exibindo {visibleCount} de {sortedWarranties.length})
+                </Button>
+              </div>
+            )}
+
+            {sortedWarranties.length > 0 && visibleCount >= sortedWarranties.length && (
+              <p className="text-center text-xs text-muted-foreground pt-2">
+                Todos os {sortedWarranties.length} registros foram carregados.
+              </p>
+            )}
+          </div>
         </CardContent>
       </Card>
 

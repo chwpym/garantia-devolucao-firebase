@@ -16,12 +16,15 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from './ui/textarea';
+import { Combobox } from './ui/combobox';
+import { QuickRegisterDialog } from './quick-register-dialog';
+import { useState } from 'react';
 
 const loteStatuses: [LoteStatus, ...LoteStatus[]] = ['Aberto', 'Enviado', 'Aprovado Parcialmente', 'Aprovado Totalmente', 'Recusado'];
 
 const attachmentSchema = z.object({
-    name: z.string(),
-    url: z.string(),
+  name: z.string(),
+  url: z.string(),
 });
 
 const formSchema = z.object({
@@ -44,6 +47,13 @@ interface LoteFormProps {
 export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isQuickRegisterOpen, setQuickRegisterOpen] = useState(false);
+
+  const supplierOptions = suppliers.map(s => ({
+    value: s.nomeFantasia,
+    label: s.nomeFantasia,
+    keywords: [s.razaoSocial || '', s.cnpj || '']
+  }));
 
   const form = useForm<LoteFormValues>({
     resolver: zodResolver(formSchema),
@@ -92,17 +102,17 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
       });
     }
   };
-  
+
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     // Temporariamente desativado para evitar problemas com CORS e plano Spark
     toast({
-        title: 'Funcionalidade Temporariamente Desativada',
-        description: 'O upload de anexos para o Firebase Storage requer um plano pago. Esta função está desativada.',
-        variant: 'destructive',
-        duration: 8000,
+      title: 'Funcionalidade Temporariamente Desativada',
+      description: 'O upload de anexos para o Firebase Storage requer um plano pago. Esta função está desativada.',
+      variant: 'destructive',
+      duration: 8000,
     });
     if (event.target) {
-        event.target.value = '';
+      event.target.value = '';
     }
     return;
   };
@@ -136,22 +146,19 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
             name="fornecedor"
             control={form.control}
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="flex flex-col">
                 <FormLabel>Fornecedor</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um fornecedor para o lote" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {suppliers.map((s) => (
-                      <SelectItem key={s.id} value={s.nomeFantasia}>
-                        {s.nomeFantasia}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Combobox
+                  options={supplierOptions}
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                  placeholder="Selecione um fornecedor"
+                  searchPlaceholder="Buscar fornecedor..."
+                  notFoundMessage="Nenhum fornecedor encontrado."
+                  className="w-full"
+                  onAddClick={() => setQuickRegisterOpen(true)}
+                  addLabel="Novo Fornecedor"
+                />
                 <FormMessage />
               </FormItem>
             )}
@@ -170,23 +177,23 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
                 </FormItem>
               )}
             />
-             <FormField
+            <FormField
               name="status"
               control={form.control}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Status do Lote</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                          <SelectTrigger>
-                              <SelectValue placeholder="Selecione um status para o lote" />
-                          </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                          {loteStatuses.map(status => (
-                              <SelectItem key={status} value={status}>{status}</SelectItem>
-                          ))}
-                      </SelectContent>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um status para o lote" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {loteStatuses.map(status => (
+                        <SelectItem key={status} value={status}>{status}</SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
@@ -203,67 +210,67 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
                   <Textarea placeholder="Digite os números das notas, separados por vírgula" {...field} />
                 </FormControl>
                 <FormDescription>
-                    Se houver mais de uma, separe por vírgulas. Ex: 12345, 67890
+                  Se houver mais de uma, separe por vírgulas. Ex: 12345, 67890
                 </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
-          
+
           <FormField
             control={form.control}
             name="attachments"
             render={() => (
-                <FormItem>
-                    <FormLabel>Anexos de Autorização</FormLabel>
-                     <FormControl>
-                        <div>
-                        <input
-                            type="file"
-                            ref={fileInputRef}
-                            multiple
-                            className="hidden"
-                            onChange={handleFileChange}
-                            disabled={!editingLote}
-                        />
-                        <Button 
-                            type="button" 
-                            variant="outline"
-                            onClick={() => fileInputRef.current?.click()}
-                            disabled={!editingLote}
+              <FormItem>
+                <FormLabel>Anexos de Autorização</FormLabel>
+                <FormControl>
+                  <div>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      multiple
+                      className="hidden"
+                      onChange={handleFileChange}
+                      disabled={!editingLote}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={!editingLote}
+                    >
+                      <Upload className="mr-2 h-4 w-4" />
+                      Anexar Arquivos
+                    </Button>
+                  </div>
+                </FormControl>
+                {!editingLote && <FormDescription>Salve o lote para poder anexar arquivos.</FormDescription>}
+                <FormDescription>Upload para nuvem temporariamente desativado no plano gratuito.</FormDescription>
+                <FormMessage />
+                {attachments && attachments.length > 0 && (
+                  <div className="space-y-2 pt-2">
+                    {attachments.map((att, index) => (
+                      <div key={index} className="flex items-center justify-between text-sm p-2 bg-muted rounded-md">
+                        <a href={att.url} target="_blank" rel="noopener noreferrer" className='flex items-center gap-2 hover:underline truncate'>
+                          <LinkIcon className='h-4 w-4' />
+                          <span className='truncate' title={att.name}>{att.name}</span>
+                        </a>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-destructive hover:text-destructive"
+                          onClick={() => removeAttachment(index)}
                         >
-                            <Upload className="mr-2 h-4 w-4" />
-                            Anexar Arquivos
+                          <X className="h-4 w-4" />
                         </Button>
-                        </div>
-                    </FormControl>
-                    {!editingLote && <FormDescription>Salve o lote para poder anexar arquivos.</FormDescription>}
-                     <FormDescription>Upload para nuvem temporariamente desativado no plano gratuito.</FormDescription>
-                    <FormMessage />
-                    {attachments && attachments.length > 0 && (
-                        <div className="space-y-2 pt-2">
-                            {attachments.map((att, index) => (
-                                <div key={index} className="flex items-center justify-between text-sm p-2 bg-muted rounded-md">
-                                    <a href={att.url} target="_blank" rel="noopener noreferrer" className='flex items-center gap-2 hover:underline truncate'>
-                                        <LinkIcon className='h-4 w-4' />
-                                        <span className='truncate' title={att.name}>{att.name}</span>
-                                    </a>
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-6 w-6 text-destructive hover:text-destructive"
-                                        onClick={() => removeAttachment(index)}
-                                    >
-                                        <X className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </FormItem>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </FormItem>
             )}
-            />
+          />
         </div>
         <DialogFooter>
           <Button type="submit" disabled={isSubmitting}>
@@ -272,6 +279,14 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
           </Button>
         </DialogFooter>
       </form>
+      <QuickRegisterDialog
+        open={isQuickRegisterOpen}
+        onOpenChange={setQuickRegisterOpen}
+        type="supplier"
+        onSuccess={(newSupplier) => {
+          form.setValue('fornecedor', newSupplier.nomeFantasia);
+        }}
+      />
     </Form>
   );
 }

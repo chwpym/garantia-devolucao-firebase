@@ -21,6 +21,7 @@ import BatchRegisterSection from '@/components/sections/batch-register-section';
 import ProductsSection from '@/components/sections/products-section';
 import ProductReportSection from '@/components/sections/product-report-section';
 import { useAppStore } from '@/store/app-store';
+import { useShallow } from 'zustand/react/shallow';
 import UsersSection from '@/components/sections/users-section';
 import StatusSection from '@/components/sections/status-section';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -65,7 +66,20 @@ export default function Home() {
     handleEditWarranty,
     handleCloneWarranty,
     handleWarrantySave,
-  } = useAppStore();
+  } = useAppStore(useShallow((state) => ({
+    activeView: state.activeView,
+    selectedLoteId: state.selectedLoteId,
+    editingDevolucaoId: state.editingDevolucaoId,
+    editingWarrantyId: state.editingWarrantyId,
+    registerMode: state.registerMode,
+    setActiveView: state.setActiveView,
+    goBack: state.goBack,
+    handleEditDevolucao: state.handleEditDevolucao,
+    handleDevolucaoSaved: state.handleDevolucaoSaved,
+    handleEditWarranty: state.handleEditWarranty,
+    handleCloneWarranty: state.handleCloneWarranty,
+    handleWarrantySave: state.handleWarrantySave,
+  })));
 
   const isMobile = useIsMobile();
 
