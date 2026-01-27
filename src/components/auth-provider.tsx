@@ -1,14 +1,14 @@
 
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useMemo } from 'react';
 import { onAuthStateChanged, type User, signOut } from 'firebase/auth';
 import { getAuth } from "firebase/auth";
 import { getFirebaseApp } from '@/lib/firebase';
 import { type UserProfile } from '@/lib/types';
 import * as db from '@/lib/db';
 import { countUsers } from '@/lib/db-utils';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
 
 
 // This new type combines Firebase Auth user with our custom profile data
@@ -24,7 +24,6 @@ export const AuthContext = createContext<AuthContextType>({ user: null, loading:
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
 
   useEffect(() => {
     const app = getFirebaseApp();
@@ -114,9 +113,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Cleanup subscription on unmount
     return () => unsubscribe();
-  }, [toast]);
+  }, []); // auth is stable, toast is imported directly
 
-  const value = { user, loading };
+  const value = useMemo(() => ({ user, loading }), [user, loading]);
 
   return (
     <AuthContext.Provider value={value}>

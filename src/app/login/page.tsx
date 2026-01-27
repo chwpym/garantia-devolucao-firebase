@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { signInWithEmailAndPassword, type AuthError, onAuthStateChanged, setPersistence, browserSessionPersistence, indexedDBLocalPersistence } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
+import { useAuthGuard } from '@/hooks/use-auth-guard';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
@@ -28,6 +29,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const { toast } = useToast();
+  const { user, loading: authLoading } = useAuthGuard();
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false); // Estado para "Lembrar de mim" (padrão: false para maior segurança)
 
@@ -37,13 +39,14 @@ export default function LoginPage() {
 
   // Listener para resetar o estado de loading caso o usuário seja deslogado (ex: bloqueado)
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (!user) {
+    const unsubscribe = onAuthStateChanged(auth, (authUser) => {
+      // Se tivermos um usuário ou carregamento terminou, paramos o loader local
+      if (authUser || authLoading === false) {
         setIsLoading(false);
       }
     });
     return () => unsubscribe();
-  }, []);
+  }, [authLoading]);
 
 
   const onSubmit = async (data: LoginFormValues) => {
@@ -121,8 +124,8 @@ export default function LoginPage() {
                 Lembrar de mim
               </label>
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button type="submit" className="w-full" disabled={isLoading || authLoading}>
+              {(isLoading || authLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Entrar
             </Button>
           </form>

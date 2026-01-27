@@ -7,8 +7,8 @@ export default function ClientManifestInjector() {
   useEffect(() => {
     try {
       const host = window.location.host || '';
-      // Evita injeção no Cloud Workstations onde o forwardAuthCookie causa redirecionamentos CORS
-      if (host.includes('cloudworkstations.dev')) return;
+      // Evita injeção no Cloud Workstations ou Vercel Previews onde o 401 ocorre comumente
+      if (host.includes('cloudworkstations.dev') || host.includes('vercel.app')) return;
 
       // Se o manifesto já estiver presente, não faz nada
       if (document.querySelector('link[rel="manifest"]')) return;
