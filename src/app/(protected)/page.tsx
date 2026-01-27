@@ -44,7 +44,8 @@ const viewComponents: { [key: string]: ComponentType<any> } = {
   backup: BackupSection,
   settings: SettingsSection,
   users: UsersSection,
-  status: StatusSection, // New view mapping
+  statuses: StatusSection, // Correct mapping to match nav-config
+  status: StatusSection, // Backward compatibility
   'devolucao-register': DevolucaoRegisterSection,
   'devolucao-query': DevolucaoQuerySection,
   'devolucao-reports': DevolucaoReportSection,
