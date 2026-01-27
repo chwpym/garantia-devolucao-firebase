@@ -511,6 +511,8 @@ export const deleteLoteItem = (id: number): Promise<void> => {
   });
 };
 
+export const clearLoteItems = (): Promise<void> => clearStore(LOTE_ITEMS_STORE_NAME);
+
 
 // --- Company Data Functions ---
 
@@ -948,3 +950,5 @@ export const deleteStatus = async (id: number): Promise<void> => {
     }
   });
 };
+
+export const clearStatuses = (): Promise<void> => clearStore(STATUSES_STORE_NAME);

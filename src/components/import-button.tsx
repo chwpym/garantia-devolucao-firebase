@@ -57,9 +57,9 @@ export function ImportButton({ onDataImported }: ImportButtonProps) {
 
         // Check for old format (just an array of warranties) for backward compatibility
         if (Array.isArray(data) && data.every((item: unknown) => typeof item === 'object' && item !== null && ('codigo' in item || 'descricao' in item))) {
-            setDataToImport({ warranties: data as Warranty[] });
-            setShowConfirm(true);
-            return;
+          setDataToImport({ warranties: data as Warranty[] });
+          setShowConfirm(true);
+          return;
         }
 
         if (!data || (
@@ -72,12 +72,12 @@ export function ImportButton({ onDataImported }: ImportButtonProps) {
           !Array.isArray(data.statuses) &&
           !data.companyData
         )) {
-            throw new Error('O arquivo de backup não parece ter um formato válido.');
+          throw new Error('O arquivo de backup não parece ter um formato válido.');
         }
-        
+
         setDataToImport(data);
         setShowConfirm(true);
-        
+
       } catch (error) {
         toast({
           title: 'Erro ao Ler Arquivo',
@@ -97,83 +97,84 @@ export function ImportButton({ onDataImported }: ImportButtonProps) {
     setIsLoading(true);
 
     try {
-        // Clear all existing data
-        await Promise.all([
-            db.clearWarranties(),
-            db.clearPersons(),
-            db.clearSuppliers(),
-            db.clearLotes(),
-            db.clearDevolucoes(),
-            db.clearProducts(),
-            db.clearCompanyData(),
-            db.clearStatuses(),
-        ]);
+      // Clear all existing data
+      await Promise.all([
+        db.clearWarranties(),
+        db.clearPersons(),
+        db.clearSuppliers(),
+        db.clearLotes(),
+        db.clearDevolucoes(),
+        db.clearProducts(),
+        db.clearCompanyData(),
+        db.clearStatuses(),
+        db.clearLoteItems(),
+      ]);
 
-        // Import new data
-        if (dataToImport.warranties) {
-            for (const { ...warrantyData } of dataToImport.warranties) {
-                await db.addWarranty(warrantyData);
-            }
+      // Import new data
+      if (dataToImport.warranties) {
+        for (const { ...warrantyData } of dataToImport.warranties) {
+          await db.addWarranty(warrantyData);
         }
-        if (dataToImport.persons) {
-            for (const { ...personData } of dataToImport.persons) {
-                await db.addPerson(personData);
-            }
+      }
+      if (dataToImport.persons) {
+        for (const { ...personData } of dataToImport.persons) {
+          await db.addPerson(personData);
         }
-        if (dataToImport.suppliers) {
-            for (const { ...supplierData } of dataToImport.suppliers) {
-                await db.addSupplier(supplierData);
-            }
+      }
+      if (dataToImport.suppliers) {
+        for (const { ...supplierData } of dataToImport.suppliers) {
+          await db.addSupplier(supplierData);
         }
-        if (dataToImport.lotes) {
-            for (const { ...loteData } of dataToImport.lotes) {
-                await db.addLote(loteData);
-            }
+      }
+      if (dataToImport.lotes) {
+        for (const { ...loteData } of dataToImport.lotes) {
+          await db.addLote(loteData);
         }
-        if (dataToImport.devolucoes) {
-            for (const { itens, ...devolucaoData } of dataToImport.devolucoes) {
-                await db.addDevolucao(devolucaoData, itens || []);
-            }
+      }
+      if (dataToImport.devolucoes) {
+        for (const { itens, ...devolucaoData } of dataToImport.devolucoes) {
+          await db.addDevolucao(devolucaoData, itens || []);
         }
-         if (dataToImport.products) {
-            for (const { ...productData } of dataToImport.products) {
-                await db.addProduct(productData);
-            }
+      }
+      if (dataToImport.products) {
+        for (const { ...productData } of dataToImport.products) {
+          await db.addProduct(productData);
         }
-        if (dataToImport.statuses) {
-            for (const { ...statusData } of dataToImport.statuses) {
-                await db.addStatus(statusData);
-            }
+      }
+      if (dataToImport.statuses) {
+        for (const { ...statusData } of dataToImport.statuses) {
+          await db.addStatus(statusData);
         }
-        if (dataToImport.companyData) {
-            const { ...companyData } = dataToImport.companyData;
-            await db.updateCompanyData(companyData);
-        }
+      }
+      if (dataToImport.companyData) {
+        const { ...companyData } = dataToImport.companyData;
+        await db.updateCompanyData(companyData);
+      }
 
-        onDataImported();
-        window.dispatchEvent(new CustomEvent('datachanged'));
+      onDataImported();
+      window.dispatchEvent(new CustomEvent('datachanged'));
     } catch (error) {
-        console.error('Failed to import data:', error);
-        toast({
-            title: 'Erro na Importação',
-            description: 'Não foi possível importar os dados. Verifique o console para mais detalhes.',
-            variant: 'destructive',
-        });
+      console.error('Failed to import data:', error);
+      toast({
+        title: 'Erro na Importação',
+        description: 'Não foi possível importar os dados. Verifique o console para mais detalhes.',
+        variant: 'destructive',
+      });
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   };
 
   const getImportSummary = () => {
     if (!dataToImport) return "Nenhum registro a ser importado."
     const counts = [
-        dataToImport.warranties?.length || 0,
-        dataToImport.persons?.length || 0,
-        dataToImport.suppliers?.length || 0,
-        dataToImport.lotes?.length || 0,
-        dataToImport.devolucoes?.length || 0,
-        dataToImport.products?.length || 0,
-        dataToImport.statuses?.length || 0,
+      dataToImport.warranties?.length || 0,
+      dataToImport.persons?.length || 0,
+      dataToImport.suppliers?.length || 0,
+      dataToImport.lotes?.length || 0,
+      dataToImport.devolucoes?.length || 0,
+      dataToImport.products?.length || 0,
+      dataToImport.statuses?.length || 0,
     ];
     const totalRecords = counts.reduce((acc, count) => acc + count, 0);
     return `Você está prestes a importar um total de ${totalRecords} registros em várias categorias. Deseja continuar?`
@@ -207,7 +208,7 @@ export function ImportButton({ onDataImported }: ImportButtonProps) {
             <AlertDialogTitle>Confirmar Restauração de Backup?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta ação <span className="font-bold text-destructive">substituirá todos os dados existentes no sistema</span> com o conteúdo do arquivo de backup selecionado.
-              <br/><br/>
+              <br /><br />
               {getImportSummary()}
             </AlertDialogDescription>
           </AlertDialogHeader>
