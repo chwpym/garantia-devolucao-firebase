@@ -1,9 +1,9 @@
 # 🚀 Plano Completo de Refatoração - Synergia OS
 
-> **Versão:** 3.0 - COMPLETA  
-> **Data Criação:** 15/12/2025  
-> **Total de Fases:** 24  
-> **Tempo Estimado:** 60-78 horas (8-10 dias)
+> **Versão:** 3.1 - ESTABILIDADE  
+> **Data Atualização:** 28/01/2026  
+> **Total de Fases:** 25 (Adicionada 11a)
+> **Status:** 🟠 Em Progresso (Fase 11a)
 
 ---
 
@@ -100,9 +100,16 @@ src/
 **Tempo:** 2-3 horas  
 **Objetivo:** Virtualização de listas + lazy loading
 
-### Fase 11: Status de Garantia
+### Fase 11: Status de Garantia ✅
 **Tempo:** 2-3 horas  
-**Objetivo:** Sistema de status visual com cores
+**Objetivo:** Sistema de status visual com cores (CRUD Dinâmico antecipado)
+
+### Fase 11a: Gestão de Acessos e Segurança Híbrida 🟠
+**Tempo:** 3-4 horas  
+**Objetivo:** Modelo Local-First com motor Firebase.
+- Cadastro Pendente/Aprovação Admin.
+- Badge de notificação de novos usuários.
+- Reset de UI entre diferentes perfis de usuário.
 
 ### Fase 12: Código Externo
 **Tempo:** 2 horas  
@@ -243,6 +250,6 @@ git push origin main
 
 ---
 
-**Última Atualização:** 15/12/2025  
-**Versão:** 3.0  
-**Status:** ✅ Pronto para iniciar
+**Última Atualização:** 28/01/2026  
+**Versão:** 3.1  
+**Status:** 🟠 Fase 11a em andamento

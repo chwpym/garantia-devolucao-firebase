@@ -5,9 +5,9 @@ Este documento rastreia o status detalhado de cada fase do plano de refatoraçã
 ## 📊 Status Geral
 
 *   **Início:** 15/12/2025
-*   **Fases Concluídas:** 5/24
-*   **Em Progresso:** Nenhuma
-*   **Próxima Fase:** Fase 6 - Refinamento de Lotes
+*   **Fases Concluídas:** 11/25
+*   **Em Progresso:** Fase 11a - Gestão de Acessos e Segurança Híbrida
+*   **Próxima Fase:** Fase 12 - Código Externo
 
 ---
 
@@ -52,13 +52,30 @@ Este documento rastreia o status detalhado de cada fase do plano de refatoraçã
 | Histórico de Navegação Persistente | ✅ | 1h | 30m | Implementado no AppStore |
 | **Total da Fase** | | 3h | 1h 10m | Navegação fluida e sem "cliques perdidos" |
 
-### FASE 5: Usabilidade em Garantias
+### FASES 6 a 10 ✅
+| Fase | Objetivo | Status | Notas |
+| :--- | :--- | :---: | :--- |
+| **6** | Busca Inteligente | ✅ | Implementada com busca fuzzy |
+| **7** | Melhorias de Fluxo | ✅ | Botão "+" e filtros persistentes |
+| **8** | Dashboard Visual | ✅ | Gráficos Recharts implementados |
+| **9** | Cadastro Rápido | ✅ | Auto-seleção de itens criada |
+| **10** | Performance | ✅ | Otimização de renderização de listas |
+
+### FASE 11: Status de Garantia ✅
 | Item | Status | Tempo Est. | Tempo Real | Notas |
 | :--- | :---: | :---: | :---: | :--- |
-| **Prioridade** | 🟠 MÉDIA | | | |
-| Cards informativos no topo (Resumo) | ✅ | 1h | 45m | KPIs implementados com sucesso |
-| Gerenciamento em massa (Bulk Actions) | ✅ | 1h 30m | 1h 15m | Ações de status e lote implementadas |
-| Melhorar visualização da tabela | ✅ | 1h | 30m | Filtros e badges integrados |
+| **Prioridade** | 🟡 MÉDIA | | | |
+| CRUD de Status Dinâmicos | ✅ | 6h | 4h | Antecipado da Fase 18 para estabilizar o sistema |
+| Sincronia de IDs (status/statuses) | ✅ | 1h | 20m | Resolvido problema de navegação Dashboard |
+| **Total da Fase** | | 7h | 4h 20m | Status 100% personalizáveis e seguros |
+
+### FASE 11a: Gestão de Acessos e Segurança Híbrida 🟠
+| Item | Status | Tempo Est. | Tempo Real | Notas |
+| :--- | :---: | :---: | :---: | :--- |
+| **Prioridade** | 🔴 CRÍTICA | | | |
+| Sistema de Aprovação (Pendente) | 🟠 | 1h | - | Em planejamento |
+| Badge de Notificação Header | ⏳ | 1h | - | Aguardando implementação |
+| Segurança de Route Guard UI | ⏳ | 1h | - | Aguardando implementação |
 
 ---
 
