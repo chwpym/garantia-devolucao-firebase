@@ -28,7 +28,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Loader2, MoreHorizontal, Pencil, Ban, CheckCircle, ArrowUpDown } from 'lucide-react';
+import { Loader2, MoreHorizontal, Pencil, Ban, CheckCircle, ArrowUpDown, UserCheck, ShieldCheck } from 'lucide-react';
 import * as db from '@/lib/db';
 import { type UserProfile, type UserRole } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -55,6 +55,7 @@ import { Info } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '../ui/dropdown-menu';
 import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { useAuth } from '@/hooks/use-auth';
 
 const userFormSchema = z.object({
@@ -78,7 +79,7 @@ export default function UsersSection() {
   const [isLoading, setIsLoading] = useState(true);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
-  const [showBlocked, setShowBlocked] = useState(false);
+  const [activeTab, setActiveTab] = useState<'active' | 'pending' | 'blocked'>('active');
   const [sortConfig, setSortConfig] = useState<{ key: SortableKeys, direction: 'ascending' | 'descending' } | null>({ key: 'displayName', direction: 'ascending' });
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
@@ -105,19 +106,19 @@ export default function UsersSection() {
 
   useEffect(() => {
     loadUsers();
-     const handleDataChanged = () => loadUsers();
+    const handleDataChanged = () => loadUsers();
     window.addEventListener('datachanged', handleDataChanged);
     return () => window.removeEventListener('datachanged', handleDataChanged);
   }, [loadUsers]);
-  
+
   useEffect(() => {
     if (isFormModalOpen && editingUser) {
-        form.reset({
-            uid: editingUser.uid,
-            displayName: editingUser.displayName,
-            email: editingUser.email,
-            role: editingUser.role,
-        });
+      form.reset({
+        uid: editingUser.uid,
+        displayName: editingUser.displayName,
+        email: editingUser.email,
+        role: editingUser.role,
+      });
     }
   }, [isFormModalOpen, editingUser, form]);
 
@@ -126,30 +127,30 @@ export default function UsersSection() {
     if (!editingUser) return;
 
     const updatedProfile: UserProfile = {
-        ...editingUser,
-        displayName: data.displayName,
-        role: data.role as UserRole,
-        status: editingUser.status || 'active',
+      ...editingUser,
+      displayName: data.displayName,
+      role: data.role as UserRole,
+      status: editingUser.status || 'active',
     };
 
     try {
-        await db.upsertUserProfile(updatedProfile);
-        toast({
-            title: 'Sucesso!',
-            description: `Usuário ${data.displayName} atualizado.`,
-        });
-        setIsFormModalOpen(false);
-        setEditingUser(null);
-        window.dispatchEvent(new CustomEvent('datachanged'));
+      await db.upsertUserProfile(updatedProfile);
+      toast({
+        title: 'Sucesso!',
+        description: `Usuário ${data.displayName} atualizado.`,
+      });
+      setIsFormModalOpen(false);
+      setEditingUser(null);
+      window.dispatchEvent(new CustomEvent('datachanged'));
     } catch {
-         toast({
-            title: 'Erro ao Atualizar',
-            description: 'Não foi possível atualizar o perfil do usuário.',
-            variant: 'destructive',
-        });
+      toast({
+        title: 'Erro ao Atualizar',
+        description: 'Não foi possível atualizar o perfil do usuário.',
+        variant: 'destructive',
+      });
     }
   };
-  
+
   const openEditModal = (user: UserProfile) => {
     setEditingUser(user);
     setIsFormModalOpen(true);
@@ -167,42 +168,57 @@ export default function UsersSection() {
       });
       loadUsers();
     } catch {
-       toast({
+      toast({
         title: 'Erro',
         description: 'Não foi possível alterar o status do usuário.',
         variant: 'destructive',
       });
     }
   };
-  
+
+  const handleApproveUser = async (user: UserProfile) => {
+    const updatedProfile: UserProfile = { ...user, status: 'active' };
+
+    try {
+      await db.upsertUserProfile(updatedProfile);
+      toast({
+        title: 'Usuário Aprovado!',
+        description: `${user.displayName} agora tem acesso ao sistema.`,
+      });
+      loadUsers();
+      window.dispatchEvent(new CustomEvent('datachanged')); // Notifica o badge no header
+    } catch {
+      toast({
+        title: 'Erro ao Aprovar',
+        description: 'Não foi possível aprovar o usuário.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const filteredUsers = useMemo(() => {
-    return users.filter(user => {
-        if (showBlocked) {
-            return user.status === 'blocked';
-        }
-        return user.status !== 'blocked';
-    });
-  }, [users, showBlocked]);
+    return users.filter(user => user.status === activeTab);
+  }, [users, activeTab]);
 
   const sortedUsers = useMemo(() => {
     const sortableItems = [...filteredUsers];
     if (sortConfig !== null) {
-        sortableItems.sort((a, b) => {
-            const valA = a[sortConfig.key];
-            const valB = b[sortConfig.key];
+      sortableItems.sort((a, b) => {
+        const valA = a[sortConfig.key];
+        const valB = b[sortConfig.key];
 
-            if (valA === undefined || valA === null) return 1;
-            if (valB === undefined || valB === null) return -1;
-            
-            let comparison = 0;
-            if (typeof valA === 'string' && typeof valB === 'string') {
-                comparison = valA.localeCompare(valB, 'pt-BR', { sensitivity: 'base' });
-            } else if (typeof valA === 'number' && typeof valB === 'number') {
-                comparison = valA - valB;
-            }
+        if (valA === undefined || valA === null) return 1;
+        if (valB === undefined || valB === null) return -1;
 
-            return sortConfig.direction === 'ascending' ? comparison : -comparison;
-        });
+        let comparison = 0;
+        if (typeof valA === 'string' && typeof valB === 'string') {
+          comparison = valA.localeCompare(valB, 'pt-BR', { sensitivity: 'base' });
+        } else if (typeof valA === 'number' && typeof valB === 'number') {
+          comparison = valA - valB;
+        }
+
+        return sortConfig.direction === 'ascending' ? comparison : -comparison;
+      });
     }
     return sortableItems;
   }, [filteredUsers, sortConfig]);
@@ -210,24 +226,24 @@ export default function UsersSection() {
   const requestSort = (key: SortableKeys) => {
     let direction: 'ascending' | 'descending' = 'ascending';
     if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
-        direction = 'descending';
+      direction = 'descending';
     }
     setSortConfig({ key, direction });
   };
-  
+
   const getSortIcon = (key: SortableKeys) => {
     if (!sortConfig || sortConfig.key !== key) {
-        return <ArrowUpDown className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-50" />;
+      return <ArrowUpDown className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-50" />;
     }
     return sortConfig.direction === 'ascending' ? '▲' : '▼';
   };
 
   const SortableHeader = ({ sortKey, children }: { sortKey: SortableKeys, children: React.ReactNode }) => (
     <TableHead>
-        <Button variant="ghost" onClick={() => requestSort(sortKey)} className="group px-2">
-            {children}
-            {getSortIcon(sortKey)}
-        </Button>
+      <Button variant="ghost" onClick={() => requestSort(sortKey)} className="group px-2">
+        {children}
+        {getSortIcon(sortKey)}
+      </Button>
     </TableHead>
   );
 
@@ -244,94 +260,94 @@ export default function UsersSection() {
         </div>
       </div>
 
-       <Alert>
-          <Info className="h-4 w-4" />
-          <AlertTitle>Como Adicionar Novos Usuários</AlertTitle>
-          <AlertDescription>
-            Para garantir a segurança, novos usuários devem se cadastrar pela página de <a href="/signup" className='underline'>cadastro público</a>. Após se registrarem, eles aparecerão nesta lista com o nível "Usuário Padrão" e você poderá editar suas permissões ou status.
-          </AlertDescription>
-        </Alert>
+      <Alert>
+        <Info className="h-4 w-4" />
+        <AlertTitle>Como Adicionar Novos Usuários</AlertTitle>
+        <AlertDescription>
+          Para garantir a segurança, novos usuários devem se cadastrar pela página de <a href="/signup" className='underline'>cadastro público</a>. Após se registrarem, eles aparecerão nesta lista com o nível "Usuário Padrão" e você poderá editar suas permissões ou status.
+        </AlertDescription>
+      </Alert>
 
       <Dialog open={isFormModalOpen} onOpenChange={setIsFormModalOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Editar Usuário</DialogTitle>
-              <DialogDescription>
-                Altere o nome ou nível de acesso do usuário.
-              </DialogDescription>
-            </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleFormSubmit)}>
-                <div className="space-y-4 py-4">
-                  <FormField
-                    control={form.control}
-                    name="displayName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nome</FormLabel>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Usuário</DialogTitle>
+            <DialogDescription>
+              Altere o nome ou nível de acesso do usuário.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleFormSubmit)}>
+              <div className="space-y-4 py-4">
+                <FormField
+                  control={form.control}
+                  name="displayName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nome do usuário" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="email"
+                          placeholder="usuario@email.com"
+                          {...field}
+                          disabled={true}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nível de Acesso</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
-                          <Input placeholder="Nome do usuário" {...field} />
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o nível de permissão" />
+                          </SelectTrigger>
                         </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="email"
-                            placeholder="usuario@email.com"
-                            {...field}
-                            disabled={true}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="role"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nível de Acesso</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione o nível de permissão" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="user">Usuário Padrão</SelectItem>
-                            <SelectItem value="admin">Administrador</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <DialogFooter>
-                  <Button
-                    type="submit"
-                    disabled={form.formState.isSubmitting}
-                  >
-                    {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Salvar Alterações
-                  </Button>
-                </DialogFooter>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
+                        <SelectContent>
+                          <SelectItem value="user">Usuário Padrão</SelectItem>
+                          <SelectItem value="admin">Administrador</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <DialogFooter>
+                <Button
+                  type="submit"
+                  disabled={form.formState.isSubmitting}
+                >
+                  {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Salvar Alterações
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
 
       <Card>
         <CardHeader>
@@ -341,144 +357,166 @@ export default function UsersSection() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-            <div className="flex items-center space-x-2 mb-4">
-                <Checkbox
-                    id="show-blocked"
-                    checked={showBlocked}
-                    onCheckedChange={(checked) => setShowBlocked(Boolean(checked))}
-                />
-                <Label htmlFor="show-blocked">Mostrar usuários bloqueados</Label>
-            </div>
-            
-            {/* Mobile View */}
-            <div className="md:hidden space-y-4">
-               {isLoading ? (
-                    <div className="h-24 text-center flex items-center justify-center">
-                        <Loader2 className="h-6 w-6 animate-spin" />
-                    </div>
-                ) : sortedUsers.length > 0 ? (
-                    sortedUsers.map((user) => (
-                        <div key={user.uid} className="border p-4 rounded-lg flex flex-col gap-2">
-                             <div className="flex justify-between items-start">
-                                <span className="font-bold">{user.displayName}</span>
-                                 <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" className="h-8 w-8 p-0">
-                                            <span className="sr-only">Abrir menu</span>
-                                            <MoreHorizontal className="h-4 w-4" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuItem onClick={() => openEditModal(user)}>
-                                            <Pencil className="mr-2 h-4 w-4" /> Editar
-                                        </DropdownMenuItem>
-                                        <DropdownMenuSeparator />
-                                        <DropdownMenuItem 
-                                            onClick={() => handleToggleBlockUser(user)} 
-                                            className={user.status === 'blocked' ? 'text-green-600 focus:text-green-700' : 'text-destructive focus:text-destructive'}
-                                            disabled={user.uid === currentUser?.uid}>
-                                            {user.status === 'blocked' ? <><CheckCircle className="mr-2 h-4 w-4" /> Desbloquear</> : <><Ban className="mr-2 h-4 w-4" /> Bloquear</>}
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </div>
-                            <div className="text-sm text-muted-foreground">{user.email}</div>
-                             <div className="flex items-center gap-4 text-sm">
-                                <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
-                                    {user.role === 'admin' ? 'Admin' : 'Usuário'}
-                                </Badge>
-                                <Badge variant={user.status === 'blocked' ? 'destructive' : 'outline'}>
-                                    {user.status === 'blocked' ? 'Bloqueado' : 'Ativo'}
-                                </Badge>
-                            </div>
-                        </div>
-                    ))
-                ) : (
-                    <div className="h-24 text-center flex items-center justify-center">
-                        <p>Nenhum usuário encontrado.</p>
-                    </div>
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="mb-6">
+            <TabsList className="grid w-full grid-cols-3 md:w-auto md:inline-grid">
+              <TabsTrigger value="active" className="gap-2">
+                <UserCheck className="h-4 w-4" /> Ativos
+              </TabsTrigger>
+              <TabsTrigger value="pending" className="gap-2">
+                <Loader2 className={`h-4 w-4 ${users.filter(u => u.status === 'pending').length > 0 ? 'inline' : 'hidden'}`} />
+                Pendentes
+                {users.filter(u => u.status === 'pending').length > 0 && (
+                  <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center rounded-full">
+                    {users.filter(u => u.status === 'pending').length}
+                  </Badge>
                 )}
-            </div>
+              </TabsTrigger>
+              <TabsTrigger value="blocked" className="gap-2">
+                <Ban className="h-4 w-4" /> Bloqueados
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
 
-            {/* Desktop View */}
-            <div className="hidden md:block border rounded-md">
-                <Table>
-                <TableHeader>
-                    <TableRow>
-                    <SortableHeader sortKey='displayName'>Nome</SortableHeader>
-                    <SortableHeader sortKey='email'>Email</SortableHeader>
-                    <SortableHeader sortKey='role'>Nível</SortableHeader>
-                    <SortableHeader sortKey='status'>Status</SortableHeader>
-                    <TableHead className='text-right'>Ações</TableHead>
+          {/* Mobile View */}
+          <div className="md:hidden space-y-4">
+            {isLoading ? (
+              <div className="h-24 text-center flex items-center justify-center">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : sortedUsers.length > 0 ? (
+              sortedUsers.map((user) => (
+                <div key={user.uid} className="border p-4 rounded-lg flex flex-col gap-2">
+                  <div className="flex justify-between items-start">
+                    <span className="font-bold">{user.displayName}</span>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Abrir menu</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => openEditModal(user)}>
+                          <Pencil className="mr-2 h-4 w-4" /> Editar
+                        </DropdownMenuItem>
+                        {user.status === 'pending' && (
+                          <DropdownMenuItem onClick={() => handleApproveUser(user)} className="text-green-600 focus:text-green-700">
+                            <ShieldCheck className="mr-2 h-4 w-4" /> Aprovar Acesso
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => handleToggleBlockUser(user)}
+                          className={user.status === 'blocked' ? 'text-green-600 focus:text-green-700' : 'text-destructive focus:text-destructive'}
+                          disabled={user.uid === currentUser?.uid}>
+                          {user.status === 'blocked' ? <><CheckCircle className="mr-2 h-4 w-4" /> Desbloquear</> : <><Ban className="mr-2 h-4 w-4" /> Bloquear</>}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                  <div className="text-sm text-muted-foreground">{user.email}</div>
+                  <div className="flex items-center gap-4 text-sm">
+                    <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
+                      {user.role === 'admin' ? 'Admin' : 'Usuário'}
+                    </Badge>
+                    <Badge variant={user.status === 'blocked' ? 'destructive' : user.status === 'pending' ? 'default' : 'outline'}>
+                      {user.status === 'blocked' ? 'Bloqueado' : user.status === 'pending' ? 'Pendente' : 'Ativo'}
+                    </Badge>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="h-24 text-center flex items-center justify-center">
+                <p>Nenhum usuário encontrado.</p>
+              </div>
+            )}
+          </div>
+
+          {/* Desktop View */}
+          <div className="hidden md:block border rounded-md">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <SortableHeader sortKey='displayName'>Nome</SortableHeader>
+                  <SortableHeader sortKey='email'>Email</SortableHeader>
+                  <SortableHeader sortKey='role'>Nível</SortableHeader>
+                  <SortableHeader sortKey='status'>Status</SortableHeader>
+                  <TableHead className='text-right'>Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">
+                      <Loader2 className="mx-auto h-6 w-6 animate-spin" />
+                    </TableCell>
+                  </TableRow>
+                ) : sortedUsers.length > 0 ? (
+                  sortedUsers.map((user) => (
+                    <TableRow key={user.uid} className={user.status === 'blocked' ? 'bg-muted/50 text-muted-foreground' : ''}>
+                      <TableCell className="font-medium">
+                        {user.displayName}
+                      </TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={user.role === 'admin' ? 'default' : 'secondary'}
+                        >
+                          {user.role === 'admin' ? 'Admin' : 'Usuário'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={user.status === 'blocked' ? 'destructive' : user.status === 'pending' ? 'default' : 'outline'}
+                        >
+                          {user.status === 'blocked' ? 'Bloqueado' : user.status === 'pending' ? 'Pendente' : 'Ativo'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className='text-right'>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Abrir menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => openEditModal(user)}>
+                              <Pencil className="mr-2 h-4 w-4" />
+                              Editar
+                            </DropdownMenuItem>
+                            {user.status === 'pending' && (
+                              <DropdownMenuItem onClick={() => handleApproveUser(user)} className="text-green-600 focus:text-green-700">
+                                <ShieldCheck className="mr-2 h-4 w-4" />
+                                Aprovar Acesso
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => handleToggleBlockUser(user)}
+                              className={user.status === 'blocked' ? 'text-green-600 focus:text-green-700' : 'text-destructive focus:text-destructive'}
+                              disabled={user.uid === currentUser?.uid}>
+                              {user.status === 'blocked' ? (
+                                <><CheckCircle className="mr-2 h-4 w-4" /> Desbloquear</>
+                              ) : (
+                                <><Ban className="mr-2 h-4 w-4" /> Bloquear</>
+                              )}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
                     </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {isLoading ? (
-                    <TableRow>
-                        <TableCell colSpan={5} className="h-24 text-center">
-                        <Loader2 className="mx-auto h-6 w-6 animate-spin" />
-                        </TableCell>
-                    </TableRow>
-                    ) : sortedUsers.length > 0 ? (
-                    sortedUsers.map((user) => (
-                        <TableRow key={user.uid} className={user.status === 'blocked' ? 'bg-muted/50 text-muted-foreground' : ''}>
-                        <TableCell className="font-medium">
-                            {user.displayName}
-                        </TableCell>
-                        <TableCell>{user.email}</TableCell>
-                        <TableCell>
-                            <Badge
-                            variant={user.role === 'admin' ? 'default' : 'secondary'}
-                            >
-                            {user.role === 'admin' ? 'Admin' : 'Usuário'}
-                            </Badge>
-                        </TableCell>
-                        <TableCell>
-                            <Badge
-                            variant={user.status === 'blocked' ? 'destructive' : 'outline'}
-                            >
-                            {user.status === 'blocked' ? 'Bloqueado' : 'Ativo'}
-                            </Badge>
-                        </TableCell>
-                        <TableCell className='text-right'>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                    <span className="sr-only">Abrir menu</span>
-                                    <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => openEditModal(user)}>
-                                    <Pencil className="mr-2 h-4 w-4" />
-                                    Editar
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem 
-                                    onClick={() => handleToggleBlockUser(user)} 
-                                    className={user.status === 'blocked' ? 'text-green-600 focus:text-green-700' : 'text-destructive focus:text-destructive'}
-                                    disabled={user.uid === currentUser?.uid}>
-                                    {user.status === 'blocked' ? (
-                                        <><CheckCircle className="mr-2 h-4 w-4" /> Desbloquear</>
-                                    ) : (
-                                        <><Ban className="mr-2 h-4 w-4" /> Bloquear</>
-                                    )}
-                                </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        </TableCell>
-                        </TableRow>
-                    ))
-                    ) : (
-                    <TableRow>
-                        <TableCell colSpan={5} className="h-24 text-center">
-                        Nenhum usuário encontrado.
-                        </TableCell>
-                    </TableRow>
-                    )}
-                </TableBody>
-                </Table>
-            </div>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">
+                      Nenhum usuário encontrado.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

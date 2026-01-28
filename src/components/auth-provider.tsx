@@ -17,6 +17,8 @@ export type AppUser = User & { profile: UserProfile };
 export interface AuthContextType {
   user: AppUser | null;
   loading: boolean;
+  pendingUsersCount: number; // New field for admin notifications
+  refreshPendingCount: () => Promise<void>; // Function to update the count
 }
 
 export const AuthContext = createContext<AuthContextType>({ user: null, loading: true });
@@ -24,6 +26,17 @@ export const AuthContext = createContext<AuthContextType>({ user: null, loading:
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [pendingUsersCount, setPendingUsersCount] = useState(0);
+
+  const refreshPendingCount = async () => {
+    try {
+      const allUsers = await db.getAllUserProfiles();
+      const pending = allUsers.filter(u => u.status === 'pending').length;
+      setPendingUsersCount(pending);
+    } catch (error) {
+      console.error("Error fetching pending count:", error);
+    }
+  };
 
   useEffect(() => {
     const app = getFirebaseApp();
@@ -67,13 +80,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                   displayName: authUser.displayName || authUser.email?.split('@')[0] || 'Novo Usuário',
                   photoURL: authUser.photoURL || undefined,
                   role: newRole,
-                  status: 'active',
+                  status: 'pending', // Set to pending by default
                 };
                 await db.upsertUserProfile(profile);
 
                 toast({
-                  title: 'Cadastro Realizado',
-                  description: 'Sua conta foi criada como Usuário Padrão.',
+                  title: 'Cadastro Recebido',
+                  description: 'Sua conta foi criada e está aguardando aprovação do administrador.',
                 });
               }
             }
@@ -90,6 +103,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               setUser(null);
               setLoading(false);
               return;
+            }
+
+            if (profile.role === 'admin') {
+              await refreshPendingCount();
             }
 
             setUser({ ...authUser, profile });
@@ -115,7 +132,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, []); // auth is stable, toast is imported directly
 
-  const value = useMemo(() => ({ user, loading }), [user, loading]);
+  const value = useMemo(() => ({
+    user,
+    loading,
+    pendingUsersCount,
+    refreshPendingCount
+  }), [user, loading, pendingUsersCount]);
 
   return (
     <AuthContext.Provider value={value}>

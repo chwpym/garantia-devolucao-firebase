@@ -20,19 +20,23 @@ import { useAuth } from "@/hooks/use-auth";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut } from "lucide-react";
+import { LogOut, Users } from "lucide-react";
+import { useAppStore } from "@/store/app-store";
+import { Badge } from "@/components/ui/badge";
 
 export function UserNav() {
-  const { user } = useAuth();
+  const { user, pendingUsersCount } = useAuth();
   const { toast } = useToast();
-  
+  const resetAppStore = useAppStore(state => state.resetState);
+
   if (!user) {
     return null;
   }
-  
+
   const handleLogout = async () => {
     try {
       await signOut(auth);
+      resetAppStore(); // Limpa todo o estado do app (Fase 11a)
       toast({
         title: "Logout realizado",
         description: "Você foi desconectado com sucesso."
@@ -60,13 +64,20 @@ export function UserNav() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 rounded-full px-2">
-            <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-foreground hidden sm:inline-block">{user.displayName}</span>
-                <Avatar className="h-9 w-9">
-                    <AvatarImage src={user.profile.photoURL || ''} alt={user.displayName || 'Avatar'} />
-                    <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
-                </Avatar>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-foreground hidden sm:inline-block">{user.displayName}</span>
+            <div className="relative">
+              <Avatar className="h-9 w-9">
+                <AvatarImage src={user.profile.photoURL || ''} alt={user.displayName || 'Avatar'} />
+                <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+              </Avatar>
+              {user.profile.role === 'admin' && pendingUsersCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground animate-in zoom-in spin-in-90 fill-mode-both">
+                  {pendingUsersCount}
+                </span>
+              )}
             </div>
+          </div>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
@@ -80,7 +91,12 @@ export function UserNav() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          {/* Pode adicionar mais itens de menu aqui no futuro */}
+          {user.profile.role === 'admin' && pendingUsersCount > 0 && (
+            <DropdownMenuItem className="text-destructive focus:text-destructive">
+              <Users className="mr-2 h-4 w-4" />
+              <span>{pendingUsersCount} Usuário(s) Pendente(s)</span>
+            </DropdownMenuItem>
+          )}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>

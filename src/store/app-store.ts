@@ -27,6 +27,7 @@ interface AppState {
   registerMode: RegisterMode;
 
   // Actions
+  resetState: () => void; // New action to clear state on logout
   loadInitialData: () => Promise<void>;
   reloadData: (dataType?: 'products' | 'persons' | 'suppliers') => Promise<void>;
   setActiveView: (viewId: string, shouldAddToHistory?: boolean) => void;
@@ -239,4 +240,17 @@ export const useAppStore = create<AppState>((set, get) => ({
       [viewId]: filters
     }
   })),
+
+  resetState: () => set({
+    activeView: 'dashboard',
+    navigationHistory: [],
+    products: [],
+    persons: [],
+    suppliers: [],
+    isDataLoaded: false,
+    selectedLoteId: null,
+    editingDevolucaoId: null,
+    editingWarrantyId: null,
+    filterStates: {},
+  }),
 }));

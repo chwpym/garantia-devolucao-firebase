@@ -25,6 +25,11 @@ import { useShallow } from 'zustand/react/shallow';
 import UsersSection from '@/components/sections/users-section';
 import StatusSection from '@/components/sections/status-section';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuth } from '@/hooks/use-auth';
+import { Clock, LogOut } from 'lucide-react';
+import { auth as firebaseAuth } from '@/lib/firebase';
+import { signOut } from 'firebase/auth';
+import { useToast } from '@/hooks/use-toast';
 
 
 export type RegisterMode = 'edit' | 'clone';
@@ -117,7 +122,43 @@ export default function Home() {
     }
   };
 
+  const isMobile = useIsMobile();
+  const { user } = useAuth();
+  const { toast } = useToast();
+
   if (isMobile === undefined) return null;
+
+  // GATEKEEPER: Bloqueia acesso se o usuário estiver pendente (Fase 11a)
+  if (user?.profile.status === 'pending') {
+    return (
+      <AppLayout>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-6 space-y-6">
+          <div className="p-4 rounded-full bg-primary/10 animate-pulse">
+            <Clock className="h-12 w-12 text-primary" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold tracking-tight">Aguardando Aprovação</h1>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              Sua conta foi criada com sucesso! Por segurança, um administrador precisa aprovar seu acesso antes que você possa visualizar os dados.
+            </p>
+          </div>
+          <div className="pt-4">
+            <Button
+              variant="outline"
+              onClick={() => signOut(firebaseAuth)}
+              className="gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              Sair do Sistema
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground italic">
+            Dica: Assim que o administrador aprovar, seu acesso será liberado automaticamente.
+          </p>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>

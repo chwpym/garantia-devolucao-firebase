@@ -5,8 +5,8 @@ Este documento rastreia o status detalhado de cada fase do plano de refatoraçã
 ## 📊 Status Geral
 
 *   **Início:** 15/12/2025
-*   **Fases Concluídas:** 11/25
-*   **Em Progresso:** Fase 11a - Gestão de Acessos e Segurança Híbrida
+*   **Fases Concluídas:** 12/25
+*   **Em Progresso:** Nenhuma
 *   **Próxima Fase:** Fase 12 - Código Externo
 
 ---
@@ -69,13 +69,15 @@ Este documento rastreia o status detalhado de cada fase do plano de refatoraçã
 | Sincronia de IDs (status/statuses) | ✅ | 1h | 20m | Resolvido problema de navegação Dashboard |
 | **Total da Fase** | | 7h | 4h 20m | Status 100% personalizáveis e seguros |
 
-### FASE 11a: Gestão de Acessos e Segurança Híbrida 🟠
+### FASE 11a: Gestão de Acessos e Segurança Híbrida ✅
 | Item | Status | Tempo Est. | Tempo Real | Notas |
 | :--- | :---: | :---: | :---: | :--- |
 | **Prioridade** | 🔴 CRÍTICA | | | |
-| Sistema de Aprovação (Pendente) | 🟠 | 1h | - | Em planejamento |
-| Badge de Notificação Header | ⏳ | 1h | - | Aguardando implementação |
-| Segurança de Route Guard UI | ⏳ | 1h | - | Aguardando implementação |
+| Sistema de Aprovação (Pendente) | ✅ | 1h | 20m | Novos usuários caem na tela de espera |
+| Badge de Notificação Header | ✅ | 1h | 15m | Badge dinâmico no Avatar do Admin |
+| Segurança de Route Guard UI | ✅ | 1h | 15m | Gatekeeper implementado no root route |
+| Reset de Sessão (Logout) | ✅ | 30m | 10m | UI limpa completamente ao deslogar |
+| **Total da Fase** | | 3h 30m | 1h | Segurança híbrida 100% operacional |
 
 ---
 
