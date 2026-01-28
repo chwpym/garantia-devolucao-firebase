@@ -1,7 +1,7 @@
 # 📚 Guia Detalhado de Refatoração - Synergia OS
 
-> **Versão:** 3.0 - DETALHADA  
-> **Data:** 15/12/2025  
+> **Versão:** 3.1 - ESTABILIDADE  
+> **Data:** 28/01/2026  
 > **Complemento de:** REFACTOR_PLAN.md
 
 Este documento contém os detalhes completos de implementação de cada fase. Use em conjunto com `REFACTOR_PLAN.md` (resumo) e `REFACTOR_PROGRESS.md` (acompanhamento).
@@ -488,7 +488,29 @@ export function DashboardSection() {
 
 ---
 
-## 🟡 FASE 18: Status Dinâmicos (COMPLEXA)
+## 🟠 FASE 11a: Gestão de Acessos e Segurança Híbrida
+
+### Problema
+Risco de acessos indevidos e poluição da interface para usuários sem privilégios administrativos.
+
+### Solução Arquitetural
+Modelo híbrido: Firebase Auth (Segurança da Credencial) + IndexedDB (Controle de Status e Perfil).
+
+### Detalhes Técnicos
+1.  **Status do Usuário**: Adicionar campo `status: 'active' | 'pending' | 'blocked'` no `UserProfile`.
+2.  **Route Guard de UI**: 
+    - No `AuthProvider`, se o perfil for `pending`, injetar uma flag `isPending`.
+    - No `page.tsx`, se `isPending` for true, renderizar apenas o layout de "Aguardando Aprovação".
+
+### Critérios de Sucesso
+- [ ] Novos usuários não veem dados até serem aprovados.
+- [ ] Admin recebe alerta visual de novos cadastros.
+- [ ] Logout limpa completamente o estado da view (activeView).
+
+---
+
+## 🟡 FASE 18: Status Dinâmicos (COMPLEXA) ✅ (ANTECIPADA)
+*(Esta fase foi movida para a Fase 11 no cronograma real para estabilizar o sistema)*
 
 ### Arquivos Afetados
 - `src/lib/db.ts`
