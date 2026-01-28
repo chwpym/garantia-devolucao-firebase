@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { smartSearch } from '@/lib/search-utils';
 import { SearchInput } from '@/components/ui/search-input';
+import { StatusBadge } from '@/components/ui/status-badge';
 
 export default function ReportSection() {
   const [warranties, setWarranties] = useState<Warranty[]>([]);
@@ -122,24 +123,6 @@ export default function ReportSection() {
     return warranties.filter(w => w.id && selectedIds.has(w.id));
   }, [warranties, selectedIds]);
 
-  const getWarrantyStatusClass = (status?: WarrantyStatus): string => {
-    switch (status) {
-      case 'Aprovada - Peça Nova':
-        return 'bg-accent-green text-accent-green-foreground';
-      case 'Aprovada - Crédito Boleto':
-        return 'bg-accent-green-dark text-accent-green-dark-foreground';
-      case 'Aprovada - Crédito NF':
-        return 'bg-primary text-primary-foreground';
-      case 'Recusada':
-        return 'bg-destructive text-destructive-foreground';
-      case 'Enviado para Análise':
-        return 'bg-accent-blue text-accent-blue-foreground';
-      case 'Aguardando Envio':
-        return 'bg-third text-white';
-      default:
-        return 'bg-secondary text-secondary-foreground';
-    }
-  };
 
   return (
     <div className="space-y-8">
@@ -207,11 +190,7 @@ export default function ReportSection() {
                       <TableCell>{warranty.fornecedor || '-'}</TableCell>
                       <TableCell>{warranty.cliente || '-'}</TableCell>
                       <TableCell>
-                        {warranty.status ? (
-                          <Badge className={cn(getWarrantyStatusClass(warranty.status))}>{warranty.status}</Badge>
-                        ) : (
-                          <Badge variant="secondary">N/A</Badge>
-                        )}
+                        <StatusBadge type="warranty" status={warranty.status} />
                       </TableCell>
                     </TableRow>
                   ))
