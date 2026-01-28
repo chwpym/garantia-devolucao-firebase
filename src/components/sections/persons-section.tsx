@@ -49,9 +49,8 @@ import {
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MoreHorizontal, Pencil, Trash2, PlusCircle, Download, Search, ArrowUpDown } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, PlusCircle, Download, ArrowUpDown } from 'lucide-react';
 import PersonForm from '../person-form';
-import { Input } from '../ui/input';
 import { smartSearch } from '@/lib/search-utils';
 import { SearchInput } from '@/components/ui/search-input';
 import { usePersistedFilters } from '@/hooks/use-persisted-filters';
@@ -85,6 +84,7 @@ export default function PersonsSection() {
   const [deleteTarget, setDeleteTarget] = useState<Person | null>(null);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDbReady, setIsDbReady] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(50);
   const { toast } = useToast();
 
   const loadPersons = useCallback(async () => {
@@ -159,6 +159,14 @@ export default function PersonsSection() {
     }
     return sortableItems;
   }, [filteredPersons, sortConfig]);
+
+  const visiblePersons = useMemo(() => {
+    return sortedPersons.slice(0, visibleCount);
+  }, [sortedPersons, visibleCount]);
+
+  useEffect(() => {
+    setVisibleCount(50);
+  }, [searchTerm]);
 
 
   const handleSave = () => {
@@ -335,8 +343,8 @@ export default function PersonsSection() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedPersons.length > 0 ? (
-                  sortedPersons.map(person => (
+                {visiblePersons.length > 0 ? (
+                  visiblePersons.map(person => (
                     <TableRow key={person.id}>
                       <TableCell className="font-medium text-muted-foreground">{person.id}</TableCell>
                       <TableCell className="font-medium">{person.nome}</TableCell>
@@ -378,6 +386,17 @@ export default function PersonsSection() {
               </TableBody>
             </Table>
           </div>
+          {filteredPersons.length > visibleCount && (
+            <div className="mt-4 flex justify-center">
+              <Button
+                variant="outline"
+                onClick={() => setVisibleCount(prev => prev + 50)}
+                className="w-full md:w-auto"
+              >
+                Carregar Mais ({filteredPersons.length - visibleCount} restantes)
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 

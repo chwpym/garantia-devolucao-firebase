@@ -70,6 +70,7 @@ export default function ProductsSection() {
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDbReady, setIsDbReady] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(50);
   const { toast } = useToast();
 
   const loadProducts = useCallback(async () => {
@@ -144,6 +145,14 @@ export default function ProductsSection() {
     }
     return sortableItems;
   }, [filteredProducts, sortConfig]);
+
+  const visibleProducts = useMemo(() => {
+    return sortedProducts.slice(0, visibleCount);
+  }, [sortedProducts, visibleCount]);
+
+  useEffect(() => {
+    setVisibleCount(50);
+  }, [searchTerm]);
 
   const handleSave = () => {
     setEditingProduct(null);
@@ -267,8 +276,8 @@ export default function ProductsSection() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedProducts.length > 0 ? (
-                  sortedProducts.map(product => (
+                {visibleProducts.length > 0 ? (
+                  visibleProducts.map(product => (
                     <TableRow key={product.id}>
                       <TableCell className="font-medium">{product.codigo}</TableCell>
                       <TableCell>{product.descricao}</TableCell>
@@ -306,6 +315,17 @@ export default function ProductsSection() {
               </TableBody>
             </Table>
           </div>
+          {filteredProducts.length > visibleCount && (
+            <div className="mt-4 flex justify-center">
+              <Button
+                variant="outline"
+                onClick={() => setVisibleCount(prev => prev + 50)}
+                className="w-full md:w-auto"
+              >
+                Carregar Mais ({filteredProducts.length - visibleCount} restantes)
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 

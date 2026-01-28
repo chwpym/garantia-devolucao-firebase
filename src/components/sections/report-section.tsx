@@ -15,6 +15,7 @@ import { DateRange } from 'react-day-picker';
 import { addDays, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { smartSearch } from '@/lib/search-utils';
 import { SearchInput } from '@/components/ui/search-input';
@@ -28,6 +29,7 @@ export default function ReportSection() {
     from: addDays(new Date(), -30),
     to: new Date(),
   });
+  const [visibleCount, setVisibleCount] = useState(50);
   const { toast } = useToast();
 
   const loadWarranties = useCallback(async () => {
@@ -50,8 +52,6 @@ export default function ReportSection() {
   }, [loadWarranties]);
 
   const filteredWarranties = useMemo(() => {
-    const lowercasedTerm = searchTerm.toLowerCase();
-
     return warranties.filter(warranty => {
       // Status filter
       if (statusFilter !== 'Todos' && warranty.status !== statusFilter) {
@@ -86,6 +86,14 @@ export default function ReportSection() {
       return true;
     });
   }, [searchTerm, warranties, dateRange, statusFilter]);
+
+  const visibleWarranties = useMemo(() => {
+    return filteredWarranties.slice(0, visibleCount);
+  }, [filteredWarranties, visibleCount]);
+
+  useEffect(() => {
+    setVisibleCount(50);
+  }, [searchTerm, statusFilter, dateRange]);
 
 
   const handleSelectionChange = (id: number) => {
@@ -184,8 +192,8 @@ export default function ReportSection() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredWarranties.length > 0 ? (
-                  filteredWarranties.map(warranty => (
+                {visibleWarranties.length > 0 ? (
+                  visibleWarranties.map(warranty => (
                     <TableRow key={warranty.id} data-state={selectedIds.has(warranty.id!) ? 'selected' : ''}>
                       <TableCell className="text-center">
                         <Checkbox
@@ -217,6 +225,17 @@ export default function ReportSection() {
               </TableBody>
             </Table>
           </div>
+          {filteredWarranties.length > visibleCount && (
+            <div className="mt-4 flex justify-center">
+              <Button
+                variant="outline"
+                onClick={() => setVisibleCount(prev => prev + 50)}
+                className="w-full md:w-auto"
+              >
+                Carregar Mais ({filteredWarranties.length - visibleCount} restantes)
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 

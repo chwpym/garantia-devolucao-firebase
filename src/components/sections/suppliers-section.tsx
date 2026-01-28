@@ -70,6 +70,7 @@ export default function SuppliersSection() {
   const [deleteTarget, setDeleteTarget] = useState<Supplier | null>(null);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDbReady, setIsDbReady] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(50);
   const [sortConfig, setSortConfig] = useState<{ key: SortableKeys, direction: 'ascending' | 'descending' } | null>({ key: 'nomeFantasia', direction: 'ascending' });
   const { toast } = useToast();
 
@@ -158,6 +159,13 @@ export default function SuppliersSection() {
     return sortableItems;
   }, [filteredSuppliers, sortConfig]);
 
+  const visibleSuppliers = useMemo(() => {
+    return sortedSuppliers.slice(0, visibleCount);
+  }, [sortedSuppliers, visibleCount]);
+
+  useEffect(() => {
+    setVisibleCount(50);
+  }, [searchTerm]);
 
   const handleSave = () => {
     setEditingSupplier(null);
@@ -283,8 +291,8 @@ export default function SuppliersSection() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedSuppliers.length > 0 ? (
-                  sortedSuppliers.map(supplier => (
+                {visibleSuppliers.length > 0 ? (
+                  visibleSuppliers.map(supplier => (
                     <TableRow key={supplier.id}>
                       <TableCell className="font-medium text-muted-foreground">{supplier.id}</TableCell>
                       <TableCell className="font-medium">{supplier.nomeFantasia}</TableCell>
@@ -323,6 +331,17 @@ export default function SuppliersSection() {
               </TableBody>
             </Table>
           </div>
+          {filteredSuppliers.length > visibleCount && (
+            <div className="mt-4 flex justify-center">
+              <Button
+                variant="outline"
+                onClick={() => setVisibleCount(prev => prev + 50)}
+                className="w-full md:w-auto"
+              >
+                Carregar Mais ({filteredSuppliers.length - visibleCount} restantes)
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 

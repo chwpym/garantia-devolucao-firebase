@@ -140,8 +140,6 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
   };
 
   const filteredWarranties = useMemo(() => {
-    const lowercasedTerm = searchTerm.toLowerCase();
-
     return warranties.filter(warranty => {
       // Show in Lote filter
       if (!showInLote && warranty.loteId) {
