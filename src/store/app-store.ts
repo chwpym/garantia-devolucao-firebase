@@ -2,16 +2,15 @@
 'use client';
 
 import { create } from 'zustand';
-import type { Warranty, Person, Supplier, Product, WarrantyStatus } from '@/lib/types';
+import type { Warranty, Person, Supplier, Product, WarrantyStatus, CustomStatus, RegisterMode } from '@/lib/types';
 import * as db from '@/lib/db';
-
-export type RegisterMode = 'edit' | 'clone';
 
 interface AppState {
   // Data stores
   products: Product[];
   persons: Person[];
   suppliers: Supplier[];
+  statuses: CustomStatus[];
   isDataLoaded: boolean;
 
   // Navigation and UI
@@ -29,7 +28,7 @@ interface AppState {
   // Actions
   resetState: () => void; // New action to clear state on logout
   loadInitialData: () => Promise<void>;
-  reloadData: (dataType?: 'products' | 'persons' | 'suppliers') => Promise<void>;
+  reloadData: (dataType?: 'products' | 'persons' | 'suppliers' | 'statuses') => Promise<void>;
   setActiveView: (viewId: string, shouldAddToHistory?: boolean) => void;
   goBack: () => void;
   setMobileMenuOpen: (isOpen: boolean) => void;
@@ -115,6 +114,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   products: [],
   persons: [],
   suppliers: [],
+  statuses: [],
   isDataLoaded: false,
   activeView: 'dashboard',
   navigationHistory: [],
@@ -133,15 +133,17 @@ export const useAppStore = create<AppState>((set, get) => ({
       // Run data migration before loading data
       await runDataMigration();
 
-      const [products, persons, suppliers] = await Promise.all([
+      const [products, persons, suppliers, statuses] = await Promise.all([
         db.getAllProducts(),
         db.getAllPersons(),
         db.getAllSuppliers(),
+        db.getAllStatuses(),
       ]);
       set({
         products: products.sort((a, b) => a.descricao.localeCompare(b.descricao)),
         persons: persons.sort((a, b) => a.nome.localeCompare(b.nome)),
         suppliers: suppliers.sort((a, b) => a.nomeFantasia.localeCompare(b.nomeFantasia)),
+        statuses: statuses.sort((a, b) => a.nome.localeCompare(b.nome)),
         isDataLoaded: true
       });
     } catch (error) {
@@ -162,6 +164,10 @@ export const useAppStore = create<AppState>((set, get) => ({
       if (!dataType || dataType === 'suppliers') {
         const suppliers = await db.getAllSuppliers();
         set({ suppliers: suppliers.sort((a, b) => a.nomeFantasia.localeCompare(b.nomeFantasia)) });
+      }
+      if (!dataType || dataType === 'statuses') {
+        const statuses = await db.getAllStatuses();
+        set({ statuses: statuses.sort((a, b) => a.nome.localeCompare(b.nome)) });
       }
     } catch (error) {
       console.error("Failed to reload data:", error);
@@ -247,6 +253,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     products: [],
     persons: [],
     suppliers: [],
+    statuses: [],
     isDataLoaded: false,
     selectedLoteId: null,
     editingDevolucaoId: null,

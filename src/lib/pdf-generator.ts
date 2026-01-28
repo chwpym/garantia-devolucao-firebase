@@ -12,8 +12,8 @@ import { format, parseISO } from 'date-fns';
 // Extend jsPDF with autoTable, which is a plugin
 declare module 'jspdf' {
     interface jsPDF {
-      autoTable: (options: UserOptions) => jsPDF;
-      lastAutoTable: { finalY: number };
+        autoTable: (options: UserOptions) => jsPDF;
+        lastAutoTable: { finalY: number };
     }
 }
 
@@ -62,14 +62,14 @@ const addStandardHeader = (doc: jsPDF, companyData: CompanyData | null, title: s
 
     doc.setFontSize(10).setFont('helvetica', 'bold');
     doc.text(companyData?.nomeEmpresa || 'Relatório', margin, cursorY);
-    
+
     doc.setFontSize(10).setFont('helvetica', 'normal');
     const date = new Date().toLocaleDateString('pt-BR');
-    doc.text(`Gerado em: ${date}`, page_width - margin, cursorY, { align: 'right'});
+    doc.text(`Gerado em: ${date}`, page_width - margin, cursorY, { align: 'right' });
     cursorY += 6;
 
     doc.setFontSize(9);
-    
+
     if (companyData?.cnpj) {
         doc.text(`CNPJ: ${formatCnpj(companyData.cnpj)}`, margin, cursorY);
         cursorY += 4;
@@ -82,7 +82,7 @@ const addStandardHeader = (doc: jsPDF, companyData: CompanyData | null, title: s
         doc.text(companyData.cidade, margin, cursorY);
         cursorY += 4;
     }
-    
+
     let infoLine = '';
     if (companyData?.telefone) infoLine += `Tel: ${companyData.telefone}`;
     if (companyData?.email) infoLine += `${infoLine ? ' | ' : ''}Email: ${companyData.email}`;
@@ -90,9 +90,9 @@ const addStandardHeader = (doc: jsPDF, companyData: CompanyData | null, title: s
 
     cursorY += 12;
     doc.setFontSize(16).setFont('helvetica', 'bold');
-    doc.text(title, page_width / 2, cursorY, { align: 'center'});
+    doc.text(title, page_width / 2, cursorY, { align: 'center' });
     cursorY += 10;
-    
+
     return cursorY;
 }
 
@@ -124,16 +124,16 @@ const addProfessionalHeader = (doc: jsPDF, companyData: CompanyData | null, lote
     doc.setFontSize(9).setFont('helvetica', 'normal');
     const pageStr = `Pág. ${doc.getNumberOfPages()}`;
     doc.text(pageStr, pageWidth - margin, 15);
-    
+
     cursorY += 4; // Gap after company data
-    
+
     // --- Report Title Section ---
     const sectionHeight = 10;
     doc.setDrawColor(180, 180, 180);
     doc.line(margin, cursorY, pageWidth - margin, cursorY); // Top line
     doc.line(margin, cursorY, margin, cursorY + sectionHeight); // Left line
     doc.line(pageWidth - margin, cursorY, pageWidth - margin, cursorY + sectionHeight); // Right line
-    
+
     const dateText = `Data: ${new Date().toLocaleDateString('pt-BR')}`;
     const idText = `Lote ID: ${loteId || 'N/A'}`;
     const dateWidth = doc.getTextWidth(dateText);
@@ -146,27 +146,27 @@ const addProfessionalHeader = (doc: jsPDF, companyData: CompanyData | null, lote
 
     doc.line(dateBoxX - 5, cursorY, dateBoxX - 5, cursorY + sectionHeight);
     doc.line(idBoxX - 5, cursorY, idBoxX - 5, cursorY + sectionHeight);
-    
+
     doc.setFontSize(11).setFont('helvetica', 'bold');
     doc.text(title, margin + titleBoxWidth / 2, cursorY + sectionHeight / 2 + 2, { align: 'center' });
-    
+
     doc.setFontSize(9).setFont('helvetica', 'normal');
     doc.text(dateText, dateBoxX, cursorY + sectionHeight / 2 + 2);
     doc.text(idText, idBoxX, cursorY + sectionHeight / 2 + 2);
 
     cursorY += sectionHeight;
     doc.line(margin, cursorY, pageWidth - margin, cursorY); // Bottom line
-    
+
     return cursorY + 4;
 };
 
 
 export function generatePdf(input: GeneratePdfInput): string {
-    const { 
-        selectedWarranties, 
-        selectedFields, 
-        companyData, 
-        supplierData, 
+    const {
+        selectedWarranties,
+        selectedFields,
+        companyData,
+        supplierData,
         loteId,
         layout = 'standard',
         orientation = 'portrait'
@@ -195,7 +195,7 @@ export function generatePdf(input: GeneratePdfInput): string {
     if (supplierData) {
         doc.setFontSize(10).setFont('helvetica', 'bold');
         doc.text('DESTINATÁRIO:', margin, startY);
-        startY += 4; 
+        startY += 4;
 
         doc.setFontSize(9).setFont('helvetica', 'normal');
         doc.text(supplierData.nomeFantasia, margin, startY);
@@ -208,12 +208,12 @@ export function generatePdf(input: GeneratePdfInput): string {
             doc.text(`CNPJ: ${formatCnpj(supplierData.cnpj)}`, margin, startY);
             startY += 4;
         }
-         if (supplierData.cidade) {
+        if (supplierData.cidade) {
             doc.text(`Cidade: ${supplierData.cidade}`, margin, startY);
         }
-        startY += 4; 
+        startY += 4;
     }
-    
+
     const FIELD_LABELS: Record<string, string> = {
         codigo: 'Código', descricao: 'Descrição', fornecedor: 'Fornecedor', quantidade: 'Qtd.',
         defeito: 'Defeito', requisicaoVenda: 'Req. Venda', requisicoesGarantia: 'Req. Garantia',
@@ -245,7 +245,7 @@ export function generatePdf(input: GeneratePdfInput): string {
         alternateRowStyles: { fillColor: [240, 240, 240] },
         didDrawPage: (data) => {
             if (layout === 'professional' && data.pageNumber > 1) {
-                 addProfessionalHeader(doc, companyData, loteId);
+                addProfessionalHeader(doc, companyData, loteId);
             }
         }
     });
@@ -257,7 +257,7 @@ export function generatePdf(input: GeneratePdfInput): string {
     }
 
 
-    if(layout === 'standard') {
+    if (layout === 'standard') {
         addPageNumbers();
     }
 
@@ -269,16 +269,16 @@ export function generatePdf(input: GeneratePdfInput): string {
 export function generatePersonsPdf(input: GeneratePersonsPdfInput): string {
     const { persons, companyData } = input;
     const doc = new jsPDF();
-    
+
     const startY = addStandardHeader(doc, companyData, 'Relatório de Clientes e Mecânicos');
 
     const tableHeaders = ['Nome / Razão Social', 'CPF/CNPJ', 'Telefone', 'Email', 'Cidade', 'Tipo'];
-    
+
     const tableBody = persons.map(person => [
         person.nome || '-',
         formatCnpj(person.cpfCnpj) || '-',
-        person.telefones?.[0]?.value || '-',
-        person.emails?.[0]?.value || '-',
+        person.telefone || '-',
+        person.email || '-',
         person.cidade || '-',
         person.tipo || '-',
     ]);
@@ -299,17 +299,17 @@ export function generatePersonsPdf(input: GeneratePersonsPdfInput): string {
 export function generateDevolucoesPdf(input: GenerateDevolucoesPdfInput): string {
     const { devolucoes, companyData, title: customTitle } = input;
     const doc = new jsPDF();
-    
+
     const isClientReport = customTitle?.includes('Relatório de Devoluções -');
     const title = customTitle || 'Relatório de Devoluções';
 
     const startY = addStandardHeader(doc, companyData, title);
-    
+
     const baseHeaders = ['Data Dev.', 'Cliente', 'Requisição', 'Código Peça', 'Descrição Peça', 'Qtd.', 'Ação Req.', 'Status'];
 
     const tableHeaders = isClientReport
-      ? ['Data Dev.', 'Requisição', 'Código Peça', 'Descrição Peça', 'Qtd.']
-      : baseHeaders;
+        ? ['Data Dev.', 'Requisição', 'Código Peça', 'Descrição Peça', 'Qtd.']
+        : baseHeaders;
 
 
     const tableBody = devolucoes.map(item => {
@@ -344,6 +344,6 @@ export function generateDevolucoesPdf(input: GenerateDevolucoesPdfInput): string
     return doc.output('datauristring');
 }
 
-    
 
-    
+
+

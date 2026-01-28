@@ -19,7 +19,6 @@ import {
 
 import WarrantyTable from '@/components/warranty-table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Input } from '@/components/ui/input';
 import {
   Card,
   CardContent,

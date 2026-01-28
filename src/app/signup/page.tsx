@@ -85,7 +85,7 @@ export default function SignupPage() {
           <CardDescription>Preencha os dados para se cadastrar.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" autoComplete="off">
             <div className="space-y-2">
               <Label htmlFor="displayName">Nome Completo</Label>
               <Input
@@ -94,6 +94,7 @@ export default function SignupPage() {
                 placeholder="Seu nome"
                 {...form.register('displayName')}
                 disabled={isLoading}
+                autoComplete="off"
               />
               {form.formState.errors.displayName && (
                 <p className="text-sm text-destructive">{form.formState.errors.displayName.message}</p>
@@ -107,6 +108,7 @@ export default function SignupPage() {
                 placeholder="seu@email.com"
                 {...form.register('email')}
                 disabled={isLoading}
+                autoComplete="off"
               />
               {form.formState.errors.email && (
                 <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
@@ -119,6 +121,7 @@ export default function SignupPage() {
                 type="password"
                 {...form.register('password')}
                 disabled={isLoading}
+                autoComplete="new-password"
               />
               {form.formState.errors.password && (
                 <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>

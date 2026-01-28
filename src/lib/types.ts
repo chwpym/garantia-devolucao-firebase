@@ -2,8 +2,10 @@
 'use client';
 
 export const WARRANTY_STATUSES = ['Aguardando Envio', 'Enviado para Análise', 'Aprovada - Peça Nova', 'Aprovada - Crédito NF', 'Aprovada - Crédito Boleto', 'Recusada'] as const;
-export type WarrantyStatus = typeof WARRANTY_STATUSES[number];
+export type WarrantyStatus = (typeof WARRANTY_STATUSES[number]) | string;
 
+
+export type RegisterMode = 'edit' | 'clone';
 
 export interface Warranty {
   id?: number;
@@ -102,8 +104,8 @@ export interface Product {
 
 // --- Novas Estruturas para Devolução ---
 
-export type ReturnStatus = 'Recebido' | 'Aguardando Peças' | 'Finalizada' | 'Cancelada';
-export type RequisitionAction = 'Alterada' | 'Excluída';
+export type ReturnStatus = 'Recebido' | 'Aguardando Peças' | 'Finalizada' | 'Cancelada' | string;
+export type RequisitionAction = 'Alterada' | 'Excluída' | string;
 
 export interface Devolucao {
   id?: number;
@@ -153,7 +155,7 @@ export interface PurchaseSimulation {
 
 // --- User Profile ---
 export type UserRole = 'admin' | 'user';
-export type UserStatus = 'active' | 'blocked';
+export type UserStatus = 'active' | 'blocked' | 'pending';
 
 export interface UserProfile {
   uid: string;

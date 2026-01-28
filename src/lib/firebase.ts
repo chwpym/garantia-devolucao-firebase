@@ -1,7 +1,7 @@
 
 'use client';
 
-import { initializeApp, getApps, getApp, type FirebaseApp, type FirebaseOptions } from 'firebase/app';
+import { initializeApp, getApps, getApp, deleteApp, type FirebaseApp, type FirebaseOptions } from 'firebase/app';
 import { getStorage } from 'firebase/storage';
 import { getAuth, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 
@@ -19,14 +19,30 @@ const firebaseConfig: FirebaseOptions = {
 
 // Padrão Singleton para inicializar o Firebase apenas uma vez.
 function getFirebaseApp(): FirebaseApp {
-    if (getApps().length === 0) {
-        return initializeApp(firebaseConfig);
-    }
-    return getApp();
+  if (getApps().length === 0) {
+    return initializeApp(firebaseConfig);
+  }
+  return getApp();
 }
 
 const app = getFirebaseApp();
 const auth = getAuth(app);
 const storage = getStorage(app);
 
-export { app, auth, storage, createUserWithEmailAndPassword, updateProfile, getFirebaseApp };
+async function adminCreateUser(email: string, pass: string, name: string) {
+  const secondaryAppName = `SecondaryApp-${Date.now()}`;
+  const secondaryApp = initializeApp(firebaseConfig, secondaryAppName);
+  const secondaryAuth = getAuth(secondaryApp);
+
+  try {
+    const credential = await createUserWithEmailAndPassword(secondaryAuth, email, pass);
+    await updateProfile(credential.user, { displayName: name });
+    await deleteApp(secondaryApp);
+    return credential.user;
+  } catch (error) {
+    await deleteApp(secondaryApp).catch(() => { });
+    throw error;
+  }
+}
+
+export { app, auth, storage, createUserWithEmailAndPassword, updateProfile, getFirebaseApp, adminCreateUser };

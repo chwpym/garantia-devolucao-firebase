@@ -5,7 +5,7 @@ import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, PlusCircle, Upload, X as XIcon, Image as ImageIcon } from 'lucide-react';
+import { Loader2, Upload, X as XIcon, Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
 
 
@@ -18,14 +18,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import SupplierForm from './supplier-form';
-import PersonForm from './person-form';
 import { Combobox } from './ui/combobox';
 import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './ui/command';
-import ProductForm from './product-form';
 import { useAppStore } from '@/store/app-store';
 import { WARRANTY_STATUSES } from '@/lib/types';
 import { QuickRegisterDialog } from './quick-register-dialog';
@@ -47,7 +43,7 @@ const formSchema = z.object({
     notaFiscalSaida: z.string().optional(),
     notaFiscalRetorno: z.string().optional(),
     observacao: z.string().optional(),
-    status: z.enum(WARRANTY_STATUSES).optional(),
+    status: z.string().optional(),
     loteId: z.number().nullable().optional(),
     photos: z.array(z.string()).optional(),
     dataRegistro: z.string().optional(),
@@ -92,7 +88,7 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModal = false, isClone = false }: WarrantyFormProps) {
     const formRef = useRef<HTMLFormElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const { products, persons, suppliers, reloadData } = useAppStore();
+    const { products, persons, suppliers } = useAppStore();
 
     const [quickRegisterType, setQuickRegisterType] = useState<'product' | 'supplier' | 'person' | null>(null);
     const [isQuickRegisterOpen, setQuickRegisterOpen] = useState(false);
@@ -121,7 +117,6 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
     const { isSubmitting } = form.formState;
 
     const [shouldNavigate, setShouldNavigate] = useState(true);
-    const [lastSavedId, setLastSavedId] = useState<number | null>(null);
 
     const handleSubmit = async (values: WarrantyFormValues) => {
         const dataToSave: Warranty = {

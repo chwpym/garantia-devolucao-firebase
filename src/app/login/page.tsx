@@ -84,7 +84,11 @@ export default function LoginPage() {
           <CardDescription>Use sua conta para entrar.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" autoComplete="off">
+            {/* Campos falsos para "enganar" o preenchimento automático do navegador */}
+            <input type="text" name="fake_email" style={{ display: 'none' }} aria-hidden="true" tabIndex={-1} />
+            <input type="password" name="fake_password" style={{ display: 'none' }} aria-hidden="true" tabIndex={-1} />
+
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -93,6 +97,7 @@ export default function LoginPage() {
                 placeholder="seu@email.com"
                 {...form.register('email')}
                 disabled={isLoading}
+                autoComplete="email-no-fill"
               />
               {form.formState.errors.email && (
                 <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
@@ -105,6 +110,7 @@ export default function LoginPage() {
                 type="password"
                 {...form.register('password')}
                 disabled={isLoading}
+                autoComplete="new-password"
               />
               {form.formState.errors.password && (
                 <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>

@@ -37,9 +37,10 @@ const devolucaoSchema = z.object({
     cliente: z.string().min(1, 'Cliente é obrigatório'),
     mecanico: z.string().optional(),
     requisicaoVenda: z.string().min(1, 'Requisição é obrigatória'),
-    acaoRequisicao: z.enum(['Alterada', 'Excluída'], { required_error: 'Selecione uma ação para a requisição' }),
+    acaoRequisicao: z.string().min(1, 'Selecione uma ação para a requisição'),
     dataVenda: z.date({ required_error: 'Data da venda é obrigatória' }),
     dataDevolucao: z.date({ required_error: 'Data da devolução é obrigatória' }),
+    status: z.string().optional(),
     observacaoGeral: z.string().optional(),
     itens: z.array(itemDevolucaoSchema).min(1, 'Adicione pelo menos uma peça'),
 });
@@ -58,6 +59,7 @@ const defaultFormValues: DevolucaoFormValues = {
     acaoRequisicao: 'Alterada', // Default value
     dataDevolucao: new Date(),
     dataVenda: new Date(),
+    status: 'Recebido', // Valor padrão
     observacaoGeral: '',
     itens: [{ codigoPeca: '', descricaoPeca: '', quantidade: 1 }],
 };

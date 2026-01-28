@@ -6,16 +6,16 @@ import { useEffect, useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { Warranty } from '@/lib/types';
 import * as db from '@/lib/db';
-import type { RegisterMode } from '@/app/page';
+import type { RegisterMode } from '@/lib/types';
 
 import WarrantyForm from '@/components/warranty-form';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface RegisterSectionProps {
-    editingId: number | null;
-    mode: RegisterMode;
-    onSave: (shouldNavigate: boolean) => void;
-    onClear: () => void;
+  editingId: number | null;
+  mode: RegisterMode;
+  onSave: (shouldNavigate: boolean) => void;
+  onClear: () => void;
 }
 
 export default function RegisterSection({ editingId, mode, onSave, onClear }: RegisterSectionProps) {
@@ -51,10 +51,10 @@ export default function RegisterSection({ editingId, mode, onSave, onClear }: Re
       console.error('Failed to load warranty:', error);
       toast({ title: 'Erro ao Carregar', description: 'Não foi possível carregar os dados da garantia.', variant: 'destructive' });
     } finally {
-        setIsLoadingData(false);
+      setIsLoadingData(false);
     }
   }, [editingId, mode, onClear, toast]);
-  
+
 
   useEffect(() => {
     async function initialize() {
@@ -72,14 +72,14 @@ export default function RegisterSection({ editingId, mode, onSave, onClear }: Re
     }
     initialize();
   }, [toast]);
-  
+
   useEffect(() => {
     if (isDbReady) {
-        if (editingId) {
-            loadWarranty();
-        } else {
-            setWarrantyToLoad(null);
-        }
+      if (editingId) {
+        loadWarranty();
+      } else {
+        setWarrantyToLoad(null);
+      }
     }
   }, [isDbReady, editingId, loadWarranty]);
 
@@ -87,7 +87,7 @@ export default function RegisterSection({ editingId, mode, onSave, onClear }: Re
   const handleSave = async (data: Warranty, shouldNavigate: boolean) => {
     try {
       const isCloning = mode === 'clone';
-      
+
       if (data.id && !isCloning) {
         await db.updateWarranty(data);
         toast({ title: 'Sucesso', description: 'Garantia atualizada com sucesso.' });
@@ -115,7 +115,7 @@ export default function RegisterSection({ editingId, mode, onSave, onClear }: Re
   return (
     <div className="max-w-5xl mx-auto">
       <WarrantyForm
-        key={editingId ? `${editingId}-${mode}`: 'new'}
+        key={editingId ? `${editingId}-${mode}` : 'new'}
         selectedWarranty={warrantyToLoad}
         onSave={handleSave}
         onClear={onClear}

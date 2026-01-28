@@ -3,17 +3,15 @@
 'use client';
 
 import { useState } from 'react';
-import type { Warranty, WarrantyStatus } from '@/lib/types';
+import type { Warranty } from '@/lib/types';
 import { format, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, Pencil, Trash2, Copy, ArrowUpDown } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { StatusBadge } from './ui/status-badge';
 import { Checkbox } from './ui/checkbox';
-import { cn } from '@/lib/utils';
 
 type SortableKeys = keyof Warranty;
 

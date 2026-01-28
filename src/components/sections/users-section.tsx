@@ -28,10 +28,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Loader2, MoreHorizontal, Pencil, Ban, CheckCircle, ArrowUpDown, UserCheck, ShieldCheck } from 'lucide-react';
+import { Loader2, MoreHorizontal, Pencil, Ban, CheckCircle, ArrowUpDown, UserCheck, ShieldCheck, ShieldPlus } from 'lucide-react';
 import * as db from '@/lib/db';
 import { type UserProfile, type UserRole } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { adminCreateUser } from '@/lib/firebase';
 import { Badge } from '../ui/badge';
 import {
   Form,
@@ -53,10 +54,19 @@ import {
 import { Alert, AlertTitle, AlertDescription } from '../ui/alert';
 import { Info } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '../ui/dropdown-menu';
-import { Checkbox } from '../ui/checkbox';
-import { Label } from '../ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
 import { useAuth } from '@/hooks/use-auth';
+
+const onboardingSchema = z.object({
+  displayName: z.string().min(2, { message: 'O nome é obrigatório.' }),
+  email: z.string().email({ message: 'E-mail inválido.' }),
+  password: z.string().min(6, { message: 'A senha deve ter pelo menos 6 caracteres.' }),
+  role: z.enum(['admin', 'user'], {
+    required_error: 'Selecione um nível de permissão.',
+  }),
+});
+
+type OnboardingFormValues = z.infer<typeof onboardingSchema>;
 
 const userFormSchema = z.object({
   uid: z.string().optional(),
@@ -83,6 +93,19 @@ export default function UsersSection() {
   const [sortConfig, setSortConfig] = useState<{ key: SortableKeys, direction: 'ascending' | 'descending' } | null>({ key: 'displayName', direction: 'ascending' });
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
+
+  const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
+  const [isOnboardingLoading, setIsOnboardingLoading] = useState(false);
+
+  const onboardingForm = useForm<OnboardingFormValues>({
+    resolver: zodResolver(onboardingSchema),
+    defaultValues: {
+      displayName: '',
+      email: '',
+      password: '',
+      role: 'user',
+    },
+  });
 
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userFormSchema),
@@ -122,6 +145,49 @@ export default function UsersSection() {
     }
   }, [isFormModalOpen, editingUser, form]);
 
+
+  const handleOnboardingSubmit = async (values: OnboardingFormValues, stayOpen: boolean) => {
+    setIsOnboardingLoading(true);
+    try {
+      const firebaseUser = await adminCreateUser(values.email, values.password, values.displayName);
+
+      const newUserProfile: UserProfile = {
+        uid: firebaseUser.uid,
+        email: values.email,
+        displayName: values.displayName,
+        role: values.role as UserRole,
+        status: 'active',
+      };
+
+      await db.upsertUserProfile(newUserProfile);
+
+      toast({
+        title: 'Usuário Criado',
+        description: `A conta de ${values.displayName} foi criada e ativada com sucesso.`,
+      });
+
+      loadUsers();
+
+      if (stayOpen) {
+        onboardingForm.reset({
+          displayName: '',
+          email: '',
+          password: '',
+          role: values.role,
+        });
+      } else {
+        setIsOnboardingModalOpen(false);
+        onboardingForm.reset();
+      }
+    } catch (error: any) {
+      console.error('Erro ao criar usuário:', error);
+      let msg = 'Não foi possível criar o usuário.';
+      if (error.code === 'auth/email-already-in-use') msg = 'Este e-mail já está em uso.';
+      toast({ title: 'Erro', description: msg, variant: 'destructive' });
+    } finally {
+      setIsOnboardingLoading(false);
+    }
+  };
 
   const handleFormSubmit = async (data: UserFormValues) => {
     if (!editingUser) return;
@@ -258,13 +324,23 @@ export default function UsersSection() {
             Visualize, edite e gerencie o acesso dos usuários do sistema.
           </p>
         </div>
+        <Button
+          onClick={() => {
+            onboardingForm.reset();
+            setIsOnboardingModalOpen(true);
+          }}
+          className="gap-2"
+        >
+          <ShieldPlus className="h-4 w-4" />
+          Novo Usuário
+        </Button>
       </div>
 
       <Alert>
         <Info className="h-4 w-4" />
-        <AlertTitle>Como Adicionar Novos Usuários</AlertTitle>
+        <AlertTitle>Opções de Cadastro</AlertTitle>
         <AlertDescription>
-          Para garantir a segurança, novos usuários devem se cadastrar pela página de <a href="/signup" className='underline'>cadastro público</a>. Após se registrarem, eles aparecerão nesta lista com o nível "Usuário Padrão" e você poderá editar suas permissões ou status.
+          Você pode cadastrar usuários diretamente pelo botão <strong>Novo Usuário</strong> (eles já entram como ativos) ou orientá-los a usar a <a href="/signup" className='underline font-medium'>página de cadastro público</a> para aprovação manual.
         </AlertDescription>
       </Alert>
 
@@ -343,6 +419,112 @@ export default function UsersSection() {
                   {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                   Salvar Alterações
                 </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Onboarding (Novo Usuário) */}
+      <Dialog open={isOnboardingModalOpen} onOpenChange={setIsOnboardingModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Novo Usuário do Sistema</DialogTitle>
+            <DialogDescription>
+              Crie uma nova conta com acesso imediato (Ativo).
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...onboardingForm}>
+            <form onSubmit={(e) => e.preventDefault()} className="space-y-4 py-4" autoComplete="off">
+              <FormField
+                control={onboardingForm.control}
+                name="displayName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome Completo</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ex: João Silva" {...field} autoComplete="off" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={onboardingForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>E-mail</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="usuario@empresa.com" {...field} autoComplete="off" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={onboardingForm.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Senha Temporária</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="Mínimo 6 caracteres" {...field} autoComplete="new-password" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={onboardingForm.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nível de Acesso</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o nível" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="user">Usuário Padrão</SelectItem>
+                        <SelectItem value="admin">Administrador</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <DialogFooter className="flex flex-col sm:flex-row gap-2 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsOnboardingModalOpen(false)}
+                  className="sm:order-1"
+                >
+                  Cancelar
+                </Button>
+                <div className="flex flex-col sm:flex-row gap-2 sm:order-2 w-full sm:w-auto">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={isOnboardingLoading}
+                    onClick={onboardingForm.handleSubmit((values) => handleOnboardingSubmit(values, true))}
+                  >
+                    {isOnboardingLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Salvar e Continuar
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={isOnboardingLoading}
+                    onClick={onboardingForm.handleSubmit((values) => handleOnboardingSubmit(values, false))}
+                  >
+                    {isOnboardingLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Salvar Usuário
+                  </Button>
+                </div>
               </DialogFooter>
             </form>
           </Form>

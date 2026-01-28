@@ -21,7 +21,12 @@ export interface AuthContextType {
   refreshPendingCount: () => Promise<void>; // Function to update the count
 }
 
-export const AuthContext = createContext<AuthContextType>({ user: null, loading: true });
+export const AuthContext = createContext<AuthContextType>({
+  user: null,
+  loading: true,
+  pendingUsersCount: 0,
+  refreshPendingCount: async () => { }
+});
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
@@ -92,24 +97,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
 
             // ** SECURITY CHECK: Blocked users should not be able to log in **
-            if (profile.status === 'blocked') {
-              toast({
-                title: 'Acesso Negado',
-                description: 'Sua conta foi desativada por um administrador.',
-                variant: 'destructive',
-                duration: 10000,
-              });
-              await signOut(auth);
+            if (profile) {
+              if (profile.status === 'blocked') {
+                toast({
+                  title: 'Acesso Negado',
+                  description: 'Sua conta foi desativada por um administrador.',
+                  variant: 'destructive',
+                  duration: 10000,
+                });
+                await signOut(auth);
+                setUser(null);
+                setLoading(false);
+                return;
+              }
+
+              if (profile.role === 'admin') {
+                await refreshPendingCount();
+              }
+
+              setUser({ ...authUser, profile });
+            } else {
               setUser(null);
-              setLoading(false);
-              return;
             }
-
-            if (profile.role === 'admin') {
-              await refreshPendingCount();
-            }
-
-            setUser({ ...authUser, profile });
 
           } catch (error) {
             console.error("Error checking/creating user profile:", error);

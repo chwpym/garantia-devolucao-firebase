@@ -47,9 +47,8 @@ import {
 } from '@/components/ui/dialog';
 
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Pencil, Trash2, PlusCircle, Search, ArrowUpDown } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, PlusCircle, ArrowUpDown } from 'lucide-react';
 import ProductForm from '../product-form';
-import { Input } from '../ui/input';
 import { smartSearch } from '@/lib/search-utils';
 import { SearchInput } from '@/components/ui/search-input';
 import { usePersistedFilters } from '@/hooks/use-persisted-filters';

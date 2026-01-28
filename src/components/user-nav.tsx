@@ -22,7 +22,6 @@ import { auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { LogOut, Users } from "lucide-react";
 import { useAppStore } from "@/store/app-store";
-import { Badge } from "@/components/ui/badge";
 
 export function UserNav() {
   const { user, pendingUsersCount } = useAuth();
