@@ -20,6 +20,7 @@ import CalculatorsSection from '@/components/sections/calculators-section';
 import BatchRegisterSection from '@/components/sections/batch-register-section';
 import ProductsSection from '@/components/sections/products-section';
 import ProductReportSection from '@/components/sections/product-report-section';
+import ReconciliationSection from '@/components/sections/reconciliation-section';
 import { useAppStore } from '@/store/app-store';
 import { useShallow } from 'zustand/react/shallow';
 import type { RegisterMode } from '@/lib/types';
@@ -58,6 +59,7 @@ const viewComponents: { [key: string]: ComponentType<any> } = {
   'devolucao-reports': DevolucaoReportSection,
   'product-reports': ProductReportSection,
   calculators: CalculatorsSection,
+  reconciliation: ReconciliationSection,
 };
 
 export default function Home() {

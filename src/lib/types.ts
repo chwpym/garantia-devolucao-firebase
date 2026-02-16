@@ -27,6 +27,7 @@ export interface Warranty {
   status?: WarrantyStatus;
   loteId?: number | null;
   photos?: string[];
+  codigoExterno?: string;
 }
 
 export type PersonType = 'Cliente' | 'Mecânico' | 'Ambos';
@@ -44,6 +45,7 @@ export interface Person {
   bairro?: string;
   cidade?: string;
   observacao?: string;
+  codigoExterno?: string;
 }
 
 export interface Supplier {
@@ -55,6 +57,7 @@ export interface Supplier {
   cep?: string;
   endereco?: string;
   bairro?: string;
+  codigoExterno?: string;
 }
 
 export type LoteStatus = 'Aberto' | 'Enviado' | 'Aprovado Parcialmente' | 'Aprovado Totalmente' | 'Recusado';
@@ -100,6 +103,7 @@ export interface Product {
   descricao: string;
   referencia?: string;
   marca?: string;
+  codigoExterno?: string;
 }
 
 // --- Novas Estruturas para Devolução ---

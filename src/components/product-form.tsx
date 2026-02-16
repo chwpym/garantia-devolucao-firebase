@@ -19,6 +19,7 @@ const formSchema = z.object({
   descricao: z.string().min(2, { message: 'A descrição deve ter pelo menos 2 caracteres.' }),
   referencia: z.string().optional(),
   marca: z.string().optional(),
+  codigoExterno: z.string().optional(),
 });
 
 type ProductFormValues = z.infer<typeof formSchema>;
@@ -33,7 +34,8 @@ const defaultFormValues: ProductFormValues = {
   codigo: '',
   descricao: '',
   referencia: '',
-  marca: ''
+  marca: '',
+  codigoExterno: ''
 };
 
 export default function ProductForm({ onSave, editingProduct, onClear }: ProductFormProps) {
@@ -154,6 +156,19 @@ export default function ProductForm({ onSave, editingProduct, onClear }: Product
           )}
         />
       </div>
+      <FormField
+        name="codigoExterno"
+        control={form.control}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Código Externo (ERP)</FormLabel>
+            <FormControl>
+              <Input placeholder="Código no sistema externo" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
     </div>
   );
 

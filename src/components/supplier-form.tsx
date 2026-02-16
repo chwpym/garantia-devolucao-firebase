@@ -24,6 +24,7 @@ const formSchema = z.object({
   endereco: z.string().optional(),
   bairro: z.string().optional(),
   cidade: z.string().optional(),
+  codigoExterno: z.string().optional(),
 });
 
 type SupplierFormValues = z.infer<typeof formSchema>;
@@ -42,7 +43,8 @@ const defaultFormValues: SupplierFormValues = {
   cep: '',
   endereco: '',
   bairro: '',
-  cidade: ''
+  cidade: '',
+  codigoExterno: ''
 };
 
 const formatCNPJ = (value: string) => {
@@ -186,6 +188,19 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
 
   const FormContent = (
     <div className="space-y-4 pt-4">
+      <FormField
+        name="codigoExterno"
+        control={form.control}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Código Externo (ERP)</FormLabel>
+            <FormControl>
+              <Input placeholder="Código no sistema externo" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
       <FormField
         name="cnpj"
         control={form.control}

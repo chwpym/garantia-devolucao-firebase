@@ -133,7 +133,7 @@ export default function PersonsSection() {
     if (!lowercasedTerm) return persons;
 
     return persons.filter(person =>
-      smartSearch(person, searchTerm, ['nome', 'nomeFantasia', 'cpfCnpj', 'telefone', 'cidade'])
+      smartSearch(person, searchTerm, ['nome', 'nomeFantasia', 'cpfCnpj', 'telefone', 'cidade', 'codigoExterno'])
     );
   }, [persons, searchTerm]);
 
@@ -321,7 +321,7 @@ export default function PersonsSection() {
         <CardContent>
           <div className="mb-4">
             <SearchInput
-              placeholder="Buscar por nome, nome fantasia, CPF/CNPJ, telefone ou cidade..."
+              placeholder="Buscar por nome, nome fantasia, CPF/CNPJ, telefone, cidade ou código externo..."
               value={searchTerm}
               onChange={(e) => setFilters({ ...filters, searchTerm: e.target.value })}
               onClear={() => setFilters({ ...filters, searchTerm: '' })}
@@ -336,10 +336,11 @@ export default function PersonsSection() {
                   <SortableHeader sortKey='id'>ID</SortableHeader>
                   <SortableHeader sortKey='nome'>Razão Social</SortableHeader>
                   <SortableHeader sortKey='nomeFantasia'>Nome Fantasia</SortableHeader>
-                  <SortableHeader sortKey='cpfCnpj'>CPF/CNPJ</SortableHeader>
-                  <SortableHeader sortKey='telefone'>Telefone</SortableHeader>
                   <SortableHeader sortKey='tipo'>Tipo</SortableHeader>
-                  <TableHead className="w-[50px] text-right">Ações</TableHead>
+                  <SortableHeader sortKey='cpfCnpj'>CPF / CNPJ</SortableHeader>
+                  <SortableHeader sortKey='codigoExterno'>Cód. Ext.</SortableHeader>
+                  <SortableHeader sortKey='telefone'>Telefone</SortableHeader>
+                  <TableHead className="w-[100px] text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -349,11 +350,12 @@ export default function PersonsSection() {
                       <TableCell className="font-medium text-muted-foreground">{person.id}</TableCell>
                       <TableCell className="font-medium">{person.nome}</TableCell>
                       <TableCell>{person.nomeFantasia || '-'}</TableCell>
-                      <TableCell>{formatCpfCnpj(person.cpfCnpj)}</TableCell>
-                      <TableCell>{person.telefone || '-'}</TableCell>
                       <TableCell>
                         <Badge variant={getTypeVariant(person.tipo)}>{person.tipo}</Badge>
                       </TableCell>
+                      <TableCell className="font-mono text-xs">{person.cpfCnpj ? formatCpfCnpj(person.cpfCnpj) : '-'}</TableCell>
+                      <TableCell className="font-mono text-xs text-blue-600">{person.codigoExterno || '-'}</TableCell>
+                      <TableCell>{person.telefone || '-'}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>

@@ -5,7 +5,7 @@
 import type { Warranty, Person, Supplier, Lote, LoteItem, CompanyData, Devolucao, ItemDevolucao, Product, PurchaseSimulation, UserProfile } from './types';
 
 const DB_NAME = 'GarantiasDB';
-const DB_VERSION = 9; // Updated to match existing database version
+const DB_VERSION = 10; // Incremented for Phase 12 (codigoExterno)
 
 const GARANTIAS_STORE_NAME = 'garantias';
 const PERSONS_STORE_NAME = 'persons';
@@ -55,8 +55,17 @@ const getDB = (): Promise<IDBDatabase> => {
         if (!dbInstance.objectStoreNames.contains(PERSONS_STORE_NAME)) {
           dbInstance.createObjectStore(PERSONS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
         }
+        const personStore = request.transaction?.objectStore(PERSONS_STORE_NAME);
+        if (personStore && !personStore.indexNames.contains('codigoExterno')) {
+          personStore.createIndex('codigoExterno', 'codigoExterno', { unique: false });
+        }
+
         if (!dbInstance.objectStoreNames.contains(SUPPLIERS_STORE_NAME)) {
           dbInstance.createObjectStore(SUPPLIERS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+        }
+        const supplierStore = request.transaction?.objectStore(SUPPLIERS_STORE_NAME);
+        if (supplierStore && !supplierStore.indexNames.contains('codigoExterno')) {
+          supplierStore.createIndex('codigoExterno', 'codigoExterno', { unique: false });
         }
         if (!dbInstance.objectStoreNames.contains(LOTES_STORE_NAME)) {
           dbInstance.createObjectStore(LOTES_STORE_NAME, { keyPath: 'id', autoIncrement: true });
@@ -78,6 +87,10 @@ const getDB = (): Promise<IDBDatabase> => {
         if (!dbInstance.objectStoreNames.contains(PRODUCTS_STORE_NAME)) {
           const productStore = dbInstance.createObjectStore(PRODUCTS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
           productStore.createIndex('codigo', 'codigo', { unique: true });
+        }
+        const productStore = request.transaction?.objectStore(PRODUCTS_STORE_NAME);
+        if (productStore && !productStore.indexNames.contains('codigoExterno')) {
+          productStore.createIndex('codigoExterno', 'codigoExterno', { unique: false });
         }
         if (!dbInstance.objectStoreNames.contains(SIMULATIONS_STORE_NAME)) {
           const simulationStore = dbInstance.createObjectStore(SIMULATIONS_STORE_NAME, { keyPath: 'id', autoIncrement: true });

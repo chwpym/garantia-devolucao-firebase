@@ -1,15 +1,16 @@
 # 🚀 Plano Completo de Refatoração - Synergia OS
 
-> **Versão:** 3.1 - ESTABILIDADE  
-> **Data Atualização:** 28/01/2026  
-> **Total de Fases:** 25 (Adicionada 11a)
-> **Status:** 🟠 Em Progresso (Fase 11a)
+> **Versão:** 3.2 - EXPANSÃO  
+> **Data Atualização:** 16/02/2026  
+> **Total de Fases:** 25
+> **Status:** 🟠 Em Progresso (Fase 12 - Username Auth)
 
 ---
 
 ## 📊 Análise do Projeto
 
 ### Estrutura Atual
+
 ```
 src/
 ├── app/              6 arquivos
@@ -23,12 +24,14 @@ src/
 ```
 
 ### Dependências
+
 - Next.js: 15.3.3 (⚠️ 15.5.9 disponível)
 - React: 18.3.1 ✅
 - Firebase: 10.12.3 ✅
 - Recharts: 2.15.1 ✅
 
 ### Problemas Identificados
+
 - 🔴 6 arquivos com erros de hidratação (`Date.now()` / `Math.random()`)
 - 🟡 4 arquivos com `console.log` em produção
 - 🟡 Next.js desatualizado
@@ -37,29 +40,32 @@ src/
 
 ## 🎯 Resumo das Fases
 
-| Prioridade | Fases | Tempo Total |
-|------------|-------|-------------|
-| 🔴 Crítica | 3 | 5-7 horas |
-| 🟠 Alta | 6 | 18-24 horas |
-| 🟡 Média | 11 | 28-36 horas |
-| 🟢 Baixa | 4 | 9-11 horas |
-| **TOTAL** | **24** | **60-78 horas** |
+| Prioridade | Fases  | Tempo Total     |
+| ---------- | ------ | --------------- |
+| 🔴 Crítica | 3      | 5-7 horas       |
+| 🟠 Alta    | 6      | 18-24 horas     |
+| 🟡 Média   | 11     | 28-36 horas     |
+| 🟢 Baixa   | 4      | 9-11 horas      |
+| **TOTAL**  | **24** | **60-78 horas** |
 
 ---
 
 ## 🔴 FASES CRÍTICAS (Fazer Primeiro)
 
 ### Fase 1: Correção de Erros de Hidratação
+
 **Tempo:** 2-3 horas  
 **Arquivos:** 6 calculadoras + batch-register-section.tsx  
 **Objetivo:** Eliminar `Date.now()` e `Math.random()` que causam hydration errors
 
 ### Fase 2: Segurança da Sessão
+
 **Tempo:** 1-2 horas  
 **Arquivos:** `login/page.tsx`  
 **Objetivo:** Checkbox "Lembrar de mim" com localStorage/sessionStorage
 
 ### Fase 3: Validador de Duplicidade
+
 **Tempo:** 2 horas  
 **Arquivos:** `product-form.tsx`, `supplier-form.tsx`, `person-form.tsx`  
 **Objetivo:** Prevenir cadastros duplicados (código, CNPJ, CPF)
@@ -69,26 +75,32 @@ src/
 ## 🟠 FASES ALTA PRIORIDADE
 
 ### Fase 4: Fundações de UI e Navegação
+
 **Tempo:** 2-3 horas  
 **Objetivo:** Navegação em abas + botão "Voltar" inteligente
 
 ### Fase 5: Usabilidade em Garantias
+
 **Tempo:** 3-4 horas  
 **Objetivo:** Cards informativos + gerenciamento em massa
 
 ### Fase 6: Busca Inteligente
+
 **Tempo:** 3-4 horas  
 **Objetivo:** Busca fuzzy + cards coloridos
 
 ### Fase 7: Melhorias de Fluxo
+
 **Tempo:** 4-5 horas  
 **Objetivo:** Cadastro rápido (botão "+") + manter filtros
 
 ### Fase 8: Dashboard Visual
+
 **Tempo:** 3-4 horas  
 **Objetivo:** Gráficos BarChart + painel de garantias recentes
 
 ### Fase 9: Otimização de Cadastro Rápido
+
 **Tempo:** 2-3 horas  
 **Objetivo:** Auto-seleção após criar item
 
@@ -97,53 +109,81 @@ src/
 ## 🟡 FASES MÉDIA PRIORIDADE
 
 ### Fase 10: Performance
+
 **Tempo:** 2-3 horas  
 **Objetivo:** Virtualização de listas + lazy loading
 
 ### Fase 11: Status de Garantia ✅
+
 **Tempo:** 2-3 horas  
 **Objetivo:** Sistema de status visual com cores (CRUD Dinâmico antecipado)
 
 ### Fase 11a: Gestão de Acessos e Segurança Híbrida 🟠
+
 **Tempo:** 3-4 horas  
 **Objetivo:** Modelo Local-First com motor Firebase.
+
 - Cadastro Pendente/Aprovação Admin.
 - Badge de notificação de novos usuários.
 - Reset de UI entre diferentes perfis de usuário.
 
-### Fase 12: Código Externo
+### Fase 11b: Performance e Paginação ✅
+
+**Tempo:** 2-3 horas  
+**Objetivo:** Implementação de "Carregar Mais" e otimização de renderização.
+
+### Fase 11c: Padronização Visual ✅
+
+**Tempo:** 1-2 horas  
+**Objetivo:** Unificação de StatusBadge em todo o sistema.
+
+### Fase 11d: Código Externo ✅
+
 **Tempo:** 2 horas  
-**Objetivo:** Campo `codigoExterno` para integração
+**Objetivo:** Campo `codigoExterno` e Tela de Conciliação.
+
+### Fase 12: Autenticação por Username
+
+**Tempo:** 2-3 horas  
+**Objetivo:** Permitir login via Username em vez de apenas e-mail.
 
 ### Fase 13: Máscara de Telefone
+
 **Tempo:** 1 hora  
 **Objetivo:** Formatação automática `(XX) XXXXX-XXXX`
 
 ### Fase 14: Múltiplos Contatos
+
 **Tempo:** 3-4 horas  
 **Objetivo:** Arrays de telefones e emails
 
 ### Fase 15: UX Telas Vazias
+
 **Tempo:** 2 horas  
 **Objetivo:** Componente EmptyState reutilizável
 
 ### Fase 16: Limpeza de Console.log
+
 **Tempo:** 30 min  
 **Objetivo:** Remover logs de produção
 
 ### Fase 17: Atualizar Next.js
+
 **Tempo:** 1 hora  
 **Objetivo:** 15.3.3 → 15.5.9
 
 ### Fase 18: Status Dinâmicos (COMPLEXA)
+
 **Tempo:** 6-8 horas  
 **Objetivo:** CRUD de status customizáveis
 
 ### Fase 19: Tempo Médio de Devolução (COMPLEXA)
+
 **Tempo:** 4-5 horas  
 **Objetivo:** Analytics de tempo de devolução por cliente
 
 ### Fase 20: Melhorias Consulta Devoluções
+
 **Tempo:** 1-2 horas  
 **Objetivo:** Hover dark mode + tooltip mecânico
 
@@ -152,18 +192,22 @@ src/
 ## 🟢 FASES BAIXA PRIORIDADE (Polish)
 
 ### Fase 21: Preferências do Usuário
+
 **Tempo:** 1 hora  
 **Objetivo:** Salvar aba preferida do dashboard
 
 ### Fase 22: Remover Login Google
+
 **Tempo:** 30 min  
 **Objetivo:** Simplificar tela de login
 
 ### Fase 23: UI Polish
+
 **Tempo:** 3-4 horas  
 **Objetivo:** Consistência visual (botões, espaçamentos, tipografia)
 
 ### Fase 24: Documentação e Testes
+
 **Tempo:** 4-5 horas  
 **Objetivo:** README + JSDoc + testes básicos
 
@@ -172,12 +216,14 @@ src/
 ## 🛡️ PROCEDIMENTOS DE SEGURANÇA
 
 ### Antes de Cada Fase
+
 ```bash
 git checkout -b [tipo]/[nome-fase]
 git pull origin main
 ```
 
 ### Durante a Fase
+
 ```bash
 # Commits incrementais
 git add [arquivo]
@@ -185,6 +231,7 @@ git commit -m "[tipo]: [descrição]"
 ```
 
 ### Após a Fase
+
 ```bash
 npm run dev          # Testar
 npm run build        # Verificar build
@@ -195,6 +242,7 @@ git push origin main
 ```
 
 ### Rollback de Emergência
+
 ```bash
 git log --oneline
 git revert [commit-hash]
@@ -206,6 +254,7 @@ git push origin main
 ## 📋 ORDEM DE EXECUÇÃO RECOMENDADA
 
 **Semana 1 - Crítico + Alta (Dias 1-5)**
+
 1. Fase 1: Hidratação (CRÍTICO)
 2. Fase 2: Segurança Sessão (CRÍTICO)
 3. Fase 3: Validador (CRÍTICO)
@@ -225,12 +274,14 @@ git push origin main
 ## ✅ CHECKLIST GERAL
 
 ### Antes de Começar
+
 - [ ] Backup completo do projeto
 - [ ] Git configurado
 - [ ] Ambiente funcionando
 - [ ] Dependências instaladas
 
 ### Para Cada Fase
+
 - [ ] Criar branch
 - [ ] Fazer mudanças incrementais
 - [ ] Testar após cada mudança
@@ -239,6 +290,7 @@ git push origin main
 - [ ] Merge para main
 
 ### Após Todas as Fases
+
 - [ ] Revisão geral
 - [ ] Testes de integração
 - [ ] Performance check
@@ -250,6 +302,6 @@ git push origin main
 
 ---
 
-**Última Atualização:** 28/01/2026  
-**Versão:** 3.1  
-**Status:** 🟠 Fase 11a em andamento
+**Última Atualização:** 16/02/2026  
+**Versão:** 3.2  
+**Status:** 🟠 Fase 12 em planejamento

@@ -120,20 +120,8 @@ export default function SuppliersSection() {
     if (!lowercasedTerm) return suppliers;
 
     return suppliers.filter(supplier =>
-      smartSearch(supplier, searchTerm, ['nomeFantasia', 'razaoSocial', 'cnpj'])
+      smartSearch(supplier, searchTerm, ['nomeFantasia', 'razaoSocial', 'cnpj', 'codigoExterno'])
     );
-
-    // ... (in JSX)
-    <div className="mb-4">
-      <SearchInput
-        placeholder="Buscar por Nome Fantasia, Razão Social ou CNPJ..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        onClear={() => setSearchTerm('')}
-        className="w-full"
-        containerClassName="max-w-full"
-      />
-    </div>
   }, [suppliers, searchTerm]);
 
   const sortedSuppliers = useMemo(() => {
@@ -286,8 +274,9 @@ export default function SuppliersSection() {
                   <SortableHeader sortKey='nomeFantasia'>Nome Fantasia</SortableHeader>
                   <SortableHeader sortKey='razaoSocial'>Razão Social</SortableHeader>
                   <SortableHeader sortKey='cnpj'>CNPJ</SortableHeader>
+                  <SortableHeader sortKey='codigoExterno'>Cód. Ext.</SortableHeader>
                   <SortableHeader sortKey='cidade'>Cidade</SortableHeader>
-                  <TableHead className="w-[50px] text-right">Ações</TableHead>
+                  <TableHead className="w-[100px] text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -297,7 +286,8 @@ export default function SuppliersSection() {
                       <TableCell className="font-medium text-muted-foreground">{supplier.id}</TableCell>
                       <TableCell className="font-medium">{supplier.nomeFantasia}</TableCell>
                       <TableCell>{supplier.razaoSocial}</TableCell>
-                      <TableCell>{formatCnpj(supplier.cnpj)}</TableCell>
+                      <TableCell className="font-mono text-xs">{supplier.cnpj ? formatCnpj(supplier.cnpj) : '-'}</TableCell>
+                      <TableCell className="font-mono text-xs text-blue-600">{supplier.codigoExterno || '-'}</TableCell>
                       <TableCell>{supplier.cidade || '-'}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>

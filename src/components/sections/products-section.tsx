@@ -118,7 +118,7 @@ export default function ProductsSection() {
     if (!searchTerm) return products;
 
     return products.filter(product =>
-      smartSearch(product, searchTerm, ['codigo', 'descricao', 'marca', 'referencia'])
+      smartSearch(product, searchTerm, ['codigo', 'descricao', 'marca', 'referencia', 'codigoExterno'])
     );
   }, [products, searchTerm]);
 
@@ -272,6 +272,7 @@ export default function ProductsSection() {
                   <SortableHeader sortKey='descricao'>Descrição</SortableHeader>
                   <SortableHeader sortKey='marca'>Marca</SortableHeader>
                   <SortableHeader sortKey='referencia'>Referência</SortableHeader>
+                  <SortableHeader sortKey='codigoExterno'>Cód. Ext.</SortableHeader>
                   <TableHead className="w-[50px] text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -283,6 +284,7 @@ export default function ProductsSection() {
                       <TableCell>{product.descricao}</TableCell>
                       <TableCell>{product.marca || '-'}</TableCell>
                       <TableCell>{product.referencia || '-'}</TableCell>
+                      <TableCell className="font-mono text-xs text-blue-600">{product.codigoExterno || '-'}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
