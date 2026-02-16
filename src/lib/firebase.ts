@@ -3,7 +3,7 @@
 
 import { initializeApp, getApps, getApp, deleteApp, type FirebaseApp, type FirebaseOptions } from 'firebase/app';
 import { getStorage } from 'firebase/storage';
-import { getAuth, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { getAuth, createUserWithEmailAndPassword, updateProfile, sendPasswordResetEmail } from 'firebase/auth';
 
 // Esta configuração agora funciona tanto no servidor (durante o build) quanto no cliente.
 const firebaseConfig: FirebaseOptions = {
@@ -45,4 +45,4 @@ async function adminCreateUser(email: string, pass: string, name: string) {
   }
 }
 
-export { app, auth, storage, createUserWithEmailAndPassword, updateProfile, getFirebaseApp, adminCreateUser };
+export { app, auth, storage, createUserWithEmailAndPassword, updateProfile, sendPasswordResetEmail, getFirebaseApp, adminCreateUser };

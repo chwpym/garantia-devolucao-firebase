@@ -39,8 +39,11 @@ export default function SignupPage() {
   const onSubmit = async (data: SignupFormValues) => {
     setIsLoading(true);
     try {
+      const normalizedUsername = data.username.toLowerCase();
+      const normalizedEmail = data.email.toLowerCase();
+
       // 0. Verifica se o username já está em uso localmente
-      const existing = await db.getUserByUsername(data.username);
+      const existing = await db.getUserByUsername(normalizedUsername);
       if (existing) {
         toast({
           title: 'Usuário já existe',
@@ -62,8 +65,8 @@ export default function SignupPage() {
       // 3. Salva o perfil no IndexedDB local
       await db.upsertUserProfile({
         uid: userCredential.user.uid,
-        email: data.email,
-        username: data.username,
+        email: normalizedEmail,
+        username: normalizedUsername,
         displayName: data.displayName,
         role: 'user', // Padrão
         status: 'pending', // Requer aprovação do admin

@@ -59,6 +59,7 @@ import { useAuth } from '@/hooks/use-auth';
 
 const onboardingSchema = z.object({
   displayName: z.string().min(2, { message: 'O nome é obrigatório.' }),
+  username: z.string().min(3, { message: 'Mínimo 3 caracteres.' }).regex(/^[a-z0-9._]+$/, { message: 'Incorreto.' }),
   email: z.string().email({ message: 'E-mail inválido.' }),
   password: z.string().min(6, { message: 'A senha deve ter pelo menos 6 caracteres.' }),
   role: z.enum(['admin', 'user'], {
@@ -71,6 +72,7 @@ type OnboardingFormValues = z.infer<typeof onboardingSchema>;
 const userFormSchema = z.object({
   uid: z.string().optional(),
   displayName: z.string().min(2, { message: 'O nome é obrigatório.' }),
+  username: z.string().min(3, { message: 'Mínimo 3 caracteres.' }).regex(/^[a-z0-9._]+$/, { message: 'Incorreto.' }),
   email: z
     .string()
     .email({ message: 'Por favor, insira um e-mail válido.' }),
@@ -101,6 +103,7 @@ export default function UsersSection() {
     resolver: zodResolver(onboardingSchema),
     defaultValues: {
       displayName: '',
+      username: '',
       email: '',
       password: '',
       role: 'user',
@@ -114,6 +117,7 @@ export default function UsersSection() {
   const loadUsers = useCallback(async () => {
     setIsLoading(true);
     try {
+      await db.ensureUsernamesOnProfiles(); // Migração silenciosa
       const allUsers = await db.getAllUserProfiles();
       setUsers(allUsers);
     } catch {
@@ -134,11 +138,20 @@ export default function UsersSection() {
     return () => window.removeEventListener('datachanged', handleDataChanged);
   }, [loadUsers]);
 
+  const onboardingUserEmail = onboardingForm.watch('email');
+  useEffect(() => {
+    if (onboardingUserEmail && !onboardingForm.getValues('username')) {
+      const suggested = onboardingUserEmail.split('@')[0].toLowerCase().replace(/[^a-z0-9._]/g, '');
+      onboardingForm.setValue('username', suggested);
+    }
+  }, [onboardingUserEmail, onboardingForm]);
+
   useEffect(() => {
     if (isFormModalOpen && editingUser) {
       form.reset({
         uid: editingUser.uid,
         displayName: editingUser.displayName,
+        username: editingUser.username || '',
         email: editingUser.email,
         role: editingUser.role,
       });
@@ -148,12 +161,16 @@ export default function UsersSection() {
 
   const handleOnboardingSubmit = async (values: OnboardingFormValues, stayOpen: boolean) => {
     setIsOnboardingLoading(true);
+    const normalizedEmail = values.email.trim().toLowerCase();
+    const normalizedUsername = values.username.trim().toLowerCase();
+
     try {
-      const firebaseUser = await adminCreateUser(values.email, values.password, values.displayName);
+      const firebaseUser = await adminCreateUser(normalizedEmail, values.password, values.displayName);
 
       const newUserProfile: UserProfile = {
         uid: firebaseUser.uid,
-        email: values.email,
+        email: normalizedEmail,
+        username: normalizedUsername,
         displayName: values.displayName,
         role: values.role as UserRole,
         status: 'active',
@@ -192,8 +209,13 @@ export default function UsersSection() {
   const handleFormSubmit = async (data: UserFormValues) => {
     if (!editingUser) return;
 
+    const normalizedEmail = data.email.trim().toLowerCase();
+    const normalizedUsername = data.username.trim().toLowerCase();
+
     const updatedProfile: UserProfile = {
       ...editingUser,
+      email: normalizedEmail,
+      username: normalizedUsername,
       displayName: data.displayName,
       role: data.role as UserRole,
       status: editingUser.status || 'active',
@@ -257,6 +279,23 @@ export default function UsersSection() {
       toast({
         title: 'Erro ao Aprovar',
         description: 'Não foi possível aprovar o usuário.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleSendPasswordReset = async (email: string) => {
+    try {
+      await db.sendPasswordResetEmail(db.auth, email);
+      toast({
+        title: 'E-mail Enviado',
+        description: `Um link de redefinição de senha foi enviado para ${email}.`,
+      });
+    } catch (error: any) {
+      console.error('Erro ao enviar reset:', error);
+      toast({
+        title: 'Falha no Envio',
+        description: 'Não foi possível enviar o e-mail de redefinição.',
         variant: 'destructive',
       });
     }
@@ -370,6 +409,19 @@ export default function UsersSection() {
                 />
                 <FormField
                   control={form.control}
+                  name="username"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome de Usuário (@)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="usuario.tecnico" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
@@ -457,6 +509,19 @@ export default function UsersSection() {
                     <FormLabel>E-mail</FormLabel>
                     <FormControl>
                       <Input type="email" placeholder="usuario@empresa.com" {...field} autoComplete="off" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={onboardingForm.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome de Usuário (@)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ex: joao.vendas" {...field} autoComplete="off" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -569,7 +634,12 @@ export default function UsersSection() {
               sortedUsers.map((user) => (
                 <div key={user.uid} className="border p-4 rounded-lg flex flex-col gap-2">
                   <div className="flex justify-between items-start">
-                    <span className="font-bold">{user.displayName}</span>
+                    <div className="flex flex-col">
+                      <span className="font-bold">{user.displayName}</span>
+                      <span className="text-xs text-muted-foreground italic">
+                        (@{user.username || user.email.split('@')[0]})
+                      </span>
+                    </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
@@ -580,6 +650,9 @@ export default function UsersSection() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => openEditModal(user)}>
                           <Pencil className="mr-2 h-4 w-4" /> Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleSendPasswordReset(user.email)}>
+                          <ShieldCheck className="mr-2 h-4 w-4" /> Redefinir Senha
                         </DropdownMenuItem>
                         {user.status === 'pending' && (
                           <DropdownMenuItem onClick={() => handleApproveUser(user)} className="text-green-600 focus:text-green-700">
@@ -637,7 +710,10 @@ export default function UsersSection() {
                   sortedUsers.map((user) => (
                     <TableRow key={user.uid} className={user.status === 'blocked' ? 'bg-muted/50 text-muted-foreground' : ''}>
                       <TableCell className="font-medium">
-                        {user.displayName}
+                        <div>{user.displayName}</div>
+                        <div className="text-xs text-muted-foreground italic">
+                          (@{user.username || user.email.split('@')[0]})
+                        </div>
                       </TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>
@@ -666,6 +742,10 @@ export default function UsersSection() {
                             <DropdownMenuItem onClick={() => openEditModal(user)}>
                               <Pencil className="mr-2 h-4 w-4" />
                               Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleSendPasswordReset(user.email)}>
+                              <ShieldCheck className="mr-2 h-4 w-4" />
+                              Redefinir Senha
                             </DropdownMenuItem>
                             {user.status === 'pending' && (
                               <DropdownMenuItem onClick={() => handleApproveUser(user)} className="text-green-600 focus:text-green-700">

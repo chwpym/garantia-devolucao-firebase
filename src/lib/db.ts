@@ -3,6 +3,9 @@
 'use client';
 
 import type { Warranty, Person, Supplier, Lote, LoteItem, CompanyData, Devolucao, ItemDevolucao, Product, PurchaseSimulation, UserProfile } from './types';
+import { auth, sendPasswordResetEmail } from './firebase';
+
+export { auth, sendPasswordResetEmail };
 
 const DB_NAME = 'GarantiasDB';
 const DB_VERSION = 11; // Incremented for Phase 12 (Username Auth)
@@ -162,20 +165,7 @@ const clearStore = (storeName: string): Promise<void> => {
 
 // --- User Profile Functions ---
 
-export const getUserProfile = (uid: string): Promise<UserProfile | undefined> => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const store = await getStore(USERS_STORE_NAME, 'readonly');
-      const request = store.get(uid);
-      request.onsuccess = () => resolve(request.result as UserProfile | undefined);
-      request.onerror = () => reject(request.error);
-    } catch (err) {
-      reject(err);
-    }
-  });
-};
-
-export const getAllUserProfiles = (): Promise<UserProfile[]> => {
+export const getAllUserProfiles = async (): Promise<UserProfile[]> => {
   return new Promise(async (resolve, reject) => {
     try {
       const store = await getStore(USERS_STORE_NAME, 'readonly');
@@ -188,13 +178,13 @@ export const getAllUserProfiles = (): Promise<UserProfile[]> => {
   });
 };
 
-export const getUserByUsername = (username: string): Promise<UserProfile | undefined> => {
+export const getUserByUsername = async (username: string): Promise<UserProfile | null> => {
   return new Promise(async (resolve, reject) => {
     try {
       const store = await getStore(USERS_STORE_NAME, 'readonly');
       const index = store.index('username');
-      const request = index.get(username);
-      request.onsuccess = () => resolve(request.result as UserProfile | undefined);
+      const request = index.get(username.toLowerCase());
+      request.onsuccess = () => resolve(request.result as UserProfile || null);
       request.onerror = () => reject(request.error);
     } catch (err) {
       reject(err);
@@ -202,13 +192,56 @@ export const getUserByUsername = (username: string): Promise<UserProfile | undef
   });
 };
 
-
-export const upsertUserProfile = (profile: UserProfile): Promise<string> => {
+export const upsertUserProfile = (profile: UserProfile): Promise<void> => {
   return new Promise(async (resolve, reject) => {
     try {
       const store = await getStore(USERS_STORE_NAME, 'readwrite');
+      
+      // Ensure username exists (fallback to email prefix)
+      if (!profile.username) {
+        profile.username = profile.email.split('@')[0].toLowerCase().replace(/[^a-z0-9._]/g, '');
+      } else {
+        profile.username = profile.username.toLowerCase();
+      }
+
       const request = store.put(profile);
-      request.onsuccess = () => resolve(request.result as string);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+/**
+ * Silent migration to ensure all local profiles have a username
+ */
+export const ensureUsernamesOnProfiles = async (): Promise<void> => {
+  try {
+    const profiles = await getAllUserProfiles();
+    let updated = false;
+    for (const profile of profiles) {
+      if (!profile.username) {
+        await upsertUserProfile(profile);
+        updated = true;
+      }
+    }
+    if (updated) {
+      console.log('Usernames ensured on local profiles.');
+    }
+  } catch (err) {
+    console.warn('Failed to ensure usernames:', err);
+  }
+};
+
+// --- User Profile Functions ---
+
+export const getUserProfile = (uid: string): Promise<UserProfile | undefined> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(USERS_STORE_NAME, 'readonly');
+      const request = store.get(uid);
+      request.onsuccess = () => resolve(request.result as UserProfile | undefined);
       request.onerror = () => reject(request.error);
     } catch (err) {
       reject(err);

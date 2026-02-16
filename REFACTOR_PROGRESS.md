@@ -6,9 +6,9 @@ Este documento rastreia o status detalhado de cada fase do plano de refatoraçã
 
 - **Início:** 15/12/2025
 - **Data Hoje:** 16/02/2026
-- **Fases Concluídas:** 15/25
+- **Fases Concluídas:** 16/25
 - **Em Progresso:** Nenhuma
-- **Próxima Fase:** Fase 12 - Autenticação por Username
+- **Próxima Fase:** Fase 13 - Máscara de Telefone
 
 ---
 
@@ -110,4 +110,17 @@ Este documento rastreia o status detalhado de cada fase do plano de refatoraçã
 
 ---
 
-_(Fases 12-25 conforme `REFACTOR_PLAN.md`)_
+### FASE 12: Autenticação por Username & Gestão ✅
+
+| Item                      | Status | Notas                                              |
+| :------------------------ | :----: | :------------------------------------------------- |
+| Schema & Index `username` |   ✅   | IndexedDB v11 com suporte a busca por username     |
+| Tabela de Usuários        |   ✅   | Exibição elegante do `(@username)` sob o nome      |
+| Gestão (Admin)            |   ✅   | Username nos modais com auto-sugestão inteligente  |
+| Redefinição de Senha      |   ✅   | Fluxo oficial via e-mail do Firebase (Custo Zero)  |
+| Login com Username        |   ✅   | Login bi-modal (Usuário ou E-mail) com Dica UX     |
+| Migração Silenciosa       |   ✅   | Gera usernames automaticamente para perfis antigos |
+
+---
+
+_(Fases 13-25 conforme `REFACTOR_PLAN.md`)_

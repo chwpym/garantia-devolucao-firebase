@@ -51,6 +51,28 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
+  const [usernameHint, setUsernameHint] = useState<string | null>(null);
+  const identifier = form.watch("identifier");
+
+  // Listener para sugerir username se digitar o e-mail
+  useEffect(() => {
+    const checkUsernameHint = async () => {
+      const normalizedIdentifier = identifier?.trim().toLowerCase();
+      if (normalizedIdentifier && normalizedIdentifier.includes("@")) {
+        const profiles = await db.getAllUserProfiles();
+        const profile = profiles.find(p => p.email.toLowerCase() === normalizedIdentifier);
+        if (profile?.username) {
+          setUsernameHint(profile.username);
+        } else {
+          setUsernameHint(null);
+        }
+      } else {
+        setUsernameHint(null);
+      }
+    };
+    checkUsernameHint();
+  }, [identifier]);
+
   // Listener para resetar o estado de loading caso o usuário seja deslogado (ex: bloqueado)
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (authUser) => {
@@ -65,7 +87,8 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
-      let email = data.identifier;
+      const normalizedIdentifier = data.identifier.trim().toLowerCase();
+      let email = normalizedIdentifier;
 
       // Se não for um e-mail, tenta resolver o username
       if (!email.includes("@")) {
@@ -152,6 +175,11 @@ export default function LoginPage() {
                 disabled={isLoading}
                 autoComplete="username"
               />
+              {usernameHint && (
+                <p className="text-xs text-blue-600 font-medium animate-in fade-in slide-in-from-top-1">
+                  💡 Seu usuário é: <span className="font-bold underline">@{usernameHint}</span>
+                </p>
+              )}
               {form.formState.errors.identifier && (
                 <p className="text-sm text-destructive">
                   {form.formState.errors.identifier.message}
