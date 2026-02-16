@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 
 import { auth, createUserWithEmailAndPassword, updateProfile } from '@/lib/firebase';
+import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 
@@ -19,6 +20,7 @@ import Image from 'next/image';
 
 const signupSchema = z.object({
   displayName: z.string().min(2, { message: 'O nome é obrigatório.' }),
+  username: z.string().min(3, { message: 'O usuário deve ter pelo menos 3 caracteres.' }).regex(/^[a-z0-9._]+$/, { message: 'Use apenas letras minúsculas, números, pontos ou underscores.' }),
   email: z.string().email({ message: 'Por favor, insira um e-mail válido.' }),
   password: z.string().min(6, { message: 'A senha deve ter pelo menos 6 caracteres.' }),
 });
@@ -37,12 +39,34 @@ export default function SignupPage() {
   const onSubmit = async (data: SignupFormValues) => {
     setIsLoading(true);
     try {
+      // 0. Verifica se o username já está em uso localmente
+      const existing = await db.getUserByUsername(data.username);
+      if (existing) {
+        toast({
+          title: 'Usuário já existe',
+          description: 'Este nome de usuário já está sendo usado por outro perfil neste dispositivo.',
+          variant: 'destructive',
+        });
+        setIsLoading(false);
+        return;
+      }
+
       // 1. Cria o usuário no Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
 
       // 2. Atualiza o perfil no Firebase (opcional, para ter o nome disponível imediatamente)
       await updateProfile(userCredential.user, {
         displayName: data.displayName,
+      });
+
+      // 3. Salva o perfil no IndexedDB local
+      await db.upsertUserProfile({
+        uid: userCredential.user.uid,
+        email: data.email,
+        username: data.username,
+        displayName: data.displayName,
+        role: 'user', // Padrão
+        status: 'pending', // Requer aprovação do admin
       });
 
       toast({
@@ -98,6 +122,20 @@ export default function SignupPage() {
               />
               {form.formState.errors.displayName && (
                 <p className="text-sm text-destructive">{form.formState.errors.displayName.message}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="username">Nome de Usuário</Label>
+              <Input
+                id="username"
+                type="text"
+                placeholder="ex: junior.vendas"
+                {...form.register('username')}
+                disabled={isLoading}
+                autoComplete="off"
+              />
+              {form.formState.errors.username && (
+                <p className="text-sm text-destructive">{form.formState.errors.username.message}</p>
               )}
             </div>
             <div className="space-y-2">

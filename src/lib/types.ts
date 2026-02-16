@@ -164,6 +164,7 @@ export type UserStatus = 'active' | 'blocked' | 'pending';
 export interface UserProfile {
   uid: string;
   email: string;
+  username?: string; // Novo campo para login simplificado
   role: UserRole;
   displayName?: string;
   photoURL?: string;

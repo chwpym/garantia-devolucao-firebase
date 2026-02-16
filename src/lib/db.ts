@@ -5,7 +5,7 @@
 import type { Warranty, Person, Supplier, Lote, LoteItem, CompanyData, Devolucao, ItemDevolucao, Product, PurchaseSimulation, UserProfile } from './types';
 
 const DB_NAME = 'GarantiasDB';
-const DB_VERSION = 10; // Incremented for Phase 12 (codigoExterno)
+const DB_VERSION = 11; // Incremented for Phase 12 (Username Auth)
 
 const GARANTIAS_STORE_NAME = 'garantias';
 const PERSONS_STORE_NAME = 'persons';
@@ -101,6 +101,15 @@ const getDB = (): Promise<IDBDatabase> => {
         if (!dbInstance.objectStoreNames.contains(USERS_STORE_NAME)) {
           const userStore = dbInstance.createObjectStore(USERS_STORE_NAME, { keyPath: 'uid' });
           userStore.createIndex('email', 'email', { unique: true });
+          userStore.createIndex('username', 'username', { unique: true });
+        } else {
+          const transaction = (event.target as IDBOpenDBRequest).transaction;
+          if (transaction) {
+            const userStore = transaction.objectStore(USERS_STORE_NAME);
+            if (!userStore.indexNames.contains('username')) {
+              userStore.createIndex('username', 'username', { unique: true });
+            }
+          }
         }
 
         // Create custom statuses store
@@ -172,6 +181,20 @@ export const getAllUserProfiles = (): Promise<UserProfile[]> => {
       const store = await getStore(USERS_STORE_NAME, 'readonly');
       const request = store.getAll();
       request.onsuccess = () => resolve(request.result as UserProfile[]);
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+export const getUserByUsername = (username: string): Promise<UserProfile | undefined> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(USERS_STORE_NAME, 'readonly');
+      const index = store.index('username');
+      const request = index.get(username);
+      request.onsuccess = () => resolve(request.result as UserProfile | undefined);
       request.onerror = () => reject(request.error);
     } catch (err) {
       reject(err);

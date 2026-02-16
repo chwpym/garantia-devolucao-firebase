@@ -1,28 +1,42 @@
+"use client";
 
-'use client';
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import {
+  signInWithEmailAndPassword,
+  type AuthError,
+  onAuthStateChanged,
+  setPersistence,
+  browserSessionPersistence,
+  indexedDBLocalPersistence,
+} from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import * as db from "@/lib/db";
+import { useToast } from "@/hooks/use-toast";
+import { useAuthGuard } from "@/hooks/use-auth-guard";
+import Link from "next/link";
+import { AlertCircle } from "lucide-react";
 
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { signInWithEmailAndPassword, type AuthError, onAuthStateChanged, setPersistence, browserSessionPersistence, indexedDBLocalPersistence } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-import { useToast } from '@/hooks/use-toast';
-import { useAuthGuard } from '@/hooks/use-auth-guard';
-import Link from 'next/link';
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-
-import { Loader2 } from 'lucide-react';
-import Image from 'next/image';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Loader2 } from "lucide-react";
+import Image from "next/image";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const loginSchema = z.object({
-  email: z.string().email({ message: 'Por favor, insira um e-mail válido.' }),
-  password: z.string().min(1, { message: 'A senha é obrigatória.' }),
+  identifier: z.string().min(3, { message: "Usuário ou e-mail inválido." }),
+  password: z.string().min(1, { message: "A senha é obrigatória." }),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -48,59 +62,100 @@ export default function LoginPage() {
     return () => unsubscribe();
   }, [authLoading]);
 
-
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
+      let email = data.identifier;
+
+      // Se não for um e-mail, tenta resolver o username
+      if (!email.includes("@")) {
+        const profile = await db.getUserByUsername(email);
+        if (!profile) {
+          toast({
+            title: "Usuário não encontrado",
+            description:
+              "Este nome de usuário não foi reconhecido. Se for seu primeiro acesso neste dispositivo, use seu e-mail completo.",
+            variant: "destructive",
+          });
+          setIsLoading(false);
+          return;
+        }
+        email = profile.email;
+      }
+
       // Define a persistência ANTES de fazer o login
-      const persistence = rememberMe ? indexedDBLocalPersistence : browserSessionPersistence;
+      const persistence = rememberMe
+        ? indexedDBLocalPersistence
+        : browserSessionPersistence;
       await setPersistence(auth, persistence);
-      await signInWithEmailAndPassword(auth, data.email, data.password);
+      await signInWithEmailAndPassword(auth, email, data.password);
       // O AuthGuard cuidará do redirecionamento.
     } catch (error: unknown) {
       const authError = error as AuthError;
-      console.error('Falha no login:', authError);
-      let errorMessage = 'Ocorreu um erro ao fazer login.';
-      if (authError.code === 'auth/invalid-credential') {
-        errorMessage = 'Credenciais inválidas. Verifique seu e-mail e senha.';
+      console.error("Falha no login:", authError);
+      let errorMessage = "Ocorreu um erro ao fazer login.";
+      if (authError.code === "auth/invalid-credential") {
+        errorMessage = "Credenciais inválidas. Verifique seu e-mail e senha.";
       }
       toast({
-        title: 'Falha no Login',
+        title: "Falha no Login",
         description: errorMessage,
-        variant: 'destructive',
+        variant: "destructive",
       });
       setIsLoading(false);
     }
   };
 
-
-
   return (
     <main className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <Image src="/logo.png" alt="Synergia OS Logo" width={64} height={64} className="mx-auto mb-4 rounded-lg" />
+          <Image
+            src="/logo.png"
+            alt="Synergia OS Logo"
+            width={64}
+            height={64}
+            className="mx-auto mb-4 rounded-lg"
+          />
           <CardTitle className="text-2xl">Acesso ao Sistema</CardTitle>
           <CardDescription>Use sua conta para entrar.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" autoComplete="off">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-4"
+            autoComplete="off"
+          >
             {/* Campos falsos para "enganar" o preenchimento automático do navegador */}
-            <input type="text" name="fake_email" style={{ display: 'none' }} aria-hidden="true" tabIndex={-1} />
-            <input type="password" name="fake_password" style={{ display: 'none' }} aria-hidden="true" tabIndex={-1} />
+            <input
+              type="text"
+              name="fake_email"
+              style={{ display: "none" }}
+              aria-hidden="true"
+              tabIndex={-1}
+            />
+            <input
+              type="password"
+              name="fake_password"
+              style={{ display: "none" }}
+              aria-hidden="true"
+              tabIndex={-1}
+            />
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="identifier">Usuário ou E-mail</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="seu@email.com"
-                {...form.register('email')}
+                id="identifier"
+                type="text"
+                placeholder="usuario ou seu@email.com"
+                {...form.register("identifier")}
                 disabled={isLoading}
-                autoComplete="email-no-fill"
+                autoComplete="username"
               />
-              {form.formState.errors.email && (
-                <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
+              {form.formState.errors.identifier && (
+                <p className="text-sm text-destructive">
+                  {form.formState.errors.identifier.message}
+                </p>
               )}
             </div>
             <div className="space-y-2">
@@ -108,12 +163,14 @@ export default function LoginPage() {
               <Input
                 id="password"
                 type="password"
-                {...form.register('password')}
+                {...form.register("password")}
                 disabled={isLoading}
                 autoComplete="new-password"
               />
               {form.formState.errors.password && (
-                <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>
+                <p className="text-sm text-destructive">
+                  {form.formState.errors.password.message}
+                </p>
               )}
             </div>
             <div className="flex items-center space-x-2">
@@ -130,13 +187,29 @@ export default function LoginPage() {
                 Lembrar de mim
               </label>
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading || authLoading}>
-              {(isLoading || authLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isLoading || authLoading}
+            >
+              {(isLoading || authLoading) && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
               Entrar
             </Button>
           </form>
+
+          <div className="mt-6 p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs flex gap-2">
+            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+            <p>
+              <strong>Dica:</strong> Se este for seu primeiro acesso neste
+              dispositivo, use seu <strong>e-mail completo</strong>. Após o
+              primeiro login, você poderá usar seu nome de usuário.
+            </p>
+          </div>
+
           <div className="mt-4 text-center text-sm">
-            Não tem uma conta?{' '}
+            Não tem uma conta?{" "}
             <Link href="/signup" className="underline">
               Cadastre-se
             </Link>
