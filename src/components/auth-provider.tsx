@@ -60,12 +60,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               // CHECK: Is this the first user ever?
               const userCount = await countUsers();
 
-              if (userCount === 0) {
-                // First user -> Auto-create as ADMIN (Bootstrap)
-                const newRole = 'admin';
-                console.log(`Bootstrap: Creating first user (Admin) for ${authUser.email}`);
+                if (userCount === 0) {
+                  // First user -> Auto-create as ADMIN (Bootstrap)
+                  const newRole = 'admin';
 
-                profile = {
+                  profile = {
                   uid: authUser.uid,
                   email: authUser.email!,
                   displayName: authUser.displayName || authUser.email?.split('@')[0] || 'Admin',
@@ -74,12 +73,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                   status: 'active',
                 };
                 await db.upsertUserProfile(profile);
-              } else {
-                // System already has users -> Create as STANDARD USER
-                const newRole = 'user';
-                console.log(`Registration: Creating standard user for ${authUser.email}`);
+                } else {
+                  // System already has users -> Create as STANDARD USER
+                  const newRole = 'user';
 
-                profile = {
+                  profile = {
                   uid: authUser.uid,
                   email: authUser.email!,
                   displayName: authUser.displayName || authUser.email?.split('@')[0] || 'Novo Usuário',

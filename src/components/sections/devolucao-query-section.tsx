@@ -15,9 +15,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { StatusBadge } from '../ui/status-badge';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Pencil, Trash2, Search, FileDown, ArrowUpDown } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, Search, FileDown, ArrowUpDown, SearchX } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { EmptyState } from '../ui/empty-state';
 
 import { Input } from '../ui/input';
 import { smartSearch } from '@/lib/search-utils';
@@ -367,8 +368,24 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
                                         ))
                                     ) : (
                                         <TableRow>
-                                            <TableCell colSpan={10} className="h-24 text-center">
-                                                Nenhuma devolução encontrada para os filtros selecionados.
+                                            <TableCell colSpan={10} className="py-12">
+                                                {searchTerm || dateRange?.from ? (
+                                                    <EmptyState 
+                                                        icon={SearchX}
+                                                        title="Nenhuma devolução encontrada"
+                                                        description="Não encontramos registros para os filtros aplicados. Tente ajustar sua busca."
+                                                        action={{
+                                                            label: "Limpar Filtros",
+                                                            onClick: () => setFilters(initialFilters)
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <EmptyState 
+                                                        icon={Search}
+                                                        title="Nenhuma devolução registrada"
+                                                        description="Inicie uma busca ou aplique filtros para ver os registros de devolução."
+                                                    />
+                                                )}
                                             </TableCell>
                                         </TableRow>
                                     )}

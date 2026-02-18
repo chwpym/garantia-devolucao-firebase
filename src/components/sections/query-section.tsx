@@ -35,6 +35,8 @@ import { Label } from '../ui/label';
 import { smartSearch } from '@/lib/search-utils';
 import { SearchInput } from '@/components/ui/search-input';
 import { usePersistedFilters } from '@/hooks/use-persisted-filters';
+import { EmptyState } from '../ui/empty-state';
+import { SearchX, LayoutList } from 'lucide-react';
 
 
 interface QuerySectionProps {
@@ -453,6 +455,25 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
               onDelete={handleDelete}
               sortConfig={sortConfig}
               onSort={(config) => setFilters({ ...filters, sortConfig: config as any })}
+              emptyState={
+                searchTerm || clientFilter || dateRange?.from || dateRange?.to ? (
+                  <EmptyState 
+                    icon={SearchX}
+                    title="Nenhuma garantia encontrada"
+                    description="Não encontramos garantias para os filtros aplicados. Tente ajustar sua busca."
+                    action={{
+                      label: "Limpar Filtros",
+                      onClick: clearFilters
+                    }}
+                  />
+                ) : (
+                  <EmptyState 
+                    icon={LayoutList}
+                    title="Nenhuma garantia registrada"
+                    description="Inicie uma busca ou aplique filtros para ver os registros de garantias."
+                  />
+                )
+              }
             />
 
             {visibleCount < sortedWarranties.length && (

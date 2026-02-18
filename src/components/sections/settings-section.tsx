@@ -1,17 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import * as db from '@/lib/db';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Plus, Trash2 } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { formatPhoneNumber, formatCpfCnpj } from '@/lib/utils';
 
 const formSchema = z.object({
     nomeEmpresa: z.string().min(2, { message: "O nome da empresa é obrigatório." }).optional(),
@@ -20,8 +21,8 @@ const formSchema = z.object({
     endereco: z.string().optional(),
     bairro: z.string().optional(),
     cidade: z.string().optional(),
-    telefone: z.string().optional(),
-    email: z.string().email({ message: "Por favor, insira um email válido." }).optional(),
+    telefones: z.array(z.string()).default([]),
+    emails: z.array(z.string().email({ message: "Por favor, insira um email válido." }).or(z.literal(''))).default([]),
 });
 
 type CompanyFormValues = z.infer<typeof formSchema>;
@@ -33,23 +34,11 @@ const defaultFormValues: CompanyFormValues = {
     endereco: '',
     bairro: '',
     cidade: '',
-    telefone: '',
-    email: ''
+    telefones: [''],
+    emails: ['']
 };
 
-const formatCNPJ = (value: string) => {
-    if (!value) return '';
-    const cnpj = value.replace(/[^\d]/g, '');
-    if (cnpj.length <= 11) {
-        return cnpj
-            .replace(/(\d{2})(\d)/, '$1.$2')
-            .replace(/(\d{3})(\d)/, '$1.$2')
-            .replace(/(\d{3})(\d)/, '$1/$2');
-    }
-    return cnpj
-        .slice(0, 14)
-        .replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
-};
+
 
 export default function SettingsSection() {
     const { toast } = useToast();
@@ -60,6 +49,16 @@ export default function SettingsSection() {
     });
     const { isSubmitting } = form.formState;
 
+    const { fields: phoneFields, append: appendPhone, remove: removePhone } = useFieldArray({
+        control: form.control,
+        name: "telefones" as never,
+    });
+
+    const { fields: emailFields, append: appendEmail, remove: removeEmail } = useFieldArray({
+        control: form.control,
+        name: "emails" as never,
+    });
+
     useEffect(() => {
         async function loadCompanyData() {
             try {
@@ -67,9 +66,21 @@ export default function SettingsSection() {
                 const data = await db.getCompanyData();
                 if (data) {
                     form.reset({
+                        ...defaultFormValues,
                         ...data,
-                        cnpj: data.cnpj ? formatCNPJ(data.cnpj) : '',
-                    });
+                        nomeEmpresa: data.nomeEmpresa || '',
+                        cnpj: data.cnpj ? formatCpfCnpj(data.cnpj) : '',
+                        cep: data.cep || '',
+                        endereco: data.endereco || '',
+                        bairro: data.bairro || '',
+                        cidade: data.cidade || '',
+                        telefones: data.telefones && data.telefones.length > 0 
+                            ? data.telefones 
+                            : [data.telefone || ''],
+                        emails: data.emails && data.emails.length > 0 
+                            ? data.emails 
+                            : [data.email || ''],
+                    } as any);
                 }
             } catch {
                 toast({
@@ -115,8 +126,10 @@ export default function SettingsSection() {
         try {
             await db.updateCompanyData({
                 ...data,
-                cnpj: data.cnpj?.replace(/[^\d]/g, '')
-            });
+                cnpj: data.cnpj?.replace(/[^\d]/g, ''),
+                telefones: data.telefones.map(t => t.replace(/\D/g, '')).filter(t => t !== ''),
+                emails: data.emails.filter(e => e !== ''),
+            } as any);
             toast({
                 title: "Sucesso!",
                 description: "Os dados da empresa foram salvos com sucesso.",
@@ -173,7 +186,7 @@ export default function SettingsSection() {
                                                     placeholder="00.000.000/0001-00"
                                                     {...field}
                                                     onChange={(e) => {
-                                                        field.onChange(formatCNPJ(e.target.value));
+                                                        field.onChange(formatCpfCnpj(e.target.value));
                                                     }}
                                                 />
                                             </FormControl>
@@ -235,30 +248,90 @@ export default function SettingsSection() {
                                         </FormItem>
                                     )}
                                 />
-                                <FormField
-                                    name="telefone"
-                                    control={form.control}
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Telefone</FormLabel>
-                                            <FormControl><Input placeholder="(11) 99999-9999" {...field} /></FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
                             </div>
+                            <div className="space-y-4 pt-4 border-t">
+                                <div className="space-y-2">
+                                    <FormLabel className="text-base font-semibold">Telefones para Contato</FormLabel>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {phoneFields.map((field, index) => (
+                                            <div key={field.id} className="flex gap-2 items-start">
+                                                <FormField
+                                                    control={form.control}
+                                                    name={`telefones.${index}` as any}
+                                                    render={({ field }) => (
+                                                        <FormItem className="flex-1">
+                                                            <FormControl>
+                                                                <Input 
+                                                                    placeholder="(11) 99999-9999" 
+                                                                    {...field} 
+                                                                    onChange={(e) => field.onChange(formatPhoneNumber(e.target.value))}
+                                                                />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <Button 
+                                                    type="button" 
+                                                    variant="ghost" 
+                                                    size="icon" 
+                                                    onClick={() => removePhone(index)}
+                                                    disabled={phoneFields.length === 1}
+                                                >
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                </Button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <Button 
+                                        type="button" 
+                                        variant="outline" 
+                                        size="sm" 
+                                        onClick={() => appendPhone('')}
+                                    >
+                                        <Plus className="mr-2 h-4 w-4" /> Adicionar Telefone
+                                    </Button>
+                                </div>
 
-                            <FormField
-                                name="email"
-                                control={form.control}
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Email</FormLabel>
-                                        <FormControl><Input placeholder="contato@minhaempresa.com" {...field} /></FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                                <div className="space-y-2">
+                                    <FormLabel className="text-base font-semibold">E-mails para Contato</FormLabel>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {emailFields.map((field, index) => (
+                                            <div key={field.id} className="flex gap-2 items-start">
+                                                <FormField
+                                                    control={form.control}
+                                                    name={`emails.${index}` as any}
+                                                    render={({ field }) => (
+                                                        <FormItem className="flex-1">
+                                                            <FormControl>
+                                                                <Input placeholder="contato@minhaempresa.com" {...field} />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <Button 
+                                                    type="button" 
+                                                    variant="ghost" 
+                                                    size="icon" 
+                                                    onClick={() => removeEmail(index)}
+                                                    disabled={emailFields.length === 1}
+                                                >
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                </Button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <Button 
+                                        type="button" 
+                                        variant="outline" 
+                                        size="sm" 
+                                        onClick={() => appendEmail('')}
+                                    >
+                                        <Plus className="mr-2 h-4 w-4" /> Adicionar E-mail
+                                    </Button>
+                                </div>
+                            </div>
                         </CardContent>
                         <CardFooter>
                             <Button type="submit" disabled={isSubmitting || isFetchingCep}>

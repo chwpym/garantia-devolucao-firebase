@@ -8,7 +8,7 @@ import { auth, sendPasswordResetEmail } from './firebase';
 export { auth, sendPasswordResetEmail };
 
 const DB_NAME = 'GarantiasDB';
-const DB_VERSION = 11; // Incremented for Phase 12 (Username Auth)
+const DB_VERSION = 12; // Incremented for Phase 14 (Multiple Contacts)
 
 const GARANTIAS_STORE_NAME = 'garantias';
 const PERSONS_STORE_NAME = 'persons';
@@ -136,6 +136,7 @@ const getDB = (): Promise<IDBDatabase> => {
 export const initDB = async (): Promise<boolean> => {
   try {
     await getDB();
+    await migrateContactsToArrays();
     return true;
   } catch (e) {
     console.error(e);
@@ -226,11 +227,69 @@ export const ensureUsernamesOnProfiles = async (): Promise<void> => {
         updated = true;
       }
     }
-    if (updated) {
-      console.log('Usernames ensured on local profiles.');
-    }
   } catch (err) {
     console.warn('Failed to ensure usernames:', err);
+  }
+};
+
+/**
+ * Migration for Phase 14: Convert single string contacts to arrays
+ */
+export const migrateContactsToArrays = async (): Promise<void> => {
+  try {
+    // 1. Persons
+    const persons = await getAllPersons();
+    for (const p of persons) {
+      let changed = false;
+      if (p.telefone && (!p.telefones || p.telefones.length === 0)) {
+        p.telefones = [p.telefone];
+        changed = true;
+      }
+      if (p.email && (!p.emails || p.emails.length === 0)) {
+        p.emails = [p.email];
+        changed = true;
+      }
+      if (changed) await updatePerson(p);
+    }
+
+    // 2. Suppliers
+    const suppliers = await getAllSuppliers();
+    for (const s of suppliers) {
+      let changed = false;
+      // Note: Supplier doesn't have single 'email' field in interface but might have it in data
+      // Based on types.ts, Supplier only had razaoSocial, nomeFantasia, cnpj, cidade, cep, endereco, bairro, codigoExterno
+      // Wait, let me check Supplier interface again.
+      // interface Supplier { id?: number; razaoSocial: string; nomeFantasia: string; cnpj: string; cidade: string; cep?: string; endereco?: string; bairro?: string; codigoExterno?: string; telefones?: string[]; emails?: string[]; }
+      // It didn't have single 'telefone' or 'email'. 
+      // But maybe some records have it from previous versions?
+      const raw = s as any;
+      if (raw.telefone && (!s.telefones || s.telefones.length === 0)) {
+        s.telefones = [raw.telefone];
+        changed = true;
+      }
+      if (raw.email && (!s.emails || s.emails.length === 0)) {
+        s.emails = [raw.email];
+        changed = true;
+      }
+      if (changed) await updateSupplier(s);
+    }
+
+    // 3. Company Data
+    const company = await getCompanyData();
+    if (company) {
+      let changed = false;
+      if (company.telefone && (!company.telefones || company.telefones.length === 0)) {
+        company.telefones = [company.telefone];
+        changed = true;
+      }
+      if (company.email && (!company.emails || company.emails.length === 0)) {
+        company.emails = [company.email];
+        changed = true;
+      }
+      if (changed) await updateCompanyData(company);
+    }
+  } catch (err) {
+    console.warn('Failed to migrate contacts:', err);
   }
 };
 

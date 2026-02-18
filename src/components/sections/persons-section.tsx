@@ -1,8 +1,8 @@
-
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { formatCpfCnpj, formatPhoneNumber } from '@/lib/utils';
 import type { Person } from '@/lib/types';
 import * as db from '@/lib/db';
 import { generatePersonsPdf } from '@/lib/pdf-generator';
@@ -54,20 +54,12 @@ import PersonForm from '../person-form';
 import { smartSearch } from '@/lib/search-utils';
 import { SearchInput } from '@/components/ui/search-input';
 import { usePersistedFilters } from '@/hooks/use-persisted-filters';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Users, SearchX } from 'lucide-react';
 
 type SortableKeys = keyof Person;
 
-const formatCpfCnpj = (value?: string) => {
-  if (!value) return '-';
-  const cleaned = value.replace(/\D/g, '');
-  if (cleaned.length === 11) { // CPF
-    return cleaned.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-  }
-  if (cleaned.length === 14) { // CNPJ
-    return cleaned.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
-  }
-  return value;
-};
+
 
 
 export default function PersonsSection() {
@@ -338,8 +330,9 @@ export default function PersonsSection() {
                   <SortableHeader sortKey='nomeFantasia'>Nome Fantasia</SortableHeader>
                   <SortableHeader sortKey='tipo'>Tipo</SortableHeader>
                   <SortableHeader sortKey='cpfCnpj'>CPF / CNPJ</SortableHeader>
-                  <SortableHeader sortKey='codigoExterno'>Cód. Ext.</SortableHeader>
+                   <SortableHeader sortKey='codigoExterno'>Cód. Ext.</SortableHeader>
                   <SortableHeader sortKey='telefone'>Telefone</SortableHeader>
+                  <TableHead>Email</TableHead>
                   <TableHead className="w-[100px] text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -355,7 +348,38 @@ export default function PersonsSection() {
                       </TableCell>
                       <TableCell className="font-mono text-xs">{person.cpfCnpj ? formatCpfCnpj(person.cpfCnpj) : '-'}</TableCell>
                       <TableCell className="font-mono text-xs text-blue-600">{person.codigoExterno || '-'}</TableCell>
-                      <TableCell>{person.telefone || '-'}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          {person.telefones && person.telefones.length > 0 ? (
+                            <>
+                              <span className="text-xs">{formatPhoneNumber(person.telefones[0])}</span>
+                              {person.telefones.length > 1 && (
+                                <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4">
+                                  +{person.telefones.length - 1}
+                                </Badge>
+                              )}
+                            </>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">-</span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          {person.emails && person.emails.length > 0 ? (
+                            <>
+                              <span className="text-xs max-w-[120px] truncate">{person.emails[0]}</span>
+                              {person.emails.length > 1 && (
+                                <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4">
+                                  +{person.emails.length - 1}
+                                </Badge>
+                              )}
+                            </>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">-</span>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -380,8 +404,28 @@ export default function PersonsSection() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
-                      Nenhum registro encontrado para a busca realizada.
+                     <TableCell colSpan={8} className="py-12">
+                      {searchTerm ? (
+                        <EmptyState 
+                          icon={SearchX}
+                          title="Nenhum resultado encontrado"
+                          description={`Não encontramos nenhum registro para "${searchTerm}". Tente ajustar sua busca.`}
+                          action={{
+                            label: "Limpar busca",
+                            onClick: () => setFilters({ ...filters, searchTerm: '' })
+                          }}
+                        />
+                      ) : (
+                        <EmptyState 
+                          icon={Users}
+                          title="Nenhum registro cadastrado"
+                          description="Parece que você ainda não cadastrou nenhum cliente ou mecânico."
+                          action={{
+                            label: "Cadastrar Primeiro",
+                            onClick: () => setIsFormModalOpen(true)
+                          }}
+                        />
+                      )}
                     </TableCell>
                   </TableRow>
                 )}

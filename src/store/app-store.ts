@@ -61,7 +61,6 @@ const runDataMigration = async () => {
     return; // Migration already performed
   }
 
-  console.log('Iniciando migração de status de garantias...');
   try {
     const warranties = await db.getAllWarranties();
     let updatedCount = 0;
@@ -94,11 +93,6 @@ const runDataMigration = async () => {
       }
     }
 
-    if (updatedCount > 0) {
-      console.log(`Migração concluída! ${updatedCount} garantias foram atualizadas.`);
-    } else {
-      console.log('Nenhuma garantia precisou de migração.');
-    }
 
     if (typeof window !== 'undefined') {
       localStorage.setItem(MIGRATION_KEY, 'completed');

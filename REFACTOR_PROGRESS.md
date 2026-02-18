@@ -123,4 +123,27 @@ Este documento rastreia o status detalhado de cada fase do plano de refatoraçã
 
 ---
 
-_(Fases 13-25 conforme `REFACTOR_PLAN.md`)_
+### FASE 13 a 17 ✅
+
+| Fase   | Objetivo                        | Status | Notas                                           |
+| :----- | :------------------------------ | :----: | :---------------------------------------------- |
+| **13** | Máscara de Telefone             |   ✅   | Máscara em tempo real nos forms e tabelas       |
+| **14** | Múltiplos Contatos              |   ✅   | Suporte a Array de Fones/E-mails e Migração v12 |
+| **15** | UX Telas Vazias                 |   ✅   | Componente `EmptyState` em todas as seções      |
+| **16** | Limpeza de Console.log          |   ✅   | Remoção de logs informativos em produção        |
+| **17** | Segurança & Atualização Next.js |   ✅   | Upgrade para 15.5.12 (CVE-2025-55182)           |
+
+---
+
+### FASE 18: Status Dinâmicos (Complexa) 🟡
+
+| Item                          |  Status  | Notas             |
+| :---------------------------- | :------: | :---------------- |
+| **Prioridade**                | 🟡 MÉDIA |                   |
+| Design de CRUD de Status      |    ⏳    | Aguardando início |
+| Schema de Banco para Status   |    ⏳    |                   |
+| Mapeamento em todas as seções |    ⏳    |                   |
+
+---
+
+_(Fases 19-25 conforme `REFACTOR_PLAN.md`)_

@@ -50,6 +50,8 @@ import { MoreHorizontal, Pencil, Trash2, PlusCircle, ArrowUpDown } from 'lucide-
 import SupplierForm from '../supplier-form';
 import { smartSearch } from '@/lib/search-utils';
 import { SearchInput } from '@/components/ui/search-input';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Truck, SearchX } from 'lucide-react';
 
 
 const formatCnpj = (value?: string) => {
@@ -313,8 +315,28 @@ export default function SuppliersSection() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
-                      Nenhum fornecedor encontrado para a busca realizada.
+                     <TableCell colSpan={6} className="py-12">
+                      {searchTerm ? (
+                        <EmptyState 
+                          icon={SearchX}
+                          title="Nenhum fornecedor encontrado"
+                          description={`Não encontramos nenhum registro para "${searchTerm}". Tente ajustar sua busca.`}
+                          action={{
+                            label: "Limpar busca",
+                            onClick: () => setSearchTerm('')
+                          }}
+                        />
+                      ) : (
+                        <EmptyState 
+                          icon={Truck}
+                          title="Nenhum fornecedor cadastrado"
+                          description="Parece que você ainda não cadastrou nenhum fornecedor."
+                          action={{
+                            label: "Cadastrar Primeiro",
+                            onClick: () => setIsFormModalOpen(true)
+                          }}
+                        />
+                      )}
                     </TableCell>
                   </TableRow>
                 )}

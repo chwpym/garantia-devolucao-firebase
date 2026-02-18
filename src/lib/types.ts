@@ -40,6 +40,8 @@ export interface Person {
   cpfCnpj?: string;
   telefone?: string;
   email?: string;
+  telefones?: string[];
+  emails?: string[];
   cep?: string;
   endereco?: string;
   bairro?: string;
@@ -58,6 +60,8 @@ export interface Supplier {
   endereco?: string;
   bairro?: string;
   codigoExterno?: string;
+  telefones?: string[];
+  emails?: string[];
 }
 
 export type LoteStatus = 'Aberto' | 'Enviado' | 'Aprovado Parcialmente' | 'Aprovado Totalmente' | 'Recusado';
@@ -95,6 +99,8 @@ export interface CompanyData {
   cidade?: string;
   telefone?: string;
   email?: string;
+  telefones?: string[];
+  emails?: string[];
 }
 
 export interface Product {

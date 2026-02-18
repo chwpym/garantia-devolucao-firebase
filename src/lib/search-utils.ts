@@ -4,8 +4,9 @@
  * 2. Removes accents (diacritics)
  * 3. Trims whitespace
  */
-export const normalizeText = (text: string | number | null | undefined): string => {
+export const normalizeText = (text: any): string => {
     if (text === null || text === undefined) return '';
+    if (Array.isArray(text)) return text.map(t => normalizeText(t)).join(' ');
     return String(text)
         .toLowerCase()
         .normalize("NFD")

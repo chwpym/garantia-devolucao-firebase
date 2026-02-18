@@ -7,6 +7,7 @@ import 'jspdf-autotable';
 import type { UserOptions } from 'jspdf-autotable';
 import type { Warranty, CompanyData, Supplier, Person, Devolucao, ItemDevolucao } from '@/lib/types';
 import { format, parseISO } from 'date-fns';
+import { formatPhoneNumber } from '@/lib/utils';
 
 
 // Extend jsPDF with autoTable, which is a plugin
@@ -84,8 +85,11 @@ const addStandardHeader = (doc: jsPDF, companyData: CompanyData | null, title: s
     }
 
     let infoLine = '';
-    if (companyData?.telefone) infoLine += `Tel: ${companyData.telefone}`;
-    if (companyData?.email) infoLine += `${infoLine ? ' | ' : ''}Email: ${companyData.email}`;
+    const phones = companyData?.telefones && companyData.telefones.length > 0 ? companyData.telefones : [companyData?.telefone].filter(Boolean);
+    const emails = companyData?.emails && companyData.emails.length > 0 ? companyData.emails : [companyData?.email].filter(Boolean);
+
+    if (phones.length > 0) infoLine += `Tel: ${phones.map(t => formatPhoneNumber(t as string)).join(' / ')}`;
+    if (emails.length > 0) infoLine += `${infoLine ? ' | ' : ''}Email: ${emails.join(' / ')}`;
     if (infoLine) doc.text(infoLine, margin, cursorY);
 
     cursorY += 12;
@@ -118,6 +122,19 @@ const addProfessionalHeader = (doc: jsPDF, companyData: CompanyData | null, lote
     }
     if (companyData?.cidade) {
         doc.text(`${companyData.cidade} - CEP: ${companyData.cep || ''}`, pageWidth / 2, cursorY, { align: 'center' });
+        cursorY += 4;
+    }
+
+    const phones = companyData?.telefones && companyData.telefones.length > 0 ? companyData.telefones : [companyData?.telefone].filter(Boolean);
+    const emails = companyData?.emails && companyData.emails.length > 0 ? companyData.emails : [companyData?.email].filter(Boolean);
+    
+    let contactInfo = '';
+    if (phones.length > 0) contactInfo += `Tel: ${phones.map(t => formatPhoneNumber(t as string)).join(' / ')}`;
+    if (emails.length > 0) contactInfo += `${contactInfo ? ' | ' : ''}Email: ${emails.join(' / ')}`;
+    
+    if (contactInfo) {
+        doc.setFontSize(8);
+        doc.text(contactInfo, pageWidth / 2, cursorY, { align: 'center' });
     }
 
     // --- Pagination ---
@@ -277,8 +294,12 @@ export function generatePersonsPdf(input: GeneratePersonsPdfInput): string {
     const tableBody = persons.map(person => [
         person.nome || '-',
         formatCnpj(person.cpfCnpj) || '-',
-        person.telefone || '-',
-        person.email || '-',
+        person.telefones && person.telefones.length > 0 
+            ? person.telefones.map(t => formatPhoneNumber(t)).join('\n') 
+            : (person.telefone ? formatPhoneNumber(person.telefone) : '-'),
+        person.emails && person.emails.length > 0 
+            ? person.emails.join('\n') 
+            : (person.email || '-'),
         person.cidade || '-',
         person.tipo || '-',
     ]);

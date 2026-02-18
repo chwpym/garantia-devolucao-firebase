@@ -2,13 +2,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Plus, Trash2 } from 'lucide-react';
 import type { Person } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
+import { formatPhoneNumber, formatCpfCnpj } from '@/lib/utils';
 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -22,8 +23,8 @@ const formSchema = z.object({
   nomeFantasia: z.string().optional(),
   tipo: z.enum(['Cliente', 'Mecânico', 'Ambos'], { required_error: 'Selecione um tipo.' }),
   cpfCnpj: z.string().optional(),
-  telefone: z.string().optional(),
-  email: z.string().email({ message: "Email inválido." }).optional().or(z.literal('')),
+  telefones: z.array(z.string()).default([]),
+  emails: z.array(z.string().email({ message: "Email inválido." }).or(z.literal(''))).default([]),
   cep: z.string().optional(),
   endereco: z.string().optional(),
   bairro: z.string().optional(),
@@ -45,8 +46,8 @@ const defaultFormValues: PersonFormValues = {
   nomeFantasia: '',
   tipo: 'Cliente',
   cpfCnpj: '',
-  telefone: '',
-  email: '',
+  telefones: [''],
+  emails: [''],
   cep: '',
   endereco: '',
   bairro: '',
@@ -55,24 +56,7 @@ const defaultFormValues: PersonFormValues = {
   codigoExterno: '',
 };
 
-const formatCpfCnpj = (value: string) => {
-  if (!value) return '';
-  const cleaned = value.replace(/\D/g, '');
-  if (cleaned.length <= 11) { // CPF
-    return cleaned
-      .slice(0, 11)
-      .replace(/(\d{3})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-  }
-  // CNPJ
-  return cleaned
-    .slice(0, 14)
-    .replace(/(\d{2})(\d)/, '$1.$2')
-    .replace(/(\d{3})(\d)/, '$1.$2')
-    .replace(/(\d{3})(\d)/, '$1/$2')
-    .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
-};
+
 
 
 export default function PersonForm({ onSave, editingPerson, onClear }: PersonFormProps) {
@@ -83,19 +67,57 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
   const form = useForm<PersonFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: editingPerson ? {
+      ...defaultFormValues,
       ...editingPerson,
+      nomeFantasia: editingPerson.nomeFantasia || '',
       cpfCnpj: editingPerson.cpfCnpj ? formatCpfCnpj(editingPerson.cpfCnpj) : '',
+      cep: editingPerson.cep || '',
+      endereco: editingPerson.endereco || '',
+      bairro: editingPerson.bairro || '',
+      cidade: editingPerson.cidade || '',
+      observacao: editingPerson.observacao || '',
+      codigoExterno: editingPerson.codigoExterno || '',
+      telefones: editingPerson.telefones && editingPerson.telefones.length > 0 
+        ? editingPerson.telefones 
+        : [editingPerson.telefone || ''],
+      emails: editingPerson.emails && editingPerson.emails.length > 0 
+        ? editingPerson.emails 
+        : [editingPerson.email || ''],
     } : defaultFormValues,
   });
   const { isSubmitting } = form.formState;
 
+  const { fields: phoneFields, append: appendPhone, remove: removePhone } = useFieldArray({
+    control: form.control,
+    name: "telefones" as never,
+  });
+
+  const { fields: emailFields, append: appendEmail, remove: removeEmail } = useFieldArray({
+    control: form.control,
+    name: "emails" as never,
+  });
+
   useEffect(() => {
     const defaultVals = editingPerson ? {
+      ...defaultFormValues,
       ...editingPerson,
+      nomeFantasia: editingPerson.nomeFantasia || '',
       cpfCnpj: editingPerson.cpfCnpj ? formatCpfCnpj(editingPerson.cpfCnpj) : '',
+      cep: editingPerson.cep || '',
+      endereco: editingPerson.endereco || '',
+      bairro: editingPerson.bairro || '',
+      cidade: editingPerson.cidade || '',
+      observacao: editingPerson.observacao || '',
+      codigoExterno: editingPerson.codigoExterno || '',
+      telefones: editingPerson.telefones && editingPerson.telefones.length > 0 
+        ? editingPerson.telefones 
+        : [editingPerson.telefone || ''],
+      emails: editingPerson.emails && editingPerson.emails.length > 0 
+        ? editingPerson.emails 
+        : [editingPerson.email || ''],
     } : defaultFormValues;
-    form.reset(defaultVals);
-  }, [editingPerson, form]);
+    form.reset(defaultVals as any);
+  }, [editingPerson, form, defaultFormValues]);
 
 
   const handleSave = async (data: PersonFormValues) => {
@@ -103,6 +125,8 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
       const dataToSave: Omit<Person, 'id'> = {
         ...data,
         cpfCnpj: data.cpfCnpj?.replace(/\D/g, ''),
+        telefones: data.telefones.map(t => t.replace(/\D/g, '')).filter(t => t !== ''),
+        emails: data.emails.filter(e => e !== ''),
       };
 
       // Validação de duplicidade de CPF/CNPJ ANTES de salvar
@@ -285,29 +309,86 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
             )}
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              name="telefone"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Telefone</FormLabel>
-                  <FormControl><Input placeholder="(00) 00000-0000" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              name="email"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl><Input placeholder="contato@email.com" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <FormLabel>Telefones</FormLabel>
+              {phoneFields.map((field, index) => (
+                <div key={field.id} className="flex gap-2">
+                  <FormField
+                    control={form.control}
+                    name={`telefones.${index}` as any}
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormControl>
+                          <Input 
+                            placeholder="(00) 00000-0000" 
+                            {...field} 
+                            onChange={(e) => field.onChange(formatPhoneNumber(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => removePhone(index)}
+                    disabled={phoneFields.length === 1}
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+              ))}
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm" 
+                className="mt-2"
+                onClick={() => appendPhone('')}
+              >
+                <Plus className="mr-2 h-4 w-4" /> Adicionar Telefone
+              </Button>
+            </div>
+
+            <div className="space-y-2">
+              <FormLabel>Emails</FormLabel>
+              {emailFields.map((field, index) => (
+                <div key={field.id} className="flex gap-2">
+                  <FormField
+                    control={form.control}
+                    name={`emails.${index}` as any}
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormControl>
+                          <Input placeholder="contato@email.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => removeEmail(index)}
+                    disabled={emailFields.length === 1}
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+              ))}
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm" 
+                className="mt-2"
+                onClick={() => appendEmail('')}
+              >
+                <Plus className="mr-2 h-4 w-4" /> Adicionar Email
+              </Button>
+            </div>
           </div>
           <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
             <FormField

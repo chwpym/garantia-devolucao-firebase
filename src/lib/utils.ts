@@ -22,27 +22,45 @@ export function formatNumber(value: number) {
 export function formatPhoneNumber(value: string): string {
   if (!value) return '';
   
+  // Remove tudo que não é dígito
   const cleaned = value.replace(/\D/g, '');
-  const isCelular = cleaned.length === 11;
   
-  if (cleaned.length <= 2) {
-    return `(${cleaned}`;
+  // Limita a 11 dígitos (máximo para celular com DDD)
+  const truncated = cleaned.slice(0, 11);
+  
+  if (truncated.length === 0) return '';
+  
+  if (truncated.length <= 2) {
+    return `(${truncated}`;
   }
   
-  if (cleaned.length <= 6) {
-    return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2)}`;
+  if (truncated.length <= 6) {
+    return `(${truncated.slice(0, 2)}) ${truncated.slice(2)}`;
   }
   
-  if (isCelular) {
-    if (cleaned.length <= 10) {
-      return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`;
-    }
-    return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7, 11)}`;
-  } else { // Fixo ou incompleto
-    if (cleaned.length <= 10) {
-        return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)}-${cleaned.slice(6, 10)}`;
-    }
-     // Handle cases where user types more than 10 digits for a landline (just truncate)
-    return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)}-${cleaned.slice(6, 10)}`;
+  if (truncated.length <= 10) {
+    // Formato Fixo: (XX) XXXX-XXXX
+    return `(${truncated.slice(0, 2)}) ${truncated.slice(2, 6)}-${truncated.slice(6)}`;
   }
+  
+  // Formato Celular: (XX) XXXXX-XXXX
+  return `(${truncated.slice(0, 2)}) ${truncated.slice(2, 7)}-${truncated.slice(7, 11)}`;
+}
+
+export function formatCpfCnpj(value: string) {
+  if (!value) return '';
+  const cleaned = value.replace(/\D/g, '');
+  if (cleaned.length <= 11) {
+    return cleaned
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d{1,2})/, '$1-$2')
+      .replace(/(-\d{2})\d+?$/, '$1');
+  }
+  return cleaned
+    .replace(/(\d{2})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1/$2')
+    .replace(/(\d{4})(\d{1,2})/, '$1-$2')
+    .replace(/(-\d{2})\d+?$/, '$1');
 }

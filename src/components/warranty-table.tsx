@@ -24,9 +24,20 @@ interface WarrantyTableProps {
   onDelete: (id: number) => Promise<void>;
   sortConfig: { key: SortableKeys, direction: 'ascending' | 'descending' } | null;
   onSort: (config: { key: SortableKeys, direction: 'ascending' | 'descending' } | null) => void;
+  emptyState?: React.ReactNode;
 }
 
-export default function WarrantyTable({ warranties, selectedIds, onSelectionChange, onEdit, onClone, onDelete, sortConfig, onSort }: WarrantyTableProps) {
+export default function WarrantyTable({ 
+  warranties, 
+  selectedIds, 
+  onSelectionChange, 
+  onEdit, 
+  onClone, 
+  onDelete, 
+  sortConfig, 
+  onSort,
+  emptyState
+}: WarrantyTableProps) {
   const [deleteTarget, setDeleteTarget] = useState<Warranty | null>(null);
 
   const handleDeleteClick = () => {
@@ -156,8 +167,12 @@ export default function WarrantyTable({ warranties, selectedIds, onSelectionChan
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={10} className="h-24 text-center">
-                  Nenhuma garantia encontrada para os filtros selecionados.
+                <TableCell colSpan={10} className="py-12">
+                  {emptyState || (
+                    <div className="text-center text-muted-foreground">
+                      Nenhuma garantia encontrada para os filtros selecionados.
+                    </div>
+                  )}
                 </TableCell>
               </TableRow>
             )}
