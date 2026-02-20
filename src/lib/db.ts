@@ -1,39 +1,48 @@
+"use client";
 
-
-'use client';
-
-import type { Warranty, Person, Supplier, Lote, LoteItem, CompanyData, Devolucao, ItemDevolucao, Product, PurchaseSimulation, UserProfile } from './types';
-import { auth, sendPasswordResetEmail } from './firebase';
+import type {
+  Warranty,
+  Person,
+  Supplier,
+  Lote,
+  LoteItem,
+  CompanyData,
+  Devolucao,
+  ItemDevolucao,
+  Product,
+  PurchaseSimulation,
+  UserProfile,
+} from "./types";
+import { auth, sendPasswordResetEmail } from "./firebase";
 
 export { auth, sendPasswordResetEmail };
 
-const DB_NAME = 'GarantiasDB';
+const DB_NAME = "GarantiasDB";
 const DB_VERSION = 12; // Incremented for Phase 14 (Multiple Contacts)
 
-const GARANTIAS_STORE_NAME = 'garantias';
-const PERSONS_STORE_NAME = 'persons';
-const SUPPLIERS_STORE_NAME = 'suppliers';
-const LOTES_STORE_NAME = 'lotes';
-const LOTE_ITEMS_STORE_NAME = 'lote_items';
-const COMPANY_DATA_STORE_NAME = 'company_data';
-const DEVOLUCOES_STORE_NAME = 'devolucoes';
-const ITENS_DEVOLUCAO_STORE_NAME = 'itens_devolucao';
-const PRODUCTS_STORE_NAME = 'products';
-const SIMULATIONS_STORE_NAME = 'simulations';
-const USERS_STORE_NAME = 'users'; // New store for user profiles/roles
-const STATUSES_STORE_NAME = 'statuses';
-
+const GARANTIAS_STORE_NAME = "garantias";
+const PERSONS_STORE_NAME = "persons";
+const SUPPLIERS_STORE_NAME = "suppliers";
+const LOTES_STORE_NAME = "lotes";
+const LOTE_ITEMS_STORE_NAME = "lote_items";
+const COMPANY_DATA_STORE_NAME = "company_data";
+const DEVOLUCOES_STORE_NAME = "devolucoes";
+const ITENS_DEVOLUCAO_STORE_NAME = "itens_devolucao";
+const PRODUCTS_STORE_NAME = "products";
+const SIMULATIONS_STORE_NAME = "simulations";
+const USERS_STORE_NAME = "users"; // New store for user profiles/roles
+const STATUSES_STORE_NAME = "statuses";
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
 const getDB = (): Promise<IDBDatabase> => {
-  if (typeof window === 'undefined') {
-    return Promise.reject('IndexedDB is not supported on the server.');
+  if (typeof window === "undefined") {
+    return Promise.reject("IndexedDB is not supported on the server.");
   }
   if (!dbPromise) {
     dbPromise = new Promise((resolve, reject) => {
       if (!window.indexedDB) {
-        reject('IndexedDB is not supported.');
+        reject("IndexedDB is not supported.");
         return;
       }
 
@@ -43,81 +52,136 @@ const getDB = (): Promise<IDBDatabase> => {
         const dbInstance = (event.target as IDBOpenDBRequest).result;
 
         if (!dbInstance.objectStoreNames.contains(GARANTIAS_STORE_NAME)) {
-          const warrantyStore = dbInstance.createObjectStore(GARANTIAS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
-          warrantyStore.createIndex('loteId', 'loteId', { unique: false });
+          const warrantyStore = dbInstance.createObjectStore(
+            GARANTIAS_STORE_NAME,
+            { keyPath: "id", autoIncrement: true },
+          );
+          warrantyStore.createIndex("loteId", "loteId", { unique: false });
         } else {
           const transaction = (event.target as IDBOpenDBRequest).transaction;
           if (transaction) {
             const warrantyStore = transaction.objectStore(GARANTIAS_STORE_NAME);
-            if (!warrantyStore.indexNames.contains('loteId')) {
-              warrantyStore.createIndex('loteId', 'loteId', { unique: false });
+            if (!warrantyStore.indexNames.contains("loteId")) {
+              warrantyStore.createIndex("loteId", "loteId", { unique: false });
             }
           }
         }
 
         if (!dbInstance.objectStoreNames.contains(PERSONS_STORE_NAME)) {
-          dbInstance.createObjectStore(PERSONS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+          dbInstance.createObjectStore(PERSONS_STORE_NAME, {
+            keyPath: "id",
+            autoIncrement: true,
+          });
         }
-        const personStore = request.transaction?.objectStore(PERSONS_STORE_NAME);
-        if (personStore && !personStore.indexNames.contains('codigoExterno')) {
-          personStore.createIndex('codigoExterno', 'codigoExterno', { unique: false });
+        const personStore =
+          request.transaction?.objectStore(PERSONS_STORE_NAME);
+        if (personStore && !personStore.indexNames.contains("codigoExterno")) {
+          personStore.createIndex("codigoExterno", "codigoExterno", {
+            unique: false,
+          });
         }
 
         if (!dbInstance.objectStoreNames.contains(SUPPLIERS_STORE_NAME)) {
-          dbInstance.createObjectStore(SUPPLIERS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+          dbInstance.createObjectStore(SUPPLIERS_STORE_NAME, {
+            keyPath: "id",
+            autoIncrement: true,
+          });
         }
-        const supplierStore = request.transaction?.objectStore(SUPPLIERS_STORE_NAME);
-        if (supplierStore && !supplierStore.indexNames.contains('codigoExterno')) {
-          supplierStore.createIndex('codigoExterno', 'codigoExterno', { unique: false });
+        const supplierStore =
+          request.transaction?.objectStore(SUPPLIERS_STORE_NAME);
+        if (
+          supplierStore &&
+          !supplierStore.indexNames.contains("codigoExterno")
+        ) {
+          supplierStore.createIndex("codigoExterno", "codigoExterno", {
+            unique: false,
+          });
         }
         if (!dbInstance.objectStoreNames.contains(LOTES_STORE_NAME)) {
-          dbInstance.createObjectStore(LOTES_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+          dbInstance.createObjectStore(LOTES_STORE_NAME, {
+            keyPath: "id",
+            autoIncrement: true,
+          });
         }
         if (!dbInstance.objectStoreNames.contains(LOTE_ITEMS_STORE_NAME)) {
-          const loteItemsStore = dbInstance.createObjectStore(LOTE_ITEMS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
-          loteItemsStore.createIndex('loteId', 'loteId', { unique: false });
+          const loteItemsStore = dbInstance.createObjectStore(
+            LOTE_ITEMS_STORE_NAME,
+            { keyPath: "id", autoIncrement: true },
+          );
+          loteItemsStore.createIndex("loteId", "loteId", { unique: false });
         }
         if (!dbInstance.objectStoreNames.contains(COMPANY_DATA_STORE_NAME)) {
-          dbInstance.createObjectStore(COMPANY_DATA_STORE_NAME, { keyPath: 'id' });
+          dbInstance.createObjectStore(COMPANY_DATA_STORE_NAME, {
+            keyPath: "id",
+          });
         }
         if (!dbInstance.objectStoreNames.contains(DEVOLUCOES_STORE_NAME)) {
-          dbInstance.createObjectStore(DEVOLUCOES_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+          dbInstance.createObjectStore(DEVOLUCOES_STORE_NAME, {
+            keyPath: "id",
+            autoIncrement: true,
+          });
         }
         if (!dbInstance.objectStoreNames.contains(ITENS_DEVOLUCAO_STORE_NAME)) {
-          const itensDevolucaoStore = dbInstance.createObjectStore(ITENS_DEVOLUCAO_STORE_NAME, { keyPath: 'id', autoIncrement: true });
-          itensDevolucaoStore.createIndex('devolucaoId', 'devolucaoId', { unique: false });
+          const itensDevolucaoStore = dbInstance.createObjectStore(
+            ITENS_DEVOLUCAO_STORE_NAME,
+            { keyPath: "id", autoIncrement: true },
+          );
+          itensDevolucaoStore.createIndex("devolucaoId", "devolucaoId", {
+            unique: false,
+          });
         }
         if (!dbInstance.objectStoreNames.contains(PRODUCTS_STORE_NAME)) {
-          const productStore = dbInstance.createObjectStore(PRODUCTS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
-          productStore.createIndex('codigo', 'codigo', { unique: true });
+          const productStore = dbInstance.createObjectStore(
+            PRODUCTS_STORE_NAME,
+            { keyPath: "id", autoIncrement: true },
+          );
+          productStore.createIndex("codigo", "codigo", { unique: true });
         }
-        const productStore = request.transaction?.objectStore(PRODUCTS_STORE_NAME);
-        if (productStore && !productStore.indexNames.contains('codigoExterno')) {
-          productStore.createIndex('codigoExterno', 'codigoExterno', { unique: false });
+        const productStore =
+          request.transaction?.objectStore(PRODUCTS_STORE_NAME);
+        if (
+          productStore &&
+          !productStore.indexNames.contains("codigoExterno")
+        ) {
+          productStore.createIndex("codigoExterno", "codigoExterno", {
+            unique: false,
+          });
         }
         if (!dbInstance.objectStoreNames.contains(SIMULATIONS_STORE_NAME)) {
-          const simulationStore = dbInstance.createObjectStore(SIMULATIONS_STORE_NAME, { keyPath: 'id', autoIncrement: true });
-          simulationStore.createIndex('nfeNumber', 'nfeInfo.nfeNumber', { unique: false });
-          simulationStore.createIndex('emitterName', 'nfeInfo.emitterName', { unique: false });
+          const simulationStore = dbInstance.createObjectStore(
+            SIMULATIONS_STORE_NAME,
+            { keyPath: "id", autoIncrement: true },
+          );
+          simulationStore.createIndex("nfeNumber", "nfeInfo.nfeNumber", {
+            unique: false,
+          });
+          simulationStore.createIndex("emitterName", "nfeInfo.emitterName", {
+            unique: false,
+          });
         }
         // Create user profile store
         if (!dbInstance.objectStoreNames.contains(USERS_STORE_NAME)) {
-          const userStore = dbInstance.createObjectStore(USERS_STORE_NAME, { keyPath: 'uid' });
-          userStore.createIndex('email', 'email', { unique: true });
-          userStore.createIndex('username', 'username', { unique: true });
+          const userStore = dbInstance.createObjectStore(USERS_STORE_NAME, {
+            keyPath: "uid",
+          });
+          userStore.createIndex("email", "email", { unique: true });
+          userStore.createIndex("username", "username", { unique: true });
         } else {
           const transaction = (event.target as IDBOpenDBRequest).transaction;
           if (transaction) {
             const userStore = transaction.objectStore(USERS_STORE_NAME);
-            if (!userStore.indexNames.contains('username')) {
-              userStore.createIndex('username', 'username', { unique: true });
+            if (!userStore.indexNames.contains("username")) {
+              userStore.createIndex("username", "username", { unique: true });
             }
           }
         }
 
         // Create custom statuses store
         if (!dbInstance.objectStoreNames.contains(STATUSES_STORE_NAME)) {
-          dbInstance.createObjectStore(STATUSES_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+          dbInstance.createObjectStore(STATUSES_STORE_NAME, {
+            keyPath: "id",
+            autoIncrement: true,
+          });
         }
       };
 
@@ -154,7 +218,7 @@ const getStore = async (storeName: string, mode: IDBTransactionMode) => {
 const clearStore = (storeName: string): Promise<void> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(storeName, 'readwrite');
+      const store = await getStore(storeName, "readwrite");
       const request = store.clear();
       request.onsuccess = () => resolve();
       request.onerror = () => reject(request.error);
@@ -164,12 +228,56 @@ const clearStore = (storeName: string): Promise<void> => {
   });
 };
 
+/**
+ * Normalizes object string values to UPPER CASE, excluding blacklisted fields.
+ */
+const normalizeData = <T>(data: T): T => {
+  if (!data || typeof data !== "object") return data as T;
+
+  const blacklist = [
+    "id",
+    "uid",
+    "email",
+    "photos",
+    "attachments",
+    "url",
+    "cep",
+    "cpf",
+    "cnpj",
+    "password",
+    "username",
+    "cor",
+  ];
+
+  const isBlacklisted = (key: string) => {
+    const k = key.toLowerCase();
+    return blacklist.includes(k) || k.endsWith("id") || k.startsWith("data"); // Skip dataCriacao, dataVenda, etc (ISO strings)
+  };
+
+  if (Array.isArray(data)) {
+    return data.map((item) => normalizeData(item)) as unknown as T;
+  }
+
+  const normalized = { ...data } as any;
+  for (const key in normalized) {
+    if (Object.prototype.hasOwnProperty.call(normalized, key)) {
+      const value = normalized[key];
+      if (typeof value === "string" && !isBlacklisted(key)) {
+        normalized[key] = value.trim().toUpperCase();
+      } else if (typeof value === "object" && value !== null) {
+        normalized[key] = normalizeData(value);
+      }
+    }
+  }
+  return normalized;
+};
+
 // --- User Profile Functions ---
 
 export const getAllUserProfiles = async (): Promise<UserProfile[]> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(USERS_STORE_NAME, 'readonly');
+      const store = await getStore(USERS_STORE_NAME, "readonly");
       const request = store.getAll();
       request.onsuccess = () => resolve(request.result as UserProfile[]);
       request.onerror = () => reject(request.error);
@@ -179,13 +287,16 @@ export const getAllUserProfiles = async (): Promise<UserProfile[]> => {
   });
 };
 
-export const getUserByUsername = async (username: string): Promise<UserProfile | null> => {
+export const getUserByUsername = async (
+  username: string,
+): Promise<UserProfile | null> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(USERS_STORE_NAME, 'readonly');
-      const index = store.index('username');
+      const store = await getStore(USERS_STORE_NAME, "readonly");
+      const index = store.index("username");
       const request = index.get(username.toLowerCase());
-      request.onsuccess = () => resolve(request.result as UserProfile || null);
+      request.onsuccess = () =>
+        resolve((request.result as UserProfile) || null);
       request.onerror = () => reject(request.error);
     } catch (err) {
       reject(err);
@@ -196,11 +307,14 @@ export const getUserByUsername = async (username: string): Promise<UserProfile |
 export const upsertUserProfile = (profile: UserProfile): Promise<void> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(USERS_STORE_NAME, 'readwrite');
-      
+      const store = await getStore(USERS_STORE_NAME, "readwrite");
+
       // Ensure username exists (fallback to email prefix)
       if (!profile.username) {
-        profile.username = profile.email.split('@')[0].toLowerCase().replace(/[^a-z0-9._]/g, '');
+        profile.username = profile.email
+          .split("@")[0]
+          .toLowerCase()
+          .replace(/[^a-z0-9._]/g, "");
       } else {
         profile.username = profile.username.toLowerCase();
       }
@@ -220,15 +334,13 @@ export const upsertUserProfile = (profile: UserProfile): Promise<void> => {
 export const ensureUsernamesOnProfiles = async (): Promise<void> => {
   try {
     const profiles = await getAllUserProfiles();
-    let updated = false;
     for (const profile of profiles) {
       if (!profile.username) {
         await upsertUserProfile(profile);
-        updated = true;
       }
     }
   } catch (err) {
-    console.warn('Failed to ensure usernames:', err);
+    console.warn("Failed to ensure usernames:", err);
   }
 };
 
@@ -260,7 +372,7 @@ export const migrateContactsToArrays = async (): Promise<void> => {
       // Based on types.ts, Supplier only had razaoSocial, nomeFantasia, cnpj, cidade, cep, endereco, bairro, codigoExterno
       // Wait, let me check Supplier interface again.
       // interface Supplier { id?: number; razaoSocial: string; nomeFantasia: string; cnpj: string; cidade: string; cep?: string; endereco?: string; bairro?: string; codigoExterno?: string; telefones?: string[]; emails?: string[]; }
-      // It didn't have single 'telefone' or 'email'. 
+      // It didn't have single 'telefone' or 'email'.
       // But maybe some records have it from previous versions?
       const raw = s as any;
       if (raw.telefone && (!s.telefones || s.telefones.length === 0)) {
@@ -278,7 +390,10 @@ export const migrateContactsToArrays = async (): Promise<void> => {
     const company = await getCompanyData();
     if (company) {
       let changed = false;
-      if (company.telefone && (!company.telefones || company.telefones.length === 0)) {
+      if (
+        company.telefone &&
+        (!company.telefones || company.telefones.length === 0)
+      ) {
         company.telefones = [company.telefone];
         changed = true;
       }
@@ -289,18 +404,21 @@ export const migrateContactsToArrays = async (): Promise<void> => {
       if (changed) await updateCompanyData(company);
     }
   } catch (err) {
-    console.warn('Failed to migrate contacts:', err);
+    console.warn("Failed to migrate contacts:", err);
   }
 };
 
 // --- User Profile Functions ---
 
-export const getUserProfile = (uid: string): Promise<UserProfile | undefined> => {
+export const getUserProfile = (
+  uid: string,
+): Promise<UserProfile | undefined> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(USERS_STORE_NAME, 'readonly');
+      const store = await getStore(USERS_STORE_NAME, "readonly");
       const request = store.get(uid);
-      request.onsuccess = () => resolve(request.result as UserProfile | undefined);
+      request.onsuccess = () =>
+        resolve(request.result as UserProfile | undefined);
       request.onerror = () => reject(request.error);
     } catch (err) {
       reject(err);
@@ -308,14 +426,16 @@ export const getUserProfile = (uid: string): Promise<UserProfile | undefined> =>
   });
 };
 
-
 // --- Warranty Functions ---
 
-export const addWarranty = (warranty: Omit<Warranty, 'id'>): Promise<number> => {
+export const addWarranty = (
+  warranty: Omit<Warranty, "id">,
+): Promise<number> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(GARANTIAS_STORE_NAME, 'readwrite');
-      const request = store.add(warranty);
+      const normalizedData = normalizeData(warranty);
+      const store = await getStore(GARANTIAS_STORE_NAME, "readwrite");
+      const request = store.add(normalizedData);
       request.onsuccess = () => resolve(request.result as number);
       request.onerror = () => reject(request.error);
     } catch (err) {
@@ -327,7 +447,7 @@ export const addWarranty = (warranty: Omit<Warranty, 'id'>): Promise<number> => 
 export const getAllWarranties = (): Promise<Warranty[]> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(GARANTIAS_STORE_NAME, 'readonly');
+      const store = await getStore(GARANTIAS_STORE_NAME, "readonly");
       const request = store.getAll();
       request.onsuccess = () => resolve(request.result as Warranty[]);
       request.onerror = () => reject(request.error);
@@ -339,12 +459,12 @@ export const getAllWarranties = (): Promise<Warranty[]> => {
 
 export const getWarrantyById = (id: number): Promise<Warranty | undefined> => {
   return new Promise(async (resolve, reject) => {
-    if (typeof id !== 'number' || id <= 0) {
+    if (typeof id !== "number" || id <= 0) {
       // Return undefined directly if the ID is not valid, preventing the DB error
       return resolve(undefined);
     }
     try {
-      const store = await getStore(GARANTIAS_STORE_NAME, 'readonly');
+      const store = await getStore(GARANTIAS_STORE_NAME, "readonly");
       const request = store.get(id);
       request.onsuccess = () => resolve(request.result as Warranty | undefined);
       request.onerror = () => reject(request.error);
@@ -354,13 +474,14 @@ export const getWarrantyById = (id: number): Promise<Warranty | undefined> => {
   });
 };
 
-
 export const getWarrantiesByIds = (ids: number[]): Promise<Warranty[]> => {
   return new Promise(async (resolve, reject) => {
     try {
       const allWarranties = await getAllWarranties();
-      const numericIds = ids.map(id => Number(id));
-      const filtered = allWarranties.filter(w => w.id && numericIds.includes(w.id));
+      const numericIds = ids.map((id) => Number(id));
+      const filtered = allWarranties.filter(
+        (w) => w.id && numericIds.includes(w.id),
+      );
       resolve(filtered);
     } catch (err) {
       reject(err);
@@ -371,8 +492,9 @@ export const getWarrantiesByIds = (ids: number[]): Promise<Warranty[]> => {
 export const updateWarranty = (warranty: Warranty): Promise<number> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(GARANTIAS_STORE_NAME, 'readwrite');
-      const request = store.put(warranty);
+      const normalizedData = normalizeData(warranty);
+      const store = await getStore(GARANTIAS_STORE_NAME, "readwrite");
+      const request = store.put(normalizedData);
       request.onsuccess = () => resolve(request.result as number);
       request.onerror = () => reject(request.error);
     } catch (err) {
@@ -384,7 +506,7 @@ export const updateWarranty = (warranty: Warranty): Promise<number> => {
 export const deleteWarranty = (id: number): Promise<void> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(GARANTIAS_STORE_NAME, 'readwrite');
+      const store = await getStore(GARANTIAS_STORE_NAME, "readwrite");
       const request = store.delete(id);
       request.onsuccess = () => resolve();
       request.onerror = () => reject(request.error);
@@ -394,16 +516,17 @@ export const deleteWarranty = (id: number): Promise<void> => {
   });
 };
 
-export const clearWarranties = (): Promise<void> => clearStore(GARANTIAS_STORE_NAME);
-
+export const clearWarranties = (): Promise<void> =>
+  clearStore(GARANTIAS_STORE_NAME);
 
 // --- Person (Client/Mechanic) Functions ---
 
-export const addPerson = (person: Omit<Person, 'id'>): Promise<number> => {
+export const addPerson = (person: Omit<Person, "id">): Promise<number> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(PERSONS_STORE_NAME, 'readwrite');
-      const request = store.add(person);
+      const normalizedData = normalizeData(person);
+      const store = await getStore(PERSONS_STORE_NAME, "readwrite");
+      const request = store.add(normalizedData);
       request.onsuccess = () => resolve(request.result as number);
       request.onerror = () => reject(request.error);
     } catch (err) {
@@ -415,7 +538,7 @@ export const addPerson = (person: Omit<Person, 'id'>): Promise<number> => {
 export const getAllPersons = (): Promise<Person[]> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(PERSONS_STORE_NAME, 'readonly');
+      const store = await getStore(PERSONS_STORE_NAME, "readonly");
       const request = store.getAll();
       request.onsuccess = () => resolve(request.result as Person[]);
       request.onerror = () => reject(request.error);
@@ -428,8 +551,9 @@ export const getAllPersons = (): Promise<Person[]> => {
 export const updatePerson = (person: Person): Promise<number> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(PERSONS_STORE_NAME, 'readwrite');
-      const request = store.put(person);
+      const normalizedData = normalizeData(person);
+      const store = await getStore(PERSONS_STORE_NAME, "readwrite");
+      const request = store.put(normalizedData);
       request.onsuccess = () => resolve(request.result as number);
       request.onerror = () => reject(request.error);
     } catch (err) {
@@ -441,7 +565,7 @@ export const updatePerson = (person: Person): Promise<number> => {
 export const deletePerson = (id: number): Promise<void> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(PERSONS_STORE_NAME, 'readwrite');
+      const store = await getStore(PERSONS_STORE_NAME, "readwrite");
       const request = store.delete(id);
       request.onsuccess = () => resolve();
       request.onerror = () => reject(request.error);
@@ -453,14 +577,16 @@ export const deletePerson = (id: number): Promise<void> => {
 
 export const clearPersons = (): Promise<void> => clearStore(PERSONS_STORE_NAME);
 
-
 // --- Supplier Functions ---
 
-export const addSupplier = (supplier: Omit<Supplier, 'id'>): Promise<number> => {
+export const addSupplier = (
+  supplier: Omit<Supplier, "id">,
+): Promise<number> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(SUPPLIERS_STORE_NAME, 'readwrite');
-      const request = store.add(supplier);
+      const normalizedData = normalizeData(supplier);
+      const store = await getStore(SUPPLIERS_STORE_NAME, "readwrite");
+      const request = store.add(normalizedData);
       request.onsuccess = () => resolve(request.result as number);
       request.onerror = () => reject(request.error);
     } catch (err) {
@@ -472,7 +598,7 @@ export const addSupplier = (supplier: Omit<Supplier, 'id'>): Promise<number> => 
 export const getAllSuppliers = (): Promise<Supplier[]> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(SUPPLIERS_STORE_NAME, 'readonly');
+      const store = await getStore(SUPPLIERS_STORE_NAME, "readonly");
       const request = store.getAll();
       request.onsuccess = () => resolve(request.result as Supplier[]);
       request.onerror = () => reject(request.error);
@@ -485,8 +611,9 @@ export const getAllSuppliers = (): Promise<Supplier[]> => {
 export const updateSupplier = (supplier: Supplier): Promise<number> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(SUPPLIERS_STORE_NAME, 'readwrite');
-      const request = store.put(supplier);
+      const normalizedData = normalizeData(supplier);
+      const store = await getStore(SUPPLIERS_STORE_NAME, "readwrite");
+      const request = store.put(normalizedData);
       request.onsuccess = () => resolve(request.result as number);
       request.onerror = () => reject(request.error);
     } catch (err) {
@@ -498,7 +625,7 @@ export const updateSupplier = (supplier: Supplier): Promise<number> => {
 export const deleteSupplier = (id: number): Promise<void> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(SUPPLIERS_STORE_NAME, 'readwrite');
+      const store = await getStore(SUPPLIERS_STORE_NAME, "readwrite");
       const request = store.delete(id);
       request.onsuccess = () => resolve();
       request.onerror = () => reject(request.error);
@@ -508,14 +635,16 @@ export const deleteSupplier = (id: number): Promise<void> => {
   });
 };
 
-export const clearSuppliers = (): Promise<void> => clearStore(SUPPLIERS_STORE_NAME);
+export const clearSuppliers = (): Promise<void> =>
+  clearStore(SUPPLIERS_STORE_NAME);
 
 // --- Lote Functions ---
-export const addLote = (lote: Omit<Lote, 'id'>): Promise<number> => {
+export const addLote = (lote: Omit<Lote, "id">): Promise<number> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(LOTES_STORE_NAME, 'readwrite');
-      const request = store.add(lote);
+      const normalizedData = normalizeData(lote);
+      const store = await getStore(LOTES_STORE_NAME, "readwrite");
+      const request = store.add(normalizedData);
       request.onsuccess = () => resolve(request.result as number);
       request.onerror = () => reject(request.error);
     } catch (err) {
@@ -527,7 +656,7 @@ export const addLote = (lote: Omit<Lote, 'id'>): Promise<number> => {
 export const getAllLotes = (): Promise<Lote[]> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(LOTES_STORE_NAME, 'readonly');
+      const store = await getStore(LOTES_STORE_NAME, "readonly");
       const request = store.getAll();
       request.onsuccess = () => resolve(request.result as Lote[]);
       request.onerror = () => reject(request.error);
@@ -540,8 +669,9 @@ export const getAllLotes = (): Promise<Lote[]> => {
 export const updateLote = (lote: Lote): Promise<number> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(LOTES_STORE_NAME, 'readwrite');
-      const request = store.put(lote);
+      const normalizedData = normalizeData(lote);
+      const store = await getStore(LOTES_STORE_NAME, "readwrite");
+      const request = store.put(normalizedData);
       request.onsuccess = () => resolve(request.result as number);
       request.onerror = () => reject(request.error);
     } catch (err) {
@@ -552,7 +682,10 @@ export const updateLote = (lote: Lote): Promise<number> => {
 
 export const deleteLote = async (id: number): Promise<void> => {
   const db = await getDB();
-  const transaction = db.transaction([GARANTIAS_STORE_NAME, LOTES_STORE_NAME], 'readwrite');
+  const transaction = db.transaction(
+    [GARANTIAS_STORE_NAME, LOTES_STORE_NAME],
+    "readwrite",
+  );
   const lotesStore = transaction.objectStore(LOTES_STORE_NAME);
   const warrantiesStore = transaction.objectStore(GARANTIAS_STORE_NAME);
 
@@ -564,7 +697,7 @@ export const deleteLote = async (id: number): Promise<void> => {
 
     deleteLoteRequest.onsuccess = () => {
       // 2. Unlink all warranties associated with this lote
-      const warrantyIndex = warrantiesStore.index('loteId');
+      const warrantyIndex = warrantiesStore.index("loteId");
       const getWarrantiesRequest = warrantyIndex.getAll(id);
 
       getWarrantiesRequest.onerror = () => reject(getWarrantiesRequest.error);
@@ -577,7 +710,7 @@ export const deleteLote = async (id: number): Promise<void> => {
         }
 
         let updatedCount = 0;
-        warrantiesToUpdate.forEach(warranty => {
+        warrantiesToUpdate.forEach((warranty) => {
           warranty.loteId = null; // or delete warranty.loteId;
           const updateRequest = warrantiesStore.put(warranty);
           updateRequest.onerror = () => reject(updateRequest.error);
@@ -597,13 +730,15 @@ export const deleteLote = async (id: number): Promise<void> => {
 
 export const clearLotes = (): Promise<void> => clearStore(LOTES_STORE_NAME);
 
-
 // --- LoteItem Functions ---
-export const addLoteItem = (loteItem: Omit<LoteItem, 'id'>): Promise<number> => {
+export const addLoteItem = (
+  loteItem: Omit<LoteItem, "id">,
+): Promise<number> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(LOTE_ITEMS_STORE_NAME, 'readwrite');
-      const request = store.add(loteItem);
+      const normalizedData = normalizeData(loteItem);
+      const store = await getStore(LOTE_ITEMS_STORE_NAME, "readwrite");
+      const request = store.add(normalizedData);
       request.onsuccess = () => resolve(request.result as number);
       request.onerror = () => reject(request.error);
     } catch (err) {
@@ -615,8 +750,8 @@ export const addLoteItem = (loteItem: Omit<LoteItem, 'id'>): Promise<number> => 
 export const getLoteItemsByLoteId = (loteId: number): Promise<LoteItem[]> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(LOTE_ITEMS_STORE_NAME, 'readonly');
-      const index = store.index('loteId');
+      const store = await getStore(LOTE_ITEMS_STORE_NAME, "readonly");
+      const index = store.index("loteId");
       const request = index.getAll(loteId);
       request.onsuccess = () => resolve(request.result as LoteItem[]);
       request.onerror = () => reject(request.error);
@@ -629,7 +764,7 @@ export const getLoteItemsByLoteId = (loteId: number): Promise<LoteItem[]> => {
 export const deleteLoteItem = (id: number): Promise<void> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(LOTE_ITEMS_STORE_NAME, 'readwrite');
+      const store = await getStore(LOTE_ITEMS_STORE_NAME, "readwrite");
       const request = store.delete(id);
       request.onsuccess = () => resolve();
       request.onerror = () => reject(request.error);
@@ -639,8 +774,8 @@ export const deleteLoteItem = (id: number): Promise<void> => {
   });
 };
 
-export const clearLoteItems = (): Promise<void> => clearStore(LOTE_ITEMS_STORE_NAME);
-
+export const clearLoteItems = (): Promise<void> =>
+  clearStore(LOTE_ITEMS_STORE_NAME);
 
 // --- Company Data Functions ---
 
@@ -661,9 +796,10 @@ export const getCompanyData = (): Promise<CompanyData | null> => {
 export const updateCompanyData = (companyData: Omit<CompanyData, 'id'>): Promise<number> => {
   return new Promise(async (resolve, reject) => {
     try {
+      const normalizedData = normalizeData(companyData);
       const store = await getStore(COMPANY_DATA_STORE_NAME, 'readwrite');
       // We use a fixed ID of 1 to always update the same record
-      const request = store.put({ ...companyData, id: 1 });
+      const request = store.put({ ...normalizedData, id: 1 });
       request.onsuccess = () => resolve(request.result as number);
       request.onerror = () => reject(request.error);
     } catch (err) {
@@ -672,8 +808,8 @@ export const updateCompanyData = (companyData: Omit<CompanyData, 'id'>): Promise
   });
 };
 
-export const clearCompanyData = (): Promise<void> => clearStore(COMPANY_DATA_STORE_NAME);
-
+export const clearCompanyData = (): Promise<void> =>
+  clearStore(COMPANY_DATA_STORE_NAME);
 
 // --- Devolução Functions ---
 
@@ -683,8 +819,11 @@ export const addDevolucao = async (devolucao: Omit<Devolucao, 'id'>, itens: Omit
   const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
   const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
 
+  const normalizedDevolucao = normalizeData(devolucao);
+  const normalizedItens = normalizeData(itens);
+
   return new Promise((resolve, reject) => {
-    const request = devolucoesStore.add(devolucao);
+    const request = devolucoesStore.add(normalizedDevolucao);
 
     request.onerror = () => reject(request.error);
 
@@ -692,17 +831,17 @@ export const addDevolucao = async (devolucao: Omit<Devolucao, 'id'>, itens: Omit
       const devolucaoId = request.result as number;
       let itemsAdded = 0;
 
-      if (itens.length === 0) {
+      if (normalizedItens.length === 0) {
         resolve(devolucaoId);
         return;
       }
 
-      itens.forEach(item => {
+      normalizedItens.forEach(item => {
         const itemRequest = itensStore.add({ ...item, devolucaoId });
         itemRequest.onerror = () => reject(itemRequest.error);
         itemRequest.onsuccess = () => {
           itemsAdded++;
-          if (itemsAdded === itens.length) {
+          if (itemsAdded === normalizedItens.length) {
             resolve(devolucaoId);
           }
         };
@@ -719,15 +858,18 @@ export const updateDevolucao = async (devolucao: Devolucao, itens: (Omit<ItemDev
   const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
   const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
 
+  const normalizedDevolucao = normalizeData(devolucao);
+  const normalizedItens = normalizeData(itens);
+
   return new Promise((resolve, reject) => {
     // 1. Update the main Devolucao object
-    const devRequest = devolucoesStore.put(devolucao);
+    const devRequest = devolucoesStore.put(normalizedDevolucao);
     devRequest.onerror = () => reject(devRequest.error);
 
     devRequest.onsuccess = () => {
-      const devolucaoId = devolucao.id!;
+      const devolucaoId = normalizedDevolucao.id!;
       // 2. Clear existing items for this devolucao
-      const itemIndex = itensStore.index('devolucaoId');
+      const itemIndex = itensStore.index("devolucaoId");
       const clearRequest = itemIndex.openCursor(IDBKeyRange.only(devolucaoId));
 
       clearRequest.onerror = () => reject(clearRequest.error);
@@ -738,13 +880,13 @@ export const updateDevolucao = async (devolucao: Devolucao, itens: (Omit<ItemDev
           cursor.continue();
         } else {
           // 3. Add the new/updated items
-          if (itens.length === 0) {
+          if (normalizedItens.length === 0) {
             resolve();
             return;
           }
           let itemsAdded = 0;
-          itens.forEach(item => {
-            const itemToAdd: Omit<ItemDevolucao, 'id'> = {
+          normalizedItens.forEach((item) => {
+            const itemToAdd: Omit<ItemDevolucao, "id"> = {
               ...item,
               devolucaoId,
             };
@@ -752,25 +894,29 @@ export const updateDevolucao = async (devolucao: Devolucao, itens: (Omit<ItemDev
             itemRequest.onerror = () => reject(itemRequest.error);
             itemRequest.onsuccess = () => {
               itemsAdded++;
-              if (itemsAdded === itens.length) {
+              if (itemsAdded === normalizedItens.length) {
                 resolve();
               }
             };
           });
         }
-      }
+      };
     };
     transaction.onabort = () => reject(transaction.error);
   });
 };
 
-
-export const getAllDevolucoes = async (): Promise<(Devolucao & { itens: ItemDevolucao[] })[]> => {
+export const getAllDevolucoes = async (): Promise<
+  (Devolucao & { itens: ItemDevolucao[] })[]
+> => {
   const db = await getDB();
-  const transaction = db.transaction([DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME], 'readonly');
+  const transaction = db.transaction(
+    [DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME],
+    "readonly",
+  );
   const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
   const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
-  const itensIndex = itensStore.index('devolucaoId');
+  const itensIndex = itensStore.index("devolucaoId");
 
   return new Promise((resolve, reject) => {
     const devolucoesRequest = devolucoesStore.getAll();
@@ -787,7 +933,7 @@ export const getAllDevolucoes = async (): Promise<(Devolucao & { itens: ItemDevo
         return;
       }
 
-      devolucoes.forEach(devolucao => {
+      devolucoes.forEach((devolucao) => {
         const itensRequest = itensIndex.getAll(devolucao.id);
         itensRequest.onerror = () => reject(itensRequest.error);
         itensRequest.onsuccess = () => {
@@ -802,12 +948,17 @@ export const getAllDevolucoes = async (): Promise<(Devolucao & { itens: ItemDevo
   });
 };
 
-export const getDevolucaoById = async (id: number): Promise<(Devolucao & { itens: ItemDevolucao[] }) | null> => {
+export const getDevolucaoById = async (
+  id: number,
+): Promise<(Devolucao & { itens: ItemDevolucao[] }) | null> => {
   const db = await getDB();
-  const transaction = db.transaction([DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME], 'readonly');
+  const transaction = db.transaction(
+    [DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME],
+    "readonly",
+  );
   const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
   const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
-  const itensIndex = itensStore.index('devolucaoId');
+  const itensIndex = itensStore.index("devolucaoId");
 
   return new Promise((resolve, reject) => {
     const devRequest = devolucoesStore.get(id);
@@ -828,10 +979,12 @@ export const getDevolucaoById = async (id: number): Promise<(Devolucao & { itens
   });
 };
 
-
 export const deleteDevolucao = async (id: number): Promise<void> => {
   const db = await getDB();
-  const transaction = db.transaction([DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME], 'readwrite');
+  const transaction = db.transaction(
+    [DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME],
+    "readwrite",
+  );
   const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
   const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
 
@@ -842,7 +995,7 @@ export const deleteDevolucao = async (id: number): Promise<void> => {
 
     devRequest.onsuccess = () => {
       // 2. Delete associated items
-      const itemIndex = itensStore.index('devolucaoId');
+      const itemIndex = itensStore.index("devolucaoId");
       const clearRequest = itemIndex.openCursor(IDBKeyRange.only(id));
 
       clearRequest.onerror = () => reject(clearRequest.error);
@@ -864,7 +1017,10 @@ export const deleteDevolucao = async (id: number): Promise<void> => {
 
 export const clearDevolucoes = async (): Promise<void> => {
   const db = await getDB();
-  const transaction = db.transaction([DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME], 'readwrite');
+  const transaction = db.transaction(
+    [DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME],
+    "readwrite",
+  );
   const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
   const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
 
@@ -889,13 +1045,13 @@ export const clearDevolucoes = async (): Promise<void> => {
   });
 };
 
-
 // --- Product Functions ---
-export const addProduct = (product: Omit<Product, 'id'>): Promise<number> => {
+export const addProduct = (product: Omit<Product, "id">): Promise<number> => {
   return new Promise(async (resolve, reject) => {
     try {
+      const normalizedData = normalizeData(product);
       const store = await getStore(PRODUCTS_STORE_NAME, 'readwrite');
-      const request = store.add(product);
+      const request = store.add(normalizedData);
       request.onsuccess = () => resolve(request.result as number);
       request.onerror = () => reject(request.error);
     } catch (err) {
@@ -907,7 +1063,7 @@ export const addProduct = (product: Omit<Product, 'id'>): Promise<number> => {
 export const getAllProducts = (): Promise<Product[]> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(PRODUCTS_STORE_NAME, 'readonly');
+      const store = await getStore(PRODUCTS_STORE_NAME, "readonly");
       const request = store.getAll();
       request.onsuccess = () => resolve(request.result as Product[]);
       request.onerror = () => reject(request.error);
@@ -917,14 +1073,16 @@ export const getAllProducts = (): Promise<Product[]> => {
   });
 };
 
-export const getProductByCode = (codigo: string): Promise<Product | undefined> => {
+export const getProductByCode = (
+  codigo: string,
+): Promise<Product | undefined> => {
   return new Promise(async (resolve, reject) => {
     if (!codigo) {
       return resolve(undefined);
     }
     try {
-      const store = await getStore(PRODUCTS_STORE_NAME, 'readonly');
-      const index = store.index('codigo');
+      const store = await getStore(PRODUCTS_STORE_NAME, "readonly");
+      const index = store.index("codigo");
       const request = index.get(codigo);
       request.onsuccess = () => resolve(request.result as Product | undefined);
       request.onerror = () => reject(request.error);
@@ -937,8 +1095,9 @@ export const getProductByCode = (codigo: string): Promise<Product | undefined> =
 export const updateProduct = (product: Product): Promise<number> => {
   return new Promise(async (resolve, reject) => {
     try {
+      const normalizedData = normalizeData(product);
       const store = await getStore(PRODUCTS_STORE_NAME, 'readwrite');
-      const request = store.put(product);
+      const request = store.put(normalizedData);
       request.onsuccess = () => resolve(request.result as number);
       request.onerror = () => reject(request.error);
     } catch (err) {
@@ -950,7 +1109,7 @@ export const updateProduct = (product: Product): Promise<number> => {
 export const deleteProduct = (id: number): Promise<void> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(PRODUCTS_STORE_NAME, 'readwrite');
+      const store = await getStore(PRODUCTS_STORE_NAME, "readwrite");
       const request = store.delete(id);
       request.onsuccess = () => resolve();
       request.onerror = () => reject(request.error);
@@ -960,15 +1119,17 @@ export const deleteProduct = (id: number): Promise<void> => {
   });
 };
 
-export const clearProducts = (): Promise<void> => clearStore(PRODUCTS_STORE_NAME);
-
+export const clearProducts = (): Promise<void> =>
+  clearStore(PRODUCTS_STORE_NAME);
 
 // --- Purchase Simulation Functions ---
 
-export const addSimulation = (simulation: Omit<PurchaseSimulation, 'id'>): Promise<number> => {
+export const addSimulation = (
+  simulation: Omit<PurchaseSimulation, "id">,
+): Promise<number> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(SIMULATIONS_STORE_NAME, 'readwrite');
+      const store = await getStore(SIMULATIONS_STORE_NAME, "readwrite");
       const request = store.add(simulation);
       request.onsuccess = () => resolve(request.result as number);
       request.onerror = () => reject(request.error);
@@ -978,10 +1139,12 @@ export const addSimulation = (simulation: Omit<PurchaseSimulation, 'id'>): Promi
   });
 };
 
-export const updateSimulation = (simulation: PurchaseSimulation): Promise<number> => {
+export const updateSimulation = (
+  simulation: PurchaseSimulation,
+): Promise<number> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(SIMULATIONS_STORE_NAME, 'readwrite');
+      const store = await getStore(SIMULATIONS_STORE_NAME, "readwrite");
       const request = store.put(simulation);
       request.onsuccess = () => resolve(request.result as number);
       request.onerror = () => reject(request.error);
@@ -994,7 +1157,7 @@ export const updateSimulation = (simulation: PurchaseSimulation): Promise<number
 export const getAllSimulations = (): Promise<PurchaseSimulation[]> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(SIMULATIONS_STORE_NAME, 'readonly');
+      const store = await getStore(SIMULATIONS_STORE_NAME, "readonly");
       const request = store.getAll();
       request.onsuccess = () => resolve(request.result as PurchaseSimulation[]);
       request.onerror = () => reject(request.error);
@@ -1007,7 +1170,7 @@ export const getAllSimulations = (): Promise<PurchaseSimulation[]> => {
 export const deleteSimulation = (id: number): Promise<void> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(SIMULATIONS_STORE_NAME, 'readwrite');
+      const store = await getStore(SIMULATIONS_STORE_NAME, "readwrite");
       const request = store.delete(id);
       request.onsuccess = () => resolve();
       request.onerror = () => reject(request.error);
@@ -1017,7 +1180,8 @@ export const deleteSimulation = (id: number): Promise<void> => {
   });
 };
 
-export const clearSimulations = (): Promise<void> => clearStore(SIMULATIONS_STORE_NAME);
+export const clearSimulations = (): Promise<void> =>
+  clearStore(SIMULATIONS_STORE_NAME);
 
 // --- General Purpose ---
 // Note: clearUsers is not exported because it should be handled carefully
@@ -1025,12 +1189,12 @@ export const clearUsers = (): Promise<void> => clearStore(USERS_STORE_NAME);
 
 // --- Custom Status Functions ---
 
-import type { CustomStatus } from './types';
+import type { CustomStatus } from "./types";
 
 export const getAllStatuses = async (): Promise<CustomStatus[]> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(STATUSES_STORE_NAME, 'readonly');
+      const store = await getStore(STATUSES_STORE_NAME, "readonly");
       const request = store.getAll();
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
@@ -1043,7 +1207,7 @@ export const getAllStatuses = async (): Promise<CustomStatus[]> => {
 export const addStatus = async (status: CustomStatus): Promise<number> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(STATUSES_STORE_NAME, 'readwrite');
+      const store = await getStore(STATUSES_STORE_NAME, "readwrite");
       const request = store.add(status);
       request.onsuccess = () => resolve(request.result as number);
       request.onerror = () => reject(request.error);
@@ -1056,7 +1220,7 @@ export const addStatus = async (status: CustomStatus): Promise<number> => {
 export const updateStatus = async (status: CustomStatus): Promise<void> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(STATUSES_STORE_NAME, 'readwrite');
+      const store = await getStore(STATUSES_STORE_NAME, "readwrite");
       const request = store.put(status);
       request.onsuccess = () => resolve();
       request.onerror = () => reject(request.error);
@@ -1069,7 +1233,7 @@ export const updateStatus = async (status: CustomStatus): Promise<void> => {
 export const deleteStatus = async (id: number): Promise<void> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(STATUSES_STORE_NAME, 'readwrite');
+      const store = await getStore(STATUSES_STORE_NAME, "readwrite");
       const request = store.delete(id);
       request.onsuccess = () => resolve();
       request.onerror = () => reject(request.error);
@@ -1079,4 +1243,5 @@ export const deleteStatus = async (id: number): Promise<void> => {
   });
 };
 
-export const clearStatuses = (): Promise<void> => clearStore(STATUSES_STORE_NAME);
+export const clearStatuses = (): Promise<void> =>
+  clearStore(STATUSES_STORE_NAME);

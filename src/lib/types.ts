@@ -64,7 +64,7 @@ export interface Supplier {
   emails?: string[];
 }
 
-export type LoteStatus = 'Aberto' | 'Enviado' | 'Aprovado Parcialmente' | 'Aprovado Totalmente' | 'Recusado';
+export type LoteStatus = 'Aberto' | 'Enviado' | 'Aprovado Parcialmente' | 'Aprovado Totalmente' | 'Recusado' | string;
 
 export interface LoteAttachment {
   name: string;

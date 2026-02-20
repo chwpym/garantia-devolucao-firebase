@@ -2,8 +2,9 @@
 
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { useAppStore } from '@/store/app-store';
 
-type StatusType = 'warranty' | 'lote' | 'devolucao' | 'acao';
+type StatusType = 'warranty' | 'lote' | 'devolucao' | 'acao' | 'acaoRequisicao';
 
 interface StatusBadgeProps {
     type: StatusType;
@@ -12,9 +13,28 @@ interface StatusBadgeProps {
 }
 
 export function StatusBadge({ type, status, className }: StatusBadgeProps) {
+    const { statuses } = useAppStore();
+
     if (!status) {
         return <Badge variant="secondary" className={className}>N/A</Badge>;
     }
+
+    // Map internal types to CustomStatus aplicavelEm types
+    const typeMapping: Record<string, string> = {
+        'warranty': 'garantia',
+        'lote': 'lote',
+        'devolucao': 'devolucao',
+        'acao': 'acaoRequisicao',
+        'acaoRequisicao': 'acaoRequisicao'
+    };
+
+    const targetType = typeMapping[type] || type;
+    
+    // Check for custom status color in the store
+    const customStatus = statuses.find(s => 
+        s.nome.toLowerCase() === status.toLowerCase() && 
+        s.aplicavelEm.includes(targetType as any)
+    );
 
     const getVariant = (): any => {
         switch (type) {
@@ -62,6 +82,7 @@ export function StatusBadge({ type, status, className }: StatusBadgeProps) {
                         return 'outline';
                 }
             case 'acao':
+            case 'acaoRequisicao':
                 switch (status) {
                     case 'Excluída':
                         return 'destructive';
@@ -73,6 +94,18 @@ export function StatusBadge({ type, status, className }: StatusBadgeProps) {
                 return 'secondary';
         }
     };
+
+    // If custom color exists, use it as inline style, otherwise use variant
+    if (customStatus?.cor) {
+        return (
+            <Badge 
+                style={{ backgroundColor: customStatus.cor, color: '#fff' }} 
+                className={cn("whitespace-nowrap border-none", className)}
+            >
+                {status}
+            </Badge>
+        );
+    }
 
     return (
         <Badge variant={getVariant()} className={cn("whitespace-nowrap", className)}>

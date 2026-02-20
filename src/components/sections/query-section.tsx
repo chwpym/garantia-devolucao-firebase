@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import type { Warranty, Lote, Person } from '@/lib/types';
+import type { Warranty, Lote, Person, CustomStatus } from '@/lib/types';
 import * as db from '@/lib/db';
 import { Search, PlusCircle, FilterX, MoreHorizontal, Hourglass, Send, DollarSign, XCircle } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
@@ -55,6 +55,7 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
   const [isLoteDialogOpen, setIsLoteDialogOpen] = useState(false);
   const [isDbReady, setIsDbReady] = useState(false);
   const [visibleCount, setVisibleCount] = useState(50);
+  const [customStatuses, setCustomStatuses] = useState<CustomStatus[]>([]);
   const initialFilters = useMemo(() => ({
     searchTerm: '',
     dateRange: { from: new Date(new Date().setDate(new Date().getDate() - 30)), to: new Date() } as DateRange | undefined,
@@ -70,14 +71,16 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
 
   const loadData = useCallback(async () => {
     try {
-      const [allWarranties, allLotes, allPersons] = await Promise.all([
+      const [allWarranties, allLotes, allPersons, allStatuses] = await Promise.all([
         db.getAllWarranties(),
         db.getAllLotes(),
-        db.getAllPersons()
+        db.getAllPersons(),
+        db.getAllStatuses()
       ]);
       setWarranties(allWarranties);
       setOpenLotes(allLotes.filter(l => l.status === 'Aberto'));
       setPersons(allPersons);
+      setCustomStatuses(allStatuses);
     } catch (error) {
       console.error('Failed to load data:', error);
       toast({
@@ -437,9 +440,15 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
                   <DropdownMenuItem onClick={() => handleBulkStatusChange('Aprovada - Crédito Boleto')}>
                     <DollarSign className="mr-2 h-4 w-4 text-green-600" /> Aprovada (Crédito)
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleBulkStatusChange('Recusada')}>
+                   <DropdownMenuItem onClick={() => handleBulkStatusChange('Recusada')}>
                     <XCircle className="mr-2 h-4 w-4 text-red-500" /> Recusada
                   </DropdownMenuItem>
+                  {customStatuses.filter(s => s.aplicavelEm.includes('garantia')).map(s => (
+                    <DropdownMenuItem key={s.id} onClick={() => handleBulkStatusChange(s.nome)}>
+                      <div className="w-4 h-4 rounded-full mr-2" style={{ backgroundColor: s.cor }} />
+                      {s.nome}
+                    </DropdownMenuItem>
+                  ))}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>

@@ -88,7 +88,7 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModal = false, isClone = false }: WarrantyFormProps) {
     const formRef = useRef<HTMLFormElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const { products, persons, suppliers } = useAppStore();
+    const { products, persons, suppliers, statuses } = useAppStore();
 
     const [quickRegisterType, setQuickRegisterType] = useState<'product' | 'supplier' | 'person' | null>(null);
     const [isQuickRegisterOpen, setQuickRegisterOpen] = useState(false);
@@ -259,6 +259,14 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
         label: m.nome,
         keywords: [m.nomeFantasia || '', m.cpfCnpj || '']
     }));
+
+    // Filter dynamic statuses for Garantia
+    const dynamicStatuses = statuses
+        .filter(s => s.aplicavelEm.includes('garantia'))
+        .map(s => s.nome);
+    
+    // Merge with hardcoded defaults to ensure fallbacks and unique entries
+    const availableStatuses = Array.from(new Set([...WARRANTY_STATUSES, ...dynamicStatuses]));
 
     const innerFormContent = (
         <Form {...form}>
@@ -510,7 +518,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                {WARRANTY_STATUSES.map(status => (
+                                                {availableStatuses.map(status => (
                                                     <SelectItem key={status} value={status}>{status}</SelectItem>
                                                 ))}
                                             </SelectContent>

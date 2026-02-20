@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { PlusCircle, Pencil, Trash2, Settings } from 'lucide-react';
@@ -21,35 +21,35 @@ export default function StatusSection() {
     const [editingStatus, setEditingStatus] = useState<CustomStatus | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<CustomStatus | null>(null);
 
-    // --- Default Statuses Migration ---
-    const defaultStatuses: CustomStatus[] = [
-        // Garantias
-        { nome: 'Aguardando Envio', cor: '#F59E0B', aplicavelEm: ['garantia'] },
-        { nome: 'Enviado para Análise', cor: '#3B82F6', aplicavelEm: ['garantia'] },
-        { nome: 'Aprovada - Peça Nova', cor: '#10B981', aplicavelEm: ['garantia'] },
-        { nome: 'Aprovada - Crédito NF', cor: '#8B5CF6', aplicavelEm: ['garantia'] },
-        { nome: 'Aprovada - Crédito Boleto', cor: '#10B981', aplicavelEm: ['garantia'] },
-        { nome: 'Recusada', cor: '#EF4444', aplicavelEm: ['garantia'] },
 
-        // Lotes
-        { nome: 'Aberto', cor: '#6B7280', aplicavelEm: ['lote'] },
-        { nome: 'Enviado', cor: '#3B82F6', aplicavelEm: ['lote'] },
-        { nome: 'Aprovado Parcialmente', cor: '#10B981', aplicavelEm: ['lote'] },
-        { nome: 'Aprovado Totalmente', cor: '#059669', aplicavelEm: ['lote'] },
-        { nome: 'Recusado', cor: '#EF4444', aplicavelEm: ['lote'] },
+    const loadStatuses = useCallback(async () => {
+        // --- Default Statuses Migration ---
+        const defaultStatuses: CustomStatus[] = [
+            // Garantias
+            { nome: 'Aguardando Envio', cor: '#F59E0B', aplicavelEm: ['garantia'] },
+            { nome: 'Enviado para Análise', cor: '#3B82F6', aplicavelEm: ['garantia'] },
+            { nome: 'Aprovada - Peça Nova', cor: '#10B981', aplicavelEm: ['garantia'] },
+            { nome: 'Aprovada - Crédito NF', cor: '#8B5CF6', aplicavelEm: ['garantia'] },
+            { nome: 'Aprovada - Crédito Boleto', cor: '#10B981', aplicavelEm: ['garantia'] },
+            { nome: 'Recusada', cor: '#EF4444', aplicavelEm: ['garantia'] },
 
-        // Devoluções
-        { nome: 'Recebido', cor: '#6B7280', aplicavelEm: ['devolucao'] },
-        { nome: 'Aguardando Peças', cor: '#F59E0B', aplicavelEm: ['devolucao'] },
-        { nome: 'Finalizada', cor: '#10B981', aplicavelEm: ['devolucao'] },
-        { nome: 'Cancelada', cor: '#EF4444', aplicavelEm: ['devolucao'] },
+            // Lotes
+            { nome: 'Aberto', cor: '#6B7280', aplicavelEm: ['lote'] },
+            { nome: 'Enviado', cor: '#3B82F6', aplicavelEm: ['lote'] },
+            { nome: 'Aprovado Parcialmente', cor: '#10B981', aplicavelEm: ['lote'] },
+            { nome: 'Aprovado Totalmente', cor: '#059669', aplicavelEm: ['lote'] },
+            { nome: 'Recusado', cor: '#EF4444', aplicavelEm: ['lote'] },
 
-        // Ação Requisição
-        { nome: 'Alterada', cor: '#3B82F6', aplicavelEm: ['acaoRequisicao'] },
-        { nome: 'Excluída', cor: '#EF4444', aplicavelEm: ['acaoRequisicao'] },
-    ];
+            // Devoluções
+            { nome: 'Recebido', cor: '#6B7280', aplicavelEm: ['devolucao'] },
+            { nome: 'Aguardando Peças', cor: '#F59E0B', aplicavelEm: ['devolucao'] },
+            { nome: 'Finalizada', cor: '#10B981', aplicavelEm: ['devolucao'] },
+            { nome: 'Cancelada', cor: '#EF4444', aplicavelEm: ['devolucao'] },
 
-    const loadStatuses = async () => {
+            // Ação Requisição
+            { nome: 'Alterada', cor: '#3B82F6', aplicavelEm: ['acaoRequisicao'] },
+            { nome: 'Excluída', cor: '#EF4444', aplicavelEm: ['acaoRequisicao'] },
+        ];
         try {
             const allStatuses = await db.getAllStatuses();
             if (allStatuses.length === 0) {
@@ -69,11 +69,11 @@ export default function StatusSection() {
             console.error('Failed to load statuses:', error);
             toast({ title: 'Erro', description: 'Erro ao carregar status.', variant: 'destructive' });
         }
-    };
+    }, [toast]);
 
     useEffect(() => {
         loadStatuses();
-    }, []);
+    }, [loadStatuses]);
 
     const handleSaveStatus = () => {
         setIsStatusDialogOpen(false);

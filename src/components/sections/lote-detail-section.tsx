@@ -5,7 +5,7 @@ import { SearchInput } from '@/components/ui/search-input';
 import { smartSearch } from '@/lib/search-utils';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import type { Lote, Warranty, Supplier, WarrantyStatus } from '@/lib/types';
+import type { Lote, Warranty, Supplier, WarrantyStatus, CustomStatus } from '@/lib/types';
 import { WARRANTY_STATUSES } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
@@ -121,6 +121,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
   const [galleryPhotos, setGalleryPhotos] = useState<string[]>([]);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: SortableKeys, direction: 'ascending' | 'descending' } | null>({ key: 'id', direction: 'descending' });
+  const [customStatuses, setCustomStatuses] = useState<CustomStatus[]>([]);
   const { toast } = useToast();
 
   const loadLoteDetails = useCallback(async () => {
@@ -128,10 +129,11 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
     setIsLoading(true);
     try {
       await db.initDB();
-      const [allLotes, allWarranties, allSuppliers] = await Promise.all([
+      const [allLotes, allWarranties, allSuppliers, allStatuses] = await Promise.all([
         db.getAllLotes(),
         db.getAllWarranties(),
-        db.getAllSuppliers()
+        db.getAllSuppliers(),
+        db.getAllStatuses(),
       ]);
       const currentLote = allLotes.find((l) => l.id === loteId) || null;
       const associatedWarranties = allWarranties.filter((w) => w.loteId === loteId);
@@ -139,6 +141,7 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
       setLote(currentLote);
       setWarranties(associatedWarranties);
       setSuppliers(allSuppliers);
+      setCustomStatuses(allStatuses);
 
       if (currentLote) {
         const currentSupplier = allSuppliers.find(s => s.nomeFantasia === currentLote.fornecedor) || null;
@@ -629,6 +632,12 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                     Marcar como {status}
                   </DropdownMenuItem>
                 ))}
+                {customStatuses.filter(s => s.aplicavelEm.includes('garantia')).map(s => (
+                  <DropdownMenuItem key={s.id} onSelect={() => handleBulkStatusChange(s.nome as WarrantyStatus)}>
+                    <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: s.cor }} />
+                    Marcar como {s.nome}
+                  </DropdownMenuItem>
+                ))}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -717,6 +726,12 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
                                   {WARRANTY_STATUSES.map(status => (
                                     <DropdownMenuItem key={status} onClick={() => handleStatusChange(warranty, status)}>
                                       <span>{status}</span>
+                                    </DropdownMenuItem>
+                                  ))}
+                                  {customStatuses.filter(s => s.aplicavelEm.includes('garantia')).map(s => (
+                                    <DropdownMenuItem key={s.id} onClick={() => handleStatusChange(warranty, s.nome as WarrantyStatus)}>
+                                      <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: s.cor }} />
+                                      <span>{s.nome}</span>
                                     </DropdownMenuItem>
                                   ))}
                                 </DropdownMenuSubContent>

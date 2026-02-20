@@ -20,7 +20,8 @@ import { Combobox } from './ui/combobox';
 import { QuickRegisterDialog } from './quick-register-dialog';
 import { useState } from 'react';
 
-const loteStatuses: [LoteStatus, ...LoteStatus[]] = ['Aberto', 'Enviado', 'Aprovado Parcialmente', 'Aprovado Totalmente', 'Recusado'];
+const defaultLoteStatuses: LoteStatus[] = ['Aberto', 'Enviado', 'Aprovado Parcialmente', 'Aprovado Totalmente', 'Recusado'];
+import { useAppStore } from '@/store/app-store';
 
 const attachmentSchema = z.object({
   name: z.string(),
@@ -32,7 +33,7 @@ const formSchema = z.object({
   fornecedor: z.string({ required_error: 'Selecione um fornecedor.' }),
   notaFiscalSaida: z.string().optional(),
   notasFiscaisRetorno: z.string().optional(),
-  status: z.enum(loteStatuses, { required_error: 'Selecione um status.' }),
+  status: z.string({ required_error: 'Selecione um status.' }),
   attachments: z.array(attachmentSchema).optional(),
 });
 
@@ -48,6 +49,13 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isQuickRegisterOpen, setQuickRegisterOpen] = useState(false);
+  const { statuses } = useAppStore();
+
+  const dynamicStatuses = statuses
+    .filter(s => s.aplicavelEm.includes('lote'))
+    .map(s => s.nome);
+
+  const availableStatuses = Array.from(new Set([...defaultLoteStatuses, ...dynamicStatuses]));
 
   const supplierOptions = suppliers.map(s => ({
     value: s.nomeFantasia,
@@ -190,7 +198,7 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {loteStatuses.map(status => (
+                      {availableStatuses.map(status => (
                         <SelectItem key={status} value={status}>{status}</SelectItem>
                       ))}
                     </SelectContent>

@@ -13,7 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Trash2 } from 'lucide-react';
-import type { ReturnStatus, Product, ItemDevolucao } from '@/lib/types';
+import type { ReturnStatus, Product, ItemDevolucao, Person } from '@/lib/types';
 import { Combobox } from '../ui/combobox';
 import { DatePicker } from '../ui/date-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -152,7 +152,7 @@ function RecentDevolutionsList() {
 
 
 export default function DevolucaoRegisterSection({ editingId, onSave }: DevolucaoRegisterSectionProps) {
-    const { persons, isDataLoaded, reloadData } = useAppStore();
+    const { persons, isDataLoaded, reloadData, statuses } = useAppStore();
     const [isProductModalOpen, setProductModalOpen] = useState(false);
     const [activeItemIndex, setActiveItemIndex] = useState<number | null>(null);
     const [shouldExit, setShouldExit] = useState(true);
@@ -288,9 +288,27 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
     };
 
     const clients = useMemo(() => persons.filter(p => p.tipo === 'Cliente' || p.tipo === 'Ambos'), [persons]);
-    const mechanics = useMemo(() => persons.filter(p => p.tipo === 'Mecânico' || p.tipo === 'Ambos'), [persons]);
+    const mechanics = useMemo(() => persons.filter((p: Person) => p.tipo === 'Mecânico' || p.tipo === 'Ambos'), [persons]);
     const clientOptions = useMemo(() => clients.map(c => ({ value: c.nome, label: c.nome })), [clients]);
     const mechanicOptions = useMemo(() => mechanics.map(m => ({ value: m.nome, label: m.nome })), [mechanics]);
+
+    // Dynamic statuses for Devolução
+    const returnStatuses = useMemo(() => {
+        const defaults = ['Recebido', 'Aguardando Peças', 'Finalizada', 'Cancelada'];
+        const dynamics = statuses
+            .filter(s => s.aplicavelEm.includes('devolucao'))
+            .map(s => s.nome);
+        return Array.from(new Set([...defaults, ...dynamics]));
+    }, [statuses]);
+
+    // Dynamic statuses for Ação Requisição
+    const acaoStatuses = useMemo(() => {
+        const defaults = ['Alterada', 'Excluída'];
+        const dynamics = statuses
+            .filter(s => s.aplicavelEm.includes('acaoRequisicao'))
+            .map(s => s.nome);
+        return Array.from(new Set([...defaults, ...dynamics]));
+    }, [statuses]);
 
     if (!isDataLoaded) {
         return <Skeleton className="h-[700px] w-full" />;
@@ -441,8 +459,9 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                                     <Select onValueChange={field.onChange} value={field.value}>
                                                         <FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl>
                                                         <SelectContent>
-                                                            <SelectItem value="Alterada">Alterada</SelectItem>
-                                                            <SelectItem value="Excluída">Excluída</SelectItem>
+                                                            {acaoStatuses.map(status => (
+                                                                <SelectItem key={status} value={status}>{status}</SelectItem>
+                                                            ))}
                                                         </SelectContent>
                                                     </Select>
                                                     <FormMessage />
@@ -467,6 +486,24 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                                 <FormItem className="flex flex-col">
                                                     <FormLabel>Data da Devolução <span className='text-destructive'>*</span></FormLabel>
                                                     <DatePicker date={field.value} setDate={field.onChange} />
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="status"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Status da Devolução <span className='text-destructive'>*</span></FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value}>
+                                                        <FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl>
+                                                        <SelectContent>
+                                                            {returnStatuses.map(status => (
+                                                                <SelectItem key={status} value={status}>{status}</SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}

@@ -63,7 +63,6 @@ const runDataMigration = async () => {
 
   try {
     const warranties = await db.getAllWarranties();
-    let updatedCount = 0;
 
     for (const warranty of warranties) {
       let needsUpdate = false;
@@ -89,7 +88,6 @@ const runDataMigration = async () => {
       if (needsUpdate && newStatus) {
         const updatedWarranty = { ...warranty, status: newStatus };
         await db.updateWarranty(updatedWarranty);
-        updatedCount++;
       }
     }
 

@@ -126,9 +126,10 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
         setIsLoading(true);
         try {
             await db.initDB();
-            let [allWarranties, allDevolucoes] = await Promise.all([
+            let [allWarranties, allDevolucoes, allStatuses] = await Promise.all([
                 db.getAllWarranties(),
                 db.getAllDevolucoes(),
+                db.getAllStatuses(),
             ]);
 
             // Filtrar por data
@@ -158,23 +159,25 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                 return acc + (warranty.quantidade ?? 0);
             }, 0);
 
-            const statusCounts = Object.fromEntries(WARRANTY_STATUSES.map(s => [s, 0])) as Record<WarrantyStatus, number>;
+            const statusCounts: Record<string, number> = {};
+            WARRANTY_STATUSES.forEach(s => statusCounts[s] = 0);
+            allStatuses.filter(s => s.aplicavelEm.includes('garantia')).forEach(s => statusCounts[s.nome] = 0);
 
             let totalAprovadas = 0;
             let totalPendentes = 0;
             let totalPagas = 0;
 
             allWarranties.forEach(w => {
-                if (w.status && statusCounts[w.status] !== undefined) {
-                    statusCounts[w.status]++;
-                }
-                if (w.status?.startsWith('Aprovada')) {
+                const s = w.status || 'Aguardando Envio';
+                statusCounts[s] = (statusCounts[s] || 0) + 1;
+
+                if (s.startsWith('Aprovada')) {
                     totalAprovadas++;
                 }
-                if (w.status === 'Aguardando Envio' || w.status === 'Enviado para Análise') {
+                if (s === 'Aguardando Envio' || s === 'Enviado para Análise') {
                     totalPendentes++;
                 }
-                if (w.status === 'Aprovada - Crédito Boleto') {
+                if (s === 'Aprovada - Crédito Boleto') {
                     totalPagas++;
                 }
             });
@@ -190,7 +193,14 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
 
             setStatusData(Object.entries(statusCounts)
                 .filter(([, value]) => value > 0)
-                .map(([name, value]) => ({ name, value, fill: COLORS[name as WarrantyStatus] }))
+                .map(([name, value]) => {
+                    const custom = allStatuses.find(s => s.nome === name);
+                    return { 
+                        name, 
+                        value, 
+                        fill: custom ? custom.cor : (COLORS[name as WarrantyStatus] || 'hsl(var(--muted))') 
+                    };
+                })
             );
 
             const now = new Date();
