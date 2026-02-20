@@ -56,10 +56,10 @@ const defaultFormValues: DevolucaoFormValues = {
     cliente: '',
     mecanico: '',
     requisicaoVenda: '',
-    acaoRequisicao: 'Alterada', // Default value
+    acaoRequisicao: '', // Default value
     dataDevolucao: new Date(),
     dataVenda: new Date(),
-    status: 'Recebido', // Valor padrão
+    status: '', // Valor padrão
     observacaoGeral: '',
     itens: [{ codigoPeca: '', descricaoPeca: '', quantidade: 1 }],
 };
@@ -456,8 +456,8 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>Ação na Requisição <span className='text-destructive'>*</span></FormLabel>
-                                                    <Select onValueChange={field.onChange} value={field.value}>
-                                                        <FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl>
+                                                    <Select onValueChange={field.onChange} value={field.value || undefined}>
+                                                        <FormControl><SelectTrigger><SelectValue placeholder="SELECIONE O STATUS" /></SelectTrigger></FormControl>
                                                         <SelectContent>
                                                             {acaoStatuses.map(status => (
                                                                 <SelectItem key={status} value={status}>{status}</SelectItem>
@@ -496,8 +496,8 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>Status da Devolução <span className='text-destructive'>*</span></FormLabel>
-                                                    <Select onValueChange={field.onChange} value={field.value}>
-                                                        <FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl>
+                                                    <Select onValueChange={field.onChange} value={field.value || undefined}>
+                                                        <FormControl><SelectTrigger><SelectValue placeholder="SELECIONE O STATUS" /></SelectTrigger></FormControl>
                                                         <SelectContent>
                                                             {returnStatuses.map(status => (
                                                                 <SelectItem key={status} value={status}>{status}</SelectItem>

@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from '@/components/ui/badge';
 import StatusForm from '@/components/status-form';
 import type { CustomStatus } from '@/lib/types';
+import { useAppStore, type AppState } from '@/store/app-store';
 
 export default function StatusSection() {
     const { toast } = useToast();
@@ -75,10 +76,13 @@ export default function StatusSection() {
         loadStatuses();
     }, [loadStatuses]);
 
+    const reloadData = useAppStore((state: AppState) => state.reloadData);
+
     const handleSaveStatus = () => {
         setIsStatusDialogOpen(false);
         setEditingStatus(null);
         loadStatuses();
+        reloadData('statuses');
     };
 
     const handleEditStatus = (status: CustomStatus) => {

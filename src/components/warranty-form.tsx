@@ -76,7 +76,7 @@ const defaultValues: WarrantyFormValues = {
     notaFiscalSaida: '',
     notaFiscalRetorno: '',
     observacao: '',
-    status: 'Aguardando Envio',
+    status: '',
     loteId: null,
     photos: [],
     marca: '',
@@ -514,7 +514,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                                         <Select onValueChange={field.onChange} value={field.value}>
                                             <FormControl>
                                                 <SelectTrigger>
-                                                    <SelectValue placeholder="Selecione um status" />
+                                                    <SelectValue placeholder="SELECIONE O STATUS" />
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>

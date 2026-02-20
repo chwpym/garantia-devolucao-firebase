@@ -33,7 +33,7 @@ const formSchema = z.object({
   fornecedor: z.string({ required_error: 'Selecione um fornecedor.' }),
   notaFiscalSaida: z.string().optional(),
   notasFiscaisRetorno: z.string().optional(),
-  status: z.string({ required_error: 'Selecione um status.' }),
+  status: z.string({ required_error: 'Seleciona um Status.' }),
   attachments: z.array(attachmentSchema).optional(),
 });
 
@@ -65,7 +65,7 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
 
   const form = useForm<LoteFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: editingLote || { nome: '', fornecedor: '', notaFiscalSaida: '', notasFiscaisRetorno: '', status: 'Aberto', attachments: [] },
+    defaultValues: editingLote || { nome: '', fornecedor: '', notaFiscalSaida: '', notasFiscaisRetorno: '', status: '', attachments: [] },
   });
 
   const { watch, setValue } = form;
@@ -77,7 +77,7 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
       notaFiscalSaida: editingLote.notaFiscalSaida || '',
       notasFiscaisRetorno: editingLote.notasFiscaisRetorno || '',
       attachments: editingLote.attachments || [],
-    } : { nome: '', fornecedor: '', notaFiscalSaida: '', notasFiscaisRetorno: '', status: 'Aberto', attachments: [] });
+    } : { nome: '', fornecedor: '', notaFiscalSaida: '', notasFiscaisRetorno: '', status: '', attachments: [] });
   }, [editingLote, form]);
 
   const { isSubmitting } = form.formState;
@@ -191,10 +191,10 @@ export default function LoteForm({ onSave, editingLote, suppliers }: LoteFormPro
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Status do Lote</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value || undefined}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione um status para o lote" />
+                        <SelectValue placeholder="SELECIONE O STATUS" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>

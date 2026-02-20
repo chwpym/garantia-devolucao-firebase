@@ -5,7 +5,7 @@ import { create } from 'zustand';
 import type { Warranty, Person, Supplier, Product, WarrantyStatus, CustomStatus, RegisterMode } from '@/lib/types';
 import * as db from '@/lib/db';
 
-interface AppState {
+export interface AppState {
   // Data stores
   products: Product[];
   persons: Person[];
