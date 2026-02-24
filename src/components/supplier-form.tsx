@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { useAppStore } from '@/store/app-store';
 import { CardContent, CardFooter } from '@/components/ui/card';
 import { DialogClose, DialogFooter } from './ui/dialog';
 
@@ -60,6 +61,7 @@ const formatCNPJ = (value: string) => {
 
 export default function SupplierForm({ onSave, editingSupplier, onClear, isModal = false }: SupplierFormProps) {
   const { toast } = useToast();
+  const reloadData = useAppStore(state => state.reloadData);
   const [isFetchingCnpj, setIsFetchingCnpj] = useState(false);
   const [isFetchingCep, setIsFetchingCep] = useState(false);
 
@@ -175,6 +177,7 @@ export default function SupplierForm({ onSave, editingSupplier, onClear, isModal
         onSave(newSupplier);
       }
       form.reset(defaultFormValues);
+      await reloadData('suppliers');
       window.dispatchEvent(new CustomEvent('datachanged'));
     } catch (error) {
       console.error('Failed to save supplier:', error);

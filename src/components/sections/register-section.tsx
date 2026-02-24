@@ -2,20 +2,121 @@
 
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import type { Warranty } from '@/lib/types';
+import type { Warranty, RegisterMode } from '@/lib/types';
 import * as db from '@/lib/db';
-import type { RegisterMode } from '@/lib/types';
 
 import WarrantyForm from '@/components/warranty-form';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { SearchX, LayoutList, Clock, CalendarIcon } from 'lucide-react';
+import { isSameDay, parseISO, format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { StatusBadge } from '@/components/ui/status-badge';
+import { DatePicker } from '@/components/ui/date-picker';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface RegisterSectionProps {
   editingId: number | null;
   mode: RegisterMode;
   onSave: (shouldNavigate: boolean) => void;
   onClear: () => void;
+}
+
+function RecentWarrantiesList() {
+  const [recentWarranties, setRecentWarranties] = useState<Warranty[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+
+  const fetchRecent = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const all = await db.getAllWarranties();
+      const filtered = selectedDate 
+        ? all.filter(w => w.dataRegistro && isSameDay(parseISO(w.dataRegistro), selectedDate))
+        : all;
+      
+      const sorted = filtered.sort((a, b) => b.id! - a.id!);
+      setRecentWarranties(sorted);
+    } catch (error) {
+      console.error('Failed to fetch recent warranties:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [selectedDate]);
+
+  useEffect(() => {
+    fetchRecent();
+    window.addEventListener('datachanged', fetchRecent);
+    return () => window.removeEventListener('datachanged', fetchRecent);
+  }, [fetchRecent]);
+
+  if (isLoading) return <Skeleton className="h-[400px] w-full" />;
+
+  return (
+    <Card className="h-full border-muted/40 shadow-sm flex flex-col">
+      <CardHeader className="py-4 px-4 border-b bg-muted/5 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-primary" />
+            <CardTitle className="text-sm font-bold uppercase tracking-wider">Lançamentos</CardTitle>
+          </div>
+        </div>
+        
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[10px] uppercase font-semibold text-muted-foreground flex items-center gap-1.5">
+            <CalendarIcon className="h-3 w-3" />
+            Filtro por data
+          </label>
+          <DatePicker 
+            date={selectedDate} 
+            setDate={setSelectedDate} 
+          />
+        </div>
+      </CardHeader>
+      <CardContent className="flex-1 overflow-auto p-0 scrollbar-thin scrollbar-thumb-muted">
+        <Table>
+          <TableHeader className="bg-muted/10 sticky top-0 z-10">
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="text-[10px] h-8 px-2">ID/Status</TableHead>
+              <TableHead className="text-[10px] h-8 px-2 text-right">Ação</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {recentWarranties.length > 0 ? (
+              recentWarranties.map((w) => (
+                <TableRow key={w.id} className="group transition-colors h-12">
+                  <TableCell className="px-2 py-1">
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-mono text-muted-foreground">#{w.id}</span>
+                        <span className="text-xs font-semibold truncate max-w-[120px]" title={w.cliente}>{w.cliente}</span>
+                      </div>
+                      <StatusBadge type="warranty" status={w.status} className="h-4 text-[10px] px-1.5 py-0" />
+                    </div>
+                  </TableCell>
+                  <TableCell className="px-2 py-0 text-right">
+             
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={2} className="py-8 text-center text-muted-foreground italic text-xs">
+                  Nenhum registro hoje.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
 }
 
 export default function RegisterSection({ editingId, mode, onSave, onClear }: RegisterSectionProps) {
@@ -113,14 +214,19 @@ export default function RegisterSection({ editingId, mode, onSave, onClear }: Re
   }
 
   return (
-    <div className="max-w-5xl mx-auto">
-      <WarrantyForm
-        key={editingId ? `${editingId}-${mode}` : 'new'}
-        selectedWarranty={warrantyToLoad}
-        onSave={handleSave}
-        onClear={onClear}
-        isClone={mode === 'clone'}
-      />
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 max-w-full lg:h-[calc(100vh-140px)] overflow-hidden">
+      <div className="lg:col-span-3 h-full overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-muted">
+        <WarrantyForm
+          key={editingId ? `${editingId}-${mode}` : 'new'}
+          selectedWarranty={warrantyToLoad}
+          onSave={handleSave}
+          onClear={onClear}
+          isClone={mode === 'clone'}
+        />
+      </div>
+      <div className="lg:col-span-1 h-full overflow-hidden">
+        <RecentWarrantiesList />
+      </div>
     </div>
   );
 }

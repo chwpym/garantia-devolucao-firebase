@@ -247,6 +247,9 @@ const normalizeData = <T>(data: T): T => {
     "password",
     "username",
     "cor",
+    "status",
+    "statusgarantia",
+    "acaorequisicao",
   ];
 
   const isBlacklisted = (key: string) => {
@@ -272,15 +275,42 @@ const normalizeData = <T>(data: T): T => {
   return normalized;
 };
 
+/**
+ * Normalizes status strings to "Sentence Case" (e.g., "ABERTO" -> "Aberto").
+ */
+const normalizeStatusOnRead = (status: string | undefined): string => {
+  if (!status) return "";
+  const s = status.trim().toLowerCase();
+  
+  // Mapeamento explícito para os status conhecidos
+  const mapping: Record<string, string> = {
+    "aberto": "Aberto",
+    "recebido": "Recebido",
+    "enviado": "Enviado",
+    "aguardando envio": "Aguardando Envio",
+    "finalizada": "Finalizada",
+    "cancelada": "Cancelada",
+    "aguardando peças": "Aguardando Peças",
+    "aprovada - peça nova": "Aprovada - Peça Nova",
+    "aprovada - crédito nf": "Aprovada - Crédito NF",
+    "aprovada - crédito boleto": "Aprovada - Crédito Boleto",
+    "recusada": "Recusada",
+    "alterada": "Alterada",
+    "excluída": "Excluída"
+  };
+
+  return mapping[s] || (status.charAt(0).toUpperCase() + status.slice(1).toLowerCase());
+};
+
 // --- User Profile Functions ---
 
 export const getAllUserProfiles = async (): Promise<UserProfile[]> => {
   return new Promise(async (resolve, reject) => {
     try {
       const store = await getStore(USERS_STORE_NAME, "readonly");
-      const request = store.getAll();
-      request.onsuccess = () => resolve(request.result as UserProfile[]);
-      request.onerror = () => reject(request.error);
+      const getReq = store.getAll();
+      getReq.onsuccess = (event) => resolve((event.target as IDBRequest).result as UserProfile[]);
+      getReq.onerror = () => reject(getReq.error);
     } catch (err) {
       reject(err);
     }
@@ -294,10 +324,10 @@ export const getUserByUsername = async (
     try {
       const store = await getStore(USERS_STORE_NAME, "readonly");
       const index = store.index("username");
-      const request = index.get(username.toLowerCase());
-      request.onsuccess = () =>
-        resolve((request.result as UserProfile) || null);
-      request.onerror = () => reject(request.error);
+      const getReq = index.get(username.toLowerCase());
+      getReq.onsuccess = (event) =>
+        resolve(((event.target as IDBRequest).result as UserProfile) || null);
+      getReq.onerror = () => reject(getReq.error);
     } catch (err) {
       reject(err);
     }
@@ -321,7 +351,7 @@ export const upsertUserProfile = (profile: UserProfile): Promise<void> => {
 
       const request = store.put(profile);
       request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
+      request.onerror = (event) => reject((event.target as IDBRequest).error);
     } catch (err) {
       reject(err);
     }
@@ -416,10 +446,10 @@ export const getUserProfile = (
   return new Promise(async (resolve, reject) => {
     try {
       const store = await getStore(USERS_STORE_NAME, "readonly");
-      const request = store.get(uid);
-      request.onsuccess = () =>
-        resolve(request.result as UserProfile | undefined);
-      request.onerror = () => reject(request.error);
+      const getReq = store.get(uid);
+      getReq.onsuccess = (event) =>
+        resolve((event.target as IDBRequest).result as UserProfile | undefined);
+      getReq.onerror = () => reject(getReq.error);
     } catch (err) {
       reject(err);
     }
@@ -436,8 +466,8 @@ export const addWarranty = (
       const normalizedData = normalizeData(warranty);
       const store = await getStore(GARANTIAS_STORE_NAME, "readwrite");
       const request = store.add(normalizedData);
-      request.onsuccess = () => resolve(request.result as number);
-      request.onerror = () => reject(request.error);
+      request.onsuccess = (event) => resolve((event.target as IDBRequest).result as number);
+      request.onerror = (event) => reject((event.target as IDBRequest).error);
     } catch (err) {
       reject(err);
     }
@@ -448,9 +478,17 @@ export const getAllWarranties = (): Promise<Warranty[]> => {
   return new Promise(async (resolve, reject) => {
     try {
       const store = await getStore(GARANTIAS_STORE_NAME, "readonly");
-      const request = store.getAll();
-      request.onsuccess = () => resolve(request.result as Warranty[]);
-      request.onerror = () => reject(request.error);
+      const getRequest = store.getAll();
+      getRequest.onsuccess = (event) => {
+        const warranties = (event.target as IDBRequest).result as Warranty[];
+        resolve(
+          warranties.map((w) => ({
+            ...w,
+            status: normalizeStatusOnRead(w.status),
+          })),
+        );
+      };
+      getRequest.onerror = () => reject(getRequest.error);
     } catch (err) {
       reject(err);
     }
@@ -465,9 +503,12 @@ export const getWarrantyById = (id: number): Promise<Warranty | undefined> => {
     }
     try {
       const store = await getStore(GARANTIAS_STORE_NAME, "readonly");
-      const request = store.get(id);
-      request.onsuccess = () => resolve(request.result as Warranty | undefined);
-      request.onerror = () => reject(request.error);
+      const getReq = store.get(id);
+      getReq.onsuccess = (event) => {
+        const w = (event.target as IDBRequest).result as Warranty | undefined;
+        resolve(w ? { ...w, status: normalizeStatusOnRead(w.status) } : undefined);
+      };
+      getReq.onerror = () => reject(getReq.error);
     } catch (err) {
       reject(err);
     }
@@ -495,8 +536,8 @@ export const updateWarranty = (warranty: Warranty): Promise<number> => {
       const normalizedData = normalizeData(warranty);
       const store = await getStore(GARANTIAS_STORE_NAME, "readwrite");
       const request = store.put(normalizedData);
-      request.onsuccess = () => resolve(request.result as number);
-      request.onerror = () => reject(request.error);
+      request.onsuccess = (event) => resolve((event.target as IDBRequest).result as number);
+      request.onerror = (event) => reject((event.target as IDBRequest).error);
     } catch (err) {
       reject(err);
     }
@@ -509,7 +550,7 @@ export const deleteWarranty = (id: number): Promise<void> => {
       const store = await getStore(GARANTIAS_STORE_NAME, "readwrite");
       const request = store.delete(id);
       request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
+      request.onerror = (event) => reject((event.target as IDBRequest).error);
     } catch (err) {
       reject(err);
     }
@@ -527,8 +568,8 @@ export const addPerson = (person: Omit<Person, "id">): Promise<number> => {
       const normalizedData = normalizeData(person);
       const store = await getStore(PERSONS_STORE_NAME, "readwrite");
       const request = store.add(normalizedData);
-      request.onsuccess = () => resolve(request.result as number);
-      request.onerror = () => reject(request.error);
+      request.onsuccess = (event) => resolve((event.target as IDBRequest).result as number);
+      request.onerror = (event) => reject((event.target as IDBRequest).error);
     } catch (err) {
       reject(err);
     }
@@ -539,9 +580,9 @@ export const getAllPersons = (): Promise<Person[]> => {
   return new Promise(async (resolve, reject) => {
     try {
       const store = await getStore(PERSONS_STORE_NAME, "readonly");
-      const request = store.getAll();
-      request.onsuccess = () => resolve(request.result as Person[]);
-      request.onerror = () => reject(request.error);
+      const getReq = store.getAll();
+      getReq.onsuccess = (event) => resolve((event.target as IDBRequest).result as Person[]);
+      getReq.onerror = () => reject(getReq.error);
     } catch (err) {
       reject(err);
     }
@@ -554,8 +595,8 @@ export const updatePerson = (person: Person): Promise<number> => {
       const normalizedData = normalizeData(person);
       const store = await getStore(PERSONS_STORE_NAME, "readwrite");
       const request = store.put(normalizedData);
-      request.onsuccess = () => resolve(request.result as number);
-      request.onerror = () => reject(request.error);
+      request.onsuccess = (event) => resolve((event.target as IDBRequest).result as number);
+      request.onerror = (event) => reject((event.target as IDBRequest).error);
     } catch (err) {
       reject(err);
     }
@@ -568,7 +609,7 @@ export const deletePerson = (id: number): Promise<void> => {
       const store = await getStore(PERSONS_STORE_NAME, "readwrite");
       const request = store.delete(id);
       request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
+      request.onerror = (event) => reject((event.target as IDBRequest).error);
     } catch (err) {
       reject(err);
     }
@@ -587,8 +628,8 @@ export const addSupplier = (
       const normalizedData = normalizeData(supplier);
       const store = await getStore(SUPPLIERS_STORE_NAME, "readwrite");
       const request = store.add(normalizedData);
-      request.onsuccess = () => resolve(request.result as number);
-      request.onerror = () => reject(request.error);
+      request.onsuccess = (event) => resolve((event.target as IDBRequest).result as number);
+      request.onerror = (event) => reject((event.target as IDBRequest).error);
     } catch (err) {
       reject(err);
     }
@@ -599,9 +640,9 @@ export const getAllSuppliers = (): Promise<Supplier[]> => {
   return new Promise(async (resolve, reject) => {
     try {
       const store = await getStore(SUPPLIERS_STORE_NAME, "readonly");
-      const request = store.getAll();
-      request.onsuccess = () => resolve(request.result as Supplier[]);
-      request.onerror = () => reject(request.error);
+      const getReq = store.getAll();
+      getReq.onsuccess = (event) => resolve((event.target as IDBRequest).result as Supplier[]);
+      getReq.onerror = () => reject(getReq.error);
     } catch (err) {
       reject(err);
     }
@@ -614,8 +655,8 @@ export const updateSupplier = (supplier: Supplier): Promise<number> => {
       const normalizedData = normalizeData(supplier);
       const store = await getStore(SUPPLIERS_STORE_NAME, "readwrite");
       const request = store.put(normalizedData);
-      request.onsuccess = () => resolve(request.result as number);
-      request.onerror = () => reject(request.error);
+      request.onsuccess = (event) => resolve((event.target as IDBRequest).result as number);
+      request.onerror = (event) => reject((event.target as IDBRequest).error);
     } catch (err) {
       reject(err);
     }
@@ -628,7 +669,7 @@ export const deleteSupplier = (id: number): Promise<void> => {
       const store = await getStore(SUPPLIERS_STORE_NAME, "readwrite");
       const request = store.delete(id);
       request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
+      request.onerror = (event) => reject((event.target as IDBRequest).error);
     } catch (err) {
       reject(err);
     }
@@ -645,8 +686,8 @@ export const addLote = (lote: Omit<Lote, "id">): Promise<number> => {
       const normalizedData = normalizeData(lote);
       const store = await getStore(LOTES_STORE_NAME, "readwrite");
       const request = store.add(normalizedData);
-      request.onsuccess = () => resolve(request.result as number);
-      request.onerror = () => reject(request.error);
+      request.onsuccess = (event) => resolve((event.target as IDBRequest).result as number);
+      request.onerror = (event) => reject((event.target as IDBRequest).error);
     } catch (err) {
       reject(err);
     }
@@ -657,9 +698,14 @@ export const getAllLotes = (): Promise<Lote[]> => {
   return new Promise(async (resolve, reject) => {
     try {
       const store = await getStore(LOTES_STORE_NAME, "readonly");
-      const request = store.getAll();
-      request.onsuccess = () => resolve(request.result as Lote[]);
-      request.onerror = () => reject(request.error);
+      const getRequest = store.getAll();
+      getRequest.onsuccess = (event) => {
+        const lotes = (event.target as IDBRequest).result as Lote[];
+        resolve(
+          lotes.map((l) => ({ ...l, status: normalizeStatusOnRead(l.status) })),
+        );
+      };
+      getRequest.onerror = () => reject(getRequest.error);
     } catch (err) {
       reject(err);
     }
@@ -672,8 +718,8 @@ export const updateLote = (lote: Lote): Promise<number> => {
       const normalizedData = normalizeData(lote);
       const store = await getStore(LOTES_STORE_NAME, "readwrite");
       const request = store.put(normalizedData);
-      request.onsuccess = () => resolve(request.result as number);
-      request.onerror = () => reject(request.error);
+      request.onsuccess = (event) => resolve((event.target as IDBRequest).result as number);
+      request.onerror = (event) => reject((event.target as IDBRequest).error);
     } catch (err) {
       reject(err);
     }
@@ -739,8 +785,8 @@ export const addLoteItem = (
       const normalizedData = normalizeData(loteItem);
       const store = await getStore(LOTE_ITEMS_STORE_NAME, "readwrite");
       const request = store.add(normalizedData);
-      request.onsuccess = () => resolve(request.result as number);
-      request.onerror = () => reject(request.error);
+      request.onsuccess = (event) => resolve((event.target as IDBRequest).result as number);
+      request.onerror = (event) => reject((event.target as IDBRequest).error);
     } catch (err) {
       reject(err);
     }
@@ -752,9 +798,9 @@ export const getLoteItemsByLoteId = (loteId: number): Promise<LoteItem[]> => {
     try {
       const store = await getStore(LOTE_ITEMS_STORE_NAME, "readonly");
       const index = store.index("loteId");
-      const request = index.getAll(loteId);
-      request.onsuccess = () => resolve(request.result as LoteItem[]);
-      request.onerror = () => reject(request.error);
+      const getReq = index.getAll(loteId);
+      getReq.onsuccess = (event) => resolve((event.target as IDBRequest).result as LoteItem[]);
+      getReq.onerror = () => reject(getReq.error);
     } catch (err) {
       reject(err);
     }
@@ -782,22 +828,25 @@ export const clearLoteItems = (): Promise<void> =>
 export const getCompanyData = (): Promise<CompanyData | null> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(COMPANY_DATA_STORE_NAME, 'readonly');
+      const store = await getStore(COMPANY_DATA_STORE_NAME, "readonly");
       // We use a fixed ID of 1 for the single company record
-      const request = store.get(1);
-      request.onsuccess = () => resolve(request.result as CompanyData || null);
-      request.onerror = () => reject(request.error);
+      const getReq = store.get(1);
+      getReq.onsuccess = (event) =>
+        resolve(((event.target as IDBRequest).result as CompanyData) || null);
+      getReq.onerror = () => reject(getReq.error);
     } catch (err) {
       reject(err);
     }
   });
 };
 
-export const updateCompanyData = (companyData: Omit<CompanyData, 'id'>): Promise<number> => {
+export const updateCompanyData = (
+  companyData: Omit<CompanyData, "id">,
+): Promise<number> => {
   return new Promise(async (resolve, reject) => {
     try {
       const normalizedData = normalizeData(companyData);
-      const store = await getStore(COMPANY_DATA_STORE_NAME, 'readwrite');
+      const store = await getStore(COMPANY_DATA_STORE_NAME, "readwrite");
       // We use a fixed ID of 1 to always update the same record
       const request = store.put({ ...normalizedData, id: 1 });
       request.onsuccess = () => resolve(request.result as number);
@@ -813,9 +862,15 @@ export const clearCompanyData = (): Promise<void> =>
 
 // --- Devolução Functions ---
 
-export const addDevolucao = async (devolucao: Omit<Devolucao, 'id'>, itens: Omit<ItemDevolucao, 'id' | 'devolucaoId'>[]): Promise<number> => {
+export const addDevolucao = async (
+  devolucao: Omit<Devolucao, "id">,
+  itens: Omit<ItemDevolucao, "id" | "devolucaoId">[],
+): Promise<number> => {
   const db = await getDB();
-  const transaction = db.transaction([DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME], 'readwrite');
+  const transaction = db.transaction(
+    [DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME],
+    "readwrite",
+  );
   const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
   const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
 
@@ -836,7 +891,7 @@ export const addDevolucao = async (devolucao: Omit<Devolucao, 'id'>, itens: Omit
         return;
       }
 
-      normalizedItens.forEach(item => {
+      normalizedItens.forEach((item) => {
         const itemRequest = itensStore.add({ ...item, devolucaoId });
         itemRequest.onerror = () => reject(itemRequest.error);
         itemRequest.onsuccess = () => {
@@ -852,9 +907,15 @@ export const addDevolucao = async (devolucao: Omit<Devolucao, 'id'>, itens: Omit
   });
 };
 
-export const updateDevolucao = async (devolucao: Devolucao, itens: (Omit<ItemDevolucao, 'devolucaoId'>)[]): Promise<void> => {
+export const updateDevolucao = async (
+  devolucao: Devolucao,
+  itens: Omit<ItemDevolucao, "devolucaoId">[],
+): Promise<void> => {
   const db = await getDB();
-  const transaction = db.transaction([DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME], 'readwrite');
+  const transaction = db.transaction(
+    [DEVOLUCOES_STORE_NAME, ITENS_DEVOLUCAO_STORE_NAME],
+    "readwrite",
+  );
   const devolucoesStore = transaction.objectStore(DEVOLUCOES_STORE_NAME);
   const itensStore = transaction.objectStore(ITENS_DEVOLUCAO_STORE_NAME);
 
@@ -923,8 +984,8 @@ export const getAllDevolucoes = async (): Promise<
 
     devolucoesRequest.onerror = () => reject(devolucoesRequest.error);
 
-    devolucoesRequest.onsuccess = () => {
-      const devolucoes = devolucoesRequest.result as Devolucao[];
+    devolucoesRequest.onsuccess = (event) => {
+      const devolucoes = (event.target as IDBRequest).result as Devolucao[];
       const result: (Devolucao & { itens: ItemDevolucao[] })[] = [];
       let processedCount = 0;
 
@@ -936,8 +997,13 @@ export const getAllDevolucoes = async (): Promise<
       devolucoes.forEach((devolucao) => {
         const itensRequest = itensIndex.getAll(devolucao.id);
         itensRequest.onerror = () => reject(itensRequest.error);
-        itensRequest.onsuccess = () => {
-          result.push({ ...devolucao, itens: itensRequest.result });
+        itensRequest.onsuccess = (event) => {
+          result.push({
+            ...devolucao,
+            status: normalizeStatusOnRead(devolucao.status),
+            acaoRequisicao: normalizeStatusOnRead(devolucao.acaoRequisicao),
+            itens: (event.target as IDBRequest).result as ItemDevolucao[],
+          });
           processedCount++;
           if (processedCount === devolucoes.length) {
             resolve(result);
@@ -963,8 +1029,8 @@ export const getDevolucaoById = async (
   return new Promise((resolve, reject) => {
     const devRequest = devolucoesStore.get(id);
     devRequest.onerror = () => reject(devRequest.error);
-    devRequest.onsuccess = () => {
-      const devolucao = devRequest.result as Devolucao;
+    devRequest.onsuccess = (event) => {
+      const devolucao = (event.target as IDBRequest).result as Devolucao;
       if (!devolucao) {
         resolve(null);
         return;
@@ -972,8 +1038,13 @@ export const getDevolucaoById = async (
 
       const itensRequest = itensIndex.getAll(id);
       itensRequest.onerror = () => reject(itensRequest.error);
-      itensRequest.onsuccess = () => {
-        resolve({ ...devolucao, itens: itensRequest.result });
+      itensRequest.onsuccess = (event) => {
+        resolve({
+          ...devolucao,
+          status: normalizeStatusOnRead(devolucao.status),
+          acaoRequisicao: normalizeStatusOnRead(devolucao.acaoRequisicao),
+          itens: (event.target as IDBRequest).result as ItemDevolucao[],
+        });
       };
     };
   });
@@ -1050,10 +1121,10 @@ export const addProduct = (product: Omit<Product, "id">): Promise<number> => {
   return new Promise(async (resolve, reject) => {
     try {
       const normalizedData = normalizeData(product);
-      const store = await getStore(PRODUCTS_STORE_NAME, 'readwrite');
+      const store = await getStore(PRODUCTS_STORE_NAME, "readwrite");
       const request = store.add(normalizedData);
-      request.onsuccess = () => resolve(request.result as number);
-      request.onerror = () => reject(request.error);
+      request.onsuccess = (event) => resolve((event.target as IDBRequest).result as number);
+      request.onerror = (event) => reject((event.target as IDBRequest).error);
     } catch (err) {
       reject(err);
     }
@@ -1064,9 +1135,9 @@ export const getAllProducts = (): Promise<Product[]> => {
   return new Promise(async (resolve, reject) => {
     try {
       const store = await getStore(PRODUCTS_STORE_NAME, "readonly");
-      const request = store.getAll();
-      request.onsuccess = () => resolve(request.result as Product[]);
-      request.onerror = () => reject(request.error);
+      const getReq = store.getAll();
+      getReq.onsuccess = (event) => resolve((event.target as IDBRequest).result as Product[]);
+      getReq.onerror = () => reject(getReq.error);
     } catch (err) {
       reject(err);
     }
@@ -1083,9 +1154,9 @@ export const getProductByCode = (
     try {
       const store = await getStore(PRODUCTS_STORE_NAME, "readonly");
       const index = store.index("codigo");
-      const request = index.get(codigo);
-      request.onsuccess = () => resolve(request.result as Product | undefined);
-      request.onerror = () => reject(request.error);
+      const getReq = index.get(codigo);
+      getReq.onsuccess = (event) => resolve((event.target as IDBRequest).result as Product | undefined);
+      getReq.onerror = () => reject(getReq.error);
     } catch (err) {
       reject(err);
     }
@@ -1096,10 +1167,10 @@ export const updateProduct = (product: Product): Promise<number> => {
   return new Promise(async (resolve, reject) => {
     try {
       const normalizedData = normalizeData(product);
-      const store = await getStore(PRODUCTS_STORE_NAME, 'readwrite');
+      const store = await getStore(PRODUCTS_STORE_NAME, "readwrite");
       const request = store.put(normalizedData);
-      request.onsuccess = () => resolve(request.result as number);
-      request.onerror = () => reject(request.error);
+      request.onsuccess = (event) => resolve((event.target as IDBRequest).result as number);
+      request.onerror = (event) => reject((event.target as IDBRequest).error);
     } catch (err) {
       reject(err);
     }
@@ -1112,7 +1183,7 @@ export const deleteProduct = (id: number): Promise<void> => {
       const store = await getStore(PRODUCTS_STORE_NAME, "readwrite");
       const request = store.delete(id);
       request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
+      request.onerror = (event) => reject((event.target as IDBRequest).error);
     } catch (err) {
       reject(err);
     }
@@ -1131,8 +1202,8 @@ export const addSimulation = (
     try {
       const store = await getStore(SIMULATIONS_STORE_NAME, "readwrite");
       const request = store.add(simulation);
-      request.onsuccess = () => resolve(request.result as number);
-      request.onerror = () => reject(request.error);
+      request.onsuccess = (event) => resolve((event.target as IDBRequest).result as number);
+      request.onerror = (event) => reject((event.target as IDBRequest).error);
     } catch (err) {
       reject(err);
     }
@@ -1146,8 +1217,8 @@ export const updateSimulation = (
     try {
       const store = await getStore(SIMULATIONS_STORE_NAME, "readwrite");
       const request = store.put(simulation);
-      request.onsuccess = () => resolve(request.result as number);
-      request.onerror = () => reject(request.error);
+      request.onsuccess = (event) => resolve((event.target as IDBRequest).result as number);
+      request.onerror = (event) => reject((event.target as IDBRequest).error);
     } catch (err) {
       reject(err);
     }
@@ -1158,9 +1229,9 @@ export const getAllSimulations = (): Promise<PurchaseSimulation[]> => {
   return new Promise(async (resolve, reject) => {
     try {
       const store = await getStore(SIMULATIONS_STORE_NAME, "readonly");
-      const request = store.getAll();
-      request.onsuccess = () => resolve(request.result as PurchaseSimulation[]);
-      request.onerror = () => reject(request.error);
+      const getReq = store.getAll();
+      getReq.onsuccess = (event) => resolve((event.target as IDBRequest).result as PurchaseSimulation[]);
+      getReq.onerror = () => reject(getReq.error);
     } catch (err) {
       reject(err);
     }
@@ -1173,7 +1244,7 @@ export const deleteSimulation = (id: number): Promise<void> => {
       const store = await getStore(SIMULATIONS_STORE_NAME, "readwrite");
       const request = store.delete(id);
       request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
+      request.onerror = (event) => reject((event.target as IDBRequest).error);
     } catch (err) {
       reject(err);
     }
@@ -1195,9 +1266,9 @@ export const getAllStatuses = async (): Promise<CustomStatus[]> => {
   return new Promise(async (resolve, reject) => {
     try {
       const store = await getStore(STATUSES_STORE_NAME, "readonly");
-      const request = store.getAll();
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
+      const getReq = store.getAll();
+      getReq.onsuccess = (event) => resolve((event.target as IDBRequest).result);
+      getReq.onerror = () => reject(getReq.error);
     } catch (err) {
       reject(err);
     }

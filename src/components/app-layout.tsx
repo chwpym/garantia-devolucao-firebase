@@ -164,8 +164,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
             </div>
           </div>
         </header>
-        <main className="flex-1 p-4 md:p-8 overflow-auto">
-          {children}
+        <main className="flex-1 p-4 md:p-8 overflow-hidden min-h-0">
+          <div className="h-full w-full overflow-auto">
+            {children}
+          </div>
         </main>
       </div>
     </div>

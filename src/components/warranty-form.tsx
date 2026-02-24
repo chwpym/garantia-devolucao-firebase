@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -241,24 +241,49 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
         : [];
 
 
-    const clients = persons.filter(p => p.tipo === 'Cliente' || p.tipo === 'Ambos');
-    const mechanics = persons.filter(p => p.tipo === 'Mecânico' || p.tipo === 'Ambos');
+    const clientsList = useMemo(() => {
+        const filtered = persons.filter(p => p.tipo === 'Cliente' || p.tipo === 'Ambos');
+        const nameCounts = new Map<string, number>();
+        filtered.forEach(p => nameCounts.set(p.nome, (nameCounts.get(p.nome) || 0) + 1));
 
-    const supplierOptions = suppliers.map(s => ({
+        return filtered.map(p => {
+            const hasCollision = (nameCounts.get(p.nome) || 0) > 1;
+            const docFragment = p.cpfCnpj ? ` (${p.cpfCnpj.slice(-4)})` : '';
+            const displayName = hasCollision ? `${p.nome}${docFragment}` : p.nome;
+            return { ...p, displayName };
+        });
+    }, [persons]);
+
+    const mechanicsList = useMemo(() => {
+        const filtered = persons.filter(p => p.tipo === 'Mecânico' || p.tipo === 'Ambos');
+        const nameCounts = new Map<string, number>();
+        filtered.forEach(p => nameCounts.set(p.nome, (nameCounts.get(p.nome) || 0) + 1));
+
+        return filtered.map(p => {
+            const hasCollision = (nameCounts.get(p.nome) || 0) > 1;
+            const docFragment = p.cpfCnpj ? ` (${p.cpfCnpj.slice(-4)})` : '';
+            const displayName = hasCollision ? `${p.nome}${docFragment}` : p.nome;
+            return { ...p, displayName };
+        });
+    }, [persons]);
+
+    const supplierOptions = useMemo(() => suppliers.map(s => ({
         value: s.nomeFantasia,
         label: s.nomeFantasia,
         keywords: [s.razaoSocial || '', s.cnpj || '']
-    }));
-    const clientOptions = clients.map(c => ({
-        value: c.nome,
-        label: c.nome,
-        keywords: [c.nomeFantasia || '', c.cpfCnpj || '']
-    }));
-    const mechanicOptions = mechanics.map(m => ({
-        value: m.nome,
-        label: m.nome,
-        keywords: [m.nomeFantasia || '', m.cpfCnpj || '']
-    }));
+    })), [suppliers]);
+
+    const clientOptions = useMemo(() => clientsList.map((c: any) => ({
+        value: c.displayName,
+        label: c.displayName,
+        keywords: [c.nome || '', c.cpfCnpj || '', c.nomeFantasia || '']
+    })), [clientsList]);
+
+    const mechanicOptions = useMemo(() => mechanicsList.map((m: any) => ({
+        value: m.displayName,
+        label: m.displayName,
+        keywords: [m.nome || '', m.cpfCnpj || '', m.nomeFantasia || '']
+    })), [mechanicsList]);
 
     // Filter dynamic statuses for Garantia
     const dynamicStatuses = statuses

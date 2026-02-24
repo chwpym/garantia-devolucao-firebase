@@ -8,6 +8,7 @@ import { Loader2 } from 'lucide-react';
 import type { Product } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
+import { useAppStore } from '@/store/app-store';
 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -40,6 +41,7 @@ const defaultFormValues: ProductFormValues = {
 
 export default function ProductForm({ onSave, editingProduct, onClear }: ProductFormProps) {
   const { toast } = useToast();
+  const reloadData = useAppStore(state => state.reloadData);
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: editingProduct || defaultFormValues,
@@ -84,6 +86,7 @@ export default function ProductForm({ onSave, editingProduct, onClear }: Product
         onSave(newProduct);
       }
       form.reset(defaultFormValues);
+      await reloadData('products');
       window.dispatchEvent(new CustomEvent('datachanged'));
     } catch (error) {
       console.error('Failed to save product:', error);

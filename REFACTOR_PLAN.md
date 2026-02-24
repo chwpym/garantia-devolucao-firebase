@@ -1,9 +1,9 @@
 # 🚀 Plano Completo de Refatoração - Synergia OS
 
-> **Versão:** 3.2 - EXPANSÃO  
-> **Data Atualização:** 16/02/2026  
-> **Total de Fases:** 25
-> **Status:** 🟠 Em Progresso (Fase 12 - Username Auth)
+> **Versão:** 3.3 - NORMALIZAÇÃO  
+> **Data Atualização:** 24/02/2026  
+> **Total de Fases:** 27
+> **Status:** ✅ Fase 26 Concluída (Normalização de Status)
 
 ---
 
@@ -42,11 +42,11 @@ src/
 
 | Prioridade | Fases  | Tempo Total     |
 | ---------- | ------ | --------------- |
-| 🔴 Crítica | 3      | 5-7 horas       |
+| 🔴 Crítica | 4      | 6-9 horas       |
 | 🟠 Alta    | 6      | 18-24 horas     |
-| 🟡 Média   | 11     | 28-36 horas     |
+| 🟡 Média   | 12     | 30-39 horas     |
 | 🟢 Baixa   | 4      | 9-11 horas      |
-| **TOTAL**  | **24** | **60-78 horas** |
+| **TOTAL**  | **26** | **63-83 horas** |
 
 ---
 
@@ -213,6 +213,26 @@ src/
 
 ---
 
+### Fase 25: Normalização de Dados (UPPER CASE) ✅
+
+**Tempo:** 2-3 horas  
+**Objetivo:** Garantir que nomes de clientes, mecânicos e produtos sejam salvos em UPPER CASE para facilitar buscas.
+**Status:** Concluído (Implementado `normalizeData` e aplicado nas funções de escrita).
+
+### Fase 26: Normalização de Status e Case-Sensitivity ✅
+
+**Tempo:** 1-2 horas  
+**Objetivo:** Resolver a inconsistência entre status em UPPER CASE (ex: "ABERTO") e status padronizados (ex: "Aberto").
+**Status:** Concluído (Normalização em tempo de leitura + Blacklist de escrita).
+
+### Fase 27: Geração de IDs Únicos e Sequenciais
+
+**Tempo:** 2-3 horas  
+**Objetivo:** Padronizar a geração de IDs em todos os stores para garantir unicidade e facilitar integridade referencial.
+**Status:** ⏳ Pendente.
+
+---
+
 ## 🛡️ PROCEDIMENTOS DE SEGURANÇA
 
 ### Antes de Cada Fase
@@ -302,6 +322,6 @@ git push origin main
 
 ---
 
-**Última Atualização:** 16/02/2026  
-**Versão:** 3.2  
-**Status:** 🟠 Fase 12 em planejamento
+**Última Atualização:** 24/02/2026  
+**Versão:** 3.3  
+**Status:** ✅ Fase 26 Concluída (Normalização de Status)

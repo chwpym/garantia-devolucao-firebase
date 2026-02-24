@@ -10,6 +10,7 @@ import type { Person } from '@/lib/types';
 import * as db from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { formatPhoneNumber, formatCpfCnpj } from '@/lib/utils';
+import { useAppStore } from '@/store/app-store';
 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -61,6 +62,7 @@ const defaultFormValues: PersonFormValues = {
 
 export default function PersonForm({ onSave, editingPerson, onClear }: PersonFormProps) {
   const { toast } = useToast();
+  const reloadData = useAppStore(state => state.reloadData);
   const [isFetchingCep, setIsFetchingCep] = useState(false);
   const [isFetchingCnpj, setIsFetchingCnpj] = useState(false);
 
@@ -127,6 +129,7 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
         cpfCnpj: data.cpfCnpj?.replace(/\D/g, ''),
         telefones: data.telefones.map(t => t.replace(/\D/g, '')).filter(t => t !== ''),
         emails: data.emails.filter(e => e !== ''),
+        codigoExterno: data.codigoExterno || '',
       };
 
       // Validação de duplicidade de CPF/CNPJ ANTES de salvar
@@ -157,6 +160,7 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
         onSave(newPerson);
       }
       form.reset(defaultFormValues);
+      await reloadData('persons');
       window.dispatchEvent(new CustomEvent('datachanged'));
     } catch (error) {
       console.error('Failed to save person:', error);
@@ -303,6 +307,20 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
                     />
                     {isFetchingCnpj && <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin" />}
                   </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            name="codigoExterno"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Código Externo (ERP)</FormLabel>
+                <FormControl>
+                  <Input placeholder="CÓDIGO NO SISTEMA EXTERNO" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
