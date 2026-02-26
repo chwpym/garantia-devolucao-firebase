@@ -19,13 +19,15 @@ export interface AuthContextType {
   loading: boolean;
   pendingUsersCount: number; // New field for admin notifications
   refreshPendingCount: () => Promise<void>; // Function to update the count
+  updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   pendingUsersCount: 0,
-  refreshPendingCount: async () => { }
+  refreshPendingCount: async () => { },
+  updateProfile: async () => { },
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -40,6 +42,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setPendingUsersCount(pending);
     } catch (error) {
       console.error("Error fetching pending count:", error);
+    }
+  };
+
+  const updateProfile = async (updates: Partial<UserProfile>) => {
+    if (!user) return;
+    try {
+      const newProfile = { ...user.profile, ...updates };
+      await db.upsertUserProfile(newProfile);
+      setUser({ ...user, profile: newProfile });
+    } catch (error) {
+      console.error("Erro ao atualizar o perfil do usuário:", error);
+      throw error;
     }
   };
 
@@ -143,7 +157,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     loading,
     pendingUsersCount,
-    refreshPendingCount
+    refreshPendingCount,
+    updateProfile
   }), [user, loading, pendingUsersCount]);
 
   return (

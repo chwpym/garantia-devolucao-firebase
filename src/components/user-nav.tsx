@@ -15,16 +15,22 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal,
+  DropdownMenuSubContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu"
 import { useAuth } from "@/hooks/use-auth";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Users } from "lucide-react";
+import { LogOut, Users, Settings } from "lucide-react";
 import { useAppStore } from "@/store/app-store";
 
 export function UserNav() {
-  const { user, pendingUsersCount } = useAuth();
+  const { user, pendingUsersCount, updateProfile } = useAuth();
   const { toast } = useToast();
   const resetAppStore = useAppStore(state => state.resetState);
 
@@ -96,6 +102,30 @@ export function UserNav() {
               <span>{pendingUsersCount} Usuário(s) Pendente(s)</span>
             </DropdownMenuItem>
           )}
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Painel Inicial</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent>
+                <DropdownMenuRadioGroup 
+                  value={user.profile.preferredDashboardTab || 'garantias'}
+                  onValueChange={(val) => {
+                    updateProfile({ preferredDashboardTab: val as 'garantias' | 'devolucoes' }).catch(() => 
+                      toast({ title: "Erro", description: "Falha ao salvar preferência.", variant: "destructive" })
+                    );
+                  }}
+                >
+                  <DropdownMenuRadioItem value="garantias">Garantias</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="devolucoes">Devoluções</DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>

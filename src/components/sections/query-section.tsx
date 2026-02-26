@@ -94,8 +94,13 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
   const refreshData = useCallback(() => {
     loadData();
     setSelectedIds(new Set());
-    window.dispatchEvent(new CustomEvent('datachanged'));
   }, [loadData]);
+
+  // Use this function to notify application that data changed globally.
+  // The global listener will then trigger refreshData automatically.
+  const notifyDataChanged = () => {
+    window.dispatchEvent(new CustomEvent('datachanged'));
+  };
 
 
   useEffect(() => {
@@ -133,7 +138,7 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
         title: 'Sucesso',
         description: 'Garantia excluída com sucesso.',
       });
-      refreshData();
+      notifyDataChanged();
     } catch (error) {
       console.error('Failed to delete warranty:', error);
       toast({
@@ -212,7 +217,7 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
   }, [filteredWarranties, sortConfig]);
 
   const clientOptions = useMemo(() => persons
-    .filter(p => p.tipo === 'Cliente' || p.tipo === 'Ambos')
+    .filter(p => !p.tipo || p.tipo.toLowerCase() === 'cliente' || p.tipo.toLowerCase() === 'ambos')
     .map(c => ({ value: c.nome, label: c.nome })),
     [persons]
   );
@@ -241,7 +246,7 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
         title: 'Sucesso!',
         description: `${selectedIds.size} garantias foram adicionadas ao lote.`
       });
-      refreshData();
+      notifyDataChanged();
     } catch (error) {
       console.error("Failed to add warranties to lote:", error);
       toast({
@@ -292,7 +297,7 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
         title: 'Status Atualizado em Massa',
         description: `${selectedIds.size} garantias marcadas como "${newStatus}".`
       });
-      refreshData();
+      notifyDataChanged();
     } catch (error) {
       console.error("Failed to update status:", error);
       toast({
@@ -315,95 +320,92 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
   }
 
   return (
-    <div className='space-y-6'>
-      {/* --- Summary Cards --- */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="shadow-sm border-l-4 border-l-primary">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Registrado</CardTitle>
-            <Search className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
-            <p className="text-xs text-muted-foreground">Garantias no sistema</p>
-          </CardContent>
-        </Card>
-        <Card className="shadow-sm border-l-4 border-l-amber-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
-            <FilterX className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.pending}</div>
-            <p className="text-xs text-muted-foreground">Aguardando envio/análise</p>
-          </CardContent>
-        </Card>
-        <Card className="shadow-sm border-l-4 border-l-green-600">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Aprovadas</CardTitle>
-            <PlusCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.approved}</div>
-            <p className="text-xs text-muted-foreground">Crédito ou peça nova</p>
-          </CardContent>
-        </Card>
-        <Card className="shadow-sm border-l-4 border-l-destructive">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Recusadas</CardTitle>
-            <FilterX className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.rejected}</div>
-            <p className="text-xs text-muted-foreground">Garantias negadas</p>
-          </CardContent>
-        </Card>
+    <div className="flex flex-col h-full space-y-4">
+      {/* Cabeçalho Híbrido: Título + Painéis */}
+      <div className="flex flex-col md:flex-row gap-6 md:items-center">
+        {/* Título */}
+        <div className="flex-none flex flex-col gap-1 w-full md:w-auto">
+          <h2 className="text-2xl font-bold tracking-tight">Consultar Garantias</h2>
+          <p className="text-sm text-muted-foreground whitespace-nowrap">
+            Gerenciamento e consultas.
+          </p>
+        </div>
+
+        {/* Resumo (Cards Superiores) */}
+        <div className="flex-1 grid grid-cols-2 lg:grid-cols-4 gap-2">
+          <Card className="shadow-sm border-l-4 border-l-primary py-1 px-2">
+            <div className="flex items-center justify-between opacity-70">
+              <span className="text-[10px] font-bold uppercase tracking-wider">Registrado</span>
+              <Search className="h-3 w-3" />
+            </div>
+            <div className="mt-1 flex items-baseline gap-2">
+              <span className="text-xl font-black leading-none">{stats.total}</span>
+            </div>
+          </Card>
+          <Card className="shadow-sm border-l-4 border-l-amber-500 py-1 px-2">
+            <div className="flex items-center justify-between opacity-70">
+              <span className="text-[10px] font-bold uppercase tracking-wider">Pendentes</span>
+              <FilterX className="h-3 w-3" />
+            </div>
+            <div className="mt-1 flex items-baseline gap-2">
+              <span className="text-xl font-black leading-none">{stats.pending}</span>
+            </div>
+          </Card>
+          <Card className="shadow-sm border-l-4 border-l-green-600 py-1 px-2">
+            <div className="flex items-center justify-between opacity-70">
+              <span className="text-[10px] font-bold uppercase tracking-wider">Aprovadas</span>
+              <PlusCircle className="h-3 w-3" />
+            </div>
+            <div className="mt-1 flex items-baseline gap-2">
+              <span className="text-xl font-black leading-none">{stats.approved}</span>
+            </div>
+          </Card>
+          <Card className="shadow-sm border-l-4 border-l-destructive py-1 px-2">
+            <div className="flex items-center justify-between opacity-70">
+              <span className="text-[10px] font-bold uppercase tracking-wider">Recusadas</span>
+              <FilterX className="h-3 w-3" />
+            </div>
+            <div className="mt-1 flex items-baseline gap-2">
+              <span className="text-xl font-black leading-none">{stats.rejected}</span>
+            </div>
+          </Card>
+        </div>
       </div>
 
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle>Consultar Garantias</CardTitle>
-          <CardDescription>
-            Painel de gerenciamento e consulta de garantias.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+      {/* 2. Área de Busca e Filtros - Fixo */}
+      <div className="flex-none space-y-4">
+
+        <div className="flex flex-col xl:flex-row gap-4">
+          <div className="flex flex-col md:flex-row gap-2 flex-grow">
             <SearchInput
-              placeholder="Buscar por código, descrição, cliente..."
+              placeholder="Buscar por código, descrição..."
               value={searchTerm}
               onChange={(e) => setFilters({ ...filters, searchTerm: e.target.value })}
               onClear={() => setFilters({ ...filters, searchTerm: '' })}
-              className="w-full"
-              containerClassName="relative flex-1 max-w-full"
+              className="flex-1"
             />
-            <div className='flex flex-col md:flex-row gap-4'>
-              <Combobox
-                options={clientOptions}
-                value={clientFilter}
-                onChange={(val) => setFilters({ ...filters, clientFilter: val })}
-                placeholder="Filtrar por cliente..."
-                searchPlaceholder='Buscar cliente...'
-                notFoundMessage='Nenhum cliente encontrado.'
-                className='w-full'
-              />
-              <DatePickerWithRange
-                date={dateRange}
-                setDate={(range) => setFilters({ ...filters, dateRange: range })}
-              />
-            </div>
+            <Combobox
+              options={clientOptions}
+              value={clientFilter}
+              onChange={(val) => setFilters({ ...filters, clientFilter: val })}
+              placeholder="Filtrar por Cliente..."
+              className="w-full md:w-[280px] lg:w-[350px]"
+            />
+            <DatePickerWithRange
+              date={dateRange}
+              setDate={(range) => setFilters({ ...filters, dateRange: range })}
+            />
           </div>
 
-          {/* --- Filters & Actions Bar --- */}
-          <div className="flex flex-wrap justify-between items-center mb-4 gap-4 bg-muted/30 p-2 rounded-lg border">
-            <div className="flex items-center space-x-4">
+          <div className="flex flex-wrap items-center gap-4 bg-muted/30 p-2 rounded-lg border whitespace-nowrap flex-none">
+            <div className="flex items-center space-x-4 flex-1">
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="showInLote"
                   checked={showInLote}
                   onCheckedChange={(checked) => setFilters({ ...filters, showInLote: Boolean(checked) })}
                 />
-                <Label htmlFor="showInLote" className="text-sm font-medium cursor-pointer">Mostrar itens em lotes</Label>
+                <Label htmlFor="showInLote" className="text-sm font-medium cursor-pointer">Itens em lotes</Label>
               </div>
               {selectedIds.size > 0 && (
                 <span className="text-sm font-medium text-primary bg-primary/10 px-2 py-1 rounded-md">
@@ -413,16 +415,15 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
             </div>
 
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground hover:text-foreground">
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground">
                 <FilterX className="mr-2 h-4 w-4" />
-                Limpar Filtros
+                Limpar
               </Button>
 
-              {/* --- Bulk Actions Dropdown --- */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button disabled={selectedIds.size === 0} variant="outline" className="border-dashed">
-                    Ações em Massa <MoreHorizontal className="ml-2 h-4 w-4" />
+                  <Button disabled={selectedIds.size === 0} variant="outline" size="sm">
+                    Ações <MoreHorizontal className="ml-2 h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
@@ -443,68 +444,52 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
                    <DropdownMenuItem onClick={() => handleBulkStatusChange('Recusada')}>
                     <XCircle className="mr-2 h-4 w-4 text-red-500" /> Recusada
                   </DropdownMenuItem>
-                  {customStatuses.filter(s => s.aplicavelEm.includes('garantia')).map(s => (
-                    <DropdownMenuItem key={s.id} onClick={() => handleBulkStatusChange(s.nome)}>
-                      <div className="w-4 h-4 rounded-full mr-2" style={{ backgroundColor: s.cor }} />
-                      {s.nome}
-                    </DropdownMenuItem>
-                  ))}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </div>
+        </div>
+      </div>
 
-          <div className="space-y-4">
-            <WarrantyTable
-              warranties={sortedWarranties.slice(0, visibleCount)}
-              selectedIds={selectedIds}
-              onSelectionChange={setSelectedIds}
-              onEdit={onEdit}
-              onClone={onClone}
-              onDelete={handleDelete}
-              sortConfig={sortConfig}
-              onSort={(config) => setFilters({ ...filters, sortConfig: config as any })}
-              emptyState={
-                searchTerm || clientFilter || dateRange?.from || dateRange?.to ? (
-                  <EmptyState 
-                    icon={SearchX}
-                    title="Nenhuma garantia encontrada"
-                    description="Não encontramos garantias para os filtros aplicados. Tente ajustar sua busca."
-                    action={{
-                      label: "Limpar Filtros",
-                      onClick: clearFilters
-                    }}
-                  />
-                ) : (
-                  <EmptyState 
-                    icon={LayoutList}
-                    title="Nenhuma garantia registrada"
-                    description="Inicie uma busca ou aplique filtros para ver os registros de garantias."
-                  />
-                )
-              }
-            />
+      {/* 3. Tabela - Único ponto de Scroll Controlado */}
+      <div className="flex-1 min-h-0 overflow-auto rounded-md border bg-card">
+        <WarrantyTable
+          warranties={sortedWarranties.slice(0, visibleCount)}
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
+          onEdit={onEdit}
+          onClone={onClone}
+          onDelete={handleDelete}
+          sortConfig={sortConfig}
+          onSort={(config) => setFilters({ ...filters, sortConfig: config as any })}
+          emptyState={
+            searchTerm || clientFilter || dateRange?.from || dateRange?.to ? (
+              <EmptyState 
+                icon={SearchX}
+                title="Nada encontrado"
+                description="Ajuste os filtros de busca."
+              />
+            ) : (
+              <EmptyState 
+                icon={LayoutList}
+                title="Nenhum registro"
+                description="Inicie uma busca para ver as garantias."
+              />
+            )
+          }
+        />
 
-            {visibleCount < sortedWarranties.length && (
-              <div className="flex justify-center pt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => setVisibleCount(prev => prev + 50)}
-                  className="w-full max-w-xs"
-                >
-                  Carregar Mais (Exibindo {visibleCount} de {sortedWarranties.length})
-                </Button>
-              </div>
-            )}
-
-            {sortedWarranties.length > 0 && visibleCount >= sortedWarranties.length && (
-              <p className="text-center text-xs text-muted-foreground pt-2">
-                Todos os {sortedWarranties.length} registros foram carregados.
-              </p>
-            )}
+        {visibleCount < sortedWarranties.length && (
+          <div className="flex justify-center p-4">
+            <Button
+              variant="outline"
+              onClick={() => setVisibleCount(prev => prev + 50)}
+            >
+              Carregar Mais ({visibleCount}/{sortedWarranties.length})
+            </Button>
           </div>
-        </CardContent>
-      </Card>
+        )}
+      </div>
 
       <AddToLoteDialog
         isOpen={isLoteDialogOpen}

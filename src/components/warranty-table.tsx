@@ -9,9 +9,10 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Pencil, Trash2, Copy, ArrowUpDown } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, Copy, ArrowUpDown, AlertCircle } from 'lucide-react';
 import { StatusBadge } from './ui/status-badge';
 import { Checkbox } from './ui/checkbox';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 type SortableKeys = keyof Warranty;
 
@@ -134,7 +135,26 @@ export default function WarrantyTable({
                   <TableCell>{warranty.descricao || '-'}</TableCell>
                   <TableCell>{warranty.quantidade || '-'}</TableCell>
                   <TableCell>{warranty.fornecedor || '-'}</TableCell>
-                  <TableCell>{warranty.cliente || '-'}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1.5">
+                      <span>{warranty.cliente || '-'}</span>
+                      {warranty.mecanico && (
+                        <TooltipProvider>
+                          <Tooltip delayDuration={200}>
+                            <TooltipTrigger asChild>
+                              <AlertCircle className="h-4 w-4 text-amber-500 cursor-help shrink-0 transition-transform hover:scale-110" />
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="font-medium shadow-md border-amber-500/20">
+                              <div className="flex flex-col gap-1 px-1 py-0.5">
+                                <span className="text-[10px] text-amber-500 uppercase font-bold tracking-wider">Mecânico Vinculado</span>
+                                <span className="text-sm">{warranty.mecanico}</span>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell>{warranty.notaFiscalRetorno || '-'}</TableCell>
                   <TableCell>
                     <StatusBadge type="warranty" status={warranty.status} />

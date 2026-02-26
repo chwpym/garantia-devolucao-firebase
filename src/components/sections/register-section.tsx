@@ -10,7 +10,7 @@ import * as db from '@/lib/db';
 import WarrantyForm from '@/components/warranty-form';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import { SearchX, LayoutList, Clock, CalendarIcon } from 'lucide-react';
 import { isSameDay, parseISO, format } from 'date-fns';
@@ -59,8 +59,8 @@ function RecentWarrantiesList() {
   if (isLoading) return <Skeleton className="h-[400px] w-full" />;
 
   return (
-    <Card className="h-full border-muted/40 shadow-sm flex flex-col">
-      <CardHeader className="py-4 px-4 border-b bg-muted/5 space-y-3">
+    <Card className="min-h-full h-full border-muted/40 shadow-sm flex flex-col bg-transparent lg:bg-card">
+      <CardHeader className="py-4 px-4 border-b bg-muted/5 space-y-3 flex-none">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-primary" />
@@ -79,41 +79,59 @@ function RecentWarrantiesList() {
           />
         </div>
       </CardHeader>
-      <CardContent className="flex-1 overflow-auto p-0 scrollbar-thin scrollbar-thumb-muted">
-        <Table>
-          <TableHeader className="bg-muted/10 sticky top-0 z-10">
-            <TableRow className="hover:bg-transparent">
-              <TableHead className="text-[10px] h-8 px-2">ID/Status</TableHead>
-              <TableHead className="text-[10px] h-8 px-2 text-right">Ação</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {recentWarranties.length > 0 ? (
-              recentWarranties.map((w) => (
-                <TableRow key={w.id} className="group transition-colors h-12">
-                  <TableCell className="px-2 py-1">
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-mono text-muted-foreground">#{w.id}</span>
-                        <span className="text-xs font-semibold truncate max-w-[120px]" title={w.cliente}>{w.cliente}</span>
-                      </div>
-                      <StatusBadge type="warranty" status={w.status} className="h-4 text-[10px] px-1.5 py-0" />
+      <CardContent className="flex-1 overflow-auto p-4 space-y-2 scrollbar-thin scrollbar-thumb-muted">
+        {recentWarranties.length > 0 ? (
+          recentWarranties.map((w) => (
+            <TooltipProvider key={w.id}>
+              <Tooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                  <div className="flex flex-col p-3 rounded-md border bg-card hover:bg-muted/50 transition-colors cursor-default group text-left">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-mono text-muted-foreground group-hover:text-foreground transition-colors">#{w.id}</span>
+                      <StatusBadge type="warranty" status={w.status} className="h-5 text-[10px] px-1.5 py-0" />
                     </div>
-                  </TableCell>
-                  <TableCell className="px-2 py-0 text-right">
-             
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={2} className="py-8 text-center text-muted-foreground italic text-xs">
-                  Nenhum registro hoje.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+                    <div className="w-full">
+                      <span className="text-xs font-semibold truncate block" title={w.cliente}>{w.cliente}</span>
+                    </div>
+                    <div className="w-full mt-1">
+                      <span className="text-[10px] text-muted-foreground font-mono truncate block" title={w.codigo || 'Sem código'}>
+                        {w.codigo ? w.codigo : 'Sem produto/código'}
+                        {w.descricao ? ` - ${w.descricao}` : ''}
+                      </span>
+                    </div>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="left" className="w-[280px] p-3 shadow-lg border">
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-[10px] font-mono text-muted-foreground mb-0.5">REGISTRADO EM</p>
+                      <p className="text-xs font-medium">{w.dataRegistro ? format(parseISO(w.dataRegistro), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : 'Data Indisponível'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-mono text-muted-foreground mb-0.5">CLIENTE</p>
+                      <p className="text-xs font-semibold">{w.cliente}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-mono text-muted-foreground mb-0.5">PRODUTO</p>
+                      <p className="text-xs">{w.codigo || 'Sem código'}{w.descricao ? ` - ${w.descricao}` : ''}</p>
+                    </div>
+                    {w.defeito && (
+                      <div>
+                        <p className="text-[10px] font-mono text-muted-foreground mb-0.5">DEFEITO APRESENTADO</p>
+                        <p className="text-xs italic">"{w.defeito}"</p>
+                      </div>
+                    )}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ))
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full text-center space-y-3 text-muted-foreground">
+            <LayoutList className="h-8 w-8 opacity-20" />
+            <p className="text-xs italic">Nenhum registro hoje.</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -214,8 +232,8 @@ export default function RegisterSection({ editingId, mode, onSave, onClear }: Re
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 max-w-full lg:h-[calc(100vh-140px)] overflow-hidden">
-      <div className="lg:col-span-3 h-full overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-muted">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 max-w-full h-full overflow-hidden min-h-0">
+      <div className="lg:col-span-3 h-full overflow-hidden pr-1">
         <WarrantyForm
           key={editingId ? `${editingId}-${mode}` : 'new'}
           selectedWarranty={warrantyToLoad}

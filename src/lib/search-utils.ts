@@ -4,6 +4,7 @@
  * 2. Removes accents (diacritics)
  * 3. Trims whitespace
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const normalizeText = (text: any): string => {
     if (text === null || text === undefined) return '';
     if (Array.isArray(text)) return text.map(t => normalizeText(t)).join(' ');

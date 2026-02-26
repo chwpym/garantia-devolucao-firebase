@@ -261,6 +261,7 @@ const normalizeData = <T>(data: T): T => {
     return data.map((item) => normalizeData(item)) as unknown as T;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const normalized = { ...data } as any;
   for (const key in normalized) {
     if (Object.prototype.hasOwnProperty.call(normalized, key)) {
@@ -404,6 +405,7 @@ export const migrateContactsToArrays = async (): Promise<void> => {
       // interface Supplier { id?: number; razaoSocial: string; nomeFantasia: string; cnpj: string; cidade: string; cep?: string; endereco?: string; bairro?: string; codigoExterno?: string; telefones?: string[]; emails?: string[]; }
       // It didn't have single 'telefone' or 'email'.
       // But maybe some records have it from previous versions?
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const raw = s as any;
       if (raw.telefone && (!s.telefones || s.telefones.length === 0)) {
         s.telefones = [raw.telefone];

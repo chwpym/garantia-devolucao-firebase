@@ -25,6 +25,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { useAppStore } from '@/store/app-store';
 import { WARRANTY_STATUSES } from '@/lib/types';
 import { QuickRegisterDialog } from './quick-register-dialog';
+import ComboboxProduct from '@/components/combobox-product';
 
 
 const formSchema = z.object({
@@ -242,7 +243,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
 
 
     const clientsList = useMemo(() => {
-        const filtered = persons.filter(p => p.tipo === 'Cliente' || p.tipo === 'Ambos');
+        const filtered = persons.filter(p => !p.tipo || p.tipo.toLowerCase() === 'cliente' || p.tipo.toLowerCase() === 'ambos');
         const nameCounts = new Map<string, number>();
         filtered.forEach(p => nameCounts.set(p.nome, (nameCounts.get(p.nome) || 0) + 1));
 
@@ -255,7 +256,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
     }, [persons]);
 
     const mechanicsList = useMemo(() => {
-        const filtered = persons.filter(p => p.tipo === 'Mecânico' || p.tipo === 'Ambos');
+        const filtered = persons.filter(p => !p.tipo || p.tipo.toLowerCase() === 'mecânico' || p.tipo.toLowerCase() === 'mecanico' || p.tipo.toLowerCase() === 'ambos');
         const nameCounts = new Map<string, number>();
         filtered.forEach(p => nameCounts.set(p.nome, (nameCounts.get(p.nome) || 0) + 1));
 
@@ -272,13 +273,14 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
         label: s.nomeFantasia,
         keywords: [s.razaoSocial || '', s.cnpj || '']
     })), [suppliers]);
-
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const clientOptions = useMemo(() => clientsList.map((c: any) => ({
         value: c.displayName,
         label: c.displayName,
         keywords: [c.nome || '', c.cpfCnpj || '', c.nomeFantasia || '']
     })), [clientsList]);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mechanicOptions = useMemo(() => mechanicsList.map((m: any) => ({
         value: m.displayName,
         label: m.displayName,
@@ -295,65 +297,39 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
 
     const innerFormContent = (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} onKeyDown={handleKeyDown} ref={formRef}>
-                <CardContent className="space-y-6 pt-6">
+            <form onSubmit={form.handleSubmit(handleSubmit)} onKeyDown={handleKeyDown} ref={formRef} className="flex-1 flex flex-col min-h-0">
+                <CardContent className="flex-1 overflow-y-auto p-6 space-y-6">
                     <div className="space-y-4">
                         <h3 className="text-lg font-medium text-foreground">Informações do Produto e Defeito</h3>
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <FormField name="codigo" control={form.control} render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Código</FormLabel>
-                                    <Popover open={isProductPopoverOpen} onOpenChange={setProductPopoverOpen}>
-                                        <PopoverTrigger asChild>
-                                            <FormControl>
-                                                <Input
-                                                    {...field}
-                                                    autoComplete="off"
-                                                    onChange={(e) => {
-                                                        field.onChange(e);
-                                                        setProductSearch(e.target.value);
-                                                        if (e.target.value) {
-                                                            setProductPopoverOpen(true);
-                                                        } else {
-                                                            setProductPopoverOpen(false);
-                                                        }
-                                                    }}
-                                                />
-                                            </FormControl>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                            <Command>
-                                                <CommandInput placeholder="Buscar produto..." value={productSearch} onValueChange={setProductSearch} />
-                                                <CommandList>
-                                                    <CommandEmpty>
-                                                        <div className='p-4 text-sm text-center'>
-                                                            <p>Nenhum produto encontrado.</p>
-                                                            <Button variant="link" type="button" onClick={() => {
-                                                                setQuickRegisterType('product');
-                                                                setQuickRegisterOpen(true);
-                                                                setProductPopoverOpen(false);
-                                                            }}>Cadastrar Novo Produto</Button>
-                                                        </div>
-                                                    </CommandEmpty>
-                                                    <CommandGroup>
-                                                        {filteredProducts.map((product) => (
-                                                            <CommandItem
-                                                                key={product.id}
-                                                                onSelect={() => handleProductSelect(product)}
-                                                            >
-                                                                {product.codigo} - {product.descricao}
-                                                            </CommandItem>
-                                                        ))}
-                                                    </CommandGroup>
-                                                </CommandList>
-                                            </Command>
-                                        </PopoverContent>
-                                    </Popover>
+                                    <ComboboxProduct
+                                        value={field.value}
+                                        onProductSelect={(product) => handleProductSelect(product)}
+                                        onInputChange={field.onChange}
+                                        onAddNew={() => {
+                                            setQuickRegisterType('product');
+                                            setQuickRegisterOpen(true);
+                                        }}
+                                    />
                                     <FormMessage />
                                 </FormItem>
                             )} />
                             <FormField name="descricao" control={form.control} render={({ field }) => (
-                                <FormItem className="md:col-span-2"><FormLabel>Descrição</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                <FormItem className="md:col-span-2">
+                                    <FormLabel>Descrição</FormLabel>
+                                    <FormControl>
+                                        <Input 
+                                            {...field} 
+                                            readOnly 
+                                            tabIndex={-1} 
+                                            className="bg-muted/50 cursor-not-allowed text-muted-foreground" 
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
                             )} />
                             <FormField name="quantidade" control={form.control} render={({ field }) => (
                                 <FormItem><FormLabel>Quantidade</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
@@ -457,7 +433,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
 
                     <Separator />
 
-                    <div className="space-y-4">
+                    <div className="space-y-4 bg-muted/10 border-2 rounded-lg p-4">
                         <h3 className="text-lg font-medium text-foreground">Dados Fiscais e de Venda</h3>
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <FormField
@@ -565,9 +541,9 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                     </div>
 
                 </CardContent>
-                <CardFooter className="flex justify-between items-center gap-2">
+                <CardFooter className="flex-none flex justify-between items-center gap-2 py-4 border-t bg-muted/5">
                     <Button type="button" variant="ghost" onClick={handleClear} disabled={isSubmitting}>
-                        {selectedWarranty ? 'Cancelar' : 'Limpar'}
+                        Cancelar
                     </Button>
                     <div className="flex gap-2">
                         {!selectedWarranty && !isClone && (
@@ -587,7 +563,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                             onClick={() => setShouldNavigate(true)}
                         >
                             {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                            {selectedWarranty && !isClone ? 'Atualizar' : 'Salvar e Sair'}
+                            {selectedWarranty && !isClone ? 'Atualizar e Sair' : 'Salvar e Sair'}
                         </Button>
                     </div>
                 </CardFooter>
@@ -610,12 +586,14 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
     }
 
     return (
-        <Card className="w-full shadow-lg">
-            <CardHeader>
+        <Card className="w-full h-full flex flex-col shadow-sm border-0 bg-transparent lg:bg-card lg:border lg:shadow-lg">
+            <CardHeader className="flex-none bg-muted/5 border-b">
                 <CardTitle>{selectedWarranty ? (isClone ? 'Clonar Garantia' : 'Editar Garantia') : 'Cadastrar Garantia'}</CardTitle>
                 <CardDescription>Preencha os detalhes da garantia abaixo. Use &quot;Enter&quot; para pular para o próximo campo.</CardDescription>
             </CardHeader>
-            {innerFormContent}
+            <div className="flex-1 flex flex-col min-h-0">
+                {innerFormContent}
+            </div>
         </Card>
     );
 }

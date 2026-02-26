@@ -105,7 +105,11 @@ export default function Home() {
           editingId={editingWarrantyId}
           mode={registerMode}
           onSave={(shouldNavigate: boolean) => handleWarrantySave(shouldNavigate)}
-          onClear={() => useAppStore.getState().clearEditingWarranty()}
+          onClear={() => {
+            const store = useAppStore.getState();
+            store.clearEditingWarranty();
+            store.goBack();
+          }}
         />;
       case 'query':
         return <QuerySection

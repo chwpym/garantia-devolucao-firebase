@@ -47,7 +47,9 @@ export interface AppState {
   clearEditingWarranty: () => void;
 
   // Filter persistence
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   filterStates: Record<string, any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setFilterState: (viewId: string, filters: any) => void;
 
   // Modal actions

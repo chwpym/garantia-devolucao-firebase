@@ -20,8 +20,8 @@ import { DialogClose, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from './ui/textarea';
 
 const formSchema = z.object({
-  nome: z.string().min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' }),
-  nomeFantasia: z.string().optional(),
+  nome: z.string().min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' }).transform(val => val.trim().toUpperCase()),
+  nomeFantasia: z.string().optional().transform(val => val ? val.trim().toUpperCase() : val),
   tipo: z.enum(['Cliente', 'Mecânico', 'Ambos'], { required_error: 'Selecione um tipo.' }),
   cpfCnpj: z.string().optional(),
   telefones: z.array(z.string()).default([]),

@@ -11,6 +11,7 @@ Este documento contém os detalhes completos de implementação de cada fase. Us
 ## 🔴 FASE 1: Correção de Erros de Hidratação
 
 ### Arquivos Afetados
+
 1. `src/components/sections/batch-register-section.tsx`
 2. `src/components/calculators/tax-analysis-calculator.tsx`
 3. `src/components/calculators/purchase-simulator-calculator.tsx`
@@ -19,9 +20,11 @@ Este documento contém os detalhes completos de implementação de cada fase. Us
 6. `src/components/calculators/advanced-cost-analysis-calculator.tsx`
 
 ### Problema
+
 Uso de `Date.now()` e `Math.random()` durante SSR causa mismatch entre servidor e cliente.
 
 ### Solução
+
 ```typescript
 // ❌ ANTES (causa hydration error)
 const id = Date.now() + Math.random();
@@ -40,18 +43,19 @@ import { useState, useEffect } from 'react';
 
 function Component() {
   const [uniqueId, setUniqueId] = useState<number | null>(null);
-  
+
   useEffect(() => {
     setUniqueId(Date.now());
   }, []);
-  
+
   if (!uniqueId) return null; // ou loading state
-  
+
   return <div id={uniqueId}>...</div>;
 }
 ```
 
 ### Procedimento Passo a Passo
+
 1. Criar branch: `git checkout -b fix/hydration-errors`
 2. Para cada arquivo:
    - Localizar todos os usos de `Date.now()` e `Math.random()`
@@ -64,6 +68,7 @@ function Component() {
 6. Merge: `git checkout main && git merge fix/hydration-errors`
 
 ### Critérios de Sucesso
+
 - [ ] Console sem "hydration mismatch"
 - [ ] IDs únicos mantidos
 - [ ] Funcionalidade preservada
@@ -74,6 +79,7 @@ function Component() {
 ## 🔴 FASE 2: Segurança da Sessão
 
 ### Arquivo Afetado
+
 - `src/app/login/page.tsx`
 
 ### Implementação Completa
@@ -88,40 +94,40 @@ import { Label } from '@/components/ui/label';
 export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const handleLogin = async (email: string, password: string) => {
     try {
       // ... lógica de autenticação
-      
+
       const session = {
         user: authUser,
         timestamp: Date.now()
       };
-      
+
       // Escolher storage baseado em "Lembrar de mim"
       const storage = rememberMe ? localStorage : sessionStorage;
       storage.setItem('synergia_session', JSON.stringify(session));
-      
+
       // Redirecionar
       window.location.replace('/');
     } catch (error) {
       console.error('Login error:', error);
     }
   };
-  
+
   return (
     <form onSubmit={handleSubmit}>
       {/* ... outros campos ... */}
-      
+
       <div className="flex items-center space-x-2">
-        <Checkbox 
-          id="remember" 
+        <Checkbox
+          id="remember"
           checked={rememberMe}
           onCheckedChange={(checked) => setRememberMe(checked as boolean)}
         />
         <Label htmlFor="remember">Lembrar de mim</Label>
       </div>
-      
+
       <Button type="submit" disabled={isLoading}>
         {isLoading ? 'Entrando...' : 'Entrar'}
       </Button>
@@ -131,6 +137,7 @@ export default function LoginPage() {
 ```
 
 ### Critérios de Sucesso
+
 - [ ] Checkbox funciona
 - [ ] Sessão em localStorage quando marcado
 - [ ] Sessão em sessionStorage quando desmarcado
@@ -141,6 +148,7 @@ export default function LoginPage() {
 ## 🔴 FASE 3: Validador de Duplicidade
 
 ### Arquivos Afetados
+
 - `src/components/product-form.tsx`
 - `src/components/supplier-form.tsx`
 - `src/components/person-form.tsx`
@@ -154,12 +162,12 @@ import * as db from '@/lib/db';
 export function ProductForm({ onSave }: ProductFormProps) {
   const { toast } = useToast();
   const form = useForm<Product>();
-  
+
   const handleSave = async (data: Product) => {
     try {
       // Validar duplicidade
       const existing = await db.getProductByCode(data.codigo);
-      
+
       if (existing && existing.id !== data.id) {
         toast({
           title: 'Produto Duplicado',
@@ -168,19 +176,19 @@ export function ProductForm({ onSave }: ProductFormProps) {
         });
         return;
       }
-      
+
       // Salvar se não for duplicado
       if (data.id) {
         await db.updateProduct(data);
       } else {
         await db.addProduct(data);
       }
-      
+
       toast({
         title: 'Sucesso',
         description: 'Produto salvo com sucesso!'
       });
-      
+
       onSave?.();
     } catch (error) {
       toast({
@@ -190,7 +198,7 @@ export function ProductForm({ onSave }: ProductFormProps) {
       });
     }
   };
-  
+
   return (
     <Form {...form}>
       {/* ... campos ... */}
@@ -208,19 +216,19 @@ const handleSave = async (data: Supplier) => {
     if (data.cnpj) {
       const allSuppliers = await db.getAllSuppliers();
       const existing = allSuppliers.find(
-        s => s.cnpj === data.cnpj && s.id !== data.id
+        (s) => s.cnpj === data.cnpj && s.id !== data.id,
       );
-      
+
       if (existing) {
         toast({
-          title: 'CNPJ Duplicado',
+          title: "CNPJ Duplicado",
           description: `Já existe um fornecedor com o CNPJ "${data.cnpj}".`,
-          variant: 'destructive'
+          variant: "destructive",
         });
         return;
       }
     }
-    
+
     // Salvar...
   } catch (error) {
     // ...
@@ -237,19 +245,19 @@ const handleSave = async (data: Person) => {
     if (data.cpfCnpj) {
       const allPersons = await db.getAllPersons();
       const existing = allPersons.find(
-        p => p.cpfCnpj === data.cpfCnpj && p.id !== data.id
+        (p) => p.cpfCnpj === data.cpfCnpj && p.id !== data.id,
       );
-      
+
       if (existing) {
         toast({
-          title: 'CPF/CNPJ Duplicado',
+          title: "CPF/CNPJ Duplicado",
           description: `Já existe um cadastro com o CPF/CNPJ "${data.cpfCnpj}".`,
-          variant: 'destructive'
+          variant: "destructive",
         });
         return;
       }
     }
-    
+
     // Salvar...
   } catch (error) {
     // ...
@@ -258,6 +266,7 @@ const handleSave = async (data: Person) => {
 ```
 
 ### Critérios de Sucesso
+
 - [ ] Toast de erro ao duplicar
 - [ ] Validação antes de salvar
 - [ ] Permite editar registro existente
@@ -268,41 +277,44 @@ const handleSave = async (data: Person) => {
 ## 🟠 FASE 4: Fundações de UI e Navegação
 
 ### Arquivos Afetados
+
 - `src/store/app-store.ts`
 - `src/components/app-layout.tsx`
 
 ### Implementação - app-store.ts
 
 ```typescript
-import { create } from 'zustand';
+import { create } from "zustand";
 
 interface AppState {
   activeView: string;
   navigationHistory: string[];
-  
+
   setActiveView: (view: string) => void;
   goBack: () => void;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
-  activeView: 'dashboard',
-  navigationHistory: ['dashboard'],
-  
-  setActiveView: (view) => set((state) => ({
-    activeView: view,
-    navigationHistory: [...state.navigationHistory, view]
-  })),
-  
-  goBack: () => set((state) => {
-    const history = [...state.navigationHistory];
-    history.pop(); // Remove atual
-    const previousView = history[history.length - 1] || 'dashboard';
-    
-    return {
-      activeView: previousView,
-      navigationHistory: history
-    };
-  })
+  activeView: "dashboard",
+  navigationHistory: ["dashboard"],
+
+  setActiveView: (view) =>
+    set((state) => ({
+      activeView: view,
+      navigationHistory: [...state.navigationHistory, view],
+    })),
+
+  goBack: () =>
+    set((state) => {
+      const history = [...state.navigationHistory];
+      history.pop(); // Remove atual
+      const previousView = history[history.length - 1] || "dashboard";
+
+      return {
+        activeView: previousView,
+        navigationHistory: history,
+      };
+    }),
 }));
 ```
 
@@ -316,7 +328,7 @@ import { useAppStore } from '@/store/app-store';
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { navigationHistory, goBack } = useAppStore();
   const canGoBack = navigationHistory.length > 1;
-  
+
   return (
     <div className="min-h-screen">
       <header className="border-b">
@@ -330,7 +342,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <h1>Synergia OS</h1>
         </div>
       </header>
-      
+
       <main>{children}</main>
     </div>
   );
@@ -338,6 +350,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 ```
 
 ### Critérios de Sucesso
+
 - [ ] Navegação sem reload
 - [ ] Botão "Voltar" aparece quando há histórico
 - [ ] Histórico preservado
@@ -348,6 +361,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 ## 🟠 FASE 8: Dashboard Visual
 
 ### Arquivo Afetado
+
 - `src/components/sections/dashboard-section.tsx`
 
 ### Implementação Completa
@@ -362,43 +376,43 @@ export function DashboardSection() {
   const [topSuppliers, setTopSuppliers] = useState<Array<{name: string, count: number}>>([]);
   const [topClients, setTopClients] = useState<Array<{name: string, count: number}>>([]);
   const [recentWarranties, setRecentWarranties] = useState<Warranty[]>([]);
-  
+
   useEffect(() => {
     loadDashboardData();
   }, []);
-  
+
   const loadDashboardData = async () => {
     const warranties = await db.getAllWarranties();
-    
+
     // Top 5 Fornecedores
     const supplierCounts = warranties.reduce((acc, w) => {
       acc[w.fornecedor] = (acc[w.fornecedor] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
-    
+
     const topSupp = Object.entries(supplierCounts)
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
-    
+
     setTopSuppliers(topSupp);
-    
+
     // Top 5 Clientes (similar)
     // ...
-    
+
     // 5 Garantias Mais Recentes
     const recent = warranties
       .sort((a, b) => new Date(b.dataEntrada).getTime() - new Date(a.dataEntrada).getTime())
       .slice(0, 5);
-    
+
     setRecentWarranties(recent);
   };
-  
+
   const handleEditWarranty = (id: number) => {
     // Navegar para edição
     useAppStore.getState().handleEditWarranty(id);
   };
-  
+
   return (
     <div className="space-y-4 p-4">
       {/* Top 5 Fornecedores */}
@@ -418,7 +432,7 @@ export function DashboardSection() {
           </ResponsiveContainer>
         </CardContent>
       </Card>
-      
+
       {/* Top 5 Clientes */}
       <Card>
         <CardHeader>
@@ -436,7 +450,7 @@ export function DashboardSection() {
           </ResponsiveContainer>
         </CardContent>
       </Card>
-      
+
       {/* Garantias Recentes */}
       <Card>
         <CardHeader>
@@ -461,8 +475,8 @@ export function DashboardSection() {
                   <TableCell>{warranty.produto}</TableCell>
                   <TableCell>{warranty.status}</TableCell>
                   <TableCell>
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       size="sm"
                       onClick={() => handleEditWarranty(warranty.id!)}
                     >
@@ -481,6 +495,7 @@ export function DashboardSection() {
 ```
 
 ### Critérios de Sucesso
+
 - [ ] Gráficos renderizam corretamente
 - [ ] Dados atualizados em tempo real
 - [ ] Botão "Editar" funciona
@@ -491,18 +506,22 @@ export function DashboardSection() {
 ## 🟠 FASE 11a: Gestão de Acessos e Segurança Híbrida
 
 ### Problema
+
 Risco de acessos indevidos e poluição da interface para usuários sem privilégios administrativos.
 
 ### Solução Arquitetural
+
 Modelo híbrido: Firebase Auth (Segurança da Credencial) + IndexedDB (Controle de Status e Perfil).
 
 ### Detalhes Técnicos
+
 1.  **Status do Usuário**: Adicionar campo `status: 'active' | 'pending' | 'blocked'` no `UserProfile`.
-2.  **Route Guard de UI**: 
+2.  **Route Guard de UI**:
     - No `AuthProvider`, se o perfil for `pending`, injetar uma flag `isPending`.
     - No `page.tsx`, se `isPending` for true, renderizar apenas o layout de "Aguardando Aprovação".
 
 ### Critérios de Sucesso
+
 - [ ] Novos usuários não veem dados até serem aprovados.
 - [ ] Admin recebe alerta visual de novos cadastros.
 - [ ] Logout limpa completamente o estado da view (activeView).
@@ -510,9 +529,11 @@ Modelo híbrido: Firebase Auth (Segurança da Credencial) + IndexedDB (Controle 
 ---
 
 ## 🟡 FASE 18: Status Dinâmicos (COMPLEXA) ✅ (ANTECIPADA)
-*(Esta fase foi movida para a Fase 11 no cronograma real para estabilizar o sistema)*
+
+_(Esta fase foi movida para a Fase 11 no cronograma real para estabilizar o sistema)_
 
 ### Arquivos Afetados
+
 - `src/lib/db.ts`
 - `src/lib/types.ts`
 - `src/components/sections/status-section.tsx` (novo)
@@ -527,28 +548,28 @@ export interface Status {
   id?: number;
   nome: string;
   cor: string; // hex color
-  aplicavelEm: ('garantia' | 'lote' | 'devolucao')[];
+  aplicavelEm: ("garantia" | "lote" | "devolucao")[];
 }
 ```
 
 ### Implementação - db.ts
 
 ```typescript
-const STATUSES_STORE_NAME = 'statuses';
+const STATUSES_STORE_NAME = "statuses";
 
 // No onupgradeneeded:
 if (!dbInstance.objectStoreNames.contains(STATUSES_STORE_NAME)) {
-  dbInstance.createObjectStore(STATUSES_STORE_NAME, { 
-    keyPath: 'id', 
-    autoIncrement: true 
+  dbInstance.createObjectStore(STATUSES_STORE_NAME, {
+    keyPath: "id",
+    autoIncrement: true,
   });
 }
 
 // CRUD Functions
-export const addStatus = (status: Omit<Status, 'id'>): Promise<number> => {
+export const addStatus = (status: Omit<Status, "id">): Promise<number> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(STATUSES_STORE_NAME, 'readwrite');
+      const store = await getStore(STATUSES_STORE_NAME, "readwrite");
       const request = store.add(status);
       request.onsuccess = () => resolve(request.result as number);
       request.onerror = () => reject(request.error);
@@ -561,7 +582,7 @@ export const addStatus = (status: Omit<Status, 'id'>): Promise<number> => {
 export const getAllStatuses = (): Promise<Status[]> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(STATUSES_STORE_NAME, 'readonly');
+      const store = await getStore(STATUSES_STORE_NAME, "readonly");
       const request = store.getAll();
       request.onsuccess = () => resolve(request.result as Status[]);
       request.onerror = () => reject(request.error);
@@ -574,7 +595,7 @@ export const getAllStatuses = (): Promise<Status[]> => {
 export const updateStatus = (status: Status): Promise<number> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(STATUSES_STORE_NAME, 'readwrite');
+      const store = await getStore(STATUSES_STORE_NAME, "readwrite");
       const request = store.put(status);
       request.onsuccess = () => resolve(request.result as number);
       request.onerror = () => reject(request.error);
@@ -587,7 +608,7 @@ export const updateStatus = (status: Status): Promise<number> => {
 export const deleteStatus = (id: number): Promise<void> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const store = await getStore(STATUSES_STORE_NAME, 'readwrite');
+      const store = await getStore(STATUSES_STORE_NAME, "readwrite");
       const request = store.delete(id);
       request.onsuccess = () => resolve();
       request.onerror = () => reject(request.error);
@@ -614,34 +635,34 @@ export function StatusSection() {
   const [statuses, setStatuses] = useState<Status[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingStatus, setEditingStatus] = useState<Status | null>(null);
-  
+
   useEffect(() => {
     loadStatuses();
   }, []);
-  
+
   const loadStatuses = async () => {
     const data = await db.getAllStatuses();
     setStatuses(data);
   };
-  
+
   const handleEdit = (status: Status) => {
     setEditingStatus(status);
     setIsDialogOpen(true);
   };
-  
+
   const handleDelete = async (id: number) => {
     if (confirm('Tem certeza que deseja excluir este status?')) {
       await db.deleteStatus(id);
       loadStatuses();
     }
   };
-  
+
   const handleSave = async () => {
     setIsDialogOpen(false);
     setEditingStatus(null);
     loadStatuses();
   };
-  
+
   return (
     <div className="p-4">
       <div className="flex justify-between items-center mb-4">
@@ -650,7 +671,7 @@ export function StatusSection() {
           Novo Status
         </Button>
       </div>
-      
+
       <Table>
         <TableHeader>
           <TableRow>
@@ -666,8 +687,8 @@ export function StatusSection() {
               <TableCell>{status.nome}</TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
-                  <div 
-                    className="w-6 h-6 rounded" 
+                  <div
+                    className="w-6 h-6 rounded"
                     style={{ backgroundColor: status.cor }}
                   />
                   {status.cor}
@@ -686,7 +707,7 @@ export function StatusSection() {
           ))}
         </TableBody>
       </Table>
-      
+
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -701,6 +722,7 @@ export function StatusSection() {
 ```
 
 ### Critérios de Sucesso
+
 - [ ] CRUD completo funciona
 - [ ] Status aparecem nos selects
 - [ ] Filtros por tipo funcionam
@@ -709,6 +731,47 @@ export function StatusSection() {
 
 ---
 
-**Este arquivo contém exemplos detalhados. Para resumo, veja REFACTOR_PLAN.md**
+## 🛠️ FASE 6.5: Estabilização de Formulários e Consultas Críticas (Hotfixes 2026)
 
-**Última Atualização:** 15/12/2025
+### Objetivo Técnico
+
+Sanear dores de operação diária apontadas via UX (Telas Brancas, Inputs Limpando e Dropdowns Descompassivos).
+
+### Lista de Correções Mapeadas
+
+1. **Cadastro de Devolução:** Binding do formulário falhando ao fixar um input Mecânico criado no Modal (`onValueChange`).
+2. **Cadastro C/M/F em Modal:** A auto-seleção após o insert rápido perde a id do form nativo.
+3. **Busca Fantasma:** Formulário de Busca exibe lixo de memória se a Query retonar String Nula na base de IndexedDB. Expandir os campos `includes()` para pegar 'Nome Fantasia'.
+4. **Case Insensitive Ponderado:** `toLowerCase()` ou Expressão Regular `i` no input de busca rápida do Card Lote Lançamentos.
+5. **Estado Visual de Produto e Status:** Reversão acidental de Filtros no `SectionState` durante re-renders em Garantia.
+6. **Card de Lotes:** Lógica de clique do Popover (...) conflitante com Invocação de Formulário Novo.
+
+---
+
+## 📘 FASES 28 a 32: Expansão Analítica e Novos Requisitos
+
+### Fase 28: Utilitário de Implantação de Base
+
+Um script de Conversor autônomo. O banco antigo gerava os cadastros e não era conversível. Propõe-se carregar os dados antigos por PDF, raspar suas Strings via Utils para JSON legível, e subjulgar no `IDBRequest` num loop para popular dados massivos sem ferir novos.
+
+### Fase 29: Agrupamento Lógico de Relatório Nativos
+
+Na Geração de `Blob/Pdf` base de Garantia (que atualmente lança linha por linha), introduzir lógica matemática com Reduce: aglutinar Itens (`itemId` baseados ou `produto.codigo` baseados) em uma única Row, multiplicando o numeral final a ser impresso na tabela. Botão Nativos na UI chamando o `exportPDF()`.
+
+### Fase 30: Kanban Componentizado (Card Dinâmico)
+
+Separar Array completo de lotes em Listas por `status` pré-mapeados (`Aberto, Enviado, Finalizado`). Refletir `cardBorderCode` de acordo com a paleta nativa. Adicionar `Tooltip Popup` interceptando Hover event no Header Card, buscando os dados filho dos lotes na tela por _lazy display_.
+
+### Fase 31: Bancos Opcionais N:1
+
+A Tabela `Supplier` passa a ter Relacionamento One-To-Many (1 Produto: N Códigos Diferentes). A Busca base refatora-se para bater no objeto Indexado do array, não mais String crua. Expor código Externo nos Perfils Globais.
+
+### Fase 32: Lógica de Trigger Temporizado (SLA Wake Up)
+
+Atrelar timestamp `Date.now()` ao momento de alteração do CRUD de Garantia. Criar Hook Assíncrono/Scheduled Global que compara a Diferença Absoluta de dias `(Hoje - timestamp)`, se `diff >= Status.SLA_Limit`, emitir visual Alert na Board.
+
+---
+
+**Este arquivo contém a estrutura modular pensada. Para acompanhamento, veja REFACTOR_PROGRESS.md**
+
+**Última Atualização:** 25/02/2026

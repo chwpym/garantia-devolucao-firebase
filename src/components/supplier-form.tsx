@@ -18,8 +18,8 @@ import { CardContent, CardFooter } from '@/components/ui/card';
 import { DialogClose, DialogFooter } from './ui/dialog';
 
 const formSchema = z.object({
-  razaoSocial: z.string().min(2, { message: 'A razão social deve ter pelo menos 2 caracteres.' }),
-  nomeFantasia: z.string().min(2, { message: 'O nome fantasia deve ter pelo menos 2 caracteres.' }),
+  razaoSocial: z.string().min(2, { message: 'A razão social deve ter pelo menos 2 caracteres.' }).transform(val => val.trim().toUpperCase()),
+  nomeFantasia: z.string().min(2, { message: 'O nome fantasia deve ter pelo menos 2 caracteres.' }).transform(val => val.trim().toUpperCase()),
   cnpj: z.string().optional(),
   cep: z.string().optional(),
   endereco: z.string().optional(),

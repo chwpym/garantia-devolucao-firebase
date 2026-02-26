@@ -15,7 +15,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { StatusBadge } from '../ui/status-badge';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Pencil, Trash2, Search, FileDown, ArrowUpDown, SearchX } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, Search, FileDown, FileText, ArrowUpDown, SearchX, AlertCircle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { EmptyState } from '../ui/empty-state';
@@ -270,156 +271,148 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
     );
 
     return (
-        <div className='space-y-8'>
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">Consulta de Devoluções</h1>
-                <p className="text-lg text-muted-foreground">
-                    Visualize, filtre e gerencie as devoluções registradas. Por padrão, são exibidos os últimos 30 dias.
-                </p>
-            </div>
-
-            <Card className="shadow-lg">
-                <CardHeader>
-                    <CardTitle>Devoluções Registradas</CardTitle>
-                    <CardDescription>
-                        Cada linha representa um item dentro de uma devolução. Use os filtros para refinar sua busca.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex flex-col md:flex-row gap-4 mb-4">
-                        <SearchInput
-                            placeholder="Buscar por cliente, peça, requisição, etc..."
-                            value={searchTerm}
-                            onChange={(e) => setFilters({ ...filters, searchTerm: e.target.value })}
-                            onClear={() => setFilters({ ...filters, searchTerm: '' })}
-                            className="w-full"
-                            containerClassName="relative flex-1 max-w-full"
-                        />
+        <div className="flex flex-col h-full space-y-4">
+            {/* 1. Cabeçalho Fixo */}
+            <div className="flex-none space-y-2">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Consulta de Devoluções</h1>
+                    <p className="text-sm text-muted-foreground">
+                        Visualize, filtre e gerencie as devoluções registradas (últimos 30 dias por padrão).
+                    </p>
+                </div>
+                <div className="flex flex-col md:flex-row gap-4">
+                    <SearchInput
+                        placeholder="Buscar por cliente, peça, requisição, etc..."
+                        value={searchTerm}
+                        onChange={(e) => setFilters({ ...filters, searchTerm: e.target.value })}
+                        onClear={() => setFilters({ ...filters, searchTerm: '' })}
+                        className="flex-1"
+                    />
+                    <div className="flex gap-2">
                         <DatePickerWithRange
                             date={dateRange}
                             setDate={(range) => setFilters({ ...filters, dateRange: range })}
                         />
-                    </div>
-                    <div className="flex gap-2 mb-4">
-                        <Button onClick={handleExportPdf} variant="outline" disabled={sortedDevolucoes.length === 0}>
-                            <FileDown className="mr-2 h-4 w-4" />
-                            Exportar para PDF
+                        <Button onClick={handleExportPdf} variant="outline" size="icon" title="Exportar PDF" disabled={sortedDevolucoes.length === 0}>
+                            <FileDown className="h-4 w-4" />
                         </Button>
-                        <Button onClick={handleExportCsv} variant="outline" disabled={sortedDevolucoes.length === 0}>
-                            <FileDown className="mr-2 h-4 w-4" />
-                            Exportar para CSV
+                        <Button onClick={handleExportCsv} variant="outline" size="icon" title="Exportar CSV" disabled={sortedDevolucoes.length === 0}>
+                            <FileText className="h-4 w-4" />
                         </Button>
                     </div>
-                    <div className="space-y-4">
-                        <div className="border rounded-md">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <SortableHeader sortKey="id">ID Dev.</SortableHeader>
-                                        <SortableHeader sortKey="dataDevolucao">Data Dev.</SortableHeader>
-                                        <SortableHeader sortKey="cliente">Cliente</SortableHeader>
-                                        <SortableHeader sortKey="requisicaoVenda">Requisição</SortableHeader>
-                                        <SortableHeader sortKey="codigoPeca">Código Peça</SortableHeader>
-                                        <SortableHeader sortKey="descricaoPeca">Descrição Peça</SortableHeader>
-                                        <SortableHeader sortKey="quantidade">Qtd.</SortableHeader>
-                                        <SortableHeader sortKey="acaoRequisicao">Ação Req.</SortableHeader>
-                                        <SortableHeader sortKey="status">Status</SortableHeader>
-                                        <TableHead className="w-[50px] text-right">Ações</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {sortedDevolucoes.length > 0 ? (
-                                        sortedDevolucoes.slice(0, visibleCount).map(item => (
-                                            <TableRow key={`${item.id}-${item.itemId || 'no-item'}`}>
-                                                <TableCell className="font-medium text-muted-foreground">{item.id}</TableCell>
-                                                <TableCell>{item.dataDevolucao ? format(parseISO(item.dataDevolucao), 'dd/MM/yyyy') : '-'}</TableCell>
-                                                <TableCell>{item.cliente}</TableCell>
-                                                <TableCell>{item.requisicaoVenda}</TableCell>
-                                                <TableCell className="font-medium">{item.codigoPeca || '-'}</TableCell>
-                                                <TableCell>{item.descricaoPeca || '-'}</TableCell>
-                                                <TableCell>{item.quantidade || '-'}</TableCell>
-                                                <TableCell>
-                                                    <StatusBadge type="acao" status={item.acaoRequisicao} />
-                                                </TableCell>
-                                                <TableCell>
-                                                    <StatusBadge type="devolucao" status={item.status} />
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                                                <span className="sr-only">Abrir menu</span>
-                                                                <MoreHorizontal className="h-4 w-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuItem onClick={() => onEdit(item.id)}>
-                                                                <Pencil className="mr-2 h-4 w-4" />
-                                                                Editar / Detalhes
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem onClick={() => setDeleteTarget(item)} className="text-destructive focus:text-destructive">
-                                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                                Excluir
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    ) : (
-                                        <TableRow>
-                                            <TableCell colSpan={10} className="py-12">
-                                                {searchTerm || dateRange?.from ? (
-                                                    <EmptyState 
-                                                        icon={SearchX}
-                                                        title="Nenhuma devolução encontrada"
-                                                        description="Não encontramos registros para os filtros aplicados. Tente ajustar sua busca."
-                                                        action={{
-                                                            label: "Limpar Filtros",
-                                                            onClick: () => setFilters(initialFilters)
-                                                        }}
-                                                    />
-                                                ) : (
-                                                    <EmptyState 
-                                                        icon={Search}
-                                                        title="Nenhuma devolução registrada"
-                                                        description="Inicie uma busca ou aplique filtros para ver os registros de devolução."
-                                                    />
-                                                )}
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </div>
+                </div>
+            </div>
 
-                        {visibleCount < sortedDevolucoes.length && (
-                            <div className="flex justify-center pt-2">
-                                <Button
-                                    variant="outline"
-                                    onClick={() => setVisibleCount(prev => prev + 50)}
-                                    className="w-full max-w-xs"
-                                >
-                                    Carregar Mais (Exibindo {visibleCount} de {sortedDevolucoes.length})
-                                </Button>
-                            </div>
+            {/* 2. Tabela com Scroll Controlado */}
+            <div className="flex-1 min-h-0 overflow-auto rounded-md border bg-card">
+                <Table>
+                    <TableHeader className="sticky top-0 bg-secondary/80 backdrop-blur-sm z-10 shadow-sm">
+                        <TableRow>
+                            <SortableHeader sortKey="id">ID Dev.</SortableHeader>
+                            <SortableHeader sortKey="dataDevolucao">Data Dev.</SortableHeader>
+                            <SortableHeader sortKey="cliente">Cliente</SortableHeader>
+                            <SortableHeader sortKey="requisicaoVenda">Requisição</SortableHeader>
+                            <SortableHeader sortKey="codigoPeca">Código Peça</SortableHeader>
+                            <SortableHeader sortKey="descricaoPeca">Descrição Peça</SortableHeader>
+                            <SortableHeader sortKey="quantidade">Qtd.</SortableHeader>
+                            <SortableHeader sortKey="acaoRequisicao">Ação Req.</SortableHeader>
+                            <SortableHeader sortKey="status">Status</SortableHeader>
+                            <TableHead className="w-[50px] text-right">Ações</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {sortedDevolucoes.length > 0 ? (
+                            sortedDevolucoes.slice(0, visibleCount).map(item => (
+                                <TableRow key={`${item.id}-${item.itemId || 'no-item'}`}>
+                                    <TableCell className="font-medium text-muted-foreground">{item.id}</TableCell>
+                                    <TableCell>{item.dataDevolucao ? format(parseISO(item.dataDevolucao), 'dd/MM/yyyy') : '-'}</TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-1.5">
+                                            <span>{item.cliente}</span>
+                                            {item.mecanico && (
+                                                <TooltipProvider>
+                                                    <Tooltip delayDuration={200}>
+                                                        <TooltipTrigger asChild>
+                                                            <AlertCircle className="h-4 w-4 text-amber-500 cursor-help shrink-0 transition-transform hover:scale-110" />
+                                                        </TooltipTrigger>
+                                                        <TooltipContent side="top" className="font-medium shadow-md border-amber-500/20">
+                                                            <div className="flex flex-col gap-1 px-1 py-0.5">
+                                                                <span className="text-[10px] text-amber-500 uppercase font-bold tracking-wider">Mecânico Vinculado</span>
+                                                                <span className="text-sm">{item.mecanico}</span>
+                                                            </div>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            )}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>{item.requisicaoVenda}</TableCell>
+                                    <TableCell className="font-medium">{item.codigoPeca || '-'}</TableCell>
+                                    <TableCell>{item.descricaoPeca || '-'}</TableCell>
+                                    <TableCell>{item.quantidade || '-'}</TableCell>
+                                    <TableCell>
+                                        <StatusBadge type="acao" status={item.acaoRequisicao} />
+                                    </TableCell>
+                                    <TableCell>
+                                        <StatusBadge type="devolucao" status={item.status} />
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                                    <span className="sr-only">Abrir menu</span>
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem onClick={() => onEdit(item.id)}>
+                                                    <Pencil className="mr-2 h-4 w-4" /> Editar
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    onClick={() => setDeleteTarget(item)}
+                                                    className="text-destructive focus:text-destructive"
+                                                >
+                                                    <Trash2 className="mr-2 h-4 w-4" /> Excluir
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={10} className="h-24 text-center">
+                                    <EmptyState
+                                        icon={SearchX}
+                                        title="Nenhuma devolução encontrada"
+                                        description="Tente ajustar os filtros ou a busca."
+                                    />
+                                </TableCell>
+                            </TableRow>
                         )}
+                    </TableBody>
+                </Table>
 
-                        {sortedDevolucoes.length > 0 && visibleCount >= sortedDevolucoes.length && (
-                            <p className="text-center text-xs text-muted-foreground">
-                                Todos os {sortedDevolucoes.length} registros foram carregados.
-                            </p>
-                        )}
+                {visibleCount < sortedDevolucoes.length && (
+                    <div className="flex justify-center p-4 border-t bg-muted/10">
+                        <Button
+                            variant="outline"
+                            onClick={() => setVisibleCount(prev => prev + 50)}
+                            className="w-full max-w-xs"
+                        >
+                            Carregar Mais ({visibleCount}/{sortedDevolucoes.length})
+                        </Button>
                     </div>
-                </CardContent>
-            </Card>
+                )}
+            </div>
 
-            <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+            {/* --- Dialogs --- */}
+            <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+                        <AlertDialogTitle>Excluir Devolução</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Tem certeza que deseja excluir esta devolução? Todos os itens associados a ela também serão removidos. Esta ação não pode ser desfeita.
+                            Tem certeza que deseja excluir esta devolução (ID {deleteTarget?.id})? Esta ação não pode ser desfeita.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>

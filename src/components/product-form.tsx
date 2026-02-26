@@ -16,8 +16,8 @@ import { Button } from '@/components/ui/button';
 import { DialogFooter } from './ui/dialog';
 
 const formSchema = z.object({
-  codigo: z.string().min(1, { message: 'O código é obrigatório.' }),
-  descricao: z.string().min(2, { message: 'A descrição deve ter pelo menos 2 caracteres.' }),
+  codigo: z.string().min(1, { message: 'O código é obrigatório.' }).transform(val => val.trim().toUpperCase()),
+  descricao: z.string().min(2, { message: 'A descrição deve ter pelo menos 2 caracteres.' }).transform(val => val.trim().toUpperCase()),
   referencia: z.string().optional(),
   marca: z.string().optional(),
   codigoExterno: z.string().optional(),
@@ -100,24 +100,38 @@ export default function ProductForm({ onSave, editingProduct, onClear }: Product
 
   const FormContent = (
     <div className="space-y-4 pt-4">
-      <FormField
-        name="codigo"
-        control={form.control}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Código</FormLabel>
-            <FormControl>
-              <Input
-                placeholder="Código principal do produto"
-                {...field}
-                // O campo agora é sempre habilitado, a lógica de bloqueio está no 'handleSave'.
-                disabled={false}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      <div className='grid grid-cols-2 gap-4'>
+        <FormField
+          name="codigo"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Código</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="Código original"
+                  {...field}
+                  disabled={false}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          name="codigoExterno"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Código Externo (ERP)</FormLabel>
+              <FormControl>
+                <Input placeholder="Código no sistema" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
       <FormField
         name="descricao"
         control={form.control}
@@ -159,19 +173,6 @@ export default function ProductForm({ onSave, editingProduct, onClear }: Product
           )}
         />
       </div>
-      <FormField
-        name="codigoExterno"
-        control={form.control}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Código Externo (ERP)</FormLabel>
-            <FormControl>
-              <Input placeholder="Código no sistema externo" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
     </div>
   );
 

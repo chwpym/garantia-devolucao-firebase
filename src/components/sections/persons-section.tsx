@@ -121,11 +121,12 @@ export default function PersonsSection() {
   }, [loadPersons, toast, isDbReady]);
 
   const filteredPersons = useMemo(() => {
-    const lowercasedTerm = searchTerm.toLowerCase();
+    const term = searchTerm || '';
+    const lowercasedTerm = term.toLowerCase();
     if (!lowercasedTerm) return persons;
 
     return persons.filter(person =>
-      smartSearch(person, searchTerm, ['nome', 'nomeFantasia', 'cpfCnpj', 'telefone', 'cidade', 'codigoExterno'])
+      smartSearch(person, term, ['nome', 'nomeFantasia', 'cpfCnpj', 'telefones', 'cidade', 'codigoExterno'])
     );
   }, [persons, searchTerm]);
 
@@ -404,7 +405,7 @@ export default function PersonsSection() {
                   ))
                 ) : (
                   <TableRow>
-                     <TableCell colSpan={8} className="py-12">
+                     <TableCell colSpan={9} className="py-12">
                       {searchTerm ? (
                         <EmptyState 
                           icon={SearchX}

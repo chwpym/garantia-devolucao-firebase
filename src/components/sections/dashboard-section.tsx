@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils';
 import { WARRANTY_STATUSES, type Warranty } from '@/lib/types';
 import { DatePickerWithRange } from '../ui/date-range-picker';
 import { DateRange } from 'react-day-picker';
+import { useAuth } from '@/hooks/use-auth';
 
 
 // Tipos para Garantias
@@ -59,6 +60,8 @@ interface DevolucaoStats {
     totalPecas: number;
     clientesUnicos: number;
     mecanicosUnicos: number;
+    pendentes: number;
+    finalizadas: number;
 }
 
 interface DashboardSectionProps {
@@ -102,6 +105,7 @@ const CHART_COLORS = [
 ];
 
 export default function DashboardSection({ openTab: setActiveView }: DashboardSectionProps) {
+    const { user } = useAuth();
     // Estado para Garantias
     const [stats, setStats] = useState<DashboardStats>({ total: 0, totalDefeitos: 0, pendentes: 0, aprovadas: 0, recusadas: 0, pagas: 0 });
     const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
@@ -205,7 +209,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
 
             const now = new Date();
             const monthlyCounts: { [key: string]: number } = {};
-            for (let i = 11; i >= 0; i--) {
+            for (let i = 5; i >= 0; i--) {
                 const month = subMonths(now, i);
                 const monthKey = format(month, 'MMM/yy', { locale: ptBR });
                 monthlyCounts[monthKey] = 0;
@@ -251,11 +255,20 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
             }).slice(0, 5);
             setRecentDevolucoes(recentFlatDevolucoes);
 
+            let devPendentes = 0;
+            let devFinalizadas = 0;
+            allDevolucoes.forEach(d => {
+                 if (d.status === 'Recebido' || d.status === 'Aguardando Peças' || !d.status) devPendentes++;
+                 else if (d.status === 'Finalizada') devFinalizadas++;
+            });
+
             setDevolucaoStats({
                 totalDevolucoes: allDevolucoes.length,
                 totalPecas: flatItems.reduce((acc, item) => acc + item.quantidade, 0),
                 clientesUnicos: new Set(allDevolucoes.map(d => d.cliente)).size,
                 mecanicosUnicos: new Set(allDevolucoes.map(d => d.mecanico).filter(Boolean)).size,
+                pendentes: devPendentes,
+                finalizadas: devFinalizadas,
             });
 
             const sortedWarranties = [...allWarranties].sort((a, b) => {
@@ -306,7 +319,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                 </div>
             </div>
 
-            <Tabs defaultValue="garantias" className="w-full">
+            <Tabs defaultValue={user?.profile?.preferredDashboardTab || "garantias"} className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="garantias" className={cn("border-2 border-transparent data-[state=active]:border-primary")}>Garantias</TabsTrigger>
                     <TabsTrigger value="devolucoes" className={cn("border-2 border-transparent data-[state=active]:border-[hsl(var(--accent-blue))]")}>Devoluções</TabsTrigger>
@@ -388,7 +401,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                     </div>
 
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7 mt-6">
-                        <Card className="shadow-lg lg:col-span-2">
+                        <Card className="shadow-lg lg:col-span-3">
                             <CardHeader>
                                 <CardTitle>Status das Garantias</CardTitle>
                                 <CardDescription>Distribuição dos status de todas as garantias.</CardDescription>
@@ -410,10 +423,10 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                             </CardContent>
                         </Card>
 
-                        <Card className="shadow-lg lg:col-span-5">
+                        <Card className="shadow-lg lg:col-span-4">
                             <CardHeader>
                                 <CardTitle>Garantias por Mês</CardTitle>
-                                <CardDescription>Volume de registros nos últimos 12 meses.</CardDescription>
+                                <CardDescription>Volume de registros nos últimos 6 meses.</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 {isLoading ? <Skeleton className="h-48 w-full" /> : (
@@ -529,7 +542,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
 
                 </TabsContent>
                 <TabsContent value="devolucoes" className="mt-6 animate-in fade-in zoom-in-95 duration-300">
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
                         <Card className="shadow-md hover:shadow-lg transition-all border-2 border-transparent hover:border-primary/50 group">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">Total de Devoluções</CardTitle>
@@ -568,6 +581,26 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                             <CardContent>
                                 {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{devolucaoStats?.mecanicosUnicos}</div>}
                                 <p className="text-xs text-muted-foreground">Envolvidos em devoluções</p>
+                            </CardContent>
+                        </Card>
+                        <Card className="shadow-md hover:border-warning transition-colors border-2 border-transparent">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
+                                <Hourglass className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{devolucaoStats?.pendentes}</div>}
+                                <p className="text-xs text-muted-foreground">Recebidas ou aguardando peças</p>
+                            </CardContent>
+                        </Card>
+                        <Card className="shadow-md hover:border-success transition-colors border-2 border-transparent">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Finalizadas</CardTitle>
+                                <Package className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{devolucaoStats?.finalizadas}</div>}
+                                <p className="text-xs text-muted-foreground">Devoluções concluídas</p>
                             </CardContent>
                         </Card>
                     </div>

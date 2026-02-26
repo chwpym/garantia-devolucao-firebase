@@ -175,6 +175,7 @@ export interface UserProfile {
   displayName?: string;
   photoURL?: string;
   status: UserStatus;
+  preferredDashboardTab?: 'garantias' | 'devolucoes';
 }
 
 // --- Custom Status Management ---

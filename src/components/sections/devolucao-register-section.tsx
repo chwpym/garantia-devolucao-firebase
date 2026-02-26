@@ -9,23 +9,29 @@ import { useToast } from '@/hooks/use-toast';
 import * as db from '@/lib/db';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Trash2, Search, Clock, CalendarIcon } from 'lucide-react';
+import { PlusCircle, Trash2, Search, Clock, CalendarIcon, SearchX, LayoutList, Plus, Pencil } from 'lucide-react';
 import type { ReturnStatus, Product, ItemDevolucao, Person } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
-import { Combobox } from '@/components/ui/combobox';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import ComboboxPerson from '../combobox-person';
 import { Textarea } from '@/components/ui/textarea';
-import { parseISO, isSameDay } from 'date-fns';
+import { parseISO, isSameDay, format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { QuickRegisterDialog } from '@/components/quick-register-dialog';
 import { useAppStore } from '@/store/app-store';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Label } from '@/components/ui/label';
 import ComboboxSearch from '@/components/combobox-search';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import ComboboxProduct from '@/components/combobox-product';
+import { smartSearch } from '@/lib/search-utils';
 
 const itemDevolucaoSchema = z.object({
     id: z.number().optional(),
@@ -67,7 +73,7 @@ const defaultFormValues: DevolucaoFormValues = {
 
 type DevolucaoComItem = Awaited<ReturnType<typeof db.getAllDevolucoes>>[0] & { item: ItemDevolucao };
 
-function RecentDevolutionsList() {
+function RecentDevolutionsList({ onEdit }: { onEdit: (id: number) => void }) {
     const [recentItems, setRecentItems] = useState<DevolucaoComItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [filterDate, setFilterDate] = useState<Date | undefined>(new Date());
@@ -116,45 +122,74 @@ function RecentDevolutionsList() {
                     <DatePicker date={filterDate} setDate={setFilterDate} />
                 </div>
             </CardHeader>
-            <CardContent className="flex-1 overflow-auto p-0 scrollbar-thin scrollbar-thumb-muted">
+            <CardContent className="flex-1 overflow-auto p-4 space-y-2 scrollbar-thin scrollbar-thumb-muted">
                 {isLoading ? (
-                    <div className="p-4 space-y-3">
-                        <Skeleton className="h-12 w-full" />
-                        <Skeleton className="h-12 w-full" />
-                        <Skeleton className="h-12 w-full" />
+                    <div className="space-y-3">
+                        <Skeleton className="h-14 w-full" />
+                        <Skeleton className="h-14 w-full" />
+                        <Skeleton className="h-14 w-full" />
                     </div>
-                ) : (
-                    <Table>
-                        <TableHeader className="bg-muted/10 sticky top-0 z-10">
-                            <TableRow className="hover:bg-transparent">
-                                <TableHead className="text-[10px] h-8 px-2">Cliente/Peça</TableHead>
-                                <TableHead className="text-[10px] h-8 px-2 text-right">Qtd.</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {filteredItems.length > 0 ? (
-                                filteredItems.map((devolucao, index) => (
-                                    <TableRow key={`${devolucao.id}-${devolucao.item.id}-${index}`} className="group transition-colors h-14">
-                                        <TableCell className="px-2 py-2">
-                                            <div className="flex flex-col gap-0.5">
-                                                <div className="font-bold text-xs truncate max-w-[140px]">{devolucao.cliente}</div>
-                                                <div className="text-[10px] text-muted-foreground truncate max-w-[140px] italic">{devolucao.item.descricaoPeca}</div>
+                ) : filteredItems.length > 0 ? (
+                    filteredItems.map((devolucao, index) => (
+                        <TooltipProvider key={`${devolucao.id}-${devolucao.item.id}-${index}`}>
+                            <Tooltip delayDuration={300}>
+                                <TooltipTrigger asChild>
+                                    <div className="relative flex flex-col p-3 rounded-md border bg-card hover:bg-muted/50 transition-colors cursor-default group text-left">
+                                        <div className="flex items-center justify-between mb-1">
+                                            <span className="text-[10px] font-mono text-muted-foreground group-hover:text-foreground transition-colors">#{devolucao.id}</span>
+                                            <span className="text-xs font-bold text-primary px-2 bg-primary/10 rounded-full py-0.5">Qtd: {devolucao.item.quantidade}</span>
+                                        </div>
+                                        <div className="w-full pr-6">
+                                            <span className="text-xs font-semibold truncate block" title={devolucao.cliente}>{devolucao.cliente}</span>
+                                        </div>
+                                        <div className="w-full mt-1 pr-6">
+                                            <span className="text-[10px] text-muted-foreground font-mono truncate block" title={devolucao.item.descricaoPeca}>{devolucao.item.descricaoPeca}</span>
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="absolute bottom-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 hover:bg-muted shadow-sm"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                onEdit(devolucao.id!);
+                                            }}
+                                            title="Editar Devolução"
+                                        >
+                                            <Pencil className="h-3 w-3" />
+                                        </Button>
+                                    </div>
+                                </TooltipTrigger>
+                                <TooltipContent side="left" className="w-[300px] p-3 shadow-lg border">
+                                    <div className="space-y-3">
+                                        <div>
+                                            <p className="text-[10px] font-mono text-muted-foreground mb-0.5">REGISTRADO EM</p>
+                                            <p className="text-xs font-medium">{devolucao.dataDevolucao ? format(parseISO(devolucao.dataDevolucao), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : 'Data Indisponível'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-mono text-muted-foreground mb-0.5">CLIENTE</p>
+                                            <p className="text-xs font-semibold">{devolucao.cliente}</p>
+                                        </div>
+                                        {devolucao.mecanico && (
+                                            <div>
+                                                <p className="text-[10px] font-mono text-muted-foreground mb-0.5">MECÂNICO</p>
+                                                <p className="text-xs">{devolucao.mecanico}</p>
                                             </div>
-                                        </TableCell>
-                                        <TableCell className="px-2 py-0 text-right font-mono font-bold text-primary">
-                                            {devolucao.item.quantidade}
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            ) : (
-                                <TableRow>
-                                    <TableCell colSpan={2} className="py-8 text-center text-muted-foreground italic text-xs">
-                                        Nenhum registro nesta data.
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
+                                        )}
+                                        <div>
+                                            <p className="text-[10px] font-mono text-muted-foreground mb-0.5">ITEM DEVOLVIDO (QTD: {devolucao.item.quantidade})</p>
+                                            <p className="text-xs">{devolucao.item.descricaoPeca}</p>
+                                        </div>
+                                    </div>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    ))
+                ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-center space-y-3 text-muted-foreground">
+                        <LayoutList className="h-8 w-8 opacity-20" />
+                        <p className="text-xs italic">Nenhum registro nesta data.</p>
+                    </div>
                 )}
             </CardContent>
         </Card>
@@ -164,8 +199,10 @@ function RecentDevolutionsList() {
 
 
 export default function DevolucaoRegisterSection({ editingId, onSave }: DevolucaoRegisterSectionProps) {
-    const { persons, isDataLoaded, reloadData, statuses } = useAppStore();
+    const { persons, products, isDataLoaded, reloadData, statuses, handleEditDevolucao } = useAppStore();
     const [isProductModalOpen, setProductModalOpen] = useState(false);
+    const [isClientModalOpen, setClientModalOpen] = useState(false);
+    const [isMechanicModalOpen, setMechanicModalOpen] = useState(false);
     const [activeItemIndex, setActiveItemIndex] = useState<number | null>(null);
     const [shouldExit, setShouldExit] = useState(true);
 
@@ -306,13 +343,27 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
         setActiveItemIndex(null);
     };
 
+    const handleClientSaved = (newPerson: Person) => {
+        if (newPerson && newPerson.nome) {
+            form.setValue('cliente', newPerson.nome);
+        }
+        setClientModalOpen(false);
+    };
+
+    const handleMechanicSaved = (newPerson: Person) => {
+        if (newPerson && newPerson.nome) {
+            form.setValue('mecanico', newPerson.nome);
+        }
+        setMechanicModalOpen(false);
+    };
+
     const handleProductSelect = (product: Product, index: number) => {
         form.setValue(`itens.${index}.codigoPeca`, product.codigo);
         form.setValue(`itens.${index}.descricaoPeca`, product.descricao);
     };
 
     const clients = useMemo(() => {
-        const filtered = persons.filter(p => p.tipo === 'Cliente' || p.tipo === 'Ambos');
+        const filtered = persons.filter(p => !p.tipo || p.tipo.toLowerCase() === 'cliente' || p.tipo.toLowerCase() === 'ambos');
         const nameCounts = new Map<string, number>();
         filtered.forEach(p => nameCounts.set(p.nome, (nameCounts.get(p.nome) || 0) + 1));
 
@@ -325,7 +376,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
     }, [persons]);
 
     const mechanics = useMemo(() => {
-        const filtered = persons.filter(p => p.tipo === 'Mecânico' || p.tipo === 'Ambos');
+        const filtered = persons.filter(p => !p.tipo || p.tipo.toLowerCase() === 'mecânico' || p.tipo.toLowerCase() === 'mecanico' || p.tipo.toLowerCase() === 'ambos');
         const nameCounts = new Map<string, number>();
         filtered.forEach(p => nameCounts.set(p.nome, (nameCounts.get(p.nome) || 0) + 1));
 
@@ -337,8 +388,8 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
         });
     }, [persons]);
 
-    const clientOptions = useMemo(() => clients.map(c => ({ value: c.displayName, label: c.displayName, key: c.id })), [clients]);
-    const mechanicOptions = useMemo(() => mechanics.map(m => ({ value: m.displayName, label: m.displayName, key: m.id })), [mechanics]);
+    const clientOptions = useMemo(() => clients.map(c => ({ value: c.displayName, label: c.displayName, key: c.id?.toString() || c.nome, keywords: [c.nome || '', c.cpfCnpj || '', c.nomeFantasia || ''] })), [clients]);
+    const mechanicOptions = useMemo(() => mechanics.map(m => ({ value: m.displayName, label: m.displayName, key: m.id?.toString() || m.nome, keywords: [m.nome || '', m.cpfCnpj || '', m.nomeFantasia || ''] })), [mechanics]);
 
     // Dynamic statuses for Devolução
     const returnStatuses = useMemo(() => {
@@ -364,12 +415,12 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
 
     return (
         <>
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 max-w-full lg:h-[calc(100vh-140px)] overflow-hidden">
-            <div className="lg:col-span-3 h-full overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-muted">
-                <Card className='border-muted/40 shadow-sm'>
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 max-w-full h-full overflow-hidden min-h-0">
+            <div className="lg:col-span-3 h-full overflow-hidden pr-1">
+                <Card className='h-full flex flex-col shadow-sm border-0 bg-transparent lg:bg-card lg:border lg:shadow-lg'>
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)}>
-                        <CardHeader className='pb-4 border-b bg-muted/5'>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 flex flex-col min-h-0">
+                        <CardHeader className='flex-none pb-4 border-b bg-muted/5'>
                             <div className='flex items-center justify-between'>
                                 <div>
                                     <CardTitle className='text-xl flex items-center gap-2'>
@@ -385,7 +436,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                 )}
                             </div>
                         </CardHeader>
-                        <CardContent className='pt-6 space-y-6'>
+                        <CardContent className='flex-1 overflow-y-auto pt-6 space-y-6'>
                             <div className='bg-muted/5 border rounded-lg p-4 space-y-4'>
                                 <div className='flex items-center justify-between'>
                                     <h3 className='text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2'>
@@ -398,7 +449,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                 </div>
 
                                 {fields.map((item, index) => (
-                                    <Card key={item.id} className='relative bg-background/50 border-muted/30'>
+                                    <Card key={item.id} className='relative bg-transparent shadow-none border border-muted/20'>
                                         <CardHeader className='p-3 border-b flex flex-row items-center justify-between'>
                                             <span className='text-xs font-bold text-primary italic'>Peça #{index + 1}</span>
                                             {fields.length > 1 && (
@@ -420,29 +471,21 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                                     name={`itens.${index}.codigoPeca`}
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel className='text-xs'>Código <span className='text-destructive'>*</span></FormLabel>
-                                                            <FormControl>
-                                                                <div className="flex gap-2">
-                                                                    <Input
-                                                                        placeholder="Aguardando..."
-                                                                        {...field}
-                                                                        onBlur={(e) => fetchProductInfo(index, e.target.value)}
-                                                                        className='h-9 transition-all focus:ring-1'
-                                                                    />
-                                                                    <Button
-                                                                        type="button"
-                                                                        variant="outline"
-                                                                        size="icon"
-                                                                        className="h-9 w-9 shrink-0"
-                                                                        onClick={() => {
-                                                                            setActiveItemIndex(index);
-                                                                            setProductModalOpen(true);
-                                                                        }}
-                                                                    >
-                                                                        <Search className="h-4 w-4" />
-                                                                    </Button>
-                                                                </div>
-                                                            </FormControl>
+                                                            <FormLabel className='text-xs'>Código / Peça <span className='text-destructive'>*</span></FormLabel>
+                                                            <ComboboxProduct
+                                                                value={field.value}
+                                                                onProductSelect={(product) => handleProductSelect(product, index)}
+                                                                onInputChange={(val) => {
+                                                                    field.onChange(val);
+                                                                    if (val.length >= 3) {
+                                                                        fetchProductInfo(index, val);
+                                                                    }
+                                                                }}
+                                                                onAddNew={() => {
+                                                                    setActiveItemIndex(index);
+                                                                    setProductModalOpen(true);
+                                                                }}
+                                                            />
                                                             <FormMessage className='text-[10px]' />
                                                         </FormItem>
                                                     )}
@@ -455,7 +498,15 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                                     render={({ field }) => (
                                                         <FormItem>
                                                             <FormLabel className='text-xs'>Descrição <span className='text-destructive'>*</span></FormLabel>
-                                                            <FormControl><Input placeholder="Descrição do produto" {...field} className='h-9' /></FormControl>
+                                                            <FormControl>
+                                                                <Input 
+                                                                    placeholder="Descrição do produto" 
+                                                                    {...field} 
+                                                                    className="h-9 bg-muted/50 cursor-not-allowed text-muted-foreground" 
+                                                                    readOnly 
+                                                                    tabIndex={-1} 
+                                                                />
+                                                            </FormControl>
                                                             <FormMessage className='text-[10px]' />
                                                         </FormItem>
                                                     )}
@@ -487,21 +538,27 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                 ))}
                             </div>
 
-                            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                                <FormField
+                            <div className='bg-muted/10 border-2 rounded-lg p-4 space-y-4'>
+                                <h3 className='text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2'>
+                                    Dados Fiscais e de Venda
+                                </h3>
+                                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                                    <FormField
                                     control={form.control}
                                     name="cliente"
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Cliente <span className='text-destructive'>*</span></FormLabel>
-                                            <Select onValueChange={field.onChange} value={field.value || undefined}>
-                                                <FormControl><SelectTrigger className='h-10'><SelectValue placeholder="Selecione um cliente" /></SelectTrigger></FormControl>
-                                                <SelectContent>
-                                                    {clients.map(p => (
-                                                        <SelectItem key={`${p.id}-${p.displayName}`} value={p.displayName}>{p.displayName}</SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
+                                            <ComboboxPerson
+                                                value={field.value}
+                                                options={clientOptions}
+                                                onPersonSelect={field.onChange}
+                                                onInputChange={field.onChange}
+                                                onAddNew={() => setClientModalOpen(true)}
+                                                placeholder="Busque ou cadastre..."
+                                                searchPlaceholder="Buscar cliente..."
+                                                addEntityLabel="Novo Cliente"
+                                             />
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -512,87 +569,97 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Mecânico (opcional)</FormLabel>
-                                            <Select onValueChange={field.onChange} value={field.value || undefined}>
-                                                <FormControl><SelectTrigger className='h-10'><SelectValue placeholder="Selecione um mecânico" /></SelectTrigger></FormControl>
-                                                <SelectContent>
-                                                    {mechanics.map(p => (
-                                                        <SelectItem key={`${p.id}-${p.displayName}`} value={p.displayName}>{p.displayName}</SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
+                                            <ComboboxPerson
+                                                value={field.value}
+                                                options={mechanicOptions}
+                                                onPersonSelect={field.onChange}
+                                                onInputChange={field.onChange}
+                                                onAddNew={() => setMechanicModalOpen(true)}
+                                                placeholder="Busque ou cadastre..."
+                                                searchPlaceholder="Buscar mecânico..."
+                                                addEntityLabel="Novo Mecânico"
+                                             />
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
-                                <FormField
-                                    control={form.control}
-                                    name="requisicaoVenda"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Requisição de Venda <span className='text-destructive'>*</span></FormLabel>
-                                            <FormControl><Input placeholder="Número da requisição" {...field} className='h-10' /></FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="acaoRequisicao"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Ação na Requisição <span className='text-destructive'>*</span></FormLabel>
-                                            <Select onValueChange={field.onChange} value={field.value || undefined}>
-                                                <FormControl><SelectTrigger className='h-10'><SelectValue placeholder="SELECIONE O STATUS" /></SelectTrigger></FormControl>
-                                                <SelectContent>
-                                                    {acaoStatuses.map(status => (
-                                                        <SelectItem key={status} value={status}>{status}</SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="dataVenda"
-                                    render={({ field }) => (
-                                        <FormItem className="flex flex-col">
-                                            <FormLabel>Data da Venda <span className='text-destructive'>*</span></FormLabel>
-                                            <DatePicker date={field.value} setDate={field.onChange} />
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="dataDevolucao"
-                                    render={({ field }) => (
-                                        <FormItem className="flex flex-col">
-                                            <FormLabel>Data da Devolução <span className='text-destructive'>*</span></FormLabel>
-                                            <DatePicker date={field.value} setDate={field.onChange} />
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="status"
-                                    render={({ field }) => (
-                                        <FormItem className='md:col-span-2'>
-                                            <FormLabel>Status da Devolução <span className='text-destructive'>*</span></FormLabel>
-                                            <Select onValueChange={field.onChange} value={field.value || undefined}>
-                                                <FormControl><SelectTrigger className='h-10'><SelectValue placeholder="SELECIONE O STATUS" /></SelectTrigger></FormControl>
-                                                <SelectContent>
-                                                    {returnStatuses.map(status => (
-                                                        <SelectItem key={status} value={status}>{status}</SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                </div>
+
+                                {/* Nova linha: Requisição, Ação na Requisição e Status agrupados */}
+                                <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+                                    <FormField
+                                        control={form.control}
+                                        name="requisicaoVenda"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Requisição de Venda <span className='text-destructive'>*</span></FormLabel>
+                                                <FormControl><Input placeholder="Número da requisição" {...field} className='h-10' /></FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="acaoRequisicao"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Ação na Requisição <span className='text-destructive'>*</span></FormLabel>
+                                                <Select onValueChange={field.onChange} value={field.value || undefined}>
+                                                    <FormControl><SelectTrigger className='h-10'><SelectValue placeholder="SELECIONE O STATUS" /></SelectTrigger></FormControl>
+                                                    <SelectContent>
+                                                        {acaoStatuses.map(status => (
+                                                            <SelectItem key={status} value={status}>{status}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="status"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Status da Devolução <span className='text-destructive'>*</span></FormLabel>
+                                                <Select onValueChange={field.onChange} value={field.value || undefined}>
+                                                    <FormControl><SelectTrigger className='h-10'><SelectValue placeholder="SELECIONE O STATUS" /></SelectTrigger></FormControl>
+                                                    <SelectContent>
+                                                        {returnStatuses.map(status => (
+                                                            <SelectItem key={status} value={status}>{status}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+
+                                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                                    <FormField
+                                        control={form.control}
+                                        name="dataVenda"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-col">
+                                                <FormLabel>Data da Venda <span className='text-destructive'>*</span></FormLabel>
+                                                <DatePicker date={field.value} setDate={field.onChange} />
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="dataDevolucao"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-col">
+                                                <FormLabel>Data da Devolução <span className='text-destructive'>*</span></FormLabel>
+                                                <DatePicker date={field.value} setDate={field.onChange} />
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
                             </div>
                             <FormField
                                 name="observacaoGeral"
@@ -607,7 +674,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                             />
 
                         </CardContent>
-                        <CardFooter className="flex justify-between items-center gap-2 py-4 border-t bg-muted/5">
+                        <CardFooter className="flex-none flex justify-between items-center gap-2 py-4 border-t bg-muted/5">
                             <Button type="button" variant="ghost" onClick={handleCancel} disabled={form.formState.isSubmitting}>
                                 Cancelar
                             </Button>
@@ -634,7 +701,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
             </Card>
         </div>
             <div className="lg:col-span-1 h-full overflow-hidden">
-                <RecentDevolutionsList />
+                <RecentDevolutionsList onEdit={(id) => handleEditDevolucao(id)} />
             </div>
         </div>
 
@@ -643,6 +710,18 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                 onOpenChange={setProductModalOpen}
                 type="product"
                 onSuccess={handleProductSaved}
+            />
+            <QuickRegisterDialog
+                open={isClientModalOpen}
+                onOpenChange={setClientModalOpen}
+                type="person"
+                onSuccess={handleClientSaved}
+            />
+            <QuickRegisterDialog
+                open={isMechanicModalOpen}
+                onOpenChange={setMechanicModalOpen}
+                type="person"
+                onSuccess={handleMechanicSaved}
             />
         </>
     );

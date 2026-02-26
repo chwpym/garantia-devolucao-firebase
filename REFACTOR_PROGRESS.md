@@ -144,6 +144,28 @@ Este documento rastreia o status detalhado de cada fase do plano de refatoraçã
 | Schema de Banco para Status   |    ⏳    |                   |
 | Mapeamento em todas as seções |    ⏳    |                   |
 
+_(Fases 19-27 conforme REFACTOR_PLAN.md)_
+
 ---
 
-_(Fases 19-25 conforme `REFACTOR_PLAN.md`)_
+### FASE 6.5: Estabilização de Formulários e Consulta (BUGS) 🐛
+
+| Item                                  | Status  | Notas                                              |
+| :------------------------------------ | :-----: | :------------------------------------------------- |
+| **Prioridade**                        | 🟠 ALTA | (Reportado via Produção)                           |
+| Fixação Input Mecânico / Auto-seleção |   ⏳    | Aguardando início                                  |
+| Correção 'Busca Fantasma' (Cliente)   |   ⏳    | Limpar listagem quando a busca não encontrar itens |
+| Case Insensitive na busca Lotes       |   ⏳    |                                                    |
+| Botão Editar do Card Lote (3 pontos)  |   ⏳    | Hoje está abrindo Modal de Novo Cadastro           |
+
+---
+
+### FASES 28 a 32 (ROADMAP DE RELATÓRIOS E INTEGRAÇÃO 2026) 🔵
+
+| Fase   | Objetivo                           | Status | Notas                                                  |
+| :----- | :--------------------------------- | :----: | :----------------------------------------------------- |
+| **28** | Importação Legada do PDF p/ JSON   |   ⏳   | Carga de DB via Script não-destrutivo                  |
+| **29** | Otimização Export PDF (Juntar Qtd) |   ⏳   | Matemática de soma e "Botão Imprimir" Direto           |
+| **30** | Lotes Estilo Kanban e Card Popup   |   ⏳   | 3 abas, status reflete na borda, e tooltip hover popup |
+| **31** | Database (1:N) Multi-Fornecedor    |   ⏳   | Múltiplos códs por peça e visibilidade Código Externo  |
+| **32** | Alertas Temporizados (SLA Inativo) |   ⏳   | Aging de Garantia (+2 dias ex: Aguardando Autorização) |

@@ -74,13 +74,16 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
     setNewLoteModalOpen(true);
   }, [setNewLoteModalOpen]);
 
+  const [statuses, setStatuses] = useState<any[]>([]);
+
   const loadData = useCallback(async () => {
     try {
       await db.initDB();
-      const [allLotes, allSuppliers, allWarranties] = await Promise.all([
+      const [allLotes, allSuppliers, allWarranties, allStatuses] = await Promise.all([
         db.getAllLotes(),
         db.getAllSuppliers(),
-        db.getAllWarranties()
+        db.getAllWarranties(),
+        db.getAllStatuses()
       ]);
 
       const lotesWithCounts: LoteWithStats[] = allLotes.map(lote => {
@@ -99,6 +102,7 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
 
       setLotes(lotesWithCounts.sort((a, b) => parseISO(b.dataCriacao).getTime() - parseISO(a.dataCriacao).getTime()));
       setSuppliers(allSuppliers);
+      setStatuses(allStatuses);
     } catch (error) {
       console.error('Failed to load data:', error);
       toast({
@@ -109,11 +113,7 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
     }
   }, [toast]);
 
-  useEffect(() => {
-    if (isNewLoteModalOpen) {
-      handleOpenModal();
-    }
-  }, [isNewLoteModalOpen, handleOpenModal]);
+  // useEffect for new lote removed to prevent destructive edits
 
   useEffect(() => {
     loadData();
@@ -227,19 +227,25 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
 
       {filteredLotes.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredLotes.map((lote) => (
-            <Card
-              key={lote.id}
-              className={cn(
-                "flex flex-col shadow-md hover:border-primary transition-colors cursor-pointer border-2",
-                lote.status === 'Enviado' ? 'border-accent-blue' :
-                  lote.status === 'Recusado' ? 'border-destructive' :
+          {filteredLotes.map((lote) => {
+            const customStatus = statuses.find(s => s.nome.toLowerCase() === lote.status?.toLowerCase() && s.aplicavelEm.includes('lote'));
+            const customColor = customStatus?.cor;
+            return (
+              <Card
+                key={lote.id}
+                className={cn(
+                  "flex flex-col shadow-md hover:border-primary transition-colors cursor-pointer border-2",
+                  !customColor && (
+                    lote.status === 'Enviado' ? 'border-accent-blue' :
+                    lote.status === 'Recusado' ? 'border-destructive' :
                     lote.status === 'Aprovado Totalmente' || lote.status === 'Aprovado Parcialmente' ? 'border-accent-green' :
-                      'border-transparent'
-              )}
-              onClick={() => onNavigateToLote(lote.id!)}
-            >
-              <CardHeader className="flex flex-row items-start justify-between">
+                    'border-transparent'
+                  )
+                )}
+                style={{ borderColor: customColor || undefined }}
+                onClick={() => onNavigateToLote(lote.id!)}
+              >
+                <CardHeader className="flex flex-row items-start justify-between">
                 <div>
                   <CardTitle className="text-xl">
                     <span className="text-muted-foreground font-normal">Lote #{lote.id}</span>
@@ -294,7 +300,8 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
                 <StatusBadge type="lote" status={lote.status} />
               </CardFooter>
             </Card>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <div className="text-center py-16 border-2 border-dashed rounded-lg">
@@ -321,7 +328,12 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
         </div>
       )}
 
-      <Dialog open={isNewLoteModalOpen} onOpenChange={setNewLoteModalOpen}>
+      <Dialog open={isNewLoteModalOpen} onOpenChange={(open) => {
+        setNewLoteModalOpen(open);
+        if (!open) {
+          setEditingLote(null);
+        }
+      }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{editingLote ? 'Editar Lote' : 'Criar Novo Lote de Garantia'}</DialogTitle>
