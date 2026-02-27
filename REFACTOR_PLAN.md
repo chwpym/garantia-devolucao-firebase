@@ -1,9 +1,9 @@
 # 🚀 Plano Completo de Refatoração - Synergia OS
 
-> **Versão:** 3.4 - NORMALIZAÇÃO E EXPANSÃO 2026
-> **Data Atualização:** 25/02/2026  
+> **Versão:** 3.5 - REFINAMENTO DE PRECISÃO E UX
+> **Data Atualização:** 27/02/2026  
 > **Total de Fases:** 32
-> **Status:** ✅ Fases Iniciais Concluídas. Iniciando Nova Frente 6.5 (Bugs / Usabilidade).
+> **Status:** ✅ Fases 6.5 a 8.5 Concluídas. Suporte a 4 casas decimais e melhorias de UX nas calculadoras.
 
 ---
 
@@ -108,6 +108,16 @@ src/
 - Aplicar o novo componente em Garantias e Devoluções.
 - Bloquear edição manual do campo "Descrição" (`readOnly`).
 - Reduzir _preload_ de itens vazios de 50 para 10 (performance).
+
+### Fase 8.5: Refatoração UX e Precisão Matemática das Calculadoras ✅
+
+**Tempo:** 4-6 horas
+**Objetivo:** Injetar alta precisão (4 casas decimais) e melhorias de usabilidade em 11 ferramentas:
+
+- Injetar Formatadores Globais de 4 casas (`formatCurrency4`, `formatNumber4`).
+- Aplicar atributo `step="0.0001"` em 11 componentes de calculadora e proteger contra Erros `NaN`.
+- Implementar função visual de `Copiar` no resultado final das calculadoras.
+- Implementar botão de `Limpar` padronizado em todas as calculadoras remanescentes.
 
 ### Fase 6.7: Ajustes Visuais e de Grid (Filtros) ✅
 
@@ -392,6 +402,6 @@ git push origin main
 
 ---
 
-**Última Atualização:** 25/02/2026  
-**Versão:** 3.4  
-**Status:** ✅ Fases iniciais Concluídas (26 Fases). Abrindo Fluxo de Bugs Diários e Novas Metas (Fase 6.5 à 32).
+**Última Atualização:** 27/02/2026  
+**Versão:** 3.5  
+**Status:** ✅ Fases iniciais Concluídas (27 Fases). Melhoria de precisão nas calculadoras (Fase 8.5) concluída. Abrindo Fluxo de Relatórios e Metas 2026 (Fases 28 a 32).

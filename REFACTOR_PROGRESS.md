@@ -5,10 +5,10 @@ Este documento rastreia o status detalhado de cada fase do plano de refatoraçã
 ## 📊 Status Geral
 
 - **Início:** 15/12/2025
-- **Data Hoje:** 16/02/2026
-- **Fases Concluídas:** 16/25
+- **Data Hoje:** 27/02/2026
+- **Fases Concluídas:** 27/32
 - **Em Progresso:** Nenhuma
-- **Próxima Fase:** Fase 13 - Máscara de Telefone
+- **Próxima Fase:** Fase 28 - Importação Legada de Dados Antigos
 
 ---
 
@@ -148,15 +148,29 @@ _(Fases 19-27 conforme REFACTOR_PLAN.md)_
 
 ---
 
-### FASE 6.5: Estabilização de Formulários e Consulta (BUGS) 🐛
+### FASE 8.5: Refatoração UX e Precisão Matemática das Calculadoras ✅
+
+| Item                                       | Status  | Tempo Est. | Tempo Real | Notas                                            |
+| :----------------------------------------- | :-----: | :--------: | :--------: | :----------------------------------------------- |
+| **Prioridade**                             | 🟠 ALTA |            |            |                                                  |
+| Formatadores `Currency4` e `Number4`       |   ✅    |    30m     |    15m     | Implementados em `src/lib/utils.ts`              |
+| Atributo `step="0.0001"` em 11 componentes |   ✅    |     1h     |    45m     | Todos os inputs de valor atualizados             |
+| Botão "Copiar" (Clipboard API)             |   ✅    |   1h30m    |     1h     | Ícone Copy + Toast de confirmação                |
+| Botão "Limpar" padronizado                 |   ✅    |     1h     |    45m     | Reset de hooks de estado em todos os componentes |
+| Tratamento Anti-NaN / Errors               |   ✅    |     1h     |    30m     | `isNaN` guardrails em todas as equações          |
+| **Total da Fase**                          |         |     5h     |   3h 15m   | 11 calculadoras 100% precisas e com UX moderna   |
+
+---
+
+### FASE 6.5: Estabilização de Formulários e Consulta (BUGS) ✅
 
 | Item                                  | Status  | Notas                                              |
 | :------------------------------------ | :-----: | :------------------------------------------------- |
 | **Prioridade**                        | 🟠 ALTA | (Reportado via Produção)                           |
-| Fixação Input Mecânico / Auto-seleção |   ⏳    | Aguardando início                                  |
-| Correção 'Busca Fantasma' (Cliente)   |   ⏳    | Limpar listagem quando a busca não encontrar itens |
-| Case Insensitive na busca Lotes       |   ⏳    |                                                    |
-| Botão Editar do Card Lote (3 pontos)  |   ⏳    | Hoje está abrindo Modal de Novo Cadastro           |
+| Fixação Input Mecânico / Auto-seleção |   ✅    | Trocado por ComboboxSearch estável                 |
+| Correção 'Busca Fantasma' (Cliente)   |   ✅    | Limpar listagem quando a busca não encontrar itens |
+| Case Insensitive na busca Lotes       |   ✅    | Aplicado regex `i` no filtro                       |
+| Botão Editar do Card Lote (3 pontos)  |   ✅    | Corrigido p/ abrir modal correto                   |
 
 ---
 

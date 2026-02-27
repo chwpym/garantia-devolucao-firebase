@@ -775,6 +775,85 @@ Atrelar timestamp `Date.now()` ao momento de alteração do CRUD de Garantia. Cr
 
 ---
 
+---
+
+## 🧮 FASE 8.5: Refatoração das Calculadoras (Precisão e UX)
+
+### Arquivos Afetados
+
+1. `src/lib/utils.ts`
+2. Todos os 11 arquivos em `src/components/calculators/`
+
+### Problema
+
+Calculadoras financeiras e de custo exigem precisão de até 4 casas decimais para evitar erros de arredondamento em volumes massivos. Além disso, a cópia manual de valores longos e o reset de tela eram pontos de fricção na UX.
+
+### Solução Técnica
+
+#### 1. Formatadores de Alta Precisão
+
+Implementados em `src/lib/utils.ts`:
+
+```typescript
+export function formatCurrency4(value: number) {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 4,
+    maximumFractionDigits: 4,
+  }).format(value);
+}
+
+export function formatNumber4(value: number) {
+  return new Intl.NumberFormat("pt-BR", {
+    minimumFractionDigits: 4,
+    maximumFractionDigits: 4,
+  }).format(value);
+}
+```
+
+#### 2. Precisão nos Inputs
+
+Adição do atributo `step="0.0001"` em campos de entrada:
+
+```tsx
+<Input
+  type="number"
+  step="0.0001"
+  value={value}
+  onChange={(e) => setValue(e.target.value)}
+/>
+```
+
+#### 3. Botão de Copiar e Limpar
+
+Uso da `navigator.clipboard` e reset de estados:
+
+```tsx
+const handleCopy = (value: number) => {
+  navigator.clipboard.writeText(value.toString());
+  toast({
+    title: "Copiado!",
+    description: "Valor copiado para a área de transferência.",
+  });
+};
+
+const handleClear = () => {
+  setField1("");
+  setField2("");
+  // ...
+};
+```
+
+### Critérios de Sucesso
+
+- [ ] Suporte a 4 casas decimais nos cálculos e exibição.
+- [ ] Botão de copiar funcional com feedback (Toast).
+- [ ] Botão de limpar reseta todos os campos.
+- [ ] Zero erros de `NaN` ou `Infinity` visíveis para o usuário.
+
+---
+
 **Este arquivo contém a estrutura modular pensada. Para acompanhamento, veja REFACTOR_PROGRESS.md**
 
-**Última Atualização:** 25/02/2026
+**Última Atualização:** 27/02/2026
