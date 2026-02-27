@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Upload, FileX, Printer } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { formatCurrency, formatNumber } from "@/lib/utils";
+import { formatCurrency, formatNumber, formatCurrency4, formatNumber4 } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info } from "lucide-react";
 import { Label } from "../ui/label";
@@ -212,19 +212,19 @@ export default function AdvancedCostAnalysisCalculator() {
         const head = [['Descrição', 'Qtde', 'Fator Conv.', 'C. Un. Orig.', 'IPI', 'ICMS-ST', 'Frete', 'Seguro', 'Desconto', 'Outras', 'PIS', 'COFINS', 'C. Un. Final', 'C. Un. Final (Conv.)', 'C. Total Final']];
         const body = items.map(item => [
             item.description,
-            formatNumber(item.quantity),
-            formatNumber(parseFloat(item.conversionFactor) || 1),
-            formatCurrency(item.unitCost),
-            formatCurrency(item.ipi),
-            formatCurrency(item.icmsST),
-            formatCurrency(item.frete),
-            formatCurrency(item.seguro),
-            formatCurrency(item.desconto),
-            formatCurrency(item.outras),
-            formatCurrency(item.pis),
-            formatCurrency(item.cofins),
-            formatCurrency(item.finalUnitCost),
-            formatCurrency(item.convertedUnitCost),
+            formatNumber4(item.quantity),
+            formatNumber4(parseFloat(item.conversionFactor) || 1),
+            formatCurrency4(item.unitCost),
+            formatCurrency4(item.ipi),
+            formatCurrency4(item.icmsST),
+            formatCurrency4(item.frete),
+            formatCurrency4(item.seguro),
+            formatCurrency4(item.desconto),
+            formatCurrency4(item.outras),
+            formatCurrency4(item.pis),
+            formatCurrency4(item.cofins),
+            formatCurrency4(item.finalUnitCost),
+            formatCurrency4(item.convertedUnitCost),
             formatCurrency(item.finalTotalCost),
         ]);
 
@@ -307,11 +307,11 @@ export default function AdvancedCostAnalysisCalculator() {
                             <div><strong>Emitente:</strong> {nfeInfo.emitterName}</div>
                             <div><strong>CNPJ:</strong> {nfeInfo.emitterCnpj}</div>
                             <div><strong>NF-e Nº:</strong> {nfeInfo.nfeNumber}</div>
-                            <div><strong>Total Bruto (s/ desc):</strong> {formatCurrency(nfeInfo.totalGrossValue)}</div>
-                            <div className="font-semibold text-sm"><strong>Custo Total (sem crédito PIS/COFINS):</strong> <span className="font-bold ml-2">{formatCurrency(totalWithoutPisCofins)}</span></div>
+                            <div><strong>Total Bruto (s/ desc):</strong> {formatCurrency4(nfeInfo.totalGrossValue)}</div>
+                            <div className="font-semibold text-sm"><strong>Custo Total (sem crédito PIS/COFINS):</strong> <span className="font-bold ml-2">{formatCurrency4(totalWithoutPisCofins)}</span></div>
                             <div className="font-semibold col-span-full">
                                 <strong>Custo Total Final ({taxRegime === 'lucro_real' ? 'c/ crédito PIS/COFINS' : 's/ crédito PIS/COFINS'}):</strong>
-                                <span className="font-bold text-primary ml-2">{formatCurrency(totals.finalTotalCost)}</span>
+                                <span className="font-bold text-primary ml-2">{formatCurrency4(totals.finalTotalCost)}</span>
                             </div>
                         </div>
                     </div>
@@ -370,8 +370,8 @@ export default function AdvancedCostAnalysisCalculator() {
                                     <TableCell className="text-right">{formatNumber(item.quantity)}</TableCell>
                                     <TableCell>
                                         <Input
-                                            type="text"
-                                            inputMode="decimal"
+                                            type="number"
+                                            step="0.0001"
                                             className="h-8 text-right bg-input-calc"
                                             value={item.conversionFactor}
                                             onChange={(e) => handleConversionFactorChange(item.id, e.target.value)}
@@ -379,17 +379,17 @@ export default function AdvancedCostAnalysisCalculator() {
                                             min="0"
                                         />
                                     </TableCell>
-                                    <TableCell className="text-right">{formatCurrency(item.unitCost)}</TableCell>
-                                    <TableCell className="text-right">{formatCurrency(item.ipi)}</TableCell>
-                                    <TableCell className="text-right">{formatCurrency(item.icmsST)}</TableCell>
-                                    <TableCell className="text-right">{formatCurrency(item.frete)}</TableCell>
-                                    <TableCell className="text-right">{formatCurrency(item.seguro)}</TableCell>
-                                    <TableCell className="text-right">{formatCurrency(item.desconto)}</TableCell>
-                                    <TableCell className="text-right">{formatCurrency(item.outras)}</TableCell>
-                                    <TableCell className="text-right text-accent-green">{formatCurrency(item.pis)}</TableCell>
-                                    <TableCell className="text-right text-accent-green">{formatCurrency(item.cofins)}</TableCell>
-                                    <TableCell className="text-right font-bold text-primary">{formatCurrency(item.finalUnitCost)}</TableCell>
-                                    <TableCell className="text-right font-bold text-third">{formatCurrency(item.convertedUnitCost)}</TableCell>
+                                    <TableCell className="text-right">{formatCurrency4(item.unitCost)}</TableCell>
+                                    <TableCell className="text-right">{formatCurrency4(item.ipi)}</TableCell>
+                                    <TableCell className="text-right">{formatCurrency4(item.icmsST)}</TableCell>
+                                    <TableCell className="text-right">{formatCurrency4(item.frete)}</TableCell>
+                                    <TableCell className="text-right">{formatCurrency4(item.seguro)}</TableCell>
+                                    <TableCell className="text-right">{formatCurrency4(item.desconto)}</TableCell>
+                                    <TableCell className="text-right">{formatCurrency4(item.outras)}</TableCell>
+                                    <TableCell className="text-right text-accent-green">{formatCurrency4(item.pis)}</TableCell>
+                                    <TableCell className="text-right text-accent-green">{formatCurrency4(item.cofins)}</TableCell>
+                                    <TableCell className="text-right font-bold text-primary">{formatCurrency4(item.finalUnitCost)}</TableCell>
+                                    <TableCell className="text-right font-bold text-third">{formatCurrency4(item.convertedUnitCost)}</TableCell>
                                     <TableCell className="text-right font-bold text-primary">{formatCurrency(item.finalTotalCost)}</TableCell>
                                 </TableRow>
                             ))}

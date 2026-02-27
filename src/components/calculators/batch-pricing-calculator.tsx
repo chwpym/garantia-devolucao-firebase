@@ -16,7 +16,7 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
-import { formatCurrency, formatNumber } from "@/lib/utils";
+import { formatCurrency, formatNumber, formatCurrency4, formatNumber4 } from "@/lib/utils";
 import { useNfeParser, type NfeData, type NfeProductDetail } from "@/hooks/use-nfe-parser";
 
 
@@ -81,10 +81,10 @@ export default function BatchPricingCalculator() {
                 id: index,
                 description: prod.xProd || "",
                 quantity: String(quantity),
-                originalCost: originalUnitCost.toFixed(2),
-                impostos: impostosUnit.toFixed(2),
-                desconto: descontoUnit.toFixed(2),
-                finalCost: finalUnitCost.toFixed(2),
+                originalCost: originalUnitCost.toString(),
+                impostos: impostosUnit.toString(),
+                desconto: descontoUnit.toString(),
+                finalCost: finalUnitCost.toString(),
                 margin: "",
                 price: ""
             };
@@ -114,10 +114,7 @@ export default function BatchPricingCalculator() {
                     if (finalCost > 0) {
                         if (field === 'margin' || field === 'finalCost') {
                             price = finalCost * (1 + margin / 100);
-                            updatedItem.price = price > 0 ? price.toFixed(2) : "";
-                        } else if (field === 'price') {
-                            margin = price > 0 && finalCost > 0 ? ((price / finalCost) - 1) * 100 : 0;
-                            updatedItem.margin = margin > 0 ? margin.toFixed(2) : "";
+                            updatedItem.margin = margin > 0 ? margin.toString() : "";
                         }
                     } else {
                         updatedItem.price = "";
@@ -151,7 +148,7 @@ export default function BatchPricingCalculator() {
                     return {
                         ...item,
                         margin: globalMargin,
-                        price: price.toFixed(2),
+                        price: price.toString(),
                     };
                 }
                 return item;
@@ -209,13 +206,13 @@ export default function BatchPricingCalculator() {
                 const totalSale = quantity * price;
                 return [
                     item.description,
-                    formatNumber(quantity),
-                    formatCurrency(parseFloat(item.originalCost) || 0),
-                    formatCurrency(parseFloat(item.impostos) || 0),
-                    formatCurrency(parseFloat(item.desconto) || 0),
-                    formatCurrency(parseFloat(item.finalCost) || 0),
-                    `${formatNumber(parseFloat(item.margin) || 0)}%`,
-                    formatCurrency(price),
+                    formatNumber4(quantity),
+                    formatCurrency4(parseFloat(item.originalCost) || 0),
+                    formatCurrency4(parseFloat(item.impostos) || 0),
+                    formatCurrency4(parseFloat(item.desconto) || 0),
+                    formatCurrency4(parseFloat(item.finalCost) || 0),
+                    `${formatNumber4(parseFloat(item.margin) || 0)}%`,
+                    formatCurrency4(price),
                     formatCurrency(totalSale)
                 ];
             }),
@@ -297,31 +294,31 @@ export default function BatchPricingCalculator() {
                                             onChange={e => handleItemChange(item.id, 'description', e.target.value)} className="bg-input-calc" />
                                     </TableCell>
                                     <TableCell>
-                                        <Input type="text" inputMode="decimal" value={item.quantity}
+                                        <Input type="number" step="0.0001" value={item.quantity}
                                             onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} className="bg-input-calc" />
                                     </TableCell>
                                     <TableCell>
-                                        <Input type="text" inputMode="decimal" value={item.originalCost}
+                                        <Input type="number" step="0.0001" value={item.originalCost}
                                             onChange={e => handleItemChange(item.id, 'originalCost', e.target.value)} className="bg-input-calc" />
                                     </TableCell>
                                     <TableCell>
-                                        <Input type="text" inputMode="decimal" value={item.impostos}
+                                        <Input type="number" step="0.0001" value={item.impostos}
                                             onChange={e => handleItemChange(item.id, 'impostos', e.target.value)} className="bg-input-calc" />
                                     </TableCell>
                                     <TableCell>
-                                        <Input type="text" inputMode="decimal" value={item.desconto}
+                                        <Input type="number" step="0.0001" value={item.desconto}
                                             onChange={e => handleItemChange(item.id, 'desconto', e.target.value)} className="bg-input-calc" />
                                     </TableCell>
                                     <TableCell>
-                                        <Input type="text" inputMode="decimal" value={item.finalCost}
+                                        <Input type="number" step="0.0001" value={item.finalCost}
                                             onChange={e => handleItemChange(item.id, 'finalCost', e.target.value)} className="bg-input-calc" />
                                     </TableCell>
                                     <TableCell>
-                                        <Input type="text" inputMode="decimal" value={item.margin}
+                                        <Input type="number" step="0.0001" value={item.margin}
                                             onChange={e => handleItemChange(item.id, 'margin', e.target.value)} className="bg-input-calc" />
                                     </TableCell>
                                     <TableCell>
-                                        <Input type="text" inputMode="decimal" value={item.price}
+                                        <Input type="number" step="0.0001" value={item.price}
                                             onChange={e => handleItemChange(item.id, 'price', e.target.value)} className="bg-input-calc" />
                                     </TableCell>
                                     <TableCell>
@@ -375,6 +372,10 @@ export default function BatchPricingCalculator() {
                 <Button onClick={addItem} variant="outline">
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Adicionar Item
+                </Button>
+                <Button onClick={() => setItems([{ id: 1, description: "", quantity: "1", originalCost: "", impostos: "", desconto: "", finalCost: "", margin: "", price: "" }])} variant="ghost" className="text-destructive">
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Limpar Tabela
                 </Button>
             </div>
         </div>

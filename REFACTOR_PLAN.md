@@ -99,6 +99,25 @@ src/
 - Bug do Card Lote: O Popover de Botão '...' abrindo Criador invés de Edição. Card Status visual não sendo refletido perfeitamente.
 - Habilitar edição cruzada de novos Clientes nas malhas em andamento.
 
+### Fase 6.6: Refatoração do Combobox de Produtos (Usabilidade) ✅
+
+**Tempo:** 4-6 horas
+**Objetivo:** Extirpar selects antigos e padronizar inserção de Peças
+
+- Criar `ComboboxProduct` global com Debounce (300ms) e SmartSearch.
+- Aplicar o novo componente em Garantias e Devoluções.
+- Bloquear edição manual do campo "Descrição" (`readOnly`).
+- Reduzir _preload_ de itens vazios de 50 para 10 (performance).
+
+### Fase 6.7: Ajustes Visuais e de Grid (Filtros) ✅
+
+**Tempo:** 1-2 horas
+**Objetivo:** Refinamento de usabilidade nas malhas de consulta.
+
+- Alterar grid rígido (50%) na tela de Consulta de Garantias para `flex-grow`.
+- Permitir que a caixa de seleção de Cliente expanda de 200px para até 350px dinamicamente.
+- Padronizar caixas de itens em Devolução para `bg-transparent` (mesmo de Garantia).
+
 ### Fase 7: Melhorias de Fluxo (Cadastros in-Loco) ⚡
 
 **Tempo:** 4-5 horas  

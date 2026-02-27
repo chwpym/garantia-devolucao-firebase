@@ -8,7 +8,7 @@ import { Upload, Trash2, GitCompareArrows, Search, Info } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
-import { formatCurrency, formatNumber } from "@/lib/utils";
+import { formatCurrency, formatNumber, formatCurrency4, formatNumber4 } from "@/lib/utils";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -103,8 +103,8 @@ const ResultTable = ({ results, title, allLoadedNfes }: { results: ComparisonRes
                                     <TableCell className="text-center">
                                         <Badge variant="secondary">{result.nfeCount} NF-es</Badge>
                                     </TableCell>
-                                    <TableCell className="text-right font-bold">{formatNumber(result.totalQuantity)}</TableCell>
-                                    <TableCell className="text-right font-bold text-primary">{formatCurrency(result.totalValue)}</TableCell>
+                                    <TableCell className="text-right font-bold">{formatNumber4(result.totalQuantity)}</TableCell>
+                                    <TableCell className="text-right font-bold text-primary">{formatCurrency4(result.totalValue)}</TableCell>
                                     <TableCell>
                                         <div className="flex flex-col gap-1">
                                             {result.occurrences.map((occ, index) => {
@@ -126,14 +126,14 @@ const ResultTable = ({ results, title, allLoadedNfes }: { results: ComparisonRes
                                                     <p className="font-semibold">{occ.emitterName}</p>
                                                     <div className="flex flex-wrap justify-between items-center mt-1 gap-x-4 gap-y-1">
                                                             <span>NF-e: {occ.nfeNumber}</span>
-                                                            <span>Qtde: {formatNumber(occ.quantity)}</span>
+                                                            <span>Qtde: {formatNumber4(occ.quantity)}</span>
                                                             <span className={cn(occ.isCheapest && "font-bold text-green-700 dark:text-green-400")}>
-                                                                Custo: {formatCurrency(occ.unitCost)}
+                                                                Custo: {formatCurrency4(occ.unitCost)}
                                                                 {!occ.isCheapest && variation > 0.01 && (
-                                                                    <Badge variant="destructive" className="ml-2">+{formatNumber(variation)}%</Badge>
+                                                                    <Badge variant="destructive" className="ml-2">+{formatNumber4(variation)}%</Badge>
                                                                 )}
                                                             </span>
-                                                            <span className="font-semibold">Subtotal: {formatCurrency(occ.quantity * occ.unitCost)}</span>
+                                                            <span className="font-semibold">Subtotal: {formatCurrency4(occ.quantity * occ.unitCost)}</span>
                                                              {otherProducts && otherProducts.length > 0 && (
                                                                 <TooltipProvider>
                                                                     <Tooltip>
@@ -169,7 +169,7 @@ const ResultTable = ({ results, title, allLoadedNfes }: { results: ComparisonRes
                                         {totalsByNfe.map(([nfeNumber, data]) => (
                                             <div key={nfeNumber} className="flex justify-between p-1 rounded bg-background">
                                                 <span className="text-muted-foreground">{data.emitter} (NF-e: {nfeNumber}):</span>
-                                                <span className="font-bold text-primary">{formatCurrency(data.total)}</span>
+                                                <span className="font-bold text-primary">{formatCurrency4(data.total)}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -180,8 +180,8 @@ const ResultTable = ({ results, title, allLoadedNfes }: { results: ComparisonRes
                         </TableRow>
                         <TableRow className="font-bold bg-muted text-base">
                             <TableCell colSpan={2} className="text-right">Totais Gerais:</TableCell>
-                            <TableCell className="text-right">{formatNumber(grandTotals.quantity)}</TableCell>
-                            <TableCell className="text-right text-primary">{formatCurrency(grandTotals.value)}</TableCell>
+                            <TableCell className="text-right">{formatNumber4(grandTotals.quantity)}</TableCell>
+                            <TableCell className="text-right text-primary">{formatCurrency4(grandTotals.value)}</TableCell>
                             <TableCell></TableCell>
                         </TableRow>
                     </TableFooter>
@@ -483,8 +483,8 @@ export default function NfeComparator() {
                                                     <TableRow key={`${nfe.id}-${prod.code}`}>
                                                         <TableCell className="font-mono text-xs">{prod.code}</TableCell>
                                                         <TableCell>{prod.description}</TableCell>
-                                                        <TableCell className="text-right">{formatNumber(prod.quantity)}</TableCell>
-                                                        <TableCell className="text-right">{formatCurrency(prod.unitCost)}</TableCell>
+                                                        <TableCell className="text-right">{formatNumber4(prod.quantity)}</TableCell>
+                                                        <TableCell className="text-right">{formatCurrency4(prod.unitCost)}</TableCell>
                                                     </TableRow>
                                                 ))}
                                             </TableBody>

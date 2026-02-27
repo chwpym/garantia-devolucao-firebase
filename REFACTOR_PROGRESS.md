@@ -160,6 +160,20 @@ _(Fases 19-27 conforme REFACTOR_PLAN.md)_
 
 ---
 
+### FASE 6.6 e 6.7: Estabilização de Usabilidade (ComboboxProduct & Grids) ✅
+
+| Item                                       | Status  | Notas                                                           |
+| :----------------------------------------- | :-----: | :-------------------------------------------------------------- |
+| **Prioridade**                             | 🟠 ALTA | (Reportado via Produção)                                        |
+| Extirpar Selects Antigos (Garantia/Devol)  |   ✅    | Substituído pelo componente Mestre `ComboboxProduct`.           |
+| Debounce Nativo (300ms)                    |   ✅    | Adicionado à busca de produtos reduzindo enchentes de CPU.      |
+| Preload Limitado                           |   ✅    | Exibição do input vazio truncada de 50 para 10 componentes.     |
+| Proteção de Informação (Descrição)         |   ✅    | Campo Descrição travado com `readOnly` para previnir acidentes. |
+| Grid Responsivo de Filtros em Consulta     |   ✅    | Trocado `grid` por `flex-grow` para esticar barra de Cliente.   |
+| Skinning e Caixas Translucidas (Devolução) |   ✅    | Remoção de cores sólidas dos cards de item na repetição.        |
+
+---
+
 ### FASES 28 a 32 (ROADMAP DE RELATÓRIOS E INTEGRAÇÃO 2026) 🔵
 
 | Fase   | Objetivo                           | Status | Notas                                                  |

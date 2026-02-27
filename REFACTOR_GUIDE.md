@@ -745,6 +745,9 @@ Sanear dores de operação diária apontadas via UX (Telas Brancas, Inputs Limpa
 4. **Case Insensitive Ponderado:** `toLowerCase()` ou Expressão Regular `i` no input de busca rápida do Card Lote Lançamentos.
 5. **Estado Visual de Produto e Status:** Reversão acidental de Filtros no `SectionState` durante re-renders em Garantia.
 6. **Card de Lotes:** Lógica de clique do Popover (...) conflitante com Invocação de Formulário Novo.
+7. **Performance do Radix UI (`ComboboxProduct`):** O uso da flag interna `shouldFilter={false}` no `<Command>` conflitava com espelhamentos locais e provocava travamento severo de CPU (~30s delay). Sem a flag, a performance retornou ao normal e a interface voltou a ficar reativa.
+8. **Renderização de Listas Massivas (`ComboboxProduct`):** Ao carregar milhares de peças em Comboboxes vazios na abertura das popovers de Formulários, o DOM estrangulava-se para carregar 50 divisões em tela. A redução do pre-load inicial para apenas 10 instâncias equalizou o fluxo gráfico sem perda de dados.
+9. **Grid de UI em Telas de Busca:** `grid-cols-2` cortam a tela ao meio criando "zonas mortas". Foram removidas em prol de containers `flex-grow` permitindo expansão natural dos Seletivos (ex: Caixa de Filtro de Cliente que subiu para até 350px dinâmicos).
 
 ---
 

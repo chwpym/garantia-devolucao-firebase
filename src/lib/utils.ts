@@ -19,6 +19,22 @@ export function formatNumber(value: number) {
   }).format(value);
 }
 
+export function formatCurrency4(value: number) {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 4,
+  }).format(value);
+}
+
+export function formatNumber4(value: number) {
+  return new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 4,
+  }).format(value);
+}
+
 export function formatPhoneNumber(value: string): string {
   if (!value) return '';
   

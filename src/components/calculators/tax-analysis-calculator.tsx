@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Upload, FileX, Printer } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { formatCurrency, formatNumber } from "@/lib/utils";
+import { formatCurrency, formatNumber, formatCurrency4, formatNumber4 } from "@/lib/utils";
 
 interface AnalyzedItem {
     id: number;
@@ -271,7 +271,7 @@ export default function TaxAnalysisCalculator() {
         const head = [['Descrição', 'Qtde', 'Total', 'ICMS', 'pICMS', 'ICMS-ST', 'IPI', 'pIPI', 'PIS', 'pPIS', 'COFINS', 'pCOFINS']];
         const body = items.map(item => [
             item.description,
-            formatNumber(item.quantity),
+            formatNumber4(item.quantity),
             formatCurrency(item.totalCost),
             formatCurrency(item.icms),
             `${formatNumber(item.pIcms)}%`,
@@ -397,7 +397,7 @@ export default function TaxAnalysisCalculator() {
                                     <TableCell>{item.ncm}</TableCell>
                                     <TableCell>{item.cst}</TableCell>
                                     <TableCell>{item.cfop}</TableCell>
-                                    <TableCell className="text-right">{formatNumber(item.quantity)}</TableCell>
+                                    <TableCell className="text-right">{formatNumber4(item.quantity)}</TableCell>
                                     <TableCell className="text-right">{formatCurrency(item.totalCost)}</TableCell>
                                     <TableCell className="text-right">{formatCurrency(item.icms)}</TableCell>
                                     <TableCell className="text-right text-muted-foreground">{formatNumber(item.pIcms)}%</TableCell>

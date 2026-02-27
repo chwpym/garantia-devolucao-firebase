@@ -5,8 +5,9 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
-import { formatCurrency, formatNumber } from "@/lib/utils";
+import { Copy, Trash2 } from "lucide-react";
+import { formatCurrency, formatNumber, formatCurrency4, formatNumber4 } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 interface Purchase {
   quantity: string;
@@ -33,6 +34,7 @@ function PurchaseCard({ title, purchase, onChange, totalValue }: PurchaseCardPro
             id={`quantity-${title}`}
             name="quantity"
             type="number"
+            step="0.0001"
             placeholder="Ex: 100"
             value={purchase.quantity}
             onChange={onChange}
@@ -45,6 +47,7 @@ function PurchaseCard({ title, purchase, onChange, totalValue }: PurchaseCardPro
             id={`price-${title}`}
             name="price"
             type="number"
+            step="0.0001"
             placeholder="Ex: 10,50"
             value={purchase.price}
             onChange={onChange}
@@ -54,7 +57,7 @@ function PurchaseCard({ title, purchase, onChange, totalValue }: PurchaseCardPro
         <div className="space-y-2">
           <Label>Valor Total</Label>
           <div className="w-full h-10 px-3 py-2 rounded-md border border-input bg-input flex items-center text-base">
-            {formatCurrency(totalValue)}
+            {formatCurrency4(totalValue)}
           </div>
         </div>
       </CardContent>
@@ -69,15 +72,30 @@ interface ResultCardProps {
 }
 
 function ResultCard({ totalQuantity, totalInvested, averagePrice }: ResultCardProps) {
+  const { toast } = useToast();
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(averagePrice.toString());
+    toast({
+      title: "Copiado!",
+      description: "Preço médio copiado para a área de transferência.",
+    });
+  };
+
   return (
     <Card className="shadow-lg">
       <CardHeader>
         <CardTitle>Resultado Final</CardTitle>
       </CardHeader>
       <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <ResultItem label="Quantidade Total" value={formatNumber(totalQuantity)} />
-        <ResultItem label="Valor Total Investido" value={formatCurrency(totalInvested)} />
-        <ResultItem label="Preço Médio" value={formatCurrency(averagePrice)} isPrimary />
+        <ResultItem label="Quantidade Total" value={formatNumber4(totalQuantity)} />
+        <ResultItem label="Valor Total Investido" value={formatCurrency4(totalInvested)} />
+        <ResultItem 
+            label="Preço Médio" 
+            value={formatCurrency4(averagePrice)} 
+            isPrimary 
+            onCopy={handleCopy} 
+        />
       </CardContent>
     </Card>
   );
@@ -87,13 +105,21 @@ interface ResultItemProps {
   label: string;
   value: string;
   isPrimary?: boolean;
+  onCopy?: () => void;
 }
 
-function ResultItem({ label, value, isPrimary = false }: ResultItemProps) {
+function ResultItem({ label, value, isPrimary = false, onCopy }: ResultItemProps) {
   return (
-    <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-muted">
+    <div className={`relative flex flex-col items-center justify-center p-4 rounded-lg bg-muted ${isPrimary ? 'border border-primary bg-primary/5' : ''}`}>
       <p className="text-sm text-muted-foreground">{label}</p>
-      <p className={`text-2xl font-bold ${isPrimary ? 'text-primary' : ''}`}>{value}</p>
+      <div className="flex items-center gap-2 mt-1">
+        <p className={`text-2xl font-bold ${isPrimary ? 'text-primary' : ''}`}>{value}</p>
+        {isPrimary && onCopy && (
+           <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:text-primary/80" onClick={onCopy} title="Copiar valor">
+               <Copy className="h-4 w-4" />
+           </Button>
+        )}
+      </div>
     </div>
   );
 }

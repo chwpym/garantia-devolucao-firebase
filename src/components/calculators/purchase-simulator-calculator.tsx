@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Upload, Printer, Trash2, Save, Search, Edit, Loader2, X, RefreshCw } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { formatCurrency, formatNumber } from "@/lib/utils";
+import { formatCurrency, formatNumber, formatCurrency4, formatNumber4 } from "@/lib/utils";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import type { NfeInfo, PurchaseSimulation } from "@/lib/types";
@@ -378,9 +378,9 @@ export default function PurchaseSimulatorCalculator() {
         const body = items.map(item => [
             item.code,
             item.description,
-            formatNumber(item.originalQuantity),
-            formatNumber(parseFloat(item.simulatedQuantity) || 0),
-            formatCurrency(item.finalUnitCost),
+            formatNumber4(item.originalQuantity),
+            formatNumber4(parseFloat(item.simulatedQuantity) || 0),
+            formatCurrency4(item.finalUnitCost),
             formatCurrency(item.originalTotalCost),
             formatCurrency(item.simulatedTotalCost),
         ]);
@@ -595,7 +595,7 @@ export default function PurchaseSimulatorCalculator() {
                                             <TableRow key={item.id}>
                                                 <TableCell className="font-medium text-xs p-2">{item.code}</TableCell>
                                                 <TableCell className="font-medium text-xs p-2">{item.description}</TableCell>
-                                                <TableCell className="w-[100px] text-right p-2">{formatNumber(item.originalQuantity)}</TableCell>
+                                                <TableCell className="w-[100px] text-right p-2">{formatNumber4(item.originalQuantity)}</TableCell>
                                                 <TableCell className="p-2 w-[120px]">
                                                     <Input
                                                         type="text"
@@ -605,9 +605,9 @@ export default function PurchaseSimulatorCalculator() {
                                                         onChange={(e) => handleQuantityChange(item.id, e.target.value)}
                                                     />
                                                 </TableCell>
-                                                <TableCell className="text-right p-2 w-[120px]">{formatCurrency(item.unitCost)}</TableCell>
-                                                <TableCell className="text-right p-2 text-red-500">{formatCurrency(item.additionalCosts)}</TableCell>
-                                                <TableCell className="text-right p-2 font-bold">{formatCurrency(item.finalUnitCost)}</TableCell>
+                                                <TableCell className="text-right p-2 w-[120px]">{formatCurrency4(item.unitCost)}</TableCell>
+                                                <TableCell className="text-right p-2 text-red-500">{formatCurrency4(item.additionalCosts)}</TableCell>
+                                                <TableCell className="text-right p-2 font-bold">{formatCurrency4(item.finalUnitCost)}</TableCell>
                                                 <TableCell className="text-right p-2">{formatCurrency(item.originalTotalCost)}</TableCell>
                                                 <TableCell className="text-right font-bold text-primary p-2">{formatCurrency(item.simulatedTotalCost)}</TableCell>
                                                 <TableCell className="p-2">

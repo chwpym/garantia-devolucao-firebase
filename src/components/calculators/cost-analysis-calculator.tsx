@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Upload, FileX, Printer } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { formatCurrency, formatNumber } from "@/lib/utils";
+import { formatCurrency, formatNumber, formatCurrency4, formatNumber4 } from "@/lib/utils";
 import { useNfeParser } from "@/hooks/use-nfe-parser";
 import type { NfeData, NfeInfo as NfeParserInfo } from "@/hooks/use-nfe-parser";
 
@@ -156,13 +156,13 @@ export default function CostAnalysisCalculator() {
         const head = [['Descrição', 'Qtde', 'Fator Conv.', 'C. Un. Orig.', 'IPI', 'ICMS-ST', 'C. Un. Final', 'C. Un. Final (Conv.)', 'C. Total Final']];
         const body = items.map(item => [
             item.description,
-            formatNumber(item.quantity),
-            formatNumber(parseFloat(item.conversionFactor) || 1),
-            formatCurrency(item.unitCost),
-            formatCurrency(item.ipi),
-            formatCurrency(item.icmsST),
-            formatCurrency(item.finalUnitCost),
-            formatCurrency(item.convertedUnitCost),
+            formatNumber4(item.quantity),
+            formatNumber4(parseFloat(item.conversionFactor) || 1),
+            formatCurrency4(item.unitCost),
+            formatCurrency4(item.ipi),
+            formatCurrency4(item.icmsST),
+            formatCurrency4(item.finalUnitCost),
+            formatCurrency4(item.convertedUnitCost),
             formatCurrency(item.finalTotalCost),
         ]);
 
@@ -276,7 +276,7 @@ export default function CostAnalysisCalculator() {
                                             min="0"
                                         />
                                     </TableCell>
-                                    <TableCell className="text-right">{formatCurrency(item.unitCost)}</TableCell>
+                                    <TableCell className="text-right">{formatCurrency4(item.unitCost)}</TableCell>
                                     <TableCell className="text-right">{formatCurrency(item.totalCost)}</TableCell>
                                     <TableCell className="text-right">{formatCurrency(item.ipi)}</TableCell>
                                     <TableCell className="text-right">{formatCurrency(item.icmsST)}</TableCell>
@@ -284,8 +284,8 @@ export default function CostAnalysisCalculator() {
                                     <TableCell className="text-right">{formatCurrency(item.seguro)}</TableCell>
                                     <TableCell className="text-right">{formatCurrency(item.desconto)}</TableCell>
                                     <TableCell className="text-right">{formatCurrency(item.outras)}</TableCell>
-                                    <TableCell className="text-right font-bold">{formatCurrency(item.finalUnitCost)}</TableCell>
-                                    <TableCell className="text-right font-bold text-third">{formatCurrency(item.convertedUnitCost)}</TableCell>
+                                    <TableCell className="text-right font-bold">{formatCurrency4(item.finalUnitCost)}</TableCell>
+                                    <TableCell className="text-right font-bold text-third">{formatCurrency4(item.convertedUnitCost)}</TableCell>
                                     <TableCell className="text-right font-bold">{formatCurrency(item.finalTotalCost)}</TableCell>
                                 </TableRow>
                             ))}
