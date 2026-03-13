@@ -139,10 +139,11 @@ export default function BatchRegisterSection() {
         title: "Sucesso!",
         description: `${savedCount} garantias foram salvas com sucesso para o fornecedor ${selectedSupplier}.`,
       });
-      // Reset form to a single empty row
+      // Reset form to a single empty row and clear supplier
       form.reset({
         warranties: [{ id: getNextId(), quantidade: 1 }],
       });
+      setSelectedSupplier("");
       window.dispatchEvent(new CustomEvent('datachanged'));
     } catch {
       toast({
@@ -154,13 +155,21 @@ export default function BatchRegisterSection() {
   };
 
   const clientOptions = useMemo(() => persons
-    .filter(p => p.tipo === 'Cliente' || p.tipo === 'Ambos')
+    .filter(p => {
+      if (!p.tipo) return true;
+      const t = p.tipo.toUpperCase();
+      return t === 'CLIENTE' || t === 'AMBOS';
+    })
     .map(c => ({ value: c.nome, label: c.nome, keywords: [c.nomeFantasia || '', c.cpfCnpj || ''] })),
     [persons]
   );
 
   const mechanicOptions = useMemo(() => persons
-    .filter(p => p.tipo === 'Mecânico' || p.tipo === 'Ambos')
+    .filter(p => {
+      if (!p.tipo) return true;
+      const t = p.tipo.toUpperCase();
+      return t === 'MECÂNICO' || t === 'MECANICO' || t === 'AMBOS';
+    })
     .map(m => ({ value: m.nome, label: m.nome, keywords: [m.nomeFantasia || '', m.cpfCnpj || ''] })),
     [persons]
   );

@@ -854,6 +854,35 @@ const handleClear = () => {
 
 ---
 
+## 🛠️ FASES 33 a 37: Estabilização de UX, Cálculos e Migrações (Março 2026)
+
+### Estratégia de Execução
+
+Estas fases nasceram do uso logístico intenso e concentram-se na remoção de fricções de UX e lógica de blindagem contra erros imprevistos.
+
+#### Fase 33 (Correções Críticas em Fluxo Base):
+- Limpar Formulário Completo: Interceptar o reset das ref states em captações compostas quando `Salvar e Continuar` for invocado em Devoluções.
+- Timejacking: Invocar `new Date().toISOString()` dentros das rotinas de Submit de forma estrita ignorando montagens de Load.
+- Imutabilidade Póstuma: Checar `.status === 'FINALIZADO'` (ou strings atreladas) injetando prop `disabled={true}` global array no form de Edição.
+
+#### Fase 34 (Calculadoras Inteligentes e XML):
+- Responsividade e Zoom: Reduzir tamanho base dos labels e grids tailwind para Input de "Fator Conversão", protegendo usuários Mobile.
+- Expandir FastXML parser mapping buscando nodes específicos `<cProd>` e tags tributárias em Múltiplas rotas.
+- Agrupamento UI: Uso massivo do Tab/Carousel layout provido pelo RadixUI injetando calculadoras como tabs.
+
+#### Fase 35 (Fuzzy Search Universal & React Ref Fokus):
+- Manipulação Strings: Regexp ou string split methods `query.trim().split(/\s+/).every(...)` para matches difusos ao digitar.
+- Controle imperativo `const inputRef = useRef(null); inputRef.current.focus()` após preencher uma peça listada num array garantindo Fast Entry Flow.
+
+#### Fase 36 (Cascateamento de Dados e Visual Hover):
+- Trigger Cascata Lote -> Item: Ao invocar a Promise base de atualização de Status do lote (ex: "ENVIADO"), engatilhar busca nativa IndexedDB que itera via `map` os ID de Itens atrelados fazendo patch da respectiva color e label.
+- Acessibilidade do UI: Hex inverter na letra de font da Status Tag variando preto ou branco visando os padroes A11Y na Board/Card.
+
+#### Fase 37 (Backup e Arquitetura Adapter Pattern p/ BD):
+- Abordagem Solid / Repository: Para coibir duvidas em relação a migrar entre SQLite / Supabase sem transtornos no ciclo do aplicativo, todo método em `lib/db.ts` passará a adotar uma interface estrita. Facilitando um Hook que retorne a conexão (Seja IndexDB nativo ou Fetch de SDK do Supabase). Isso resolve preocupações arquiteturais local vs nuvem em tempo zero de refatoração de React.
+
+---
+
 **Este arquivo contém a estrutura modular pensada. Para acompanhamento, veja REFACTOR_PROGRESS.md**
 
 **Última Atualização:** 27/02/2026

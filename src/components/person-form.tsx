@@ -22,7 +22,7 @@ import { Textarea } from './ui/textarea';
 const formSchema = z.object({
   nome: z.string().min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' }).transform(val => val.trim().toUpperCase()),
   nomeFantasia: z.string().optional().transform(val => val ? val.trim().toUpperCase() : val),
-  tipo: z.enum(['Cliente', 'Mecânico', 'Ambos'], { required_error: 'Selecione um tipo.' }),
+  tipo: z.preprocess((val) => String(val).toUpperCase(), z.enum(['CLIENTE', 'MECÂNICO', 'AMBOS'], { required_error: 'Selecione um tipo.' })),
   cpfCnpj: z.string().optional(),
   telefones: z.array(z.string()).default([]),
   emails: z.array(z.string().email({ message: "Email inválido." }).or(z.literal(''))).default([]),
@@ -45,7 +45,7 @@ interface PersonFormProps {
 const defaultFormValues: PersonFormValues = {
   nome: '',
   nomeFantasia: '',
-  tipo: 'Cliente',
+  tipo: 'CLIENTE',
   cpfCnpj: '',
   telefones: [''],
   emails: [''],
@@ -130,6 +130,7 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
         telefones: data.telefones.map(t => t.replace(/\D/g, '')).filter(t => t !== ''),
         emails: data.emails.filter(e => e !== ''),
         codigoExterno: data.codigoExterno || '',
+        tipo: data.tipo, // Standardized by Zod enum
       };
 
       // Validação de duplicidade de CPF/CNPJ ANTES de salvar
@@ -270,20 +271,22 @@ export default function PersonForm({ onSave, editingPerson, onClear }: PersonFor
                   <RadioGroup
                     onValueChange={field.onChange}
                     value={field.value}
-                    className="flex flex-row space-x-4"
+                    className="flex flex-col space-y-2"
                   >
-                    <FormItem className="flex items-center space-x-2 space-y-0">
-                      <FormControl><RadioGroupItem value="Cliente" /></FormControl>
-                      <FormLabel className="font-normal">Cliente</FormLabel>
-                    </FormItem>
-                    <FormItem className="flex items-center space-x-2 space-y-0">
-                      <FormControl><RadioGroupItem value="Mecânico" /></FormControl>
-                      <FormLabel className="font-normal">Mecânico</FormLabel>
-                    </FormItem>
-                    <FormItem className="flex items-center space-x-2 space-y-0">
-                      <FormControl><RadioGroupItem value="Ambos" /></FormControl>
-                      <FormLabel className="font-normal">Ambos</FormLabel>
-                    </FormItem>
+                    <div className="flex flex-row space-x-6">
+                      <FormItem className="flex items-center space-x-2 space-y-0">
+                        <FormControl><RadioGroupItem value="CLIENTE" /></FormControl>
+                        <FormLabel className="font-normal cursor-pointer">CLIENTE</FormLabel>
+                      </FormItem>
+                      <FormItem className="flex items-center space-x-2 space-y-0">
+                        <FormControl><RadioGroupItem value="MECÂNICO" /></FormControl>
+                        <FormLabel className="font-normal cursor-pointer">MECÂNICO</FormLabel>
+                      </FormItem>
+                      <FormItem className="flex items-center space-x-2 space-y-0">
+                        <FormControl><RadioGroupItem value="AMBOS" /></FormControl>
+                        <FormLabel className="font-normal cursor-pointer">AMBOS</FormLabel>
+                      </FormItem>
+                    </div>
                   </RadioGroup>
                 </FormControl>
                 <FormMessage />

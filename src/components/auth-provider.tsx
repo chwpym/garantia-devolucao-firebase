@@ -20,6 +20,7 @@ export interface AuthContextType {
   pendingUsersCount: number; // New field for admin notifications
   refreshPendingCount: () => Promise<void>; // Function to update the count
   updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
+  signOut: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -28,6 +29,7 @@ export const AuthContext = createContext<AuthContextType>({
   pendingUsersCount: 0,
   refreshPendingCount: async () => { },
   updateProfile: async () => { },
+  signOut: async () => { },
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -57,6 +59,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const handleSignOut = async () => {
+    const app = getFirebaseApp();
+    const auth = getAuth(app);
+    await signOut(auth);
+  };
+
   useEffect(() => {
     const app = getFirebaseApp();
     const auth = getAuth(app);
@@ -68,17 +76,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           try {
             await db.initDB(); // Ensure DB is ready
             let profile = await db.getUserProfile(authUser.uid);
+            const userCount = await countUsers(); // Fixed: using direct import from db-utils
 
             if (!profile) {
               // Profile doesn't exist.
               // CHECK: Is this the first user ever?
-              const userCount = await countUsers();
+              if (userCount === 0) {
+                // First user -> Auto-create as ADMIN (Bootstrap)
+                const newRole = 'admin';
 
-                if (userCount === 0) {
-                  // First user -> Auto-create as ADMIN (Bootstrap)
-                  const newRole = 'admin';
-
-                  profile = {
+                profile = {
                   uid: authUser.uid,
                   email: authUser.email!,
                   displayName: authUser.displayName || authUser.email?.split('@')[0] || 'Admin',
@@ -87,11 +94,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                   status: 'active',
                 };
                 await db.upsertUserProfile(profile);
-                } else {
-                  // System already has users -> Create as STANDARD USER
-                  const newRole = 'user';
+              } else {
+                // System already has users -> Create as STANDARD USER
+                const newRole = 'user';
 
-                  profile = {
+                profile = {
                   uid: authUser.uid,
                   email: authUser.email!,
                   displayName: authUser.displayName || authUser.email?.split('@')[0] || 'Novo Usuário',
@@ -124,6 +131,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               }
 
               if (profile.role === 'admin') {
+                await refreshPendingCount();
+              } else if (userCount === 1) {
+                // If this is the ONLY user and somehow got 'user' role, upgrade to admin
+                profile.role = 'admin';
+                profile.status = 'active';
+                await db.upsertUserProfile(profile);
                 await refreshPendingCount();
               }
 
@@ -158,7 +171,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading,
     pendingUsersCount,
     refreshPendingCount,
-    updateProfile
+    updateProfile,
+    signOut: handleSignOut
   }), [user, loading, pendingUsersCount]);
 
   return (

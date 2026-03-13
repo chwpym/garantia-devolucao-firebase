@@ -9,6 +9,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Button } from './ui/button';
 import type { Product } from '@/lib/types';
 import { useAppStore } from '@/store/app-store';
+import { smartSearch } from '@/lib/search-utils';
 
 interface ComboboxSearchProps {
   value: string | undefined;
@@ -35,20 +36,9 @@ export default function ComboboxSearch({
   const filteredProducts = useMemo(() => {
     if (!value) return [];
     
-    const lowercasedTerm = value.toLowerCase();
-    
-    // Lógica de busca correta e completa, como na tela de consulta de produtos.
-    return products.filter(product => {
-        const productCode = product.codigo || '';
-        const productDesc = product.descricao || '';
-        const productBrand = product.marca || '';
-        const productRef = product.referencia || '';
-
-        return productCode.toLowerCase().includes(lowercasedTerm) ||
-               productDesc.toLowerCase().includes(lowercasedTerm) ||
-               productBrand.toLowerCase().includes(lowercasedTerm) ||
-               productRef.toLowerCase().includes(lowercasedTerm);
-    }).slice(0, 10);
+    return products.filter(product => 
+        smartSearch(product, value, ['codigo', 'descricao', 'marca', 'referencia'])
+    ).slice(0, 15);
   }, [products, value]);
 
   return (
@@ -71,7 +61,7 @@ export default function ComboboxSearch({
         </FormControl>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-        <Command>
+        <Command shouldFilter={false}>
           <CommandInput
             placeholder={searchPlaceholder}
             value={value}

@@ -30,11 +30,12 @@ export interface Warranty {
   codigoExterno?: string;
 }
 
-export type PersonType = 'Cliente' | 'Mecânico' | 'Ambos';
+export type PersonType = 'CLIENTE' | 'MECÂNICO' | 'AMBOS';
 
 export interface Person {
   id?: number;
   nome: string;
+  razaoSocial?: string;
   nomeFantasia?: string;
   tipo: PersonType;
   cpfCnpj?: string;

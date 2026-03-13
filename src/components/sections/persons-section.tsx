@@ -126,7 +126,7 @@ export default function PersonsSection() {
     if (!lowercasedTerm) return persons;
 
     return persons.filter(person =>
-      smartSearch(person, term, ['nome', 'nomeFantasia', 'cpfCnpj', 'telefones', 'cidade', 'codigoExterno'])
+      smartSearch(person, term, ['nome', 'razaoSocial', 'nomeFantasia', 'cpfCnpj', 'telefones', 'cidade', 'codigoExterno', 'tipo'])
     );
   }, [persons, searchTerm]);
 
@@ -225,13 +225,16 @@ export default function PersonsSection() {
     }
   };
 
-  const getTypeVariant = (type: Person['tipo']) => {
-    switch (type) {
-      case 'Cliente':
+  const getTypeVariant = (type: string | undefined) => {
+    if (!type) return 'secondary';
+    const upperType = type.toUpperCase();
+    switch (upperType) {
+      case 'CLIENTE':
         return 'secondary';
-      case 'Mecânico':
+      case 'MECÂNICO':
+      case 'MECANICO':
         return 'outline';
-      case 'Ambos':
+      case 'AMBOS':
         return 'default';
       default:
         return 'secondary';

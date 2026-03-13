@@ -19,7 +19,7 @@ const applicabilityOptions: { id: StatusApplicability; label: string }[] = [
     { id: 'garantia', label: 'Garantias' },
     { id: 'lote', label: 'Lotes' },
     { id: 'devolucao', label: 'Devoluções (Status)' },
-    { id: 'acaoRequisicao', label: 'Devoluções (Ação na Requisição)' },
+    { id: 'acaoRequisicao', label: 'Devoluções (Ação na Condicional/Requisição)' },
 ];
 
 const formSchema = z.object({

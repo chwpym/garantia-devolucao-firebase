@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Wrench, ShieldCheck, Hourglass, BarChart3, ShieldX, Users, Building, DollarSign, Undo, Package } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
-import { Bar, BarChart, CartesianGrid, XAxis, Pie, PieChart as RechartsPieChart, Cell } from 'recharts';
+import { Bar, BarChart, CartesianGrid, XAxis, Pie, PieChart, Cell } from 'recharts';
 import { format, parseISO, subMonths, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -409,7 +409,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                             <CardContent>
                                 {isLoading ? <Skeleton className="h-48 w-full" /> : (
                                     <ChartContainer config={chartConfig} className="mx-auto aspect-square h-[250px]">
-                                        <RechartsPieChart>
+                                        <PieChart>
                                             <ChartTooltip content={<ChartTooltipContent hideLabel />} />
                                             <Pie data={statusData} dataKey="value" nameKey="name" innerRadius={60} strokeWidth={5}>
                                                 {statusData.map((entry) => (
@@ -417,7 +417,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                                                 ))}
                                             </Pie>
                                             <ChartLegend content={<ChartLegendContent nameKey="name" />} />
-                                        </RechartsPieChart>
+                                        </PieChart>
                                     </ChartContainer>
                                 )}
                             </CardContent>
@@ -624,7 +624,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                                             <TableHead>Cliente</TableHead>
                                             <TableHead>Peça</TableHead>
                                             <TableHead className='text-center'>Quantidade</TableHead>
-                                            <TableHead>Requisição</TableHead>
+                                            <TableHead className="truncate">Cond./Req.</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>

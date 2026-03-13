@@ -66,10 +66,12 @@ export default function ComboboxProduct({
               autoComplete="off"
               onChange={(e) => {
                 onInputChange(e.target.value);
-                setPopoverOpen(true);
+                if (e.target.value) {
+                  setPopoverOpen(true);
+                }
               }}
               onFocus={() => {
-                setPopoverOpen(true);
+                // Focus is now instant, popover only opens on typing
               }}
               onKeyDown={(e) => {
                 if (e.key !== 'Tab') {
@@ -98,7 +100,7 @@ export default function ComboboxProduct({
         </FormControl>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-        <Command>
+        <Command shouldFilter={false}>
           <CommandInput
             placeholder={searchPlaceholder}
             value={value}

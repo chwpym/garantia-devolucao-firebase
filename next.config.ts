@@ -41,6 +41,9 @@ const nextConfig: NextConfig = {
   env: {
     APP_VERSION: process.env.VERCEL_GIT_COMMIT_SHA || packageJson.version,
   },
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'recharts', 'date-fns'],
+  },
 };
 
 const pwaConfig = withPWA({

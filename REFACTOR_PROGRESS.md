@@ -197,3 +197,15 @@ _(Fases 19-27 conforme REFACTOR_PLAN.md)_
 | **30** | Lotes Estilo Kanban e Card Popup   |   ⏳   | 3 abas, status reflete na borda, e tooltip hover popup |
 | **31** | Database (1:N) Multi-Fornecedor    |   ⏳   | Múltiplos códs por peça e visibilidade Código Externo  |
 | **32** | Alertas Temporizados (SLA Inativo) |   ⏳   | Aging de Garantia (+2 dias ex: Aguardando Autorização) |
+
+---
+
+### FASES 33 a 37: Estabilização Operacional e Feedbacks (MARÇO/2026) 🔵
+
+| Fase   | Objetivo                               | Status | Notas                                                       |
+| :----- | :------------------------------------- | :----: | :---------------------------------------------------------- |
+| **33** | Correções Críticas (Garantia/Devol)    |   ⏳   | Edições em fechadas, "Salvar e Continuar", Timestamp dinâmico |
+| **34** | Otimização Calculadoras (Layout e ST)  |   ⏳   | Fator conv zoom, Calc ST, Extração Universal XML e Widgets  |
+| **35** | Aprimoramentos de Busca e Foco (`Fuzzy`) |   ⏳   | Input `split` Match, Input focus React Ref e Razão Social   |
+| **36** | Regras Cascata, Hover Lotes e Cores    |   ⏳   | Hover Tooltip Lote, Multi-Status Trigger, Contrast Color    |
+| **37** | Converters e Migração BD (Supabase)    |   ⏳   | CerTtus Universal Reader + Interface de Banco Isolada       |

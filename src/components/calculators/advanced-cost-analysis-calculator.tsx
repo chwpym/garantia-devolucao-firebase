@@ -100,6 +100,18 @@ export default function AdvancedCostAnalysisCalculator() {
         };
         setNfeInfo(newNfeInfo);
 
+        const extractST = (imposto: any): number => {
+            if (!imposto?.ICMS) return 0;
+            const icms = imposto.ICMS;
+            // Iterate through all possible ICMS tags (ICMS00, ICMS10, ICMSST, etc.)
+            for (const key in icms) {
+                if (icms[key]?.vICMSST) {
+                    return parseFloat(icms[key].vICMSST) || 0;
+                }
+            }
+            return 0;
+        };
+
         const newItems: Omit<AnalyzedItem, 'finalUnitCost' | 'finalTotalCost' | 'convertedUnitCost'>[] = dets.map((det: NfeProductDetail, index: number) => {
             const prod = det.prod;
             const imposto = det.imposto;
@@ -111,7 +123,7 @@ export default function AdvancedCostAnalysisCalculator() {
             const itemWeight = totalProdValue > 0 ? itemTotalCost / totalProdValue : 0;
 
             const ipiValor = parseFloat(imposto?.IPI?.IPITrib?.vIPI) || 0;
-            const stValor = parseFloat(imposto?.ICMS?.ICMSST?.vICMSST) || 0;
+            const stValor = extractST(imposto);
             const pisValor = parseFloat(imposto?.PIS?.PISAliq?.vPIS) || parseFloat(imposto?.PIS?.PISST?.vPIS) || 0;
             const cofinsValor = parseFloat(imposto?.COFINS?.COFINSAliq?.vCOFINS) || parseFloat(imposto?.COFINS?.COFINSST?.vCOFINS) || 0;
 
@@ -348,7 +360,7 @@ export default function AdvancedCostAnalysisCalculator() {
                             <TableRow>
                                 <TableHead className="min-w-[250px] sticky left-0 z-10">Descrição</TableHead>
                                 <TableHead className="text-right">Qtde</TableHead>
-                                <TableHead className="w-[100px]">Fator Conv.</TableHead>
+                                <TableHead className="w-[150px]">Fator Conv.</TableHead>
                                 <TableHead className="text-right">C. Un. Orig.</TableHead>
                                 <TableHead className="text-right">IPI</TableHead>
                                 <TableHead className="text-right">ICMS-ST</TableHead>
@@ -370,13 +382,17 @@ export default function AdvancedCostAnalysisCalculator() {
                                     <TableCell className="text-right">{formatNumber(item.quantity)}</TableCell>
                                     <TableCell>
                                         <Input
-                                            type="number"
-                                            step="0.0001"
+                                            type="text"
+                                            inputMode="decimal"
                                             className="h-8 text-right bg-input-calc"
                                             value={item.conversionFactor}
-                                            onChange={(e) => handleConversionFactorChange(item.id, e.target.value)}
+                                            onChange={(e) => {
+                                                const val = e.target.value.replace(',', '.');
+                                                if (val === '' || !isNaN(Number(val))) {
+                                                    handleConversionFactorChange(item.id, val);
+                                                }
+                                            }}
                                             placeholder="1"
-                                            min="0"
                                         />
                                     </TableCell>
                                     <TableCell className="text-right">{formatCurrency4(item.unitCost)}</TableCell>

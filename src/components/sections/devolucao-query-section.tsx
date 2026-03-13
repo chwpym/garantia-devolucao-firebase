@@ -223,7 +223,7 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
             toast({ title: 'Aviso', description: 'Não há dados para exportar.' });
             return;
         }
-        const headers = ['ID Dev.', 'Data Dev.', 'Cliente', 'Requisição', 'Código Peça', 'Descrição Peça', 'Qtd.', 'Ação Req.', 'Status'];
+        const headers = ['ID Dev.', 'Data Dev.', 'Cliente', 'Cond./Req.', 'Código Peça', 'Descrição Peça', 'Qtd.', 'Ação Req.', 'Status'];
         const rows = sortedDevolucoes.map(item => [
             item.id,
             item.dataDevolucao ? format(parseISO(item.dataDevolucao), 'dd/MM/yyyy') : '',
@@ -261,8 +261,8 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
         );
     }
 
-    const SortableHeader = ({ sortKey, children }: { sortKey: SortableKeys, children: React.ReactNode }) => (
-        <TableHead>
+    const SortableHeader = ({ sortKey, children, className }: { sortKey: SortableKeys, children: React.ReactNode, className?: string }) => (
+        <TableHead className={className}>
             <Button variant="ghost" onClick={() => requestSort(sortKey)} className="group px-2">
                 {children}
                 {getSortIcon(sortKey)}
@@ -282,7 +282,7 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
                 </div>
                 <div className="flex flex-col md:flex-row gap-4">
                     <SearchInput
-                        placeholder="Buscar por cliente, peça, requisição, etc..."
+                        placeholder="Buscar por cliente, peça, condicional/requisição, etc..."
                         value={searchTerm}
                         onChange={(e) => setFilters({ ...filters, searchTerm: e.target.value })}
                         onClear={() => setFilters({ ...filters, searchTerm: '' })}
@@ -311,7 +311,7 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
                             <SortableHeader sortKey="id">ID Dev.</SortableHeader>
                             <SortableHeader sortKey="dataDevolucao">Data Dev.</SortableHeader>
                             <SortableHeader sortKey="cliente">Cliente</SortableHeader>
-                            <SortableHeader sortKey="requisicaoVenda">Requisição</SortableHeader>
+                            <SortableHeader sortKey="requisicaoVenda" className="truncate max-w-[120px]">Cond./Req.</SortableHeader>
                             <SortableHeader sortKey="codigoPeca">Código Peça</SortableHeader>
                             <SortableHeader sortKey="descricaoPeca">Descrição Peça</SortableHeader>
                             <SortableHeader sortKey="quantidade">Qtd.</SortableHeader>

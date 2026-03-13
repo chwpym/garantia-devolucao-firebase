@@ -9,11 +9,12 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SearchInput } from '@/components/ui/search-input';
 import { CheckCircle2, AlertCircle, Loader2, Save, Search, User, Building, Archive } from 'lucide-react';
-import * as db from '@/lib/db';
-import { useToast } from '@/hooks/use-toast';
 import { useAppStore } from '@/store/app-store';
 import { useShallow } from 'zustand/react/shallow';
 import { cn } from '@/lib/utils';
+import { smartSearch } from '@/lib/search-utils';
+import * as db from '@/lib/db';
+import { useToast } from '@/hooks/use-toast';
 import type { Product, Supplier, Person } from '@/lib/types';
 
 type Category = 'products' | 'suppliers' | 'persons';
@@ -40,11 +41,8 @@ export default function ReconciliationSection() {
         else if (activeTab === 'persons') items = persons;
 
         return items.filter(item => {
-            const matchesSearch = (item.descricao || item.nome || item.nomeFantasia || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (item.codigo || item.cnpj || item.cpfCnpj || '').toLowerCase().includes(searchTerm.toLowerCase());
-
+            const matchesSearch = smartSearch(item, searchTerm, ['descricao', 'nome', 'nomeFantasia', 'codigo', 'cnpj', 'cpfCnpj']);
             const isPending = !item.codigoExterno;
-
             return matchesSearch && (pendingOnly ? isPending : true);
         });
     }, [activeTab, products, suppliers, persons, searchTerm, pendingOnly]);

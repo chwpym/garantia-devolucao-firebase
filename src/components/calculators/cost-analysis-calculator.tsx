@@ -72,8 +72,19 @@ export default function CostAnalysisCalculator() {
 
             const itemWeight = totalProdValue > 0 ? itemTotalCost / totalProdValue : 0;
 
+            const extractST = (imposto: any): number => {
+                if (!imposto?.ICMS) return 0;
+                const icms = imposto.ICMS;
+                for (const key in icms) {
+                    if (icms[key]?.vICMSST) {
+                        return parseFloat(icms[key].vICMSST) || 0;
+                    }
+                }
+                return 0;
+            };
+
             const ipiValor = parseFloat(imposto?.IPI?.IPITrib?.vIPI) || 0;
-            const stValor = parseFloat(imposto?.ICMS?.ICMSST?.vICMSST) || 0;
+            const stValor = extractST(imposto);
 
             const freteRateado = parseFloat(prod.vFrete) || (totalFrete * itemWeight) || 0;
             const seguroRateado = parseFloat(prod.vSeg) || (totalSeguro * itemWeight) || 0;
@@ -246,7 +257,7 @@ export default function CostAnalysisCalculator() {
                             <TableRow>
                                 <TableHead className="min-w-[250px] sticky left-0 z-10">Descrição</TableHead>
                                 <TableHead className="text-right">Qtde</TableHead>
-                                <TableHead className="w-[100px]">Fator Conv.</TableHead>
+                                <TableHead className="w-[150px]">Fator Conv.</TableHead>
                                 <TableHead className="text-right">Custo Un. Orig.</TableHead>
                                 <TableHead className="text-right">Custo Total Orig.</TableHead>
                                 <TableHead className="text-right">IPI</TableHead>
@@ -271,9 +282,13 @@ export default function CostAnalysisCalculator() {
                                             inputMode="decimal"
                                             className="h-8 text-right bg-input-calc"
                                             value={item.conversionFactor}
-                                            onChange={(e) => handleConversionFactorChange(item.id, e.target.value)}
+                                            onChange={(e) => {
+                                                const val = e.target.value.replace(',', '.');
+                                                if (val === '' || !isNaN(Number(val))) {
+                                                    handleConversionFactorChange(item.id, val);
+                                                }
+                                            }}
                                             placeholder="1"
-                                            min="0"
                                         />
                                     </TableCell>
                                     <TableCell className="text-right">{formatCurrency4(item.unitCost)}</TableCell>

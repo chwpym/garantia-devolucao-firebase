@@ -26,6 +26,8 @@ import { useAppStore } from '@/store/app-store';
 import { WARRANTY_STATUSES } from '@/lib/types';
 import { QuickRegisterDialog } from './quick-register-dialog';
 import ComboboxProduct from '@/components/combobox-product';
+import ComboboxSearch from '@/components/combobox-search';
+import ComboboxPerson from '@/components/combobox-person';
 
 
 const formSchema = z.object({
@@ -126,20 +128,25 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
             quantidade: values.quantidade ?? 1,
             status: values.status as WarrantyStatus,
             photos: values.photos ?? [],
-            dataRegistro: selectedWarranty?.dataRegistro && !isClone ? selectedWarranty.dataRegistro : new Date().toISOString(),
+            dataRegistro: new Date().toISOString(), // Always record current time as the last action timestamp
         };
 
         await onSave(dataToSave, shouldNavigate);
 
         if (!shouldNavigate) {
-            // Se for novo cadastro e quiser continuar, limpa o form
+            // Limpa o formulário completo para novo lançamento, evitando confusão
+            const currentObs = form.getValues('observacao');
             form.reset(defaultValues);
+            if (currentObs) form.setValue('observacao', currentObs);
+            
             if (fileInputRef.current) fileInputRef.current.value = '';
             toast({
                 title: 'Pronto para mais um!',
-                description: 'O formulário foi limpo para o próximo cadastro.',
+                description: 'O formulário foi limpo para o próximo lançamento.',
             });
         }
+        
+        window.dispatchEvent(new CustomEvent('datachanged'));
     };
 
     const handleClear = () => {
@@ -175,10 +182,10 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
     };
 
     const handlePersonSaved = (newPerson: Person) => {
-        if (newPerson.tipo === 'Cliente' || newPerson.tipo === 'Ambos') {
+        if (newPerson.tipo === 'CLIENTE' || newPerson.tipo === 'AMBOS') {
             form.setValue('cliente', newPerson.nome);
         }
-        if (newPerson.tipo === 'Mecânico' || newPerson.tipo === 'Ambos') {
+        if (newPerson.tipo === 'MECÂNICO' || newPerson.tipo === 'AMBOS') {
             form.setValue('mecanico', newPerson.nome);
         }
     };
@@ -243,7 +250,11 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
 
 
     const clientsList = useMemo(() => {
-        const filtered = persons.filter(p => !p.tipo || p.tipo.toLowerCase() === 'cliente' || p.tipo.toLowerCase() === 'ambos');
+        const filtered = persons.filter(p => {
+            if (!p.tipo) return true;
+            const type = p.tipo.toUpperCase();
+            return type === 'CLIENTE' || type === 'AMBOS';
+        });
         const nameCounts = new Map<string, number>();
         filtered.forEach(p => nameCounts.set(p.nome, (nameCounts.get(p.nome) || 0) + 1));
 
@@ -255,36 +266,42 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
         });
     }, [persons]);
 
-    const mechanicsList = useMemo(() => {
-        const filtered = persons.filter(p => !p.tipo || p.tipo.toLowerCase() === 'mecânico' || p.tipo.toLowerCase() === 'mecanico' || p.tipo.toLowerCase() === 'ambos');
-        const nameCounts = new Map<string, number>();
-        filtered.forEach(p => nameCounts.set(p.nome, (nameCounts.get(p.nome) || 0) + 1));
-
-        return filtered.map(p => {
-            const hasCollision = (nameCounts.get(p.nome) || 0) > 1;
-            const docFragment = p.cpfCnpj ? ` (${p.cpfCnpj.slice(-4)})` : '';
-            const displayName = hasCollision ? `${p.nome}${docFragment}` : p.nome;
-            return { ...p, displayName };
-        });
-    }, [persons]);
+    const clientOptions = useMemo(() => clientsList.map(c => ({
+        value: c.displayName,
+        label: c.displayName,
+        key: `p-${c.id}`,
+        keywords: [c.nome, c.razaoSocial, c.nomeFantasia, c.cpfCnpj].filter(Boolean) as string[]
+    })), [clientsList]);
 
     const supplierOptions = useMemo(() => suppliers.map(s => ({
         value: s.nomeFantasia,
         label: s.nomeFantasia,
-        keywords: [s.razaoSocial || '', s.cnpj || '']
+        key: `s-${s.id}`,
+        keywords: [s.razaoSocial, s.cnpj].filter(Boolean) as string[]
     })), [suppliers]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const clientOptions = useMemo(() => clientsList.map((c: any) => ({
-        value: c.displayName,
-        label: c.displayName,
-        keywords: [c.nome || '', c.cpfCnpj || '', c.nomeFantasia || '']
-    })), [clientsList]);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mechanicOptions = useMemo(() => mechanicsList.map((m: any) => ({
+    const mechanicsList = useMemo(() => {
+        const filtered = persons.filter(p => {
+            if (!p.tipo) return true;
+            const type = p.tipo.toUpperCase();
+            return type === 'MECÂNICO' || type === 'MECANICO' || type === 'AMBOS';
+        });
+        const nameCounts = new Map<string, number>();
+        filtered.forEach(p => nameCounts.set(p.nome, (nameCounts.get(p.nome) || 0) + 1));
+
+        return filtered.map(p => {
+            const hasCollision = (nameCounts.get(p.nome) || 0) > 1;
+            const docFragment = p.cpfCnpj ? ` (${p.cpfCnpj.slice(-4)})` : '';
+            const displayName = hasCollision ? `${p.nome}${docFragment}` : p.nome;
+            return { ...p, displayName };
+        });
+    }, [persons]);
+
+    const mechanicOptions = useMemo(() => mechanicsList.map(m => ({
         value: m.displayName,
         label: m.displayName,
-        keywords: [m.nome || '', m.cpfCnpj || '', m.nomeFantasia || '']
+        key: `m-${m.id}`,
+        keywords: [m.nome, m.razaoSocial, m.nomeFantasia, m.cpfCnpj].filter(Boolean) as string[]
     })), [mechanicsList]);
 
     // Filter dynamic statuses for Garantia
@@ -341,19 +358,18 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                                     <FormItem className="md:col-span-2 flex flex-col">
                                         <FormLabel>Fornecedor</FormLabel>
                                         <div className="flex items-center gap-2">
-                                            <Combobox
+                                            <ComboboxPerson
                                                 options={supplierOptions}
                                                 value={field.value ?? ''}
-                                                onChange={field.onChange}
+                                                onPersonSelect={field.onChange}
+                                                onInputChange={field.onChange}
                                                 placeholder="Selecione um fornecedor"
                                                 searchPlaceholder="Buscar fornecedor..."
-                                                notFoundMessage="Nenhum fornecedor encontrado."
-                                                className="w-full"
-                                                onAddClick={() => {
+                                                addEntityLabel="Novo Fornecedor"
+                                                onAddNew={() => {
                                                     setQuickRegisterType('supplier');
                                                     setQuickRegisterOpen(true);
                                                 }}
-                                                addLabel="Novo Fornecedor"
                                             />
                                         </div>
                                         <FormMessage />
@@ -489,7 +505,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                                 )}
                             />
                             <FormField name="requisicaoVenda" control={form.control} render={({ field }) => (
-                                <FormItem><FormLabel>Requisição Venda</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                                <FormItem><FormLabel className="truncate">Condicional/Requisição</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                             )} />
                             <FormField name="requisicoesGarantia" control={form.control} render={({ field }) => (
                                 <FormItem className="md:col-span-3"><FormLabel>Requisições Garantia</FormLabel><FormControl><Textarea rows={1} placeholder="Separe múltiplas requisições por vírgula" {...field} /></FormControl><FormMessage /></FormItem>
@@ -546,7 +562,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
                         Cancelar
                     </Button>
                     <div className="flex gap-2">
-                        {!selectedWarranty && !isClone && (
+                        {!isClone && (
                             <Button
                                 type="submit"
                                 variant="outline"

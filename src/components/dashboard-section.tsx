@@ -571,7 +571,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                                         <TableHead>Cliente</TableHead>
                                         <TableHead>Peça</TableHead>
                                         <TableHead className='text-center'>Quantidade</TableHead>
-                                        <TableHead>Requisição</TableHead>
+                                        <TableHead className="truncate">Cond./Req.</TableHead>
                                         <TableHead className='w-[100px] text-right'>Ações</TableHead>
                                     </TableRow>
                                 </TableHeader>

@@ -322,6 +322,44 @@ _Lógicas extras demandadas nativamente durante o uso._
 **Tempo:** 3-5 horas
 **Objetivo:** Adicionar configuração no Criador de Status: _Avisar SLAs (Dias)_. O sistema enviará notificações na tela (ou badge vermelho) quando uma Garantia ficar Inerte "Ex: Aguardando Autorização por +2 Dias Úteis".
 
+### Fase 33: Correção de Bugs Críticos (Garantia/Devolução)
+**Tempo:** 4-6 horas
+**Objetivo:**
+- Resolver conflitos de tipagem de Cliente e Fornecedor em Garantia/Devolução.
+- Bloquear edição/adição de itens em Devoluções/Garantias com Status Finalizado.
+- Botão "Salvar e Continuar" na Devolução passará a limpar toda o formulário (Capa e Itens).
+- Fixar Timestamp (`Date.now()`) no momento exato do *Save*, não no carregamento.
+
+### Fase 34: Otimização de Calculadoras (Layout, ST e Unificação)
+**Tempo:** 5-7 horas
+**Objetivo:**
+- Corrigir overflow/zoom do campo "Fator Conversão".
+- Implementar cálculo de Substituição Tributária (ST) e ST-D nas Avançadas e NF-e.
+- Expandir Leitor XML p/ extrair Código de Produto/Fornecedor em TODAS calculadoras.
+- Criar a funcionalidade Modular: Agrupar calculadoras e criar um Widget Popup flutuante Padrão global.
+
+### Fase 35: Aprimoramento de Busca e Foco (Fuzzy & UX)
+**Tempo:** 3-5 horas
+**Objetivo:**
+- Expandir Busca de Clientes/Empresa para indexar `Nome`, `Razão Social` e `Nome Fantasia` nos relatórios automáticos.
+- Busca Flexível: Permitir buscar trechos soltos (Ex: "mang colet jahu").
+- AutoFocus forçado (`useRef`) no campo "Código/Peça" ao cadastrar itens nas Devoluções/Garantias para Fast Entry.
+
+### Fase 36: Regras de Negócio e Hover Popup (Garantia/Lotes)
+**Tempo:** 3-4 horas
+**Objetivo:**
+- Exibir propriedades do Lote (Popup Hover) em cima da Tabela de Peças em Garantia.
+- Efeito Cascata: Mudar o status do Lote propaga o status para as peças envolvidas.
+- Permitir cor de texto de Status customizável (branco/preto) ou auto-contraste inteligente.
+- Validar se os dados do Card de Garantia (resumo visual) condizem 100% com a base.
+
+### Fase 37: Importações Avulsas e Migração BD (Supabase)
+**Tempo:** 6-8 horas
+**Objetivo:**
+- Parser Universal CERTTUS: Leitor de arquivos legados (XLS c/sem cabeçalho, TXT, Word, PDF).
+- Gerador/Limitador de Descrições (Truncar mantendo prefixo/sufixo crítico < 120 caracteres NFe).
+- Utilitário de Backups em CSV e arquitetar Pattern de Repository para facilitar isolamento caso haja migração de banco local IndexedDB para Supabase (Visando Custo Zero/Sem Firebase).
+
 ---
 
 ## 🛡️ PROCEDIMENTOS DE SEGURANÇA

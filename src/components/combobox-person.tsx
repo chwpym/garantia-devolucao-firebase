@@ -8,6 +8,7 @@ import { Plus } from 'lucide-react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Button } from './ui/button';
 import { useAppStore } from '@/store/app-store';
+import { smartSearch } from '@/lib/search-utils';
 
 interface PersonOption {
   value: string;
@@ -42,13 +43,9 @@ export default function ComboboxPerson({
   const filteredOptions = useMemo(() => {
     if (!value) return options.slice(0, 15);
     
-    const lowercasedTerm = value.toLowerCase();
-    
-    return options.filter(option => {
-        const matchesLabel = option.label.toLowerCase().includes(lowercasedTerm);
-        const matchesKeywords = option.keywords?.some(k => k.toLowerCase().includes(lowercasedTerm));
-        return matchesLabel || matchesKeywords;
-    }).slice(0, 15);
+    return options.filter(option => 
+        smartSearch(option, value, ['label', 'keywords'])
+    ).slice(0, 15);
   }, [options, value]);
 
   return (
@@ -60,9 +57,9 @@ export default function ComboboxPerson({
             autoComplete="off"
             onChange={(e) => {
               onInputChange(e.target.value);
-              if (e.target.value) {
+              if (e.target.value && e.target.value.length >= 2) {
                 setPopoverOpen(true);
-              } else {
+              } else if (!e.target.value) {
                 setPopoverOpen(false);
               }
             }}
@@ -71,7 +68,7 @@ export default function ComboboxPerson({
         </FormControl>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-        <Command>
+        <Command shouldFilter={false}>
           <CommandInput
             placeholder={searchPlaceholder}
             value={value}

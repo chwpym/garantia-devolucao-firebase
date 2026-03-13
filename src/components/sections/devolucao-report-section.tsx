@@ -230,7 +230,7 @@ export default function DevolucaoReportSection() {
 
   const clientOptions = useMemo(() => {
     return allPersons
-      .filter(p => p.tipo === 'Cliente' || p.tipo === 'Ambos')
+      .filter(p => p.tipo === 'CLIENTE' || p.tipo === 'AMBOS')
       .map(c => ({ value: c.nome, label: c.nome }))
       .sort((a, b) => a.label.localeCompare(b.label));
   }, [allPersons]);
@@ -292,7 +292,8 @@ export default function DevolucaoReportSection() {
       const pdfDataUri = generateDevolucoesPdf({
         devolucoes: flatData,
         companyData,
-        title: `Relatório de Devoluções - ${clientReportFilters.client}`
+        title: `Relatório de Devoluções - ${clientReportFilters.client}`,
+        baseHeaders: ['Data Dev.', 'Cliente', 'Cond./Req.', 'Código Peça', 'Descrição Peça', 'Qtd.', 'Ação Cond./Req.', 'Status']
       });
 
       const monthLabel = months.find(m => m.value === clientReportFilters.month)?.label;
@@ -415,7 +416,7 @@ export default function DevolucaoReportSection() {
                           <TableHeader>
                             <TableRow>
                               <TableHead>Data Dev.</TableHead>
-                              <TableHead>Requisição</TableHead>
+                              <TableHead className="truncate">Cond./Req.</TableHead>
                               <TableHead>Código Peça</TableHead>
                               <TableHead>Descrição Peça</TableHead>
                               <TableHead>Qtd.</TableHead>
@@ -587,7 +588,7 @@ export default function DevolucaoReportSection() {
                 <Card>
                     <CardHeader>
                         <CardTitle className='flex items-center gap-2'><PieChart className='h-5 w-5' /> Relatório por Ação</CardTitle>
-                        <CardDescription>Distribuição das ações na requisição.</CardDescription>
+                        <CardDescription>Distribuição das ações na condicional/requisição.</CardDescription>
                     </CardHeader>
                     <CardContent>
                          <Table>

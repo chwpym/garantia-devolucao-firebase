@@ -1,11 +1,10 @@
 
-
 'use client';
 
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Settings, Menu, DatabaseBackup, ArrowLeft } from 'lucide-react';
+import { Menu, X, ArrowLeft, LogOut, Settings, LayoutDashboard, Database, ChevronLeft, ChevronRight, DatabaseBackup } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
 import MobileSidebar from './mobile-sidebar';
 import QuickShortcuts from './quick-shortcuts';
@@ -13,6 +12,9 @@ import { useAppStore } from '@/store/app-store';
 import { useShallow } from 'zustand/react/shallow';
 import { UserNav } from './user-nav';
 import { ThemeToggle } from './theme-toggle';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/use-auth'; // Assuming this path for useAuth
+import { cn } from '@/lib/utils'; // Assuming this path for cn
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -32,6 +34,9 @@ const getViewLabel = (viewId: string): string => {
 };
 
 export default function AppLayout({ children }: AppLayoutProps) {
+  const router = useRouter();
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const { user, signOut } = useAuth();
   const {
     activeView,
     isMobileMenuOpen,
@@ -71,6 +76,16 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const handleNavClick = (view: string) => {
     setActiveView(view, true); // Add to history when clicking nav items
     setMobileMenuOpen(false);
+    router.push(`/${view}`);
+  };
+
+  const handleGoBack = () => {
+    const { navigationHistory } = useAppStore.getState();
+    if (navigationHistory.length > 0) {
+      const previousViewId = navigationHistory[navigationHistory.length - 1];
+      goBack();
+      router.push(`/${previousViewId}`);
+    }
   };
 
   const showBackButton = navigationHistory.length > 0;
@@ -85,18 +100,104 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <div className="flex h-screen w-full bg-muted/40">
+      <aside className={cn(
+        "hidden md:flex flex-col border-r bg-background transition-all duration-300 relative",
+        isSidebarCollapsed ? "w-20" : "w-64"
+      )}>
+        <div className={cn(
+          "h-16 flex items-center border-b px-4",
+          isSidebarCollapsed ? "justify-center" : "justify-between"
+        )}>
+           {!isSidebarCollapsed && (
+             <div className="flex items-center gap-3 font-bold text-xl text-primary overflow-hidden">
+               <Image
+                 src="/logo.png"
+                 alt="Synergia OS Logo"
+                 width={32}
+                 height={32}
+                 className="h-8 w-8 rounded-md flex-shrink-0"
+               />
+               <h1 className="text-xl font-bold font-headline text-foreground whitespace-nowrap truncate">
+                 Synergia OS
+               </h1>
+             </div>
+           )}
+           {isSidebarCollapsed && (
+             <Image
+               src="/logo.png"
+               alt="Synergia OS Logo"
+               width={32}
+               height={32}
+               className="h-8 w-8 rounded-md flex-shrink-0"
+             />
+           )}
+           
+           <Button 
+             variant="ghost" 
+             size="icon" 
+             className="absolute -right-3 top-20 h-6 w-6 rounded-full border bg-background shadow-sm z-10 hidden md:flex"
+             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+           >
+             {isSidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+           </Button>
+        </div>
+        
+        <div className="flex-1 overflow-auto py-4">
+          <MobileSidebar
+            activeView={activeView}
+            onNavigate={handleNavClick}
+            setMobileMenuOpen={setMobileMenuOpen}
+            isCollapsed={isSidebarCollapsed}
+          />
+        </div>
+        <div className="p-4 border-t flex flex-col gap-1">
+          <Button
+            key="backup"
+            variant={activeView === 'backup' ? 'secondary' : 'ghost'}
+            className={cn(
+              "justify-start gap-3 text-base h-11 w-full",
+              isSidebarCollapsed && "justify-center px-0"
+            )}
+            onClick={() => handleNavClick('backup')}
+            title={isSidebarCollapsed ? "Backup" : ""}
+          >
+            <DatabaseBackup className="h-5 w-5 flex-shrink-0" />
+            {!isSidebarCollapsed && <span>Backup</span>}
+          </Button>
+          <Button
+            key="settings"
+            variant={activeView === 'settings' ? 'secondary' : 'ghost'}
+            className={cn(
+              "justify-start gap-3 text-base h-11 w-full",
+              isSidebarCollapsed && "justify-center px-0"
+            )}
+            onClick={() => handleNavClick('settings')}
+            title={isSidebarCollapsed ? "Configurações" : ""}
+          >
+            <Settings className="h-5 w-5 flex-shrink-0" />
+            {!isSidebarCollapsed && <span>Configurações</span>}
+          </Button>
+          {!isSidebarCollapsed && (
+            <div className="text-center text-[10px] text-muted-foreground mt-2">
+              Versão {displayVersion}
+            </div>
+          )}
+        </div>
+      </aside>
+
       <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="p-4 border-b bg-background shadow-sm sticky top-0 z-20 flex flex-col gap-2">
+        <header className="px-4 py-2 border-b bg-background shadow-sm sticky top-0 z-20 flex flex-col gap-2">
           <div className='flex items-center justify-between w-full h-12'>
             <div className='flex items-center gap-2'>
               <Sheet open={isMobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon">
+                  <Button variant="ghost" size="icon" className="md:hidden">
                     <Menu className="h-6 w-6" />
                     <span className="sr-only">Abrir menu</span>
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="w-[280px] p-0 flex flex-col">
+                  {/* ... same sheet content as before, keeping it for mobile ... */}
                   <SheetHeader className="flex flex-row items-center gap-3 h-16 border-b px-4">
                     <Image
                       src="/logo.png"
@@ -109,11 +210,14 @@ export default function AppLayout({ children }: AppLayoutProps) {
                       Synergia OS
                     </SheetTitle>
                   </SheetHeader>
-                  <MobileSidebar
-                    activeView={activeView}
-                    onNavigate={handleNavClick}
-                    className="flex-1 overflow-auto py-2"
-                  />
+                  {isMobileMenuOpen && (
+                    <MobileSidebar
+                      activeView={activeView}
+                      onNavigate={handleNavClick}
+                      setMobileMenuOpen={setMobileMenuOpen}
+                      className="flex-1 overflow-auto py-2"
+                    />
+                  )}
                   <div className="mt-auto p-4 border-t">
                     <nav className='flex flex-col gap-1'>
                       <Button
@@ -146,7 +250,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={goBack}
+                  onClick={handleGoBack}
                   className="gap-2"
                   title={`Voltar para ${previousViewLabel}`}
                 >

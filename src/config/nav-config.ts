@@ -7,6 +7,7 @@ export type NavItem = {
   id: string;
   label: string;
   icon: React.ElementType;
+  href?: string;
   items?: NavItem[];
   adminOnly?: boolean; // New property to flag admin-only items
 }
@@ -15,16 +16,17 @@ export const navConfig: NavItem[] = [
   {
     id: 'dashboard',
     label: 'Dashboard',
-    icon: LayoutDashboard
+    icon: LayoutDashboard,
+    href: '/dashboard'
   },
   {
     id: 'cadastros',
     label: 'Cadastros',
     icon: FolderKanban,
     items: [
-      { id: 'persons', label: 'Clientes/Mecânicos', icon: Users },
-      { id: 'suppliers', label: 'Fornecedores', icon: Building },
-      { id: 'products', label: 'Produtos', icon: Archive },
+      { id: 'persons', label: 'Clientes/Mecânicos', icon: Users, href: '/persons' },
+      { id: 'suppliers', label: 'Fornecedores', icon: Building, href: '/suppliers' },
+      { id: 'products', label: 'Produtos', icon: Archive, href: '/products' },
     ]
   },
   {
@@ -32,10 +34,10 @@ export const navConfig: NavItem[] = [
     label: 'Garantias',
     icon: Wrench,
     items: [
-      { id: 'register', label: 'Cadastro de Garantia', icon: PlusSquare },
-      { id: 'batch-register', label: 'Cadastro em Lote', icon: History },
-      { id: 'query', label: 'Consulta de Garantias', icon: Search },
-      { id: 'lotes', label: 'Lotes de Garantia', icon: Package },
+      { id: 'register', label: 'Cadastro de Garantia', icon: PlusSquare, href: '/register' },
+      { id: 'batch-register', label: 'Cadastro em Lote', icon: History, href: '/batch-register' },
+      { id: 'query', label: 'Consulta de Garantias', icon: Search, href: '/query' },
+      { id: 'lotes', label: 'Lotes de Garantia', icon: Package, href: '/lotes' },
     ]
   },
   {
@@ -43,8 +45,8 @@ export const navConfig: NavItem[] = [
     label: 'Devoluções',
     icon: Undo2,
     items: [
-      { id: 'devolucao-register', label: 'Cadastro de Devolução', icon: PlusSquare },
-      { id: 'devolucao-query', label: 'Consulta de Devoluções', icon: Search },
+      { id: 'devolucao-register', label: 'Cadastro de Devolução', icon: PlusSquare, href: '/devolucao-register' },
+      { id: 'devolucao-query', label: 'Consulta de Devoluções', icon: Search, href: '/devolucao-query' },
     ]
   },
   {
@@ -52,9 +54,9 @@ export const navConfig: NavItem[] = [
     label: 'Relatórios',
     icon: FileText,
     items: [
-      { id: 'reports', label: 'Relatório de Garantias', icon: FileText },
-      { id: 'devolucao-reports', label: 'Relatório de Devoluções', icon: FileText },
-      { id: 'product-reports', label: 'Relatórios de Produtos', icon: BarChartHorizontal },
+      { id: 'reports', label: 'Relatório de Garantias', icon: FileText, href: '/reports' },
+      { id: 'devolucao-reports', label: 'Relatório de Devoluções', icon: FileText, href: '/devolucao-reports' },
+      { id: 'product-reports', label: 'Relatórios de Produtos', icon: BarChartHorizontal, href: '/product-reports' },
     ]
   },
   {
@@ -62,8 +64,8 @@ export const navConfig: NavItem[] = [
     label: 'Ferramentas',
     icon: Calculator,
     items: [
-      { id: 'calculators', label: 'Calculadoras', icon: Calculator },
-      { id: 'reconciliation', label: 'Conciliação de Códigos', icon: History },
+      { id: 'calculators', label: 'Calculadoras', icon: Calculator, href: '/calculators' },
+      { id: 'reconciliation', label: 'Conciliação de Códigos', icon: History, href: '/reconciliation' },
     ]
   },
   {
@@ -72,8 +74,8 @@ export const navConfig: NavItem[] = [
     icon: UserCog,
     adminOnly: true, // This whole section is for admins
     items: [
-      { id: 'users', label: 'Gerenciar Usuários', icon: Users },
-      { id: 'statuses', label: 'Gerenciar Status', icon: Settings },
+      { id: 'users', label: 'Gerenciar Usuários', icon: Users, href: '/users' },
+      { id: 'statuses', label: 'Gerenciar Status', icon: Settings, href: '/statuses' },
     ]
   }
 ];

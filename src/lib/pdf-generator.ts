@@ -40,6 +40,7 @@ interface GenerateDevolucoesPdfInput {
     devolucoes: (Omit<Devolucao, 'id' | 'itens'> & Partial<ItemDevolucao> & { id: number; itemId?: number })[];
     companyData: CompanyData | null;
     title?: string;
+    baseHeaders?: string[];
 }
 
 
@@ -318,7 +319,7 @@ export function generatePersonsPdf(input: GeneratePersonsPdfInput): string {
 }
 
 export function generateDevolucoesPdf(input: GenerateDevolucoesPdfInput): string {
-    const { devolucoes, companyData, title: customTitle } = input;
+    const { devolucoes, companyData, title: customTitle, baseHeaders: inputHeaders } = input;
     const doc = new jsPDF();
 
     const isClientReport = customTitle?.includes('Relatório de Devoluções -');
@@ -326,10 +327,10 @@ export function generateDevolucoesPdf(input: GenerateDevolucoesPdfInput): string
 
     const startY = addStandardHeader(doc, companyData, title);
 
-    const baseHeaders = ['Data Dev.', 'Cliente', 'Requisição', 'Código Peça', 'Descrição Peça', 'Qtd.', 'Ação Req.', 'Status'];
+    const baseHeaders = inputHeaders || ['Data Dev.', 'Cliente', 'Cond./Req.', 'Código Peça', 'Descrição Peça', 'Qtd.', 'Ação Cond./Req.', 'Status'];
 
     const tableHeaders = isClientReport
-        ? ['Data Dev.', 'Requisição', 'Código Peça', 'Descrição Peça', 'Qtd.']
+        ? ['Data Dev.', 'Cond./Req.', 'Código Peça', 'Descrição Peça', 'Qtd.']
         : baseHeaders;
 
 

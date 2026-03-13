@@ -43,8 +43,8 @@ const itemDevolucaoSchema = z.object({
 const devolucaoSchema = z.object({
     cliente: z.string().min(1, 'Cliente é obrigatório'),
     mecanico: z.string().optional(),
-    requisicaoVenda: z.string().min(1, 'Requisição é obrigatória'),
-    acaoRequisicao: z.string().min(1, 'Selecione uma ação para a requisição'),
+    requisicaoVenda: z.string().min(1, 'Condicional/Requisição é obrigatória'),
+    acaoRequisicao: z.string().min(1, 'Selecione uma ação para a requisicao/condicional'),
     dataVenda: z.date({ required_error: 'Data da venda é obrigatória' }),
     dataDevolucao: z.date({ required_error: 'Data da devolução é obrigatória' }),
     status: z.string().optional(),
@@ -262,16 +262,14 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
     const onSubmit = async (data: DevolucaoFormValues) => {
         try {
             const currentDevolucao = editingId ? await db.getDevolucaoById(editingId) : null;
-            const currentStatus: ReturnStatus = currentDevolucao?.status || 'Recebido';
-
             const devolucaoBaseData = {
                 cliente: data.cliente,
                 mecanico: data.mecanico,
                 requisicaoVenda: data.requisicaoVenda,
                 acaoRequisicao: data.acaoRequisicao,
                 dataVenda: data.dataVenda.toISOString(),
-                dataDevolucao: data.dataDevolucao.toISOString(),
-                status: currentStatus,
+                dataDevolucao: new Date().toISOString(), // Always save current timestamp reliably for devolução
+                status: (data.status || (editingId ? (await db.getDevolucaoById(editingId))?.status : 'Recebido')) as string, // Ensure string type
                 observacaoGeral: data.observacaoGeral
             };
 
@@ -290,11 +288,15 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                 if (shouldExit) {
                     onSave();
                 } else {
-                    // Mantém dados comuns (cliente, mecânico, data, requisição) mas limpa os itens
-                    form.setValue('itens', [{ codigoPeca: '', descricaoPeca: '', quantidade: 1 }]);
+                    // Limpa o formulário para novo lançamento, mantendo opcionalmente apenas a observação
+                    const currentObs = form.getValues('observacaoGeral');
+                    form.reset(defaultFormValues);
+                    if (currentObs) form.setValue('observacaoGeral', currentObs);
+                    
+                    window.dispatchEvent(new CustomEvent('datachanged'));
                     toast({
                         title: 'Tudo pronto!',
-                        description: 'O cadastro foi atualizado e mantido para novas peças.'
+                        description: 'O cadastro foi atualizado. Tela limpa para novo lançamento.'
                     });
                 }
 
@@ -311,12 +313,15 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                 if (shouldExit) {
                     onSave();
                 } else {
-                    // Limpa apenas os itens para agilizar novo registro do mesmo cliente/requisicao
-                    form.setValue('itens', [{ codigoPeca: '', descricaoPeca: '', quantidade: 1 }]);
+                    // Limpa o formulário para novo lançamento, mantendo opcionalmente apenas a observação
+                    const currentObs = form.getValues('observacaoGeral');
+                    form.reset(defaultFormValues);
+                    if (currentObs) form.setValue('observacaoGeral', currentObs);
+
                     window.dispatchEvent(new CustomEvent('datachanged'));
                     toast({
                         title: 'Cadastrado!',
-                        description: 'A devolução foi salva. Itens limpos para novo registro.'
+                        description: 'A devolução foi salva. Tela limpa para novo lançamento.'
                     });
                 }
             }
@@ -363,7 +368,11 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
     };
 
     const clients = useMemo(() => {
-        const filtered = persons.filter(p => !p.tipo || p.tipo.toLowerCase() === 'cliente' || p.tipo.toLowerCase() === 'ambos');
+        const filtered = persons.filter(p => {
+            if (!p.tipo) return true;
+            const type = p.tipo.toUpperCase();
+            return type === 'CLIENTE' || type === 'AMBOS';
+        });
         const nameCounts = new Map<string, number>();
         filtered.forEach(p => nameCounts.set(p.nome, (nameCounts.get(p.nome) || 0) + 1));
 
@@ -376,7 +385,11 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
     }, [persons]);
 
     const mechanics = useMemo(() => {
-        const filtered = persons.filter(p => !p.tipo || p.tipo.toLowerCase() === 'mecânico' || p.tipo.toLowerCase() === 'mecanico' || p.tipo.toLowerCase() === 'ambos');
+        const filtered = persons.filter(p => {
+            if (!p.tipo) return true;
+            const type = p.tipo.toUpperCase();
+            return type === 'MECÂNICO' || type === 'MECANICO' || type === 'AMBOS';
+        });
         const nameCounts = new Map<string, number>();
         filtered.forEach(p => nameCounts.set(p.nome, (nameCounts.get(p.nome) || 0) + 1));
 
@@ -388,8 +401,19 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
         });
     }, [persons]);
 
-    const clientOptions = useMemo(() => clients.map(c => ({ value: c.displayName, label: c.displayName, key: c.id?.toString() || c.nome, keywords: [c.nome || '', c.cpfCnpj || '', c.nomeFantasia || ''] })), [clients]);
-    const mechanicOptions = useMemo(() => mechanics.map(m => ({ value: m.displayName, label: m.displayName, key: m.id?.toString() || m.nome, keywords: [m.nome || '', m.cpfCnpj || '', m.nomeFantasia || ''] })), [mechanics]);
+    const clientOptions = useMemo(() => clients.map(c => ({ 
+        value: c.displayName, 
+        label: c.displayName, 
+        key: c.id?.toString() || c.nome, 
+        keywords: [c.nome, c.razaoSocial, c.nomeFantasia, c.cpfCnpj].filter(Boolean) as string[] 
+    })), [clients]);
+
+    const mechanicOptions = useMemo(() => mechanics.map(m => ({ 
+        value: m.displayName, 
+        label: m.displayName, 
+        key: m.id?.toString() || m.nome, 
+        keywords: [m.nome, m.razaoSocial, m.nomeFantasia, m.cpfCnpj].filter(Boolean) as string[] 
+    })), [mechanics]);
 
     // Dynamic statuses for Devolução
     const returnStatuses = useMemo(() => {
@@ -585,15 +609,15 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                 />
                                 </div>
 
-                                {/* Nova linha: Requisição, Ação na Requisição e Status agrupados */}
+                                {/* Nova linha: Condicional/Requisição, Ação na Condicional/Requisição e Status agrupados */}
                                 <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
                                     <FormField
                                         control={form.control}
                                         name="requisicaoVenda"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Requisição de Venda <span className='text-destructive'>*</span></FormLabel>
-                                                <FormControl><Input placeholder="Número da requisição" {...field} className='h-10' /></FormControl>
+                                                <FormLabel className="truncate block max-w-full">Condicional/Requisição <span className='text-destructive'>*</span></FormLabel>
+                                                <FormControl><Input placeholder="Número da condicional/requisição" {...field} className='h-10' /></FormControl>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -603,7 +627,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                         name="acaoRequisicao"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Ação na Requisição <span className='text-destructive'>*</span></FormLabel>
+                                                <FormLabel className="truncate block max-w-full">Ação na Condicional/Requisição <span className='text-destructive'>*</span></FormLabel>
                                                 <Select onValueChange={field.onChange} value={field.value || undefined}>
                                                     <FormControl><SelectTrigger className='h-10'><SelectValue placeholder="SELECIONE O STATUS" /></SelectTrigger></FormControl>
                                                     <SelectContent>

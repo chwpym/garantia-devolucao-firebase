@@ -12,6 +12,7 @@ export const normalizeText = (text: any): string => {
         .toLowerCase()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[.\-/()]/g, "") // Remove common separators: . - / ( )
         .trim();
 };
 
