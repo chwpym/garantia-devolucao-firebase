@@ -1,9 +1,9 @@
 # 🚀 Plano Completo de Refatoração - Synergia OS
 
-> **Versão:** 3.5 - REFINAMENTO DE PRECISÃO E UX
-> **Data Atualização:** 27/02/2026  
-> **Total de Fases:** 32
-> **Status:** ✅ Fases 6.5 a 8.5 Concluídas. Suporte a 4 casas decimais e melhorias de UX nas calculadoras.
+> **Versão:** 3.6 - PADRONIZAÇÃO DE BUSCA E UX GLOBAL
+> **Data Atualização:** 13/03/2026  
+> **Total de Fases:** 37
+> **Status:** ✅ Fases 35 a 37 Concluídas. Busca Inteligente padronizada em todos os Comboboxes e Filtros.
 
 ---
 
@@ -338,12 +338,13 @@ _Lógicas extras demandadas nativamente durante o uso._
 - Expandir Leitor XML p/ extrair Código de Produto/Fornecedor em TODAS calculadoras.
 - Criar a funcionalidade Modular: Agrupar calculadoras e criar um Widget Popup flutuante Padrão global.
 
-### Fase 35: Aprimoramento de Busca e Foco (Fuzzy & UX)
+### Fase 35: Aprimoramento de Busca e Foco (Fuzzy & UX) ✅
 **Tempo:** 3-5 horas
 **Objetivo:**
 - Expandir Busca de Clientes/Empresa para indexar `Nome`, `Razão Social` e `Nome Fantasia` nos relatórios automáticos.
 - Busca Flexível: Permitir buscar trechos soltos (Ex: "mang colet jahu").
-- AutoFocus forçado (`useRef`) no campo "Código/Peça" ao cadastrar itens nas Devoluções/Garantias para Fast Entry.
+- Padronização Global: Uso de `smartSearch` em todos os Comboboxes.
+- Correção de Filtragem: Desabilitação de `shouldFilter` interno do Command para permitir buscas por CNPJ/Keywords.
 
 ### Fase 36: Regras de Negócio e Hover Popup (Garantia/Lotes)
 **Tempo:** 3-4 horas
@@ -440,6 +441,6 @@ git push origin main
 
 ---
 
-**Última Atualização:** 27/02/2026  
-**Versão:** 3.5  
-**Status:** ✅ Fases iniciais Concluídas (27 Fases). Melhoria de precisão nas calculadoras (Fase 8.5) concluída. Abrindo Fluxo de Relatórios e Metas 2026 (Fases 28 a 32).
+**Última Atualização:** 13/03/2026  
+**Versão:** 3.6  
+**Status:** ✅ Fases iniciais Concluídas (30 Fases). Padronização de Busca Global (Fase 35) concluída.

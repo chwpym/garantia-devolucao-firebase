@@ -1,7 +1,7 @@
 # 📚 Guia Detalhado de Refatoração - Synergia OS
 
-> **Versão:** 3.1 - ESTABILIDADE  
-> **Data:** 28/01/2026  
+> **Versão:** 3.5 - PADRONIZAÇÃO DE BUSCA
+> **Data:** 13/03/2026  
 > **Complemento de:** REFACTOR_PLAN.md
 
 Este documento contém os detalhes completos de implementação de cada fase. Use em conjunto com `REFACTOR_PLAN.md` (resumo) e `REFACTOR_PROGRESS.md` (acompanhamento).
@@ -886,3 +886,43 @@ Estas fases nasceram do uso logístico intenso e concentram-se na remoção de f
 **Este arquivo contém a estrutura modular pensada. Para acompanhamento, veja REFACTOR_PROGRESS.md**
 
 **Última Atualização:** 27/02/2026
+---
+
+## 🟠 FASE 35: Aprimoramento de Busca e Foco (Busca Inteligente Global)
+
+### Problema Técnico
+O componente `<Command>` da biblioteca `cmdk` possui uma lógica de filtragem interna que conflita com buscas por campos secundários (como CNPJ ou keywords) quando usamos o padrão de opções `{ label, value }`. Isso causava falhas silenciosas onde o usuário digitava um CNPJ válido, mas o componente escondia o resultado por não encontrar o número na "label".
+
+### Solução Padronizada
+Para todas as buscas no sistema, agora utilizamos o componente `Combobox` mestre com as seguintes regras:
+
+1. **Desabilitar Filtro Nativo**: Definir `shouldFilter={false}` no componente `<Command>`.
+2. **Filtragem Manual Robusta**: Usar a função `smartSearch` no `useMemo` das opções.
+
+```typescript
+// Exemplo de implementação padronizada em ComboboxPerson
+const filteredOptions = useMemo(() => {
+  if (!value) return options.slice(0, 15);
+  
+  return options.filter(option => 
+    smartSearch(option, value, ['label', 'keywords'])
+  ).slice(0, 15);
+}, [options, value]);
+
+// No JSX:
+<Command shouldFilter={false}>
+  <CommandInput value={value} onValueChange={onInputChange} />
+  ...
+</Command>
+```
+
+### Arquivos Padronizados
+- `src/components/combobox-person.tsx`
+- `src/components/combobox-product.tsx`
+- `src/components/combobox-search.tsx`
+- `src/components/sections/reconciliation-section.tsx` (Migrado de manual para `smartSearch`)
+
+### Critérios de Sucesso
+- [x] Buscar por CNPJ sem pontos/traços retorna o fornecedor.
+- [x] Buscar por termos "quebrados" (ex: "mang jah") retorna resultados.
+- [x] Performance mantida (slice(0, 15) para evitar gargalo de DOM).

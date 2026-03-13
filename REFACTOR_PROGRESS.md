@@ -5,8 +5,8 @@ Este documento rastreia o status detalhado de cada fase do plano de refatoraçã
 ## 📊 Status Geral
 
 - **Início:** 15/12/2025
-- **Data Hoje:** 27/02/2026
-- **Fases Concluídas:** 27/32
+- **Data Hoje:** 13/03/2026
+- **Fases Concluídas:** 30/37
 - **Em Progresso:** Nenhuma
 - **Próxima Fase:** Fase 28 - Importação Legada de Dados Antigos
 
@@ -200,12 +200,20 @@ _(Fases 19-27 conforme REFACTOR_PLAN.md)_
 
 ---
 
-### FASES 33 a 37: Estabilização Operacional e Feedbacks (MARÇO/2026) 🔵
+### FASE 35: Aprimoramento de Busca e Foco (Fuzzy & UX) ✅
+
+| Item                                     | Status | Tempo Est. | Tempo Real | Notas                                            |
+| :--------------------------------------- | :----: | :--------: | :--------: | :----------------------------------------------- |
+| **Prioridade**                           | 🟠 ALTA |            |            |                                                  |
+| Padronização `smartSearch` Global        |   ✅   |     2h     |     1h     | Aplicado em Person, Product e Search Comboboxes  |
+| Fix Filtragem CNPJ (`shouldFilter`)      |   ✅   |     1h     |    30m     | Resolvido conflito entre cmdk e smartSearch      |
+| Varredura Global (Conciliação e outros)  |   ✅   |     2h     |     1h     | `reconciliation-section` agora usa smartSearch   |
+| Merge para Branch `main`                 |   ✅   |    30m     |    15m     | Código oficializado em produção (Vercel)         |
+| **Total da Fase**                        |        |   5h 30m   |   2h 45m   | Buscas 100% resilientes e padronizadas           |
+
+### FASE 36 e 37: Regras Cascata e Converters (Em breve) 🔵
 
 | Fase   | Objetivo                               | Status | Notas                                                       |
 | :----- | :------------------------------------- | :----: | :---------------------------------------------------------- |
-| **33** | Correções Críticas (Garantia/Devol)    |   ⏳   | Edições em fechadas, "Salvar e Continuar", Timestamp dinâmico |
-| **34** | Otimização Calculadoras (Layout e ST)  |   ⏳   | Fator conv zoom, Calc ST, Extração Universal XML e Widgets  |
-| **35** | Aprimoramentos de Busca e Foco (`Fuzzy`) |   ⏳   | Input `split` Match, Input focus React Ref e Razão Social   |
 | **36** | Regras Cascata, Hover Lotes e Cores    |   ⏳   | Hover Tooltip Lote, Multi-Status Trigger, Contrast Color    |
 | **37** | Converters e Migração BD (Supabase)    |   ⏳   | CerTtus Universal Reader + Interface de Banco Isolada       |
