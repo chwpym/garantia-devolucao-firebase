@@ -62,6 +62,7 @@ const addStandardHeader = (doc: jsPDF, companyData: CompanyData | null, title: s
     const margin = 14;
     let cursorY = 20;
 
+    // Company Name - Reduced to 10
     doc.setFontSize(10).setFont('helvetica', 'bold');
     doc.text(companyData?.nomeEmpresa || 'Relatório', margin, cursorY);
 
@@ -94,13 +95,27 @@ const addStandardHeader = (doc: jsPDF, companyData: CompanyData | null, title: s
     if (infoLine) doc.text(infoLine, margin, cursorY);
 
     cursorY += 12;
-    doc.setFontSize(14).setFont('helvetica', 'bold');
-    
-    // Split title if it's too long (especially for customer reports)
-    const splitTitle = doc.splitTextToSize(title, page_width - (margin * 2));
-    doc.text(splitTitle, page_width / 2, cursorY, { align: 'center' });
-    
-    cursorY += (splitTitle.length * 7); // Adjust Y based on lines
+
+    // Report Title Section
+    if (title.includes(' - ')) {
+        const [mainTitle, subTitle] = title.split(' - ');
+        
+        // Main Title (Relatório de Devoluções)
+        doc.setFontSize(14).setFont('helvetica', 'bold');
+        doc.text(mainTitle, page_width / 2, cursorY, { align: 'center' });
+        cursorY += 7;
+
+        // Subtitle (Client Name) - Font 10
+        doc.setFontSize(10).setFont('helvetica', 'bold');
+        const splitSubTitle = doc.splitTextToSize(subTitle, page_width - (margin * 2));
+        doc.text(splitSubTitle, page_width / 2, cursorY, { align: 'center' });
+        cursorY += (splitSubTitle.length * 5);
+    } else {
+        doc.setFontSize(14).setFont('helvetica', 'bold');
+        const splitTitle = doc.splitTextToSize(title, page_width - (margin * 2));
+        doc.text(splitTitle, page_width / 2, cursorY, { align: 'center' });
+        cursorY += (splitTitle.length * 7);
+    }
 
     return cursorY;
 }
@@ -112,9 +127,9 @@ const addProfessionalHeader = (doc: jsPDF, companyData: CompanyData | null, lote
 
     // --- Company Info ---
     if (companyData?.nomeEmpresa) {
-        doc.setFontSize(12).setFont('helvetica', 'bold');
+        doc.setFontSize(10).setFont('helvetica', 'bold');
         doc.text(companyData.nomeEmpresa, pageWidth / 2, cursorY, { align: 'center' });
-        cursorY += 6;
+        cursorY += 5;
     }
     doc.setFontSize(9).setFont('helvetica', 'normal');
     if (companyData?.cnpj) {

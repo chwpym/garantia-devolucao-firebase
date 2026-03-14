@@ -41,11 +41,11 @@ export default function ComboboxPerson({
   const [isPopoverOpen, setPopoverOpen] = useState(false);
   
   const filteredOptions = useMemo(() => {
-    if (!value) return options.slice(0, 15);
+    if (!value) return options;
     
     return options.filter(option => 
         smartSearch(option, value, ['label', 'keywords'])
-    ).slice(0, 15);
+    );
   }, [options, value]);
 
   return (

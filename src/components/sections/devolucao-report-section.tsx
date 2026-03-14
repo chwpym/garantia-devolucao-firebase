@@ -231,7 +231,11 @@ export default function DevolucaoReportSection() {
   const clientOptions = useMemo(() => {
     return allPersons
       .filter(p => p.tipo === 'CLIENTE' || p.tipo === 'AMBOS')
-      .map(c => ({ value: c.nome, label: c.nome }))
+      .map(c => ({ 
+        value: c.nome, 
+        label: c.nome,
+        keywords: [c.nome, c.razaoSocial, c.nomeFantasia, c.cpfCnpj].filter(Boolean) as string[]
+      }))
       .sort((a, b) => a.label.localeCompare(b.label));
   }, [allPersons]);
 

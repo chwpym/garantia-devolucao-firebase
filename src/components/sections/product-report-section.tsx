@@ -189,11 +189,50 @@ export default function ProductReportSection() {
     }, [allDevolucoes, allProducts, allWarranties, dateRange, toast]);
 
     const handleBrandClick = (marca: string) => {
-        const productsOfBrand = allProducts.filter(p => {
+        // 1. Get products already in the database for this brand
+        const registeredProducts = allProducts.filter(p => {
             if (marca === 'N/A') return !p.marca || p.marca === 'N/A';
             return p.marca === marca;
         });
-        setAuditProducts(productsOfBrand);
+
+        // 2. Identify "Ghost Products" (not in database but present in warranties/returns)
+        const ghostProducts: Product[] = [];
+        
+        if (marca === 'N/A') {
+            const allCodesInRecords = new Set<string>();
+            const codeToDesc = new Map<string, string>();
+
+            allWarranties.forEach(w => {
+                if (w.codigo) {
+                    allCodesInRecords.add(w.codigo);
+                    if (w.descricao && !codeToDesc.has(w.codigo)) codeToDesc.set(w.codigo, w.descricao);
+                }
+            });
+
+            allDevolucoes.forEach(d => {
+                d.itens.forEach(i => {
+                    if (i.codigoPeca) {
+                        allCodesInRecords.add(i.codigoPeca);
+                        if (i.descricaoPeca && !codeToDesc.has(i.codigoPeca)) codeToDesc.set(i.codigoPeca, i.descricaoPeca);
+                    }
+                });
+            });
+
+            allCodesInRecords.forEach(code => {
+                const exists = allProducts.some(p => p.codigo === code);
+                if (!exists) {
+                    ghostProducts.push({
+                        id: -1, // Mark as ghost (ID doesn't exist yet)
+                        codigo: code,
+                        descricao: codeToDesc.get(code) || 'Produto não cadastrado',
+                        marca: 'N/A',
+                        referencia: ''
+                    });
+                }
+            });
+        }
+
+        setAuditProducts([...registeredProducts, ...ghostProducts]);
         setSelectedBrand(marca);
         setIsAuditModalOpen(true);
     };
@@ -204,14 +243,20 @@ export default function ProductReportSection() {
     };
 
     const handleProductSave = async (updatedProduct: Product) => {
-        // Update local state to reflect change immediately in report
-        setAllProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
-        setAuditProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
+        // If it was a ghost product, it might now have a real ID after saving (handled by db.updateProduct or similar if it creates)
+        // Since we are updating local state, let's just reload the whole data to be sure
+        await loadData();
+        
         setIsEditModalOpen(false);
         setEditingProduct(null);
         
-        // Regenerate report to reflect brand change
+        // Regenerate report
         setTimeout(generateReport, 100);
+        
+        toast({
+            title: "Sucesso",
+            description: "Produto atualizado com sucesso.",
+        });
     };
 
     return (
