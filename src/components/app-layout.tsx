@@ -11,7 +11,7 @@ import QuickShortcuts from './quick-shortcuts';
 import { useAppStore } from '@/store/app-store';
 import { useShallow } from 'zustand/react/shallow';
 import { UserNav } from './user-nav';
-import { ThemeToggle } from './theme-toggle';
+import { ThemePicker } from './theme-picker';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth'; // Assuming this path for useAuth
 import { cn } from '@/lib/utils'; // Assuming this path for cn
@@ -263,7 +263,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
             </div>
             <QuickShortcuts />
             <div className='flex items-center gap-2'>
-              <ThemeToggle />
+              <ThemePicker />
               <UserNav />
             </div>
           </div>

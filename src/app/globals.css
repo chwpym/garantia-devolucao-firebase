@@ -1,6 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@config "../../tailwind.config.ts";
 
 @layer base {
   :root {
@@ -98,7 +97,77 @@
     --chart-2: 32 95% 72%;
     --chart-3: 160 84% 49%;
     --chart-4: 204 80% 61%;
+    --chart-4: 204 80% 61%;
     --chart-5: 0 84% 70%;
+  }
+
+  /* Tokyo Night Theme */
+  [data-theme='tokyo'] {
+    --background: 234 44% 14%;
+    --foreground: 230 46% 75%;
+    --card: 234 44% 20%;
+    --card-foreground: 230 46% 75%;
+    --popover: 234 44% 20%;
+    --popover-foreground: 230 46% 75%;
+    --primary: 221 92% 72%;
+    --primary-foreground: 234 44% 14%;
+    --secondary: 234 44% 25%;
+    --secondary-foreground: 230 46% 75%;
+    --muted: 234 44% 25%;
+    --muted-foreground: 230 25% 60%;
+    --accent: 234 44% 30%;
+    --accent-foreground: 230 46% 75%;
+    --destructive: 354 85% 65%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 234 44% 25%;
+    --input: 234 44% 25%;
+    --ring: 221 92% 72%;
+  }
+
+  /* Ayu Dark Theme */
+  [data-theme='ayu'] {
+    --background: 222 28% 7%;
+    --foreground: 46 15% 73%;
+    --card: 222 28% 12%;
+    --card-foreground: 46 15% 73%;
+    --popover: 222 28% 12%;
+    --popover-foreground: 46 15% 73%;
+    --primary: 41 78% 61%;
+    --primary-foreground: 222 28% 7%;
+    --secondary: 222 28% 15%;
+    --secondary-foreground: 46 15% 73%;
+    --muted: 222 28% 15%;
+    --muted-foreground: 46 5% 50%;
+    --accent: 222 28% 20%;
+    --accent-foreground: 46 15% 73%;
+    --destructive: 1 80% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 222 28% 15%;
+    --input: 222 28% 15%;
+    --ring: 41 78% 61%;
+  }
+
+  /* Dracula Theme */
+  [data-theme='dracula'] {
+    --background: 231 15% 18%;
+    --foreground: 60 30% 96%;
+    --card: 231 15% 24%;
+    --card-foreground: 60 30% 96%;
+    --popover: 231 15% 24%;
+    --popover-foreground: 60 30% 96%;
+    --primary: 326 100% 74%;
+    --primary-foreground: 231 15% 18%;
+    --secondary: 231 15% 32%;
+    --secondary-foreground: 60 30% 96%;
+    --muted: 231 15% 32%;
+    --muted-foreground: 231 25% 66%;
+    --accent: 231 15% 40%;
+    --accent-foreground: 60 30% 96%;
+    --destructive: 0 100% 67%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 231 15% 32%;
+    --input: 231 15% 32%;
+    --ring: 326 100% 74%;
   }
 }
 

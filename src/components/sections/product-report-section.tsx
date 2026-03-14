@@ -10,8 +10,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { DatePickerWithRange } from '../ui/date-range-picker';
 import { Button } from '../ui/button';
-import { BarChart3, Package, TrendingDown, Undo, Wrench } from 'lucide-react';
+import { BarChart3, Edit2, Package, TrendingDown, Undo, Wrench } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
+import ProductForm from '../product-form';
+import { ScrollArea } from '../ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 
 interface ProductWarrantyStats {
@@ -54,6 +58,11 @@ export default function ProductReportSection() {
     const [isLoading, setIsLoading] = useState(true);
     const [dateRange, setDateRange] = useState<DateRange | undefined>(initialDateRange);
     const [reportData, setReportData] = useState<ReportData | null>(null);
+    const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
+    const [auditProducts, setAuditProducts] = useState<Product[]>([]);
+    const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+    const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
     const { toast } = useToast();
 
@@ -179,8 +188,35 @@ export default function ProductReportSection() {
 
     }, [allDevolucoes, allProducts, allWarranties, dateRange, toast]);
 
+    const handleBrandClick = (marca: string) => {
+        const productsOfBrand = allProducts.filter(p => {
+            if (marca === 'N/A') return !p.marca || p.marca === 'N/A';
+            return p.marca === marca;
+        });
+        setAuditProducts(productsOfBrand);
+        setSelectedBrand(marca);
+        setIsAuditModalOpen(true);
+    };
+
+    const handleEditProduct = (product: Product) => {
+        setEditingProduct(product);
+        setIsEditModalOpen(true);
+    };
+
+    const handleProductSave = async (updatedProduct: Product) => {
+        // Update local state to reflect change immediately in report
+        setAllProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
+        setAuditProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
+        setIsEditModalOpen(false);
+        setEditingProduct(null);
+        
+        // Regenerate report to reflect brand change
+        setTimeout(generateReport, 100);
+    };
+
     return (
-        <div className="space-y-8">
+        <>
+            <div className="space-y-8">
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">Relatórios de Produtos</h1>
                 <p className="text-lg text-muted-foreground">
@@ -246,8 +282,17 @@ export default function ProductReportSection() {
                                     <TableHeader><TableRow><TableHead>Marca</TableHead><TableHead className='text-right'>Ocorrências</TableHead><TableHead className='text-right'>Qtd. Total</TableHead></TableRow></TableHeader>
                                     <TableBody>
                                         {reportData.topBrandsByWarranty.slice(0, 10).map(b => (
-                                            <TableRow key={b.marca}>
-                                                <TableCell className='font-medium'>{b.marca}</TableCell>
+                                            <TableRow 
+                                                key={b.marca} 
+                                                className="cursor-pointer hover:bg-muted/50 transition-colors"
+                                                onClick={() => handleBrandClick(b.marca)}
+                                            >
+                                                <TableCell className='font-medium'>
+                                                    {b.marca}
+                                                    {b.marca === 'N/A' && (
+                                                        <span className="ml-2 text-[10px] bg-destructive/10 text-destructive px-1.5 py-0.5 rounded-full uppercase">Corrigir</span>
+                                                    )}
+                                                </TableCell>
                                                 <TableCell className='text-right font-bold'>{b.ocorrencias}</TableCell>
                                                 <TableCell className='text-right'>{b.totalQtd}</TableCell>
                                             </TableRow>
@@ -305,6 +350,95 @@ export default function ProductReportSection() {
 
 
         </div>
+
+        {/* Modal de Auditoria de Marcas */}
+        <Dialog open={isAuditModalOpen} onOpenChange={setIsAuditModalOpen}>
+            <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
+                <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                        <Package className="h-5 w-5 text-primary" />
+                        Produtos da Marca: {selectedBrand}
+                    </DialogTitle>
+                    <DialogDescription>
+                        {selectedBrand === 'N/A' 
+                            ? "Estes produtos não possuem marca cadastrada. Clique em editar para preencher." 
+                            : `Lista de produtos catalogados sob a marca ${selectedBrand}.`}
+                    </DialogDescription>
+                </DialogHeader>
+
+                <ScrollArea className="flex-grow mt-4 border rounded-md">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Código</TableHead>
+                                <TableHead>Descrição</TableHead>
+                                <TableHead>Marca Atual</TableHead>
+                                <TableHead className="w-[100px]">Ação</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {auditProducts.map((product) => (
+                                <TableRow key={product.id}>
+                                    <TableCell className="font-mono text-xs">{product.codigo}</TableCell>
+                                    <TableCell className="text-xs">{product.descricao}</TableCell>
+                                    <TableCell>
+                                        <span className={cn(
+                                            "text-xs px-2 py-0.5 rounded-full",
+                                            !product.marca || product.marca === 'N/A' 
+                                                ? "bg-destructive/10 text-destructive font-bold" 
+                                                : "bg-secondary text-secondary-foreground"
+                                        )}>
+                                            {product.marca || 'N/A'}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            className="h-8 w-8 text-primary"
+                                            onClick={() => handleEditProduct(product)}
+                                        >
+                                            <Edit2 className="h-4 w-4" />
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                            {auditProducts.length === 0 && (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                                        Nenhum produto cadastrado para esta marca.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </ScrollArea>
+                
+                <div className="flex justify-end mt-4">
+                    <Button variant="outline" onClick={() => setIsAuditModalOpen(false)}>Fechar</Button>
+                </div>
+            </DialogContent>
+        </Dialog>
+
+        {/* Modal de Edição de Produto (Drill-down) */}
+        <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+            <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>Editar Produto</DialogTitle>
+                    <DialogDescription>Atualize os dados e a marca do produto para corrigir o relatório.</DialogDescription>
+                </DialogHeader>
+                <div className="py-2">
+                    {editingProduct && (
+                        <ProductForm 
+                            editingProduct={editingProduct} 
+                            onSave={handleProductSave}
+                            onClear={() => setIsEditModalOpen(false)}
+                        />
+                    )}
+                </div>
+            </DialogContent>
+        </Dialog>
+        </>
     );
 }
 

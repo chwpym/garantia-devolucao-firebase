@@ -94,9 +94,13 @@ const addStandardHeader = (doc: jsPDF, companyData: CompanyData | null, title: s
     if (infoLine) doc.text(infoLine, margin, cursorY);
 
     cursorY += 12;
-    doc.setFontSize(16).setFont('helvetica', 'bold');
-    doc.text(title, page_width / 2, cursorY, { align: 'center' });
-    cursorY += 10;
+    doc.setFontSize(14).setFont('helvetica', 'bold');
+    
+    // Split title if it's too long (especially for customer reports)
+    const splitTitle = doc.splitTextToSize(title, page_width - (margin * 2));
+    doc.text(splitTitle, page_width / 2, cursorY, { align: 'center' });
+    
+    cursorY += (splitTitle.length * 7); // Adjust Y based on lines
 
     return cursorY;
 }
@@ -108,9 +112,9 @@ const addProfessionalHeader = (doc: jsPDF, companyData: CompanyData | null, lote
 
     // --- Company Info ---
     if (companyData?.nomeEmpresa) {
-        doc.setFontSize(16).setFont('helvetica', 'bold');
+        doc.setFontSize(12).setFont('helvetica', 'bold');
         doc.text(companyData.nomeEmpresa, pageWidth / 2, cursorY, { align: 'center' });
-        cursorY += 8;
+        cursorY += 6;
     }
     doc.setFontSize(9).setFont('helvetica', 'normal');
     if (companyData?.cnpj) {

@@ -44,9 +44,26 @@ export function Combobox({
   addLabel
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false)
+  const [searchValue, setSearchValue] = React.useState("")
+
+  const filteredOptions = React.useMemo(() => {
+    if (!searchValue) return options;
+    const normalizedSearch = normalizeText(searchValue);
+    return options.filter(option => {
+      const normalizedLabel = normalizeText(option.label);
+      const normalizedKeywords = (option.keywords || []).map(k => normalizeText(k));
+      return (
+        normalizedLabel.includes(normalizedSearch) ||
+        normalizedKeywords.some(k => k.includes(normalizedSearch))
+      );
+    });
+  }, [options, searchValue]);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={(isOpen) => {
+      setOpen(isOpen);
+      if (!isOpen) setSearchValue("");
+    }}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -61,18 +78,12 @@ export function Combobox({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-        <Command
-          filter={(value, search, keywords) => {
-            const normalizedSearch = normalizeText(search);
-            const normalizedValue = normalizeText(value);
-            const normalizedKeywords = (keywords || []).map(k => normalizeText(k));
-
-            if (normalizedValue.includes(normalizedSearch)) return 1;
-            if (normalizedKeywords.some(k => k.includes(normalizedSearch))) return 1;
-            return 0;
-          }}
-        >
-          <CommandInput placeholder={searchPlaceholder ?? "Search..."} />
+        <Command shouldFilter={false}>
+          <CommandInput 
+            placeholder={searchPlaceholder ?? "Search..."} 
+            value={searchValue}
+            onValueChange={setSearchValue}
+          />
           <CommandList>
             <CommandEmpty>
               <div className="py-2 px-4 text-sm flex flex-col gap-2 items-center">
@@ -95,16 +106,16 @@ export function Combobox({
               </div>
             </CommandEmpty>
             <CommandGroup>
-              {options.map((option) => (
+              {filteredOptions.map((option) => (
                 <CommandItem
                   key={option.value}
                   value={option.value}
-                  keywords={[option.label, ...(option.keywords || [])]}
                   onSelect={(currentValue) => {
                     const selectedOption = options.find(opt => opt.value.toLowerCase() === currentValue.toLowerCase());
                     const finalValue = selectedOption ? selectedOption.value : "";
                     onChange(finalValue === value ? "" : finalValue)
                     setOpen(false)
+                    setSearchValue("")
                   }}
                 >
                   <Check
