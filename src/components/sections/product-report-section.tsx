@@ -59,7 +59,7 @@ export default function ProductReportSection() {
     const [dateRange, setDateRange] = useState<DateRange | undefined>(initialDateRange);
     const [reportData, setReportData] = useState<ReportData | null>(null);
     const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
-    const [auditProducts, setAuditProducts] = useState<(Product & { totalQtd?: number })[]>([]);
+    const [auditProducts, setAuditProducts] = useState<(Product & { totalQtd?: number, ocorrencias?: number })[]>([]);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -237,7 +237,8 @@ export default function ProductReportSection() {
             const rStat = reportData?.topProductsByReturn.find(r => r.codigo === p.codigo);
             return {
                 ...p,
-                totalQtd: (wStat?.totalQtd || 0) + (rStat?.totalQtd || 0)
+                totalQtd: (wStat?.totalQtd || 0) + (rStat?.totalQtd || 0),
+                ocorrencias: (wStat?.ocorrencias || 0) + (rStat?.ocorrencias || 0)
             };
         }).sort((a, b) => (b.totalQtd || 0) - (a.totalQtd || 0));
 
@@ -412,6 +413,9 @@ export default function ProductReportSection() {
                     <DialogTitle className="flex items-center gap-2">
                         <Package className="h-5 w-5 text-primary" />
                         Produtos da Marca: {selectedBrand}
+                        <span className="text-sm font-normal text-muted-foreground ml-1">
+                            ({auditProducts.reduce((sum, p) => sum + (p.ocorrencias || 0), 0)} {selectedBrand === 'N/A' ? 'a corrigir' : 'ocorrências'})
+                        </span>
                     </DialogTitle>
                     <DialogDescription>
                         {selectedBrand === 'N/A' 
