@@ -46,6 +46,7 @@ export default function LoginPage() {
   const { user, loading: authLoading } = useAuthGuard();
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false); // Estado para "Lembrar de mim" (padrão: false para maior segurança)
+  const [showHint, setShowHint] = useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -53,6 +54,13 @@ export default function LoginPage() {
 
   const [usernameHint, setUsernameHint] = useState<string | null>(null);
   const identifier = form.watch("identifier");
+
+  useEffect(() => {
+    const hasLoggedIn = localStorage.getItem("hasLoggedInBefore");
+    if (!hasLoggedIn) {
+      setShowHint(true);
+    }
+  }, []);
 
   // Listener para sugerir username se digitar o e-mail
   useEffect(() => {
@@ -112,6 +120,7 @@ export default function LoginPage() {
         : browserSessionPersistence;
       await setPersistence(auth, persistence);
       await signInWithEmailAndPassword(auth, email, data.password);
+      localStorage.setItem("hasLoggedInBefore", "true");
       // O AuthGuard cuidará do redirecionamento.
     } catch (error: unknown) {
       const authError = error as AuthError;
@@ -227,14 +236,16 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-6 p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs flex gap-2">
-            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-            <p>
-              <strong>Dica:</strong> Se este for seu primeiro acesso neste
-              dispositivo, use seu <strong>e-mail completo</strong>. Após o
-              primeiro login, você poderá usar seu nome de usuário.
-            </p>
-          </div>
+          {showHint && (
+            <div className="mt-6 p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs flex gap-2">
+              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+              <p>
+                <strong>Dica:</strong> Se este for seu primeiro acesso neste
+                dispositivo, use seu <strong>e-mail completo</strong>. Após o
+                primeiro login, você poderá usar seu nome de usuário.
+              </p>
+            </div>
+          )}
 
           <div className="mt-4 text-center text-sm">
             Não tem uma conta?{" "}
