@@ -259,8 +259,29 @@ export function generatePdf(input: GeneratePdfInput): string {
         status: 'Status', dataRegistro: 'Data Registro',
     };
 
+    const groupedWarranties: Omit<Warranty, 'id'>[] = [];
+    selectedWarranties.forEach(w => {
+        const existing = groupedWarranties.find(gw => gw.codigo === w.codigo && gw.descricao === w.descricao);
+        if (existing) {
+            existing.quantidade = (existing.quantidade || 0) + (w.quantidade || 1);
+            const fieldsToConcat = ['defeito', 'requisicaoVenda', 'requisicoesGarantia', 'nfCompra', 'observacao'] as const;
+            fieldsToConcat.forEach(field => {
+                const existingVal = existing[field];
+                const newVal = w[field];
+                if (newVal && existingVal && newVal !== existingVal) {
+                    const set = new Set([...existingVal.toString().split(', '), ...newVal.toString().split(', ')]);
+                    existing[field] = Array.from(set).join(', ');
+                } else if (!existingVal && newVal) {
+                    existing[field] = newVal as any;
+                }
+            });
+        } else {
+            groupedWarranties.push({ ...w, quantidade: w.quantidade || 1 });
+        }
+    });
+
     const tableHeaders = selectedFields.map(field => FIELD_LABELS[field] || field.replace(/([A-Z])/g, ' $1').toUpperCase());
-    const tableBody = selectedWarranties.map(warranty => {
+    const tableBody = groupedWarranties.map(warranty => {
         const warrantyRecord = warranty as Record<string, string | number | boolean | null | undefined>;
         return selectedFields.map(field => {
             const key = field as keyof Omit<Warranty, 'id'>;
@@ -290,7 +311,8 @@ export function generatePdf(input: GeneratePdfInput): string {
     if (layout === 'professional') {
         const finalY = doc.lastAutoTable.finalY || startY;
         doc.setFontSize(10).setFont('helvetica', 'bold');
-        doc.text(`Total de Itens: ${selectedWarranties.length}`, margin, finalY + 10);
+        const totalQtd = groupedWarranties.reduce((sum, w) => sum + (w.quantidade || 0), 0);
+        doc.text(`Total de Peças: ${totalQtd} (${groupedWarranties.length} itens)`, margin, finalY + 10);
     }
 
 
@@ -353,7 +375,28 @@ export function generateDevolucoesPdf(input: GenerateDevolucoesPdfInput): string
         : baseHeaders;
 
 
-    const tableBody = devolucoes.map(item => {
+    const groupedDevolucoes: typeof devolucoes = [];
+    devolucoes.forEach(item => {
+        const existing = groupedDevolucoes.find(gd => gd.codigoPeca === item.codigoPeca && gd.descricaoPeca === item.descricaoPeca);
+        if (existing) {
+            existing.quantidade = (existing.quantidade || 0) + (item.quantidade || 1);
+            const fieldsToConcat = ['status', 'observacao', 'acaoRequisicao', 'requisicaoVenda'] as const;
+            fieldsToConcat.forEach(field => {
+                const existingVal = (existing as any)[field];
+                const newVal = (item as any)[field];
+                if (newVal && existingVal && newVal !== existingVal) {
+                    const set = new Set([...existingVal.toString().split(', '), ...newVal.toString().split(', ')]);
+                    (existing as any)[field] = Array.from(set).join(', ');
+                } else if (!existingVal && newVal) {
+                    (existing as any)[field] = newVal;
+                }
+            });
+        } else {
+            groupedDevolucoes.push({ ...item, quantidade: item.quantidade || 1 });
+        }
+    });
+
+    const tableBody = groupedDevolucoes.map(item => {
         const fullRow = [
             item.dataDevolucao ? format(parseISO(item.dataDevolucao), 'dd/MM/yyyy') : '-',
             item.cliente || '-',

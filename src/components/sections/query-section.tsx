@@ -5,7 +5,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { Warranty, Lote, Person, CustomStatus } from '@/lib/types';
 import * as db from '@/lib/db';
-import { Search, PlusCircle, FilterX, MoreHorizontal, Hourglass, Send, DollarSign, XCircle } from 'lucide-react';
+import { Search, PlusCircle, FilterX, MoreHorizontal, Hourglass, Send, DollarSign, XCircle, Printer } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
 import { addDays, parseISO } from 'date-fns';
 import {
@@ -37,6 +37,7 @@ import { SearchInput } from '@/components/ui/search-input';
 import { usePersistedFilters } from '@/hooks/use-persisted-filters';
 import { EmptyState } from '../ui/empty-state';
 import { SearchX, LayoutList } from 'lucide-react';
+import { generatePdf } from '@/lib/pdf-generator';
 
 
 interface QuerySectionProps {
@@ -233,6 +234,25 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
     setVisibleCount(50);
   }
 
+  const handlePrintFiltered = async () => {
+    try {
+      const companyData = await db.getCompanyData();
+      const pdfDataUri = generatePdf({
+        selectedWarranties: filteredWarranties,
+        selectedFields: ['codigo', 'descricao', 'quantidade', 'fornecedor', 'status', 'defeito', 'cliente', 'dataRegistro'],
+        companyData: companyData
+      });
+      const link = document.createElement('a');
+      link.href = pdfDataUri;
+      link.download = `Relatorio_Garantias_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`;
+      link.click();
+      toast({ title: 'Sucesso', description: 'PDF gerado com sucesso.' });
+    } catch (error) {
+      console.error('Failed to generate PDF:', error);
+      toast({ title: 'Erro', description: 'Não foi possível gerar o PDF.', variant: 'destructive' });
+    }
+  };
+
   const handleAddToLote = async (loteId: number) => {
     try {
       const selectedWarranties = await db.getWarrantiesByIds(Array.from(selectedIds));
@@ -415,6 +435,11 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
             </div>
 
             <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={handlePrintFiltered} className="text-primary hover:text-primary">
+                <Printer className="mr-2 h-4 w-4" />
+                Imprimir
+              </Button>
+
               <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground">
                 <FilterX className="mr-2 h-4 w-4" />
                 Limpar

@@ -15,7 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { StatusBadge } from '../ui/status-badge';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Pencil, Trash2, Search, FileDown, FileText, ArrowUpDown, SearchX, AlertCircle } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, Search, FileDown, FileText, ArrowUpDown, SearchX, AlertCircle, Printer } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -293,8 +293,9 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
                             date={dateRange}
                             setDate={(range) => setFilters({ ...filters, dateRange: range })}
                         />
-                        <Button onClick={handleExportPdf} variant="outline" size="icon" title="Exportar PDF" disabled={sortedDevolucoes.length === 0}>
-                            <FileDown className="h-4 w-4" />
+                        <Button onClick={handleExportPdf} variant="outline" size="sm" className="text-primary hover:text-primary" disabled={sortedDevolucoes.length === 0}>
+                            <Printer className="mr-2 h-4 w-4" />
+                            Imprimir
                         </Button>
                         <Button onClick={handleExportCsv} variant="outline" size="icon" title="Exportar CSV" disabled={sortedDevolucoes.length === 0}>
                             <FileText className="h-4 w-4" />

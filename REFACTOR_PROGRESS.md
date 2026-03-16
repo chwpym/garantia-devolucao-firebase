@@ -135,14 +135,13 @@ Este documento rastreia o status detalhado de cada fase do plano de refatoraçã
 
 ---
 
-### FASE 18: Status Dinâmicos (Complexa) 🟡
-
-| Item                          |  Status  | Notas             |
-| :---------------------------- | :------: | :---------------- |
-| **Prioridade**                | 🟡 MÉDIA |                   |
-| Design de CRUD de Status      |    ⏳    | Aguardando início |
-| Schema de Banco para Status   |    ⏳    |                   |
-| Mapeamento em todas as seções |    ⏳    |                   |
+### FASE 18: Status Dinâmicos (Complexa) ✅
+| Item                          |  Status  | Notas                                              |
+| :---------------------------- | :------: | :------------------------------------------------- |
+| **Prioridade**                | 🟡 MÉDIA |                                                    |
+| Design de CRUD de Status      |    ✅    | Atualizado e validado pelo usuário                 |
+| Schema de Banco para Status   |    ✅    | Concluído                                          |
+| Mapeamento em todas as seções |    ✅    | Integrado em Painéis, Consultas e Fluxos de Lote   |
 
 _(Fases 19-27 conforme REFACTOR_PLAN.md)_
 
