@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { Devolucao, ItemDevolucao, Product, Warranty } from '@/lib/types';
 import * as db from '@/lib/db';
@@ -59,12 +59,67 @@ export default function ProductReportSection() {
     const [dateRange, setDateRange] = useState<DateRange | undefined>(initialDateRange);
     const [reportData, setReportData] = useState<ReportData | null>(null);
     const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
-    const [auditProducts, setAuditProducts] = useState<(Product & { totalQtd?: number, ocorrencias?: number })[]>([]);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
     const { toast } = useToast();
+
+    const auditProducts = useMemo(() => {
+        if (!selectedBrand) return [];
+        
+        const registeredProducts = allProducts.filter(p => {
+            if (selectedBrand === 'N/A') return !p.marca || p.marca === 'N/A';
+            return p.marca === selectedBrand;
+        });
+
+        const ghostProducts: Product[] = [];
+        if (selectedBrand === 'N/A') {
+            const allCodesInRecords = new Set<string>();
+            const codeToDesc = new Map<string, string>();
+
+            allWarranties.forEach(w => {
+                if (w.codigo) {
+                    allCodesInRecords.add(w.codigo);
+                    if (w.descricao && !codeToDesc.has(w.codigo)) codeToDesc.set(w.codigo, w.descricao);
+                }
+            });
+
+            allDevolucoes.forEach(d => {
+                d.itens.forEach(i => {
+                    if (i.codigoPeca) {
+                        allCodesInRecords.add(i.codigoPeca);
+                        if (i.descricaoPeca && !codeToDesc.has(i.codigoPeca)) codeToDesc.set(i.codigoPeca, i.descricaoPeca);
+                    }
+                });
+            });
+
+            allCodesInRecords.forEach(code => {
+                const exists = allProducts.some(p => p.codigo === code);
+                if (!exists) {
+                    ghostProducts.push({
+                        id: -1, 
+                        codigo: code,
+                        descricao: codeToDesc.get(code) || 'Produto não cadastrado',
+                        marca: 'N/A',
+                        referencia: ''
+                    });
+                }
+            });
+        }
+
+        const combined: (Product & { totalQtd?: number, ocorrencias?: number })[] = [...registeredProducts, ...ghostProducts].map(p => {
+            const wStat = reportData?.topProductsByWarranty.find(w => w.codigo === p.codigo);
+            const rStat = reportData?.topProductsByReturn.find(r => r.codigo === p.codigo);
+            return {
+                ...p,
+                totalQtd: (wStat?.totalQtd || 0) + (rStat?.totalQtd || 0),
+                ocorrencias: (wStat?.ocorrencias || 0) + (rStat?.ocorrencias || 0)
+            };
+        }).sort((a, b) => (b.totalQtd || 0) - (a.totalQtd || 0));
+
+        return combined;
+    }, [allProducts, allWarranties, allDevolucoes, reportData, selectedBrand]);
 
     const loadData = useCallback(async () => {
         setIsLoading(true);
@@ -189,60 +244,6 @@ export default function ProductReportSection() {
     }, [allDevolucoes, allProducts, allWarranties, dateRange, toast]);
 
     const handleBrandClick = (marca: string) => {
-        // 1. Get products already in the database for this brand
-        const registeredProducts = allProducts.filter(p => {
-            if (marca === 'N/A') return !p.marca || p.marca === 'N/A';
-            return p.marca === marca;
-        });
-
-        // 2. Identify "Ghost Products" (not in database but present in warranties/returns)
-        const ghostProducts: Product[] = [];
-        
-        if (marca === 'N/A') {
-            const allCodesInRecords = new Set<string>();
-            const codeToDesc = new Map<string, string>();
-
-            allWarranties.forEach(w => {
-                if (w.codigo) {
-                    allCodesInRecords.add(w.codigo);
-                    if (w.descricao && !codeToDesc.has(w.codigo)) codeToDesc.set(w.codigo, w.descricao);
-                }
-            });
-
-            allDevolucoes.forEach(d => {
-                d.itens.forEach(i => {
-                    if (i.codigoPeca) {
-                        allCodesInRecords.add(i.codigoPeca);
-                        if (i.descricaoPeca && !codeToDesc.has(i.codigoPeca)) codeToDesc.set(i.codigoPeca, i.descricaoPeca);
-                    }
-                });
-            });
-
-            allCodesInRecords.forEach(code => {
-                const exists = allProducts.some(p => p.codigo === code);
-                if (!exists) {
-                    ghostProducts.push({
-                        id: -1, // Mark as ghost (ID doesn't exist yet)
-                        codigo: code,
-                        descricao: codeToDesc.get(code) || 'Produto não cadastrado',
-                        marca: 'N/A',
-                        referencia: ''
-                    });
-                }
-            });
-        }
-
-        const combined = [...registeredProducts, ...ghostProducts].map(p => {
-            const wStat = reportData?.topProductsByWarranty.find(w => w.codigo === p.codigo);
-            const rStat = reportData?.topProductsByReturn.find(r => r.codigo === p.codigo);
-            return {
-                ...p,
-                totalQtd: (wStat?.totalQtd || 0) + (rStat?.totalQtd || 0),
-                ocorrencias: (wStat?.ocorrencias || 0) + (rStat?.ocorrencias || 0)
-            };
-        }).sort((a, b) => (b.totalQtd || 0) - (a.totalQtd || 0));
-
-        setAuditProducts(combined);
         setSelectedBrand(marca);
         setIsAuditModalOpen(true);
     };
