@@ -59,7 +59,7 @@ export default function ProductReportSection() {
     const [dateRange, setDateRange] = useState<DateRange | undefined>(initialDateRange);
     const [reportData, setReportData] = useState<ReportData | null>(null);
     const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
-    const [auditProducts, setAuditProducts] = useState<Product[]>([]);
+    const [auditProducts, setAuditProducts] = useState<(Product & { totalQtd?: number })[]>([]);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -232,7 +232,16 @@ export default function ProductReportSection() {
             });
         }
 
-        setAuditProducts([...registeredProducts, ...ghostProducts]);
+        const combined = [...registeredProducts, ...ghostProducts].map(p => {
+            const wStat = reportData?.topProductsByWarranty.find(w => w.codigo === p.codigo);
+            const rStat = reportData?.topProductsByReturn.find(r => r.codigo === p.codigo);
+            return {
+                ...p,
+                totalQtd: (wStat?.totalQtd || 0) + (rStat?.totalQtd || 0)
+            };
+        }).sort((a, b) => (b.totalQtd || 0) - (a.totalQtd || 0));
+
+        setAuditProducts(combined);
         setSelectedBrand(marca);
         setIsAuditModalOpen(true);
     };
@@ -417,6 +426,7 @@ export default function ProductReportSection() {
                             <TableRow>
                                 <TableHead>Código</TableHead>
                                 <TableHead>Descrição</TableHead>
+                                <TableHead className="text-right">Qtd.</TableHead>
                                 <TableHead>Marca Atual</TableHead>
                                 <TableHead className="w-[100px]">Ação</TableHead>
                             </TableRow>
@@ -426,6 +436,7 @@ export default function ProductReportSection() {
                                 <TableRow key={product.id}>
                                     <TableCell className="font-mono text-xs">{product.codigo}</TableCell>
                                     <TableCell className="text-xs">{product.descricao}</TableCell>
+                                    <TableCell className="text-right font-medium">{product.totalQtd || 0}</TableCell>
                                     <TableCell>
                                         <span className={cn(
                                             "text-xs px-2 py-0.5 rounded-full",

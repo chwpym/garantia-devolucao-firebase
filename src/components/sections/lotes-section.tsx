@@ -87,7 +87,7 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
       ]);
 
       const lotesWithCounts: LoteWithStats[] = allLotes.map(lote => {
-        const loteWarranties = allWarranties.filter(w => w.loteId === lote.id);
+        const loteWarranties = allWarranties.filter(w => Number(w.loteId) === Number(lote.id));
         const itemCount = loteWarranties.length;
 
         const statusCounts = {

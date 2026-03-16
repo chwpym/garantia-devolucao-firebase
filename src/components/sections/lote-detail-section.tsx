@@ -135,8 +135,8 @@ export default function LoteDetailSection({ loteId, onBack }: LoteDetailSectionP
         db.getAllSuppliers(),
         db.getAllStatuses(),
       ]);
-      const currentLote = allLotes.find((l) => l.id === loteId) || null;
-      const associatedWarranties = allWarranties.filter((w) => w.loteId === loteId);
+      const currentLote = allLotes.find((l) => Number(l.id) === Number(loteId)) || null;
+      const associatedWarranties = allWarranties.filter((w) => Number(w.loteId) === Number(loteId));
 
       setLote(currentLote);
       setWarranties(associatedWarranties);
