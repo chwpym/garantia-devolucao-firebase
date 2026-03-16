@@ -5,10 +5,10 @@ Este documento rastreia o status detalhado de cada fase do plano de refatoraçã
 ## 📊 Status Geral
 
 - **Início:** 15/12/2025
-- **Data Hoje:** 13/03/2026
-- **Fases Concluídas:** 30/37
+- **Data Hoje:** 16/03/2026
+- **Fases Concluídas:** 31/37
 - **Em Progresso:** Nenhuma
-- **Próxima Fase:** Fase 28 - Importação Legada de Dados Antigos
+- **Próxima Fase:** Fase 19a - Analytics / Fase 30 - Kanban
 
 ---
 
@@ -144,6 +144,16 @@ Este documento rastreia o status detalhado de cada fase do plano de refatoraçã
 | Mapeamento em todas as seções |    ✅    | Integrado em Painéis, Consultas e Fluxos de Lote   |
 
 _(Fases 19-27 conforme REFACTOR_PLAN.md)_
+
+---
+
+### FASE 29: Exportação Sumarizada (PDF) e Atalhos ✅
+| Item                                        | Status | Notas                                              |
+| :------------------------------------------ | :----: | :------------------------------------------------- |
+| **Prioridade**                              | 🟢 BAIXA|                                                    |
+| Agrupamento de itens no PDF (Código+Descrição)|   ✅   | Somada quantidade e concatenado textos descritivos  |
+| Botão "Imprimir" em Consulta de Garantias   |   ✅   | Adicionado com agrupamento ativo                   |
+| Botão "Imprimir" em Consulta de Devoluções |   ✅   | Padronizado layout com agrupamento ativo           |
 
 ---
 
