@@ -110,11 +110,10 @@ export default function ProductReportSection() {
 
         const combined: (Product & { totalQtd?: number, ocorrencias?: number })[] = [...registeredProducts, ...ghostProducts].map(p => {
             const wStat = reportData?.topProductsByWarranty.find(w => w.codigo === p.codigo);
-            const rStat = reportData?.topProductsByReturn.find(r => r.codigo === p.codigo);
             return {
                 ...p,
-                totalQtd: (wStat?.totalQtd || 0) + (rStat?.totalQtd || 0),
-                ocorrencias: (wStat?.ocorrencias || 0) + (rStat?.ocorrencias || 0)
+                totalQtd: wStat?.totalQtd || 0,
+                ocorrencias: wStat?.ocorrencias || 0
             };
         }).sort((a, b) => (b.totalQtd || 0) - (a.totalQtd || 0));
 
