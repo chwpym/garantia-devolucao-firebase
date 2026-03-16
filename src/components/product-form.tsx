@@ -69,7 +69,7 @@ export default function ProductForm({ onSave, editingProduct, onClear }: Product
         }
       }
 
-      if (editingProduct?.id) {
+      if (editingProduct?.id && editingProduct.id !== -1) {
         // Ao editar, não alteramos o código. Usamos o código original.
         const updatedProduct = {
           ...editingProduct,
