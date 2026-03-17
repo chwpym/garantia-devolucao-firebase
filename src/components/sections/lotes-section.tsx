@@ -76,6 +76,15 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
   }, [setNewLoteModalOpen]);
 
   const [statuses, setStatuses] = useState<any[]>([]);
+  const [loteToMove, setLoteToMove] = useState<LoteWithStats | null>(null);
+  const [targetStatus, setTargetStatus] = useState<string | null>(null);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+
+  const triggerMoveConfirmation = (lote: LoteWithStats, nextStatus: string) => {
+    setLoteToMove(lote);
+    setTargetStatus(nextStatus);
+    setIsConfirmModalOpen(true);
+  };
 
   const loadData = useCallback(async () => {
     try {
@@ -270,7 +279,7 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={(e) => { e.stopPropagation(); updateLoteStatus(lote, getPrevStatus()!); }}
+                onClick={(e) => { e.stopPropagation(); triggerMoveConfirmation(lote, getPrevStatus()!); }}
                 className="h-7 px-2 text-xs text-muted-foreground hover:text-primary"
                 title={`Voltar para ${getPrevStatus()}`}
               >
@@ -284,7 +293,7 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={(e) => { e.stopPropagation(); updateLoteStatus(lote, getNextStatus()!); }}
+                onClick={(e) => { e.stopPropagation(); triggerMoveConfirmation(lote, getNextStatus()!); }}
                 className="h-7 px-2 text-xs font-semibold border-primary/30 text-primary hover:bg-primary/10"
                 title={`Mover para ${getNextStatus()}`}
               >
@@ -295,7 +304,7 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
               <Button 
                 variant="default" 
                 size="sm" 
-                onClick={(e) => { e.stopPropagation(); updateLoteStatus(lote, 'Concluído'); }}
+                onClick={(e) => { e.stopPropagation(); triggerMoveConfirmation(lote, 'Concluído'); }}
                 className="h-7 px-2 text-xs font-semibold bg-green-600 hover:bg-green-700 text-white"
               >
                 Finalizar <ArrowRight className="h-3 w-3 ml-1" />
@@ -490,6 +499,36 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive hover:bg-destructive/90">
               Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog open={isConfirmModalOpen} onOpenChange={setIsConfirmModalOpen}>
+        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Movimentação</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>Tem certeza que deseja alterar o status deste lote?</p>
+              <div className="bg-muted/50 p-3 rounded-lg border text-sm mt-3">
+                <p><strong>Lote:</strong> #{loteToMove?.id} - {loteToMove?.nome}</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-muted-foreground">De:</span>
+                  <StatusBadge type="lote" status={loteToMove?.status || 'Aberto'} />
+                  <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-muted-foreground">Para:</span>
+                  <StatusBadge type="lote" status={targetStatus || 'Aberto'} />
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={(e) => { 
+                e.stopPropagation(); 
+                if(loteToMove && targetStatus) updateLoteStatus(loteToMove, targetStatus); 
+                setIsConfirmModalOpen(false); 
+              }} className="bg-primary hover:bg-primary/90">
+              Mover Lote
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
