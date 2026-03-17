@@ -263,7 +263,7 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
             {canMoveBack && getPrevStatus() && (
               <Button 
                 variant="ghost" 
-                size="xs" 
+                size="sm" 
                 onClick={(e) => { e.stopPropagation(); updateLoteStatus(lote, getPrevStatus()!); }}
                 className="h-7 px-2 text-xs text-muted-foreground hover:text-primary"
                 title={`Voltar para ${getPrevStatus()}`}
@@ -279,7 +279,7 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
             {canMoveForward && getNextStatus() && (
               <Button 
                 variant="outline" 
-                size="xs" 
+                size="sm" 
                 onClick={(e) => { e.stopPropagation(); updateLoteStatus(lote, getNextStatus()!); }}
                 className="h-7 px-2 text-xs font-semibold border-primary/30 text-primary hover:bg-primary/10"
                 title={`Mover para ${getNextStatus()}`}
@@ -290,7 +290,7 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
             {lote.status === 'Enviado' && (
               <Button 
                 variant="default" 
-                size="xs" 
+                size="sm" 
                 onClick={(e) => { e.stopPropagation(); updateLoteStatus(lote, 'Concluído'); }}
                 className="h-7 px-2 text-xs font-semibold bg-green-600 hover:bg-green-700 text-white"
               >
