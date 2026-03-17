@@ -226,8 +226,8 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
         style={{ borderColor: customColor || undefined }}
         onClick={() => onNavigateToLote(lote.id!)}
       >
-        <CardHeader className="flex flex-row items-start justify-between pb-2">
-          <div>
+        <CardHeader className="flex flex-row items-start justify-between pb-2 gap-2">
+          <div className="flex-1 min-w-0">
             <CardTitle className="text-xl">
               <span className="text-muted-foreground font-normal">Lote #{lote.id}</span>
               <br />
