@@ -207,38 +207,44 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
         style={{ borderColor: customColor || undefined }}
         onClick={() => onNavigateToLote(lote.id!)}
       >
-        <CardHeader className="flex flex-row items-start justify-between pb-2 gap-2">
-          <div className="flex-1 min-w-0">
-            <CardTitle className="text-xl">
-              <span className="text-muted-foreground font-normal">Lote #{lote.id}</span>
-              <br />
+        <CardHeader className="flex flex-col pb-2 gap-3">
+          {/* Linha 1: ID e status/menu */}
+          <div className="flex flex-row items-center justify-between w-full">
+            <span className="text-muted-foreground font-semibold text-sm">Lote #{lote.id}</span>
+            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+              <StatusBadge type="lote" status={lote.status} />
+              <DropdownMenu onOpenChange={(open) => { if (open) { event?.stopPropagation(); } }}>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0">
+                    <span className="sr-only">Abrir menu</span>
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEdit(lote); }}>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Editar
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setDeleteTarget(lote); }} className="text-destructive focus:text-destructive">
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Excluir
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+
+          {/* Linha 2: Nome do Lote */}
+          <div className="w-full">
+            <CardTitle className="text-xl font-bold tracking-tight break-words">
               {lote.nome?.replace(/\n/g, ' ')}
             </CardTitle>
-            <CardDescription className="flex items-center gap-2 pt-2">
-              <Building className="h-4 w-4" />
-              {lote.fornecedor?.replace(/\n/g, ' ')}
+            
+            {/* Linha 3: Fornecedor */}
+            <CardDescription className="flex items-center gap-2 pt-2 break-words text-muted-foreground w-full">
+              <Building className="h-4 w-4 shrink-0" />
+              <span className="flex-1">{lote.fornecedor?.replace(/\n/g, ' ')}</span>
             </CardDescription>
-          </div>
-          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-            <StatusBadge type="lote" status={lote.status} />
-            <DropdownMenu onOpenChange={(open) => { if (open) { event?.stopPropagation(); } }}>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                  <span className="sr-only">Abrir menu</span>
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEdit(lote); }}>
-                <Pencil className="mr-2 h-4 w-4" />
-                Editar
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setDeleteTarget(lote); }} className="text-destructive focus:text-destructive">
-                <Trash2 className="mr-2 h-4 w-4" />
-                Excluir
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
           </div>
         </CardHeader>
         <CardContent className="flex-grow space-y-4 pb-2">
