@@ -201,9 +201,7 @@ export const initDB = async (): Promise<boolean> => {
   try {
     await getDB();
     await migrateContactsToArrays();
-    if ((window as any).migrateLotesToFases) {
-      await (window as any).migrateLotesToFases();
-    }
+    await migrateLotesToFases();
     return true;
   } catch (e) {
     console.error(e);
@@ -387,7 +385,7 @@ export const ensureUsernamesOnProfiles = async (): Promise<void> => {
   }
 };
 
-const migrateLotesToFases = async () => {
+async function migrateLotesToFases() {
   try {
     const db = await getDB();
     const transaction = db.transaction(LOTES_STORE_NAME, "readwrite");
@@ -421,7 +419,7 @@ const migrateLotesToFases = async () => {
   }
 };
 
-(window as any).migrateLotesToFases = migrateLotesToFases;
+
 
 /**
  * Migration for Phase 14: Convert single string contacts to arrays
