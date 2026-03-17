@@ -615,6 +615,18 @@ export const clearWarranties = (): Promise<void> =>
 export const addPerson = (person: Omit<Person, "id">): Promise<number> => {
   return new Promise(async (resolve, reject) => {
     try {
+      const persons = await getAllPersons();
+      const duplicate = persons.find(
+        (p) =>
+          p.nome.toLowerCase() === person.nome.toLowerCase() ||
+          (person.cpfCnpj && p.cpfCnpj === person.cpfCnpj)
+      );
+
+      if (duplicate) {
+        reject(new Error("Já existe um cliente/mecânico cadastrado com este nome ou CPF/CNPJ."));
+        return;
+      }
+
       const normalizedData = normalizeData(person);
       const store = await getStore(PERSONS_STORE_NAME, "readwrite");
       const request = store.add(normalizedData);
@@ -675,6 +687,18 @@ export const addSupplier = (
 ): Promise<number> => {
   return new Promise(async (resolve, reject) => {
     try {
+      const suppliers = await getAllSuppliers();
+      const duplicate = suppliers.find(
+        (s) =>
+          s.nomeFantasia.toLowerCase() === supplier.nomeFantasia.toLowerCase() ||
+          (supplier.cnpj && s.cnpj === supplier.cnpj)
+      );
+
+      if (duplicate) {
+        reject(new Error("Já existe um fornecedor cadastrado com este Nome Fantasia ou CNPJ."));
+        return;
+      }
+
       const normalizedData = normalizeData(supplier);
       const store = await getStore(SUPPLIERS_STORE_NAME, "readwrite");
       const request = store.add(normalizedData);
