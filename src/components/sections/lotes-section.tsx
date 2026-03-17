@@ -175,11 +175,14 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
     const customColor = customStatus?.cor;
     
     // Status Flow Helpers:
+    const isKnown = ['Aguardando Envio', 'Enviado', 'Concluído', 'Aprovado Totalmente', 'Aprovado Parcialmente', 'Recusado'].includes(lote.status || '');
+    const isFallbackAberto = !isKnown && lote.status !== 'Aberto';
+
     const canMoveBack = lote.status === 'Aguardando Envio' || lote.status === 'Enviado';
-    const canMoveForward = lote.status === 'Aberto' || lote.status === 'Aguardando Envio' || lote.status === 'Enviado';
+    const canMoveForward = lote.status === 'Aberto' || lote.status === 'Aguardando Envio' || lote.status === 'Enviado' || isFallbackAberto;
     
     const getNextStatus = () => {
-      if (lote.status === 'Aberto') return 'Aguardando Envio';
+      if (lote.status === 'Aberto' || isFallbackAberto) return 'Aguardando Envio';
       if (lote.status === 'Aguardando Envio') return 'Enviado';
       if (lote.status === 'Enviado') return 'Concluído';
       return null;
@@ -359,15 +362,6 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
         </Card>
       </div>
 
-      {/* --- Filters --- */}
-      <div className="flex items-center gap-4">
-        <SearchInput
-          placeholder="Buscar lotes..."
-          value={searchTerm}
-          onChange={(e) => setFilters({ ...filters, searchTerm: e.target.value })}
-          onClear={() => setFilters({ ...filters, searchTerm: '' })}
-        />
-      </div>
 
       {filteredLotes.length > 0 ? (
         (() => {
@@ -392,17 +386,31 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
 
           return (
             <Tabs defaultValue="aberto" className="w-full">
-              <TabsList className="grid grid-cols-4 w-full h-12 max-w-2xl mx-auto mb-6 bg-muted/40 p-1 rounded-xl">
-                {tabConfig.map(tab => {
-                  const count = getLotesByTab(tab.id).length;
-                  return (
-                    <TabsTrigger key={tab.id} value={tab.id} className="text-xs font-semibold gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                      <span className="truncate">{tab.title.split(' ')[0]}</span>
-                      {count > 0 && <Badge variant="secondary" className="px-1.5 py-0 text-[10px] bg-muted">{count}</Badge>}
-                    </TabsTrigger>
-                  );
-                })}
-              </TabsList>
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
+                <div className="w-full md:max-w-xs">
+                  <SearchInput
+                    placeholder="Buscar lotes..."
+                    value={searchTerm}
+                    onChange={(e) => setFilters({ ...filters, searchTerm: e.target.value })}
+                    onClear={() => setFilters({ ...filters, searchTerm: '' })}
+                  />
+                </div>
+
+                <TabsList className="grid grid-cols-4 w-full md:max-w-xl h-11 bg-muted/40 p-1 rounded-xl">
+                  {tabConfig.map(tab => {
+                    const count = getLotesByTab(tab.id).length;
+                    return (
+                      <TabsTrigger key={tab.id} value={tab.id} className="text-xs font-semibold gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                        <span className="truncate">
+                          <span className="hidden sm:inline">{tab.title}</span>
+                          <span className="sm:hidden">{tab.title.split(' ')[0]}</span>
+                        </span>
+                        {count > 0 && <Badge variant="secondary" className="px-1.5 py-0 text-[10px] bg-muted">{count}</Badge>}
+                      </TabsTrigger>
+                    );
+                  })}
+                </TabsList>
+              </div>
 
               {tabConfig.map(tab => {
                 const columnLotes = getLotesByTab(tab.id);
