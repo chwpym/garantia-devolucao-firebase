@@ -58,6 +58,11 @@ export const normalizeString = (str: string) => {
 };
 ```
 
+### 4. Exceção: TitleCase para Status
+
+Para campos de **Status** (ex: `status`, `statusgarantia`), o padrão exigido é **TitleCase** (Primeira Letra Maiúscula). Ex: ``Em Análise`` em vez de ``EM ANÁLISE``.
+Isso evita poluição visual no Dashboard e Cards. No `db.ts`, utilize um `toTitleCase(valor)` dedicado ao salvar.
+
 ## 🔍 Onde Validar Agora Mesmo
 
 - Formulários de **Cliente, Produto, Mecânico, Fornecedor** e **Status**.

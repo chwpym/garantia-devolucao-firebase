@@ -45,6 +45,7 @@ Este documento rastreia o status detalhado de cada fase do plano de refatoraçã
 | Implementar check em `SupplierForm`    |   ✅    |    45m     |    15m     | Validação proativa por CNPJ               |
 | Implementar check em `CustomerForm`    |   ✅    |    45m     |    15m     | Validação proativa por CPF/CNPJ           |
 | UX: Mensagens de erro claras           |   ✅    |    30m     |    10m     | Toasts vermelhos implementados            |
+| Refino: Trava Clientes/Fornecedores   |   ✅    |    30m     |    15m     | Bloqueio por Nome/CNPJ no addPerson/Supplier |
 | **Total da Fase**                      |         |   3h 45m   |   1h 30m   | Duplicidade bloqueada antes do salvamento |
 
 ### FASE 4: Fundações de UI e Navegação ✅
@@ -203,7 +204,7 @@ _(Fases 19-27 conforme REFACTOR_PLAN.md)_
 | :----- | :--------------------------------- | :----: | :----------------------------------------------------- |
 | **28** | Importação Legada do PDF p/ JSON   |   ⏳   | Carga de DB via Script não-destrutivo                  |
 | **29** | Otimização Export PDF (Juntar Qtd) |   ⏳   | Matemática de soma e "Botão Imprimir" Direto           |
-| **30** | Lotes Estilo Kanban e Card Popup   |   ⏳   | 3 abas, status reflete na borda, e tooltip hover popup |
+| **30** | Lotes Estilo Kanban e Card Popup   |   ✅   | 4 abas fixas por Fase, Select Dropdown e visual limpo  |
 | **31** | Database (1:N) Multi-Fornecedor    |   ⏳   | Múltiplos códs por peça e visibilidade Código Externo  |
 | **32** | Alertas Temporizados (SLA Inativo) |   ⏳   | Aging de Garantia (+2 dias ex: Aguardando Autorização) |
 
