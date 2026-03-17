@@ -1328,8 +1328,21 @@ export const getAllStatuses = async (): Promise<CustomStatus[]> => {
 export const addStatus = async (status: CustomStatus): Promise<number> => {
   return new Promise(async (resolve, reject) => {
     try {
+      const existing = await getAllStatuses();
+      const isDuplicate = existing.some(
+        (s) =>
+          s.nome.toLowerCase() === status.nome.toLowerCase() &&
+          s.aplicavelEm === status.aplicavelEm
+      );
+
+      if (isDuplicate) {
+        reject(new Error("Já existe um status cadastrado com este nome para este módulo."));
+        return;
+      }
+
+      const normalized = normalizeData(status);
       const store = await getStore(STATUSES_STORE_NAME, "readwrite");
-      const request = store.add(status);
+      const request = store.add(normalized);
       request.onsuccess = () => resolve(request.result as number);
       request.onerror = () => reject(request.error);
     } catch (err) {
