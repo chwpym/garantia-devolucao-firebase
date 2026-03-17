@@ -390,8 +390,8 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
 
           const getLotesByTab = (tabId: string) => {
             return filteredLotes.filter(l => {
-              const fase = (l as any).fase || 'aberto';
-              return fase === tabId;
+              const fase = ((l as any).fase || 'aberto').toLowerCase();
+              return fase === tabId.toLowerCase();
             });
           };
 

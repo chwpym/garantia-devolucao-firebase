@@ -256,6 +256,7 @@ const normalizeData = <T>(data: T): T => {
     "password",
     "username",
     "cor",
+    "fase",
   ];
 
   const isBlacklisted = (key: string) => {
