@@ -209,9 +209,9 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
       >
         <CardHeader className="flex flex-col pb-2 gap-3">
           {/* Linha 1: ID e status/menu */}
-          <div className="flex flex-row items-center justify-between w-full">
-            <span className="text-muted-foreground font-semibold text-sm">Lote #{lote.id}</span>
-            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+          <div className="flex flex-row items-center justify-between w-full gap-2">
+            <span className="text-muted-foreground font-semibold text-sm truncate">Lote #{lote.id}</span>
+            <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
               <StatusBadge type="lote" status={lote.status} />
               <DropdownMenu onOpenChange={(open) => { if (open) { event?.stopPropagation(); } }}>
                 <DropdownMenuTrigger asChild>
