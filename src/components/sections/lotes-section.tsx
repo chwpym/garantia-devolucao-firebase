@@ -370,68 +370,56 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
 
       {filteredLotes.length > 0 ? (
         (() => {
-          const columns = [
-            { title: 'Aberto / Montagem', statuses: ['Aberto'], color: 'border-amber-500/30' },
-            { title: 'Aguardando Envio', statuses: ['Aguardando Envio'], color: 'border-blue-500/30' },
-            { title: 'Em Análise / Enviado', statuses: ['Enviado'], color: 'border-cyan-500/30' },
-            { title: 'Finalizado', statuses: ['Concluído', 'Aprovado Totalmente', 'Aprovado Parcialmente', 'Recusado'], color: 'border-green-500/30' }
+          const tabConfig = [
+            { title: 'Aberto / Montagem', id: 'aberto' },
+            { title: 'Aguardando Envio', id: 'aguardando' },
+            { title: 'Em Análise / Enviado', id: 'enviado' },
+            { title: 'Finalizado', id: 'finalizado' }
           ];
 
+          const getLotesByTab = (tabId: string) => {
+            return filteredLotes.filter(l => {
+              const status = l.status || 'Aberto';
+              if (tabId === 'aguardando') return status === 'Aguardando Envio';
+              if (tabId === 'enviado') return status === 'Enviado';
+              if (tabId === 'finalizado') return ['Concluído', 'Aprovado Totalmente', 'Aprovado Parcialmente', 'Recusado'].includes(status);
+              
+              const isKnown = ['Aguardando Envio', 'Enviado', 'Concluído', 'Aprovado Totalmente', 'Aprovado Parcialmente', 'Recusado'].includes(status);
+              return tabId === 'aberto' && (!isKnown || status === 'Aberto');
+            });
+          };
+
           return (
-            <>
-              {/* --- Desktop (Columns) --- */}
-              <div className="hidden md:grid grid-cols-4 gap-4 p-1">
-                {columns.map(col => {
-                  const columnLotes = filteredLotes.filter(l => col.statuses.includes(l.status!));
+            <Tabs defaultValue="aberto" className="w-full">
+              <TabsList className="grid grid-cols-4 w-full h-12 max-w-2xl mx-auto mb-6 bg-muted/40 p-1 rounded-xl">
+                {tabConfig.map(tab => {
+                  const count = getLotesByTab(tab.id).length;
                   return (
-                    <div key={col.title} className={cn("flex flex-col space-y-3 bg-muted/20 p-3 rounded-xl border border-dashed min-h-[500px]", col.color)}>
-                      <div className="flex items-center justify-between pb-2 border-b border-dashed border-muted-foreground/20">
-                        <h3 className="font-bold text-xs tracking-wide uppercase text-muted-foreground">{col.title}</h3>
-                        <Badge variant="secondary" className="text-[10px] font-bold px-1.5 py-0">
-                          {columnLotes.length}
-                        </Badge>
-                      </div>
-                      <div className="flex flex-col space-y-3 overflow-y-auto max-h-[70vh] pr-1 styled-scrollbar flex-grow">
-                        {columnLotes.length > 0 ? (
-                          columnLotes.map(renderLoteCard)
-                        ) : (
-                          <div className="text-center text-xs text-muted-foreground/60 py-8 border border-dashed rounded-lg bg-background/30 mt-4">
-                            Vazio
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                    <TabsTrigger key={tab.id} value={tab.id} className="text-xs font-semibold gap-1.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                      <span className="truncate">{tab.title.split(' ')[0]}</span>
+                      {count > 0 && <Badge variant="secondary" className="px-1.5 py-0 text-[10px] bg-muted">{count}</Badge>}
+                    </TabsTrigger>
                   );
                 })}
-              </div>
+              </TabsList>
 
-              {/* --- Mobile (Tabs) --- */}
-              <div className="md:hidden">
-                <Tabs defaultValue={columns[0].title} className="w-full">
-                  <TabsList className="grid grid-cols-4 w-full h-11 bg-muted/40 p-1 rounded-lg">
-                    {columns.map(col => (
-                      <TabsTrigger key={col.title} value={col.title} className="text-[10px] font-bold px-0">
-                        {col.title.split(' ')[0]}
-                      </TabsTrigger>
-                    ))}
-                  </TabsList>
-                  {columns.map(col => {
-                    const columnLotes = filteredLotes.filter(l => col.statuses.includes(l.status!));
-                    return (
-                      <TabsContent key={col.title} value={col.title} className="space-y-4 pt-4">
-                        {columnLotes.length > 0 ? (
-                          columnLotes.map(renderLoteCard)
-                        ) : (
-                          <div className="text-center text-muted-foreground py-16 border border-dashed rounded-lg bg-muted/20">
-                            Nenhum lote nesta fase.
-                          </div>
-                        )}
-                      </TabsContent>
-                    );
-                  })}
-                </Tabs>
-              </div>
-            </>
+              {tabConfig.map(tab => {
+                const columnLotes = getLotesByTab(tab.id);
+                return (
+                  <TabsContent key={tab.id} value={tab.id} className="space-y-6 pt-2">
+                    {columnLotes.length > 0 ? (
+                      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {columnLotes.map(renderLoteCard)}
+                      </div>
+                    ) : (
+                      <div className="text-center text-muted-foreground py-20 border-2 border-dashed rounded-xl bg-muted/5">
+                        Nenhum lote nesta fase.
+                      </div>
+                    )}
+                  </TabsContent>
+                );
+              })}
+            </Tabs>
           );
         })()
       ) : (
