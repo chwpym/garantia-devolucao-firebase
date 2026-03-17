@@ -78,11 +78,13 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
   const [statuses, setStatuses] = useState<any[]>([]);
   const [loteToMove, setLoteToMove] = useState<LoteWithStats | null>(null);
   const [targetStatus, setTargetStatus] = useState<string | null>(null);
+  const [targetFase, setTargetFase] = useState<string | null>(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
-  const triggerMoveConfirmation = (lote: LoteWithStats, nextStatus: string) => {
+  const triggerMoveConfirmation = (lote: LoteWithStats, nextStatus: string, nextFase: string) => {
     setLoteToMove(lote);
     setTargetStatus(nextStatus);
+    setTargetFase(nextFase);
     setIsConfirmModalOpen(true);
   };
 
@@ -168,11 +170,14 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
   const filteredLotes = lotes.filter(lote =>
     smartSearch(lote, searchTerm, ['nome', 'fornecedor', 'notasFiscaisRetorno', 'id'])
   );
-  const updateLoteStatus = async (lote: Lote, newStatus: string) => {
+  const updateLoteStatus = async (lote: Lote, newStatus: string, newFase?: string) => {
     try {
       const updatedLote = { ...lote, status: newStatus };
+      if (newFase) {
+        (updatedLote as any).fase = newFase;
+      }
       await db.updateLote(updatedLote as any);
-      toast({ title: 'Sucesso', description: `Lote movido para ${newStatus}` });
+      toast({ title: 'Sucesso', description: `Lote atualizado para ${newStatus}` });
       window.dispatchEvent(new CustomEvent('datachanged'));
     } catch (err) {
       toast({ title: 'Erro', description: 'Não foi possível mover o lote.', variant: 'destructive' });
@@ -183,26 +188,28 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
     const customStatus = statuses.find(s => s.nome.toLowerCase() === lote.status?.toLowerCase() && s.aplicavelEm.includes('lote'));
     const customColor = customStatus?.cor;
     
-    // Status Flow Helpers:
-    const isKnown = ['Aguardando Envio', 'Enviado', 'Concluído', 'Aprovado Totalmente', 'Aprovado Parcialmente', 'Recusado'].includes(lote.status || '');
-    const isFallbackAberto = !isKnown && lote.status !== 'Aberto';
+    // Status Flow Helpers baseado em Fase:
+    const loteFase = (lote as any).fase || 'aberto';
+    
+    const canMoveBack = loteFase === 'aguardando' || loteFase === 'enviado' || loteFase === 'finalizado';
+    const canMoveForward = loteFase === 'aberto' || loteFase === 'aguardando' || loteFase === 'enviado';
+    
+    const getNextStatusAndFase = () => {
+      if (loteFase === 'aberto') return { status: 'Aguardando Envio', fase: 'aguardando' };
+      if (loteFase === 'aguardando') return { status: 'Enviado', fase: 'enviado' };
+      if (loteFase === 'enviado') return { status: 'Concluído', fase: 'finalizado' };
+      return null;
+    };
+    
+    const getPrevStatusAndFase = () => {
+      if (loteFase === 'aguardando') return { status: 'Aberto', fase: 'aberto' };
+      if (loteFase === 'enviado') return { status: 'Aguardando Envio', fase: 'aguardando' };
+      if (loteFase === 'finalizado') return { status: 'Enviado', fase: 'enviado' };
+      return null;
+    };
 
-    const canMoveBack = lote.status === 'Aguardando Envio' || lote.status === 'Enviado';
-    const canMoveForward = lote.status === 'Aberto' || lote.status === 'Aguardando Envio' || lote.status === 'Enviado' || isFallbackAberto;
-    
-    const getNextStatus = () => {
-      if (lote.status === 'Aberto' || isFallbackAberto) return 'Aguardando Envio';
-      if (lote.status === 'Aguardando Envio') return 'Enviado';
-      if (lote.status === 'Enviado') return 'Concluído';
-      return null;
-    };
-    
-    const getPrevStatus = () => {
-      if (lote.status === 'Aguardando Envio') return 'Aberto';
-      if (lote.status === 'Enviado') return 'Aguardando Envio';
-      if (lote.status === 'Concluído' || lote.status?.startsWith('Aprovado') || lote.status === 'Recusado') return 'Enviado';
-      return null;
-    };
+    const next = getNextStatusAndFase();
+    const prev = getPrevStatusAndFase();
 
     return (
       <Card
@@ -275,13 +282,13 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
         </CardContent>
         <CardFooter className="flex items-center justify-between pt-2 border-t mt-auto gap-2">
           <div className="flex gap-1">
-            {canMoveBack && getPrevStatus() && (
+            {canMoveBack && prev && (
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={(e) => { e.stopPropagation(); triggerMoveConfirmation(lote, getPrevStatus()!); }}
+                onClick={(e) => { e.stopPropagation(); triggerMoveConfirmation(lote, prev.status, prev.fase); }}
                 className="h-7 px-2 text-xs text-muted-foreground hover:text-primary"
-                title={`Voltar para ${getPrevStatus()}`}
+                title={`Voltar para ${prev.status}`}
               >
                 <ArrowLeft className="h-3 w-3 mr-1" /> Voltar
               </Button>
@@ -289,22 +296,22 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
           </div>
           
           <div className="flex gap-1 ml-auto">
-            {canMoveForward && getNextStatus() && lote.status !== 'Enviado' && (
+            {canMoveForward && next && loteFase !== 'enviado' && (
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={(e) => { e.stopPropagation(); triggerMoveConfirmation(lote, getNextStatus()!); }}
+                onClick={(e) => { e.stopPropagation(); triggerMoveConfirmation(lote, next.status, next.fase); }}
                 className="h-7 px-2 text-xs font-semibold border-primary/30 text-primary hover:bg-primary/10"
-                title={`Mover para ${getNextStatus()}`}
+                title={`Mover para ${next.status}`}
               >
                 Mover <ArrowRight className="h-3 w-3 ml-1" />
               </Button>
             )}
-            {lote.status === 'Enviado' && (
+            {loteFase === 'enviado' && next && (
               <Button 
                 variant="default" 
                 size="sm" 
-                onClick={(e) => { e.stopPropagation(); triggerMoveConfirmation(lote, 'Concluído'); }}
+                onClick={(e) => { e.stopPropagation(); triggerMoveConfirmation(lote, next.status, next.fase); }}
                 className="h-7 px-2 text-xs font-semibold bg-green-600 hover:bg-green-700 text-white"
               >
                 Finalizar <ArrowRight className="h-3 w-3 ml-1" />
@@ -383,13 +390,8 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
 
           const getLotesByTab = (tabId: string) => {
             return filteredLotes.filter(l => {
-              const status = l.status || 'Aberto';
-              if (tabId === 'aguardando') return status === 'Aguardando Envio';
-              if (tabId === 'enviado') return status === 'Enviado';
-              if (tabId === 'finalizado') return ['Concluído', 'Aprovado Totalmente', 'Aprovado Parcialmente', 'Recusado'].includes(status);
-              
-              const isKnown = ['Aguardando Envio', 'Enviado', 'Concluído', 'Aprovado Totalmente', 'Aprovado Parcialmente', 'Recusado'].includes(status);
-              return tabId === 'aberto' && (!isKnown || status === 'Aberto');
+              const fase = (l as any).fase || 'aberto';
+              return fase === tabId;
             });
           };
 
@@ -525,7 +527,7 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={(e) => { 
                 e.stopPropagation(); 
-                if(loteToMove && targetStatus) updateLoteStatus(loteToMove, targetStatus); 
+                if(loteToMove && targetStatus) updateLoteStatus(loteToMove, targetStatus, targetFase || undefined); 
                 setIsConfirmModalOpen(false); 
               }} className="bg-primary hover:bg-primary/90">
               Mover Lote

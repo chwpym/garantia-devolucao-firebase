@@ -81,6 +81,7 @@ export interface Lote {
   notaFiscalSaida?: string;
   notasFiscaisRetorno?: string;
   status: LoteStatus;
+  fase?: string;
   attachments?: LoteAttachment[];
 }
 

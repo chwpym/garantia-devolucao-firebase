@@ -201,6 +201,9 @@ export const initDB = async (): Promise<boolean> => {
   try {
     await getDB();
     await migrateContactsToArrays();
+    if ((window as any).migrateLotesToFases) {
+      await (window as any).migrateLotesToFases();
+    }
     return true;
   } catch (e) {
     console.error(e);
@@ -374,6 +377,42 @@ export const ensureUsernamesOnProfiles = async (): Promise<void> => {
     console.warn("Failed to ensure usernames:", err);
   }
 };
+
+const migrateLotesToFases = async () => {
+  try {
+    const db = await getDB();
+    const transaction = db.transaction(LOTES_STORE_NAME, "readwrite");
+    const store = transaction.objectStore(LOTES_STORE_NAME);
+    const request = store.openCursor();
+
+    return new Promise<void>((resolve, reject) => {
+      request.onsuccess = (event) => {
+        const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
+        if (cursor) {
+          const lote = cursor.value;
+          if (lote.fase === undefined) {
+            let fase = 'aberto';
+            const status = (lote.status || '').toLowerCase();
+            if (status === 'aguardando envio') fase = 'aguardando';
+            else if (status === 'enviado') fase = 'enviado';
+            else if (['concluído', 'aprovado totalmente', 'aprovado parcialmente', 'recusado'].includes(status)) fase = 'finalizado';
+            
+            const updatedLote = { ...lote, fase };
+            cursor.update(updatedLote);
+          }
+          cursor.continue();
+        } else {
+          resolve();
+        }
+      };
+      request.onerror = () => reject(request.error);
+    });
+  } catch (e) {
+    console.error("Migration failed:", e);
+  }
+};
+
+(window as any).migrateLotesToFases = migrateLotesToFases;
 
 /**
  * Migration for Phase 14: Convert single string contacts to arrays
@@ -685,7 +724,7 @@ export const clearSuppliers = (): Promise<void> =>
 export const addLote = (lote: Omit<Lote, "id">): Promise<number> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const normalizedData = normalizeData(lote);
+      const normalizedData = normalizeData({ ...lote, fase: (lote as any).fase || 'aberto' });
       const store = await getStore(LOTES_STORE_NAME, "readwrite");
       const request = store.add(normalizedData);
       request.onsuccess = (event) => resolve((event.target as IDBRequest).result as number);
