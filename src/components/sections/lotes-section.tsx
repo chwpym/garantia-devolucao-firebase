@@ -395,7 +395,7 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
 
           return (
             <Tabs defaultValue="aberto" className="w-full">
-              <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
+              <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
                 <div className="w-full md:max-w-xs">
                   <SearchInput
                     placeholder="Buscar lotes..."
@@ -405,7 +405,7 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
                   />
                 </div>
 
-                <TabsList className="grid grid-cols-4 w-full md:max-w-xl h-11 bg-muted/40 p-1 rounded-xl">
+                <TabsList className="grid grid-cols-4 md:flex-1 w-full h-11 bg-muted/40 p-1 rounded-xl">
                   {tabConfig.map(tab => {
                     const count = getLotesByTab(tab.id).length;
                     return (
