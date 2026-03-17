@@ -219,13 +219,15 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
               {lote.fornecedor}
             </CardDescription>
           </div>
-          <DropdownMenu onOpenChange={(open) => { if (open) { event?.stopPropagation(); } }}>
-            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Abrir menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
+          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+            <StatusBadge type="lote" status={lote.status} />
+            <DropdownMenu onOpenChange={(open) => { if (open) { event?.stopPropagation(); } }}>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <span className="sr-only">Abrir menu</span>
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEdit(lote); }}>
                 <Pencil className="mr-2 h-4 w-4" />
@@ -237,6 +239,7 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          </div>
         </CardHeader>
         <CardContent className="flex-grow space-y-4 pb-2">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -273,10 +276,8 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
             )}
           </div>
           
-          <StatusBadge type="lote" status={lote.status} />
-          
-          <div className="flex gap-1">
-            {canMoveForward && getNextStatus() && (
+          <div className="flex gap-1 ml-auto">
+            {canMoveForward && getNextStatus() && lote.status !== 'Enviado' && (
               <Button 
                 variant="outline" 
                 size="sm" 
