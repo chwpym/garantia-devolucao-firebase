@@ -761,9 +761,13 @@ Um script de Conversor autônomo. O banco antigo gerava os cadastros e não era 
 
 Na Geração de `Blob/Pdf` base de Garantia (que atualmente lança linha por linha), introduzir lógica matemática com Reduce: aglutinar Itens (`itemId` baseados ou `produto.codigo` baseados) em uma única Row, multiplicando o numeral final a ser impresso na tabela. Botão Nativos na UI chamando o `exportPDF()`.
 
-### Fase 30: Kanban Componentizado (Card Dinâmico)
+### Fase 30: Kanban Componentizado (Card Dinâmico) ✅
 
-Separar Array completo de lotes em Listas por `status` pré-mapeados (`Aberto, Enviado, Finalizado`). Refletir `cardBorderCode` de acordo com a paleta nativa. Adicionar `Tooltip Popup` interceptando Hover event no Header Card, buscando os dados filho dos lotes na tela por _lazy display_.
+**Implementação Concluída:**
+- **Roteamento por Fase**: Substituídos os botões sequenciais de avanço/recuo por um Seletor `<Select>` de Fase autônomo e independente do status textual do lote.
+- **Divisão em Abas**: Refatorada filtragem do `getLotesByTab` com `.toLowerCase()` para garantir suporte a 4 abas estritas.
+- **Elasticidade Visual**: Layout do `CardHeader` em Linhas Dedicadas (ID/Status, Título, Fornecedor) expandindo 100% da largura.
+- **Blindagem String**: Máscara `.replace(/\n/g, ' ')` em títulos e descritivos eliminando quebras de layout orfãs.
 
 ### Fase 31: Bancos Opcionais N:1
 
