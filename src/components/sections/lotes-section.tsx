@@ -36,6 +36,7 @@ import { cn } from '@/lib/utils';
 import { smartSearch } from '@/lib/search-utils';
 import { SearchInput } from '@/components/ui/search-input';
 import { usePersistedFilters } from '@/hooks/use-persisted-filters';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
 interface LotesSectionProps {
@@ -190,26 +191,6 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
     
     // Status Flow Helpers baseado em Fase:
     const loteFase = (lote as any).fase || 'aberto';
-    
-    const canMoveBack = loteFase === 'aguardando' || loteFase === 'enviado' || loteFase === 'finalizado';
-    const canMoveForward = loteFase === 'aberto' || loteFase === 'aguardando' || loteFase === 'enviado';
-    
-    const getNextStatusAndFase = () => {
-      if (loteFase === 'aberto') return { status: 'Aguardando Envio', fase: 'aguardando' };
-      if (loteFase === 'aguardando') return { status: 'Enviado', fase: 'enviado' };
-      if (loteFase === 'enviado') return { status: 'Concluído', fase: 'finalizado' };
-      return null;
-    };
-    
-    const getPrevStatusAndFase = () => {
-      if (loteFase === 'aguardando') return { status: 'Aberto', fase: 'aberto' };
-      if (loteFase === 'enviado') return { status: 'Aguardando Envio', fase: 'aguardando' };
-      if (loteFase === 'finalizado') return { status: 'Enviado', fase: 'enviado' };
-      return null;
-    };
-
-    const next = getNextStatusAndFase();
-    const prev = getPrevStatusAndFase();
 
     return (
       <Card
@@ -231,11 +212,11 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
             <CardTitle className="text-xl">
               <span className="text-muted-foreground font-normal">Lote #{lote.id}</span>
               <br />
-              {lote.nome}
+              {lote.nome?.replace(/\n/g, ' ')}
             </CardTitle>
             <CardDescription className="flex items-center gap-2 pt-2">
               <Building className="h-4 w-4" />
-              {lote.fornecedor}
+              {lote.fornecedor?.replace(/\n/g, ' ')}
             </CardDescription>
           </div>
           <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
@@ -281,42 +262,25 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
           </div>
         </CardContent>
         <CardFooter className="flex items-center justify-between pt-2 border-t mt-auto gap-2">
-          <div className="flex gap-1">
-            {canMoveBack && prev && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={(e) => { e.stopPropagation(); triggerMoveConfirmation(lote, prev.status, prev.fase); }}
-                className="h-7 px-2 text-xs text-muted-foreground hover:text-primary"
-                title={`Voltar para ${prev.status}`}
-              >
-                <ArrowLeft className="h-3 w-3 mr-1" /> Voltar
-              </Button>
-            )}
-          </div>
-          
-          <div className="flex gap-1 ml-auto">
-            {canMoveForward && next && loteFase !== 'enviado' && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={(e) => { e.stopPropagation(); triggerMoveConfirmation(lote, next.status, next.fase); }}
-                className="h-7 px-2 text-xs font-semibold border-primary/30 text-primary hover:bg-primary/10"
-                title={`Mover para ${next.status}`}
-              >
-                Mover <ArrowRight className="h-3 w-3 ml-1" />
-              </Button>
-            )}
-            {loteFase === 'enviado' && next && (
-              <Button 
-                variant="default" 
-                size="sm" 
-                onClick={(e) => { e.stopPropagation(); triggerMoveConfirmation(lote, next.status, next.fase); }}
-                className="h-7 px-2 text-xs font-semibold bg-green-600 hover:bg-green-700 text-white"
-              >
-                Finalizar <ArrowRight className="h-3 w-3 ml-1" />
-              </Button>
-            )}
+          <div className="flex-1 w-full">
+            <Select 
+              value={loteFase} 
+              onValueChange={(novaFase) => {
+                if (novaFase !== loteFase) {
+                  triggerMoveConfirmation(lote, lote.status, novaFase);
+                }
+              }}
+            >
+              <SelectTrigger className="w-full h-8 text-xs font-semibold">
+                <SelectValue placeholder="Mover para outra aba..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="aberto">Aberto / Montagem</SelectItem>
+                <SelectItem value="aguardando">Aguardando Envio</SelectItem>
+                <SelectItem value="enviado">Em Análise / Enviado</SelectItem>
+                <SelectItem value="finalizado">Finalizado</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardFooter>
       </Card>
