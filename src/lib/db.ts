@@ -231,6 +231,14 @@ const clearStore = (storeName: string): Promise<void> => {
   });
 };
 
+const toTitleCase = (str: string): string => {
+  return str
+    .toLowerCase()
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
+
 /**
  * Normalizes object string values to UPPER CASE, excluding blacklisted fields.
  */
@@ -250,9 +258,6 @@ const normalizeData = <T>(data: T): T => {
     "password",
     "username",
     "cor",
-    "status",
-    "statusgarantia",
-    "acaorequisicao",
   ];
 
   const isBlacklisted = (key: string) => {
@@ -270,7 +275,11 @@ const normalizeData = <T>(data: T): T => {
     if (Object.prototype.hasOwnProperty.call(normalized, key)) {
       const value = normalized[key];
       if (typeof value === "string" && !isBlacklisted(key)) {
-        normalized[key] = value.trim().toUpperCase();
+        if (["status", "statusgarantia", "acaorequisicao"].includes(key.toLowerCase())) {
+          normalized[key] = toTitleCase(value.trim());
+        } else {
+          normalized[key] = value.trim().toUpperCase();
+        }
       } else if (typeof value === "object" && value !== null) {
         normalized[key] = normalizeData(value);
       }
