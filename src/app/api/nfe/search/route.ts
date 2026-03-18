@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import https from 'https';
 import zlib from 'zlib';
 import { XMLParser } from 'fast-xml-parser';
+// @ts-ignore
+import forge from 'node-forge';
 
 export async function POST(request: Request) {
     try {
@@ -12,11 +14,39 @@ export async function POST(request: Request) {
             return NextResponse.json({ status: 'error', message: 'Certificado, senha e CNPJ são obrigatórios.' }, { status: 400 });
         }
 
-        // 1. Criar Agent HTTPS com o certificado PFX
+        // 1. Extrair Chave e Certificado do PFX usando node-forge (evita erro de cifra legada no OpenSSL 3.0)
+        const pfxDer = Buffer.from(fileBase64, 'base64').toString('binary');
+        const pfxAsn1 = forge.asn1.fromDer(pfxDer);
+        const pfx = forge.pkcs12.pkcs12FromAsn1(pfxAsn1, false, senha);
+
+        let keyPem = '';
+        let certPem = '';
+
+        const keyBags = pfx.getBags({ bagType: forge.pki.oids.pkcs8ShroudedKeyBag })[forge.pki.oids.pkcs8ShroudedKeyBag] || [];
+        const certBags = pfx.getBags({ bagType: forge.pki.oids.certBag })[forge.pki.oids.certBag] || [];
+
+        if (keyBags.length > 0) {
+            keyPem = forge.pki.privateKeyToPem(keyBags[0].key);
+        }
+        if (certBags.length > 0) {
+            certPem = forge.pki.certificateToPem(certBags[0].cert);
+        }
+
+        if (!keyPem || !certPem) {
+            // Em alguns PFX mais antigos o tipo da chave pode ser 'keyBag'
+            const keyBagsAlt = pfx.getBags({ bagType: forge.pki.oids.keyBag })[forge.pki.oids.keyBag] || [];
+            if (keyBagsAlt.length > 0) {
+                 keyPem = forge.pki.privateKeyToPem(keyBagsAlt[0].key);
+            }
+            if (!keyPem || !certPem) {
+                 return NextResponse.json({ status: 'error', message: 'Não foi possível extrair a chave/certificado válido do arquivo .pfx' });
+            }
+        }
+
         const agent = new https.Agent({
-            pfx: Buffer.from(fileBase64, 'base64'),
-            passphrase: senha,
-            rejectUnauthorized: false // Desativa validação estrita de SSL para a SEFAZ se necessário
+            key: keyPem,
+            cert: certPem,
+            rejectUnauthorized: false
         });
 
         // 2. Montar SOAP Envelope para NFeDistribuicaoDFe
