@@ -36,6 +36,7 @@ export default function XmlSearchSection() {
     // Consulta states
     const [selectedCertIndex, setSelectedCertIndex] = useState<string>('');
     const [notas, setNotas] = useState<any[]>([]);
+    const [ultNSU, setUltNSU] = useState<string>('0');
 
     useEffect(() => {
         loadCertificados();
@@ -120,14 +121,22 @@ export default function XmlSearchSection() {
                 body: JSON.stringify({
                     fileBase64: cert.fileBase64,
                     senha: inputSenha,
-                    cnpj: cert.cnpj
+                    cnpj: cert.cnpj,
+                    ultNSU: ultNSU
                 })
             });
 
             const data = await response.json();
+            
+            if (data.ultNSU) {
+                setUltNSU(data.ultNSU);
+            }
+
             if (data.status === 'success') {
                 setNotas(data.notas || []);
                 toast({ title: 'Sucesso', description: data.message });
+            } else if (data.status === 'warning') {
+                toast({ title: 'Aviso', description: data.message, variant: 'default' });
             } else {
                 toast({ title: 'Erro', description: data.message, variant: 'destructive' });
                 if (data.debug) {

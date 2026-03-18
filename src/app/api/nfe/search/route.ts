@@ -49,6 +49,8 @@ export async function POST(request: Request) {
             rejectUnauthorized: false
         });
 
+        const inputNSU = String(body.ultNSU || '000000000000000').padStart(15, '0');
+
         // 2. Montar SOAP Envelope para NFeDistribuicaoDFe
         const soapEnvelope = `<?xml version="1.0" encoding="utf-8"?>
 <soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">
@@ -60,7 +62,7 @@ export async function POST(request: Request) {
           <cUFAutor>35</cUFAutor>
           <CNPJ>${cnpj.replace(/\D/g, '')}</CNPJ>
           <distNSU>
-            <ultNSU>000000000000000</ultNSU>
+            <ultNSU>${inputNSU}</ultNSU>
           </distNSU>
         </distDFeInt>
       </nfeDadosMsg>
@@ -91,23 +93,28 @@ export async function POST(request: Request) {
 
         const xmlResponse = await soapRequest();
 
-        // 4. Parser do XML de Resposta
-        const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "" });
+        // 4. Parser do XML de Resposta (Agnoóstico a Namespaces)
+        const parser = new XMLParser({ 
+            ignoreAttributes: false, 
+            attributeNamePrefix: "",
+            removeNSPrefix: true // Remove 'soap12:', 'nfe:' para facilitar leitura
+        });
         const result = parser.parse(xmlResponse);
 
-        const bodyNode = result['soap12:Envelope']?.['soap12:Body'];
+        const bodyNode = result.Envelope?.Body;
 
         // Verificar erro SOAP (Fault) de cabeçalho/autenticação
-        if (bodyNode?.['soap12:Fault']) {
-            const fault = bodyNode['soap12:Fault'];
+        if (bodyNode?.Fault) {
+            const fault = bodyNode.Fault;
             const reason = fault.Reason?.Text || fault.faultstring || 'Desconhecido';
             return NextResponse.json({ status: 'error', message: `Erro SOAP SEFAZ: ${reason}`, debug: fault });
         }
 
-        const responseNode = bodyNode?.['nfeDistDFeInteresseResponse'];
-        const resultNode = responseNode?.['nfeDistDFeInteresseResult'];
+        const responseNode = bodyNode?.nfeDistDFeInteresseResponse;
+        const resultNode = responseNode?.nfeDistDFeInteresseResult;
+        const retDistNode = resultNode?.retDistDFeInt;
         
-        if (!resultNode) {
+        if (!retDistNode) {
              console.error('XML SEFAZ bruto:', xmlResponse);
              return NextResponse.json({ 
                  status: 'error', 
@@ -116,13 +123,23 @@ export async function POST(request: Request) {
              });
         }
 
-        const retDistNode = resultNode['retDistDFeInt'];
-        const cStat = retDistNode?.['cStat'];
-        const xMotivo = retDistNode?.['xMotivo'];
+        const cStat = retDistNode['cStat'];
+        const xMotivo = retDistNode['xMotivo'];
+        const ultNSU = retDistNode['ultNSU'];
+
+        // Se der consumo indevido o ideal é retornar o ultNSU para o usuário
+        if (cStat === 656 || cStat === '656') {
+             return NextResponse.json({ 
+                 status: 'warning', 
+                 message: `SEFAZ: Consumo Indevido. Tente novamente em 1h usando NSU ${ultNSU || 'atual'}`, 
+                 ultNSU: ultNSU,
+                 notas: [] 
+             });
+        }
 
         // cStat 137 = Nenhum documento encontrado, 138 = Documentos encontrados
         if (cStat !== 138 && cStat !== '138') {
-            return NextResponse.json({ status: 'success', message: `${xMotivo || 'Nenhum item novo.'} (Código ${cStat})`, notas: [] });
+            return NextResponse.json({ status: 'success', message: `${xMotivo || 'Nenhum item novo.'} (Código ${cStat})`, ultNSU: ultNSU, notas: [] });
         }
 
         const loteNode = retDistNode['loteDistDFeInt'];
