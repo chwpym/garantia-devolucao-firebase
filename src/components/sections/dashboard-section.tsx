@@ -137,6 +137,30 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                 db.getAllStatuses(),
             ]);
 
+            // --- Migração de Devoluções para 'Finalizada' (Uma vez só) ---
+            if (localStorage.getItem('devolucoes_finalized_migrated') !== 'true' && allDevolucoes.length > 0) {
+                let updatedAny = false;
+                for (const d of allDevolucoes) {
+                    const s = (d.status || '').trim().toLowerCase();
+                    if (s === 'recebido' || s === 'aguardando peças' || !s) {
+                        try {
+                            await db.updateDevolucao({ 
+                                ...d, 
+                                id: d.id!, 
+                                status: 'Finalizada' 
+                            }, d.itens);
+                            updatedAny = true;
+                        } catch (e) {
+                            console.error('Erro ao migrar devolução:', d.id, e);
+                        }
+                    }
+                }
+                if (updatedAny) {
+                    allDevolucoes = await db.getAllDevolucoes();
+                }
+                localStorage.setItem('devolucoes_finalized_migrated', 'true');
+            }
+
             // Filtrar por data
             if (dateRange?.from || dateRange?.to) {
                 const from = dateRange.from;
