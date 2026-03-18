@@ -17,6 +17,7 @@ export default function QuickShortcuts() {
 
     const handleNewLoteClick = () => {
         openNewLoteModal();
+        router.push('/lotes');
     };
 
     return (

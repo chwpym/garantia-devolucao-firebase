@@ -37,6 +37,7 @@ import { smartSearch } from '@/lib/search-utils';
 import { SearchInput } from '@/components/ui/search-input';
 import { usePersistedFilters } from '@/hooks/use-persisted-filters';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useAuth } from '@/hooks/use-auth';
 
 
 interface LotesSectionProps {
@@ -55,6 +56,9 @@ interface LoteWithStats extends Lote {
 
 
 export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+
   const [lotes, setLotes] = useState<LoteWithStats[]>([]);
   const initialFilters = useMemo(() => ({
     searchTerm: '',
@@ -188,6 +192,8 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
   const renderLoteCard = (lote: LoteWithStats) => {
     const customStatus = statuses.find(s => s.nome.toLowerCase() === lote.status?.toLowerCase() && s.aplicavelEm.includes('lote'));
     const customColor = customStatus?.cor;
+    const isFinalizado = lote.status === 'Finalizado' || ['Aprovado Totalmente', 'Aprovado Parcialmente', 'Recusado'].includes(lote.status);
+    const canEdit = !isFinalizado || isAdmin;
     
     // Status Flow Helpers baseado em Fase:
     const loteFase = (lote as any).fase || 'aberto';
@@ -221,13 +227,21 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEdit(lote); }}>
+                  <DropdownMenuItem 
+                    onClick={(e) => { e.stopPropagation(); handleEdit(lote); }}
+                    disabled={!canEdit}
+                    className={cn(!canEdit && "opacity-50 cursor-not-allowed")}
+                  >
                     <Pencil className="mr-2 h-4 w-4" />
-                    Editar
+                    Editar {!canEdit && '(Bloqueado)'}
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setDeleteTarget(lote); }} className="text-destructive focus:text-destructive">
+                  <DropdownMenuItem 
+                    onClick={(e) => { e.stopPropagation(); setDeleteTarget(lote); }} 
+                    className={cn("text-destructive focus:text-destructive", !canEdit && "opacity-50 cursor-not-allowed")}
+                    disabled={!canEdit}
+                  >
                     <Trash2 className="mr-2 h-4 w-4" />
-                    Excluir
+                    Excluir {!canEdit && '(Bloqueado)'}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -271,6 +285,7 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
           <div className="flex-1 w-full">
             <Select 
               value={loteFase} 
+              disabled={!canEdit}
               onValueChange={(novaFase) => {
                 if (novaFase !== loteFase) {
                   triggerMoveConfirmation(lote, lote.status, novaFase);

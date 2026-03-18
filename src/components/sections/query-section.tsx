@@ -404,13 +404,6 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
               onClear={() => setFilters({ ...filters, searchTerm: '' })}
               className="flex-1"
             />
-            <Combobox
-              options={clientOptions}
-              value={clientFilter}
-              onChange={(val) => setFilters({ ...filters, clientFilter: val })}
-              placeholder="Filtrar por Cliente..."
-              className="w-full md:w-[280px] lg:w-[350px]"
-            />
             <DatePickerWithRange
               date={dateRange}
               setDate={(range) => setFilters({ ...filters, dateRange: range })}

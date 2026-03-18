@@ -4,6 +4,7 @@
 import { useAppStore } from '@/store/app-store';
 import { useShallow } from 'zustand/react/shallow';
 import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -13,6 +14,7 @@ const QuerySection = dynamic(() => import('@/components/sections/query-section')
 });
 
 export default function QueryPage() {
+  const router = useRouter();
   const { 
     setActiveView, 
     handleEditWarranty, 
@@ -23,6 +25,16 @@ export default function QueryPage() {
     handleCloneWarranty: state.handleCloneWarranty
   })));
 
+  const handleEdit = (warranty: any) => {
+    handleEditWarranty(warranty);
+    router.push('/register');
+  };
+
+  const handleClone = (warranty: any) => {
+    handleCloneWarranty(warranty);
+    router.push('/register');
+  };
+
   useEffect(() => {
     setActiveView('query');
   }, [setActiveView]);
@@ -30,8 +42,8 @@ export default function QueryPage() {
   return (
     <QuerySection
       setActiveView={setActiveView}
-      onEdit={handleEditWarranty}
-      onClone={handleCloneWarranty}
+      onEdit={handleEdit}
+      onClone={handleClone}
     />
   );
 }
