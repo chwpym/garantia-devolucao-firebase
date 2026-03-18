@@ -57,7 +57,7 @@ interface LoteWithStats extends Lote {
 
 export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.profile?.role === 'admin';
 
   const [lotes, setLotes] = useState<LoteWithStats[]>([]);
   const initialFilters = useMemo(() => ({
@@ -320,7 +320,7 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
       </div>
 
       {/* --- Summary Cards --- */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total de Lotes</CardTitle>
@@ -333,21 +333,37 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Abertos</CardTitle>
-            <Hourglass className="h-4 w-4 text-amber-500" />
+            <CardTitle className="text-sm font-medium">Aberto / Montagem</CardTitle>
+            <Package className="h-4 w-4 text-amber-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{lotes.filter(l => l.status === 'Aberto').length}</div>
+            <div className="text-2xl font-bold">
+              {lotes.filter(l => ((l as any).fase || 'aberto').toLowerCase() === 'aberto').length}
+            </div>
             <p className="text-xs text-muted-foreground">Em montagem</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Enviados</CardTitle>
+            <CardTitle className="text-sm font-medium">Aguardando Envio</CardTitle>
+            <Hourglass className="h-4 w-4 text-orange-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {lotes.filter(l => (l as any).fase === 'aguardando').length}
+            </div>
+            <p className="text-xs text-muted-foreground">Lotes montados</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Em Análise / Enviado</CardTitle>
             <CheckCircle className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{lotes.filter(l => l.status === 'Enviado').length}</div>
+            <div className="text-2xl font-bold">
+              {lotes.filter(l => (l as any).fase === 'enviado').length}
+            </div>
             <p className="text-xs text-muted-foreground">Aguardando retorno</p>
           </CardContent>
         </Card>
@@ -357,7 +373,9 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
             <DollarSign className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{lotes.filter(l => ['Aprovado Totalmente', 'Aprovado Parcialmente', 'Recusado'].includes(l.status)).length}</div>
+            <div className="text-2xl font-bold">
+              {lotes.filter(l => (l as any).fase === 'finalizado').length}
+            </div>
             <p className="text-xs text-muted-foreground">Processados</p>
           </CardContent>
         </Card>
