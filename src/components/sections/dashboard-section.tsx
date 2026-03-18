@@ -34,6 +34,7 @@ interface DashboardStats {
     aprovadas: number;
     recusadas: number;
     pagas: number;
+    pecaNova: number;
 }
 
 interface MonthlyData {
@@ -107,7 +108,7 @@ const CHART_COLORS = [
 export default function DashboardSection({ openTab: setActiveView }: DashboardSectionProps) {
     const { user } = useAuth();
     // Estado para Garantias
-    const [stats, setStats] = useState<DashboardStats>({ total: 0, totalDefeitos: 0, pendentes: 0, aprovadas: 0, recusadas: 0, pagas: 0 });
+    const [stats, setStats] = useState<DashboardStats>({ total: 0, totalDefeitos: 0, pendentes: 0, aprovadas: 0, recusadas: 0, pagas: 0, pecaNova: 0 });
     const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
     const [statusData, setStatusData] = useState<StatusChartData[]>([]);
     const [supplierRanking, setSupplierRanking] = useState<RankingData[]>([]);
@@ -170,6 +171,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
             let totalAprovadas = 0;
             let totalPendentes = 0;
             let totalPagas = 0;
+            let totalPecaNova = 0;
 
             allWarranties.forEach(w => {
                 const s = w.status || 'Aguardando Envio';
@@ -181,8 +183,11 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                 if (s === 'Aguardando Envio' || s === 'Enviado para Análise') {
                     totalPendentes++;
                 }
-                if (s === 'Aprovada - Crédito Boleto') {
+                if (s === 'Aprovada - Crédito Boleto' || s === 'Aprovada - Crédito NF') {
                     totalPagas++;
+                }
+                if (s === 'Aprovada - Peça Nova') {
+                    totalPecaNova++;
                 }
             });
 
@@ -191,8 +196,9 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                 totalDefeitos: totalDefeitos,
                 pendentes: totalPendentes,
                 aprovadas: totalAprovadas,
-                recusadas: statusCounts['Recusada'],
+                recusadas: statusCounts['Recusada'] || 0,
                 pagas: totalPagas,
+                pecaNova: totalPecaNova,
             });
 
             setStatusData(Object.entries(statusCounts)
@@ -328,7 +334,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                     <TabsTrigger value="devolucoes" className={cn("border-2 border-transparent data-[state=active]:border-[hsl(var(--accent-blue))]")}>Devoluções</TabsTrigger>
                 </TabsList>
                 <TabsContent value="garantias" className="mt-6 animate-in fade-in zoom-in-95 duration-300">
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                         <Card className="shadow-md hover:shadow-lg transition-all border-2 border-transparent hover:border-primary/50 group">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">Total de Garantias</CardTitle>
@@ -361,7 +367,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                             <CardContent>
                                 {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.aprovadas}</div>}
                                 <p className="text-xs text-muted-foreground">
-                                    Crédito ou peça nova recebida
+                                    Total geral autorizadas
                                 </p>
                             </CardContent>
                         </Card>
@@ -374,6 +380,18 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                                 {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.pagas}</div>}
                                 <p className="text-xs text-muted-foreground">
                                     Crédito NF / Boleto
+                                </p>
+                            </CardContent>
+                        </Card>
+                        <Card className="shadow-md hover:border-green-600 transition-colors border-2 border-transparent">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Peça Nova</CardTitle>
+                                <Package className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.pecaNova}</div>}
+                                <p className="text-xs text-muted-foreground">
+                                    Reposições autorizadas
                                 </p>
                             </CardContent>
                         </Card>
