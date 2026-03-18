@@ -1,7 +1,7 @@
 
 'use client';
 
-import { LayoutDashboard, FileText, Search, PlusSquare, Users, Building, Package, FolderKanban, Wrench, Undo2, Calculator, History, Archive, BarChartHorizontal, UserCog, Settings } from 'lucide-react';
+import { LayoutDashboard, FileText, Search, PlusSquare, Users, Building, Package, FolderKanban, Wrench, Undo2, Calculator, History, Archive, BarChartHorizontal, UserCog, Settings, ShieldCheck } from 'lucide-react';
 
 export type NavItem = {
   id: string;
@@ -66,6 +66,7 @@ export const navConfig: NavItem[] = [
     items: [
       { id: 'calculators', label: 'Calculadoras', icon: Calculator, href: '/calculators' },
       { id: 'reconciliation', label: 'Conciliação de Códigos', icon: History, href: '/reconciliation' },
+      { id: 'xml-search', label: 'Buscador XML', icon: ShieldCheck, href: '/xml-search' },
     ]
   },
   {
