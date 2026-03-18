@@ -267,8 +267,12 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
             let devPendentes = 0;
             let devFinalizadas = 0;
             allDevolucoes.forEach(d => {
-                 if (d.status === 'Recebido' || d.status === 'Aguardando Peças' || !d.status) devPendentes++;
-                 else if (d.status === 'Finalizada') devFinalizadas++;
+                const s = (d.status || '').trim().toLowerCase();
+                if (s === 'recebido' || s === 'aguardando peças' || !s) {
+                    devPendentes++;
+                } else if (s === 'finalizada') {
+                    devFinalizadas++;
+                }
             });
 
             setDevolucaoStats({
