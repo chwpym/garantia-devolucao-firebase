@@ -373,7 +373,7 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                             <CardContent>
                                 {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{stats.pagas}</div>}
                                 <p className="text-xs text-muted-foreground">
-                                    Finalizadas e pagas
+                                    Crédito NF / Boleto
                                 </p>
                             </CardContent>
                         </Card>
