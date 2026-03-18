@@ -199,10 +199,13 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                 .filter(([, value]) => value > 0)
                 .map(([name, value]) => {
                     const custom = allStatuses.find(s => s.nome === name);
+                    const matchedKey = Object.keys(COLORS).find(
+                        k => k.toLowerCase() === name.toLowerCase()
+                    );
                     return { 
                         name, 
                         value, 
-                        fill: custom ? custom.cor : (COLORS[name as WarrantyStatus] || 'hsl(var(--muted))') 
+                        fill: custom ? custom.cor : (COLORS[matchedKey as WarrantyStatus] || 'hsl(var(--muted))') 
                     };
                 })
             );
