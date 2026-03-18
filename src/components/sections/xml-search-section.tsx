@@ -17,6 +17,7 @@ interface CertificadoItem {
     cnpj: string;
     hasPassword?: boolean;
     nomeArquivo?: string;
+    fileBase64?: string; // Manter em memória para o teste
 }
 
 export default function XmlSearchSection() {
@@ -76,7 +77,8 @@ export default function XmlSearchSection() {
                 empresa,
                 cnpj,
                 hasPassword: !!senha,
-                nomeArquivo: fileName
+                nomeArquivo: fileName,
+                fileBase64: fileBase64 || undefined
             };
             
             setCertificados([...certificados, newItem]);
@@ -102,15 +104,22 @@ export default function XmlSearchSection() {
             return;
         }
 
+        const cert = certificados[parseInt(selectedCertIndex)];
+        const inputSenha = window.prompt(`Digite a senha para o certificado da empresa ${cert.empresa}:`);
+        
+        if (!inputSenha) {
+            toast({ title: 'Cancelado', description: 'Consulta abortada pelo usuário.' });
+            return;
+        }
+
         setLoading(true);
         try {
-            const cert = certificados[parseInt(selectedCertIndex)];
             const response = await fetch('/api/nfe/search', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    fileBase64: 'placeholder', // Na prática puxamos do IndexedDB
-                    senha: '123',
+                    fileBase64: cert.fileBase64,
+                    senha: inputSenha,
                     cnpj: cert.cnpj
                 })
             });
