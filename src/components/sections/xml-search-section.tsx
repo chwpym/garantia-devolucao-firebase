@@ -1,0 +1,305 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { FileText, ShieldCheck, Plus, Trash2, Search, Key } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import * as db from '@/lib/db'; // Assuming IndexedDB has get/set capabilities
+
+interface CertificadoItem {
+    id?: number;
+    empresa: string;
+    cnpj: string;
+    hasPassword?: boolean;
+    nomeArquivo?: string;
+}
+
+export default function XmlSearchSection() {
+    const { toast } = useToast();
+    const [activeTab, setActiveTab] = useState('certificados');
+    const [certificados, setCertificados] = useState<CertificadoItem[]>([]);
+    const [loading, setLoading] = useState(false);
+
+    // Form states for Certificate
+    const [empresa, setEmpresa] = useState('');
+    const [cnpj, setCnpj] = useState('');
+    const [senha, setSenha] = useState('');
+    const [fileBase64, setFileBase64] = useState<string | null>(null);
+    const [fileName, setFileName] = useState('');
+
+    // Consulta states
+    const [selectedCertIndex, setSelectedCertIndex] = useState<string>('');
+    const [notas, setNotas] = useState<any[]>([]);
+
+    useEffect(() => {
+        loadCertificados();
+    }, []);
+
+    const loadCertificados = async () => {
+        // Implement database load later
+        setCertificados([]); // Mock initial
+    };
+
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (!file.name.endsWith('.pfx') && !file.name.endsWith('.p12')) {
+            toast({ title: 'Formato inválido', description: 'Por favor, selecione um arquivo .pfx ou .p12', variant: 'destructive' });
+            return;
+        }
+
+        setFileName(file.name);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const base64String = reader.result as string;
+            setFileBase64(base64String.split(',')[1]); // Only base64 data
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleSaveCertificate = async () => {
+        if (!empresa || !cnpj || !senha || !fileBase64) {
+            toast({ title: 'Campos obrigatórios', description: 'Preencha todos os campos e selecione o certificado.', variant: 'destructive' });
+            return;
+        }
+
+        setLoading(true);
+        try {
+            // Save Certificate Logic to indexDB (Encrypted or raw for test)
+            const newItem: CertificadoItem = {
+                empresa,
+                cnpj,
+                hasPassword: !!senha,
+                nomeArquivo: fileName
+            };
+            
+            setCertificados([...certificados, newItem]);
+            
+            // Clear fields
+            setEmpresa('');
+            setCnpj('');
+            setSenha('');
+            setFileBase64(null);
+            setFileName('');
+            
+            toast({ title: 'Sucesso', description: 'Certificado salvo localmente!' });
+        } catch (error) {
+            toast({ title: 'Erro ao salvar', description: 'Não foi possível salvar o arquivo.', variant: 'destructive' });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleConsultarSefaz = async () => {
+        if (selectedCertIndex === '') {
+            toast({ title: 'Aviso', description: 'Selecione um certificado para consultar.', variant: 'destructive' });
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const cert = certificados[parseInt(selectedCertIndex)];
+            const response = await fetch('/api/nfe/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    fileBase64: 'placeholder', // Na prática puxamos do IndexedDB
+                    senha: '123',
+                    cnpj: cert.cnpj
+                })
+            });
+
+            const data = await response.json();
+            if (data.status === 'success') {
+                setNotas(data.notas || []);
+                toast({ title: 'Sucesso', description: data.message });
+            } else {
+                toast({ title: 'Erro', description: data.message, variant: 'destructive' });
+            }
+        } catch (error) {
+            toast({ title: 'Erro na requisição', description: 'Não foi possível falar com a API.', variant: 'destructive' });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="space-y-6">
+            <div>
+                <h1 className="text-3xl font-bold tracking-tight">Buscador de XML SEFAZ</h1>
+                <p className="text-sm text-muted-foreground">
+                    Gerencie certificados e busque Notas Fiscais Eletrônicas emitidas contra seu CNPJ.
+                </p>
+            </div>
+
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid w-full grid-cols-2 max-w-md">
+                    <TabsTrigger value="certificados" className="flex items-center gap-2">
+                        <ShieldCheck className="h-4 w-4" /> Certificados
+                    </TabsTrigger>
+                    <TabsTrigger value="consulta" className="flex items-center gap-2">
+                        <Search className="h-4 w-4" /> Consultar
+                    </TabsTrigger>
+                </TabsList>
+
+                {/* --- ABA CERTIFICADOS --- */}
+                <TabsContent value="certificados" className="space-y-4 pt-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* Formulário de Upload */}
+                        <Card className="md:col-span-1 shadow-sm">
+                            <CardHeader>
+                                <CardTitle className="text-lg flex items-center gap-2">
+                                    <Plus className="h-4 w-4 text-primary" /> Novo Certificado
+                                </CardTitle>
+                                <CardDescription>Carregue o certificado A1 (.pfx/.p12)</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="empresa">Nome da Empresa / Apelido</Label>
+                                    <Input id="empresa" placeholder="Ex: Matriz Campinas" value={empresa} onChange={e => setEmpresa(e.target.value)} />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="cnpj">CNPJ</Label>
+                                    <Input id="cnpj" placeholder="Ex: 00.000.000/0000-00" value={cnpj} onChange={e => setCnpj(e.target.value)} />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="file-upload">Arquivo do Certificado</Label>
+                                    <div className="flex items-center gap-2">
+                                        <Input id="file-upload" type="file" accept=".pfx,.p12" className="hidden" onChange={handleFileUpload} />
+                                        <Button asChild variant="outline" className="w-full cursor-pointer">
+                                            <label htmlFor="file-upload">
+                                                <FileText className="mr-2 h-4 w-4" /> {fileName || 'Selecionar Arquivo'}
+                                            </label>
+                                        </Button>
+                                    </div>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="senha" className="flex items-center gap-1.5">
+                                        <Key className="h-3 w-3 text-muted-foreground" /> Senha do Certificado
+                                    </Label>
+                                    <Input id="senha" type="password" placeholder="Digite a senha" value={senha} onChange={e => setSenha(e.target.value)} />
+                                </div>
+                                <Button className="w-full mt-2" onClick={handleSaveCertificate} disabled={loading}>
+                                    {loading ? 'Processando...' : 'Salvar Certificado'}
+                                </Button>
+                            </CardContent>
+                        </Card>
+
+                        {/* Listagem de Certificados */}
+                        <Card className="md:col-span-2 shadow-sm">
+                            <CardHeader>
+                                <CardTitle className="text-lg">Certificados Salvos</CardTitle>
+                                <CardDescription>Múltiplos perfis cadastrados para consulta.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="rounded-md border bg-card">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Empresa</TableHead>
+                                                <TableHead>CNPJ</TableHead>
+                                                <TableHead>Arquivo</TableHead>
+                                                <TableHead className="w-[80px] text-right">Ação</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {certificados.length > 0 ? (
+                                                certificados.map((cert, index) => (
+                                                    <TableRow key={index}>
+                                                        <TableCell className="font-medium">{cert.empresa}</TableCell>
+                                                        <TableCell>{cert.cnpj}</TableCell>
+                                                        <TableCell className="text-xs text-muted-foreground">{cert.nomeArquivo || '-'}</TableCell>
+                                                        <TableCell className="text-right">
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))
+                                            ) : (
+                                                <TableRow>
+                                                    <TableCell colSpan={4} className="h-24 text-center text-muted-foreground italic">
+                                                        Nenhum certificado cadastrado localmente.
+                                                    </TableCell>
+                                                </TableRow>
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </TabsContent>
+
+                {/* --- ABA CONSULTA --- */}
+                <TabsContent value="consulta" className="space-y-4 pt-4">
+                    <Card>
+                        <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4">
+                            <div>
+                                <CardTitle>Buscar Notas Fiscais</CardTitle>
+                                <CardDescription>Consulte os XMLs emitidos no ambiente da SEFAZ.</CardDescription>
+                            </div>
+                            <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                                <select 
+                                    className="h-9 rounded-md border bg-background px-3 text-sm"
+                                    value={selectedCertIndex}
+                                    onChange={(e) => setSelectedCertIndex(e.target.value)}
+                                >
+                                    <option value="">Selecione a Empresa...</option>
+                                    {certificados.map((c, i) => (
+                                        <option key={i} value={i.toString()}>{c.empresa}</option>
+                                    ))}
+                                </select>
+                                <Button onClick={handleConsultarSefaz} disabled={loading || certificados.length === 0} className="gap-2">
+                                    <Search className="h-4 w-4" /> {loading ? 'Consultando...' : 'Consultar SEFAZ'}
+                                </Button>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            {notas.length > 0 ? (
+                                <div className="rounded-md border bg-card">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Número NF-e</TableHead>
+                                                <TableHead>Emissor</TableHead>
+                                                <TableHead>Data</TableHead>
+                                                <TableHead>Valor</TableHead>
+                                                <TableHead className="w-[100px] text-right">Ação</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {notas.map((nota) => (
+                                                <TableRow key={nota.id}>
+                                                    <TableCell className="font-medium">{nota.numero}</TableCell>
+                                                    <TableCell>{nota.emissor}</TableCell>
+                                                    <TableCell>{nota.data}</TableCell>
+                                                    <TableCell>R$ {nota.valor.toFixed(2)}</TableCell>
+                                                    <TableCell className="text-right">
+                                                        <Button variant="outline" size="sm" className="text-xs">
+                                                            Baixar XML
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            ) : (
+                                <div className="h-48 flex items-center justify-center text-muted-foreground italic border-2 border-dashed rounded-md bg-muted/20">
+                                    Nenhum resultado de consulta ou selecione um certificado para buscar.
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+            </Tabs>
+        </div>
+    );
+}
