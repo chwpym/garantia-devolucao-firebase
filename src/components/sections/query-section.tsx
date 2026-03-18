@@ -35,6 +35,8 @@ import { Label } from '../ui/label';
 import { smartSearch } from '@/lib/search-utils';
 import { SearchInput } from '@/components/ui/search-input';
 import { usePersistedFilters } from '@/hooks/use-persisted-filters';
+import { useRouter } from 'next/navigation';
+import { useAppStore } from '@/store/app-store';
 import { EmptyState } from '../ui/empty-state';
 import { SearchX, LayoutList } from 'lucide-react';
 import { generatePdf } from '@/lib/pdf-generator';
@@ -49,6 +51,9 @@ interface QuerySectionProps {
 type SortableKeys = keyof Warranty;
 
 export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySectionProps) {
+  const router = useRouter();
+  const openNewLoteModal = useAppStore(state => state.openNewLoteModal);
+  
   const [warranties, setWarranties] = useState<Warranty[]>([]);
   const [persons, setPersons] = useState<Person[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -281,7 +286,8 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
 
   const handleGoToLotes = () => {
     setIsLoteDialogOpen(false);
-    setActiveView('lotes');
+    openNewLoteModal();
+    router.push('/lotes');
   };
 
   // --- Stats Calculation ---
