@@ -66,7 +66,7 @@ const defaultFormValues: DevolucaoFormValues = {
     acaoRequisicao: '', // Default value
     dataDevolucao: new Date(),
     dataVenda: new Date(),
-    status: '', // Valor padrão
+    status: 'Finalizada', // Valor padrão
     observacaoGeral: '',
     itens: [{ codigoPeca: '', descricaoPeca: '', quantidade: 1 }],
 };
@@ -268,8 +268,8 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                 requisicaoVenda: data.requisicaoVenda,
                 acaoRequisicao: data.acaoRequisicao,
                 dataVenda: data.dataVenda.toISOString(),
-                dataDevolucao: new Date().toISOString(), // Always save current timestamp reliably for devolução
-                status: (data.status || (editingId ? (await db.getDevolucaoById(editingId))?.status : 'Recebido')) as string, // Ensure string type
+                dataDevolucao: data.dataDevolucao.toISOString(),
+                status: (data.status || (editingId ? currentDevolucao?.status : 'Finalizada')) as string,
                 observacaoGeral: data.observacaoGeral
             };
 
