@@ -25,18 +25,18 @@ export async function POST(request: Request) {
         const keyBags = pfx.getBags({ bagType: forge.pki.oids.pkcs8ShroudedKeyBag })[forge.pki.oids.pkcs8ShroudedKeyBag] || [];
         const certBags = pfx.getBags({ bagType: forge.pki.oids.certBag })[forge.pki.oids.certBag] || [];
 
-        if (keyBags.length > 0) {
-            keyPem = forge.pki.privateKeyToPem(keyBags[0].key);
+        if (keyBags.length > 0 && keyBags[0].key) {
+            keyPem = forge.pki.privateKeyToPem(keyBags[0].key as any);
         }
-        if (certBags.length > 0) {
-            certPem = forge.pki.certificateToPem(certBags[0].cert);
+        if (certBags.length > 0 && certBags[0].cert) {
+            certPem = forge.pki.certificateToPem(certBags[0].cert as any);
         }
 
         if (!keyPem || !certPem) {
             // Em alguns PFX mais antigos o tipo da chave pode ser 'keyBag'
             const keyBagsAlt = pfx.getBags({ bagType: forge.pki.oids.keyBag })[forge.pki.oids.keyBag] || [];
-            if (keyBagsAlt.length > 0) {
-                 keyPem = forge.pki.privateKeyToPem(keyBagsAlt[0].key);
+            if (keyBagsAlt.length > 0 && keyBagsAlt[0].key) {
+                 keyPem = forge.pki.privateKeyToPem(keyBagsAlt[0].key as any);
             }
             if (!keyPem || !certPem) {
                  return NextResponse.json({ status: 'error', message: 'Não foi possível extrair a chave/certificado válido do arquivo .pfx' });
@@ -95,13 +95,25 @@ export async function POST(request: Request) {
         const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "" });
         const result = parser.parse(xmlResponse);
 
-        // Caminhar na resposta SOAP
         const bodyNode = result['soap12:Envelope']?.['soap12:Body'];
+
+        // Verificar erro SOAP (Fault) de cabeçalho/autenticação
+        if (bodyNode?.['soap12:Fault']) {
+            const fault = bodyNode['soap12:Fault'];
+            const reason = fault.Reason?.Text || fault.faultstring || 'Desconhecido';
+            return NextResponse.json({ status: 'error', message: `Erro SOAP SEFAZ: ${reason}`, debug: fault });
+        }
+
         const responseNode = bodyNode?.['nfeDistDFeInteresseResponse'];
         const resultNode = responseNode?.['nfeDistDFeInteresseResult'];
         
         if (!resultNode) {
-             return NextResponse.json({ status: 'error', message: 'Resposta da SEFAZ inválida ou vazia.' });
+             console.error('XML SEFAZ bruto:', xmlResponse);
+             return NextResponse.json({ 
+                 status: 'error', 
+                 message: 'Resposta da SEFAZ inválida ou estrutura inesperada.',
+                 debug: result 
+             });
         }
 
         const retDistNode = resultNode['retDistDFeInt'];

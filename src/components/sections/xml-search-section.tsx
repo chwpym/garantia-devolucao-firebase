@@ -130,6 +130,9 @@ export default function XmlSearchSection() {
                 toast({ title: 'Sucesso', description: data.message });
             } else {
                 toast({ title: 'Erro', description: data.message, variant: 'destructive' });
+                if (data.debug) {
+                    console.log('DEBUG SEFAZ:', data.debug);
+                }
             }
         } catch (error) {
             toast({ title: 'Erro na requisição', description: 'Não foi possível falar com a API.', variant: 'destructive' });
