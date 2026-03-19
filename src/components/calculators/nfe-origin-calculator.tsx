@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { XMLParser } from "fast-xml-parser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Upload, FileX, Info, FileText } from "lucide-react";
+import { Upload, FileX, Info, FileText, HelpCircle } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 const ORIGEM_LEGENDA: Record<string, string> = {
     "0": "Nacional (Exceto as indicadas nos códigos 3, 4, 5 e 8)",
@@ -34,6 +34,7 @@ interface ProductItem {
 export default function NfeProductOriginCalculator() {
     const [items, setItems] = useState<ProductItem[]>([]);
     const [fileName, setFileName] = useState<string | null>(null);
+    const [isLegendOpen, setIsLegendOpen] = useState(false);
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -46,45 +47,51 @@ export default function NfeProductOriginCalculator() {
         reader.onload = (e) => {
             try {
                 const xmlData = e.target?.result as string;
-                const parser = new XMLParser({ ignoreAttributes: false, parseAttributeValue: true });
-                const jsonObj = parser.parse(xmlData);
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlData, "text/xml");
 
-                const infNFe = jsonObj?.nfeProc?.NFe?.infNFe || jsonObj?.NFe?.infNFe;
+                let infNFe = xmlDoc.getElementsByTagName("infNFe")[0];
                 if (!infNFe) {
                     throw new Error("Estrutura do XML inválida ou <infNFe> não encontrado.");
                 }
 
-                const dets = Array.isArray(infNFe.det) ? infNFe.det : [infNFe.det];
+                const dets = xmlDoc.getElementsByTagName("det");
                 if (!dets || dets.length === 0) {
                     throw new Error("Nenhum produto (tag <det>) localizado no XML.");
                 }
 
-                const parsedItems: ProductItem[] = dets.map((det: any, index: number) => {
-                    const prod = det.prod || {};
-                    const imposto = det.imposto || {};
+                const parsedItems: ProductItem[] = [];
+                for (let i = 0; i < dets.length; i++) {
+                    const det = dets[i];
+                    const prod = det.getElementsByTagName("prod")[0];
+                    const imposto = det.getElementsByTagName("imposto")[0];
+
+                    const description = prod?.getElementsByTagName("xProd")[0]?.textContent || "N/A";
+                    const ncm = prod?.getElementsByTagName("NCM")[0]?.textContent || "N/A";
+                    const cfop = prod?.getElementsByTagName("CFOP")[0]?.textContent || "N/A";
 
                     let orig = "N/A";
                     let cst = "N/A";
 
-                    if (imposto.ICMS) {
-                        const icmsGroup = imposto.ICMS;
-                        const icmsKey = Object.keys(icmsGroup)[0];
-                        if (icmsKey) {
-                            const icmsContent = icmsGroup[icmsKey];
-                            orig = icmsContent.orig !== undefined ? String(icmsContent.orig) : "N/A";
-                            cst = icmsContent.CST || icmsContent.CSOSN || "N/A";
+                    if (imposto) {
+                        const icmsGroup = imposto.getElementsByTagName("ICMS")[0];
+                        if (icmsGroup && icmsGroup.children.length > 0) {
+                            const icmsContent = icmsGroup.children[0]; // ICMS00, ICMS10, ICMS60, etc.
+                            orig = icmsContent.getElementsByTagName("orig")[0]?.textContent || "N/A";
+                            const cstNode = icmsContent.getElementsByTagName("CST")[0] || icmsContent.getElementsByTagName("CSOSN")[0];
+                            cst = cstNode?.textContent || "N/A";
                         }
                     }
 
-                    return {
-                        id: index + 1,
-                        description: prod.xProd || "N/A",
-                        ncm: prod.NCM || "N/A",
-                        orig: orig,
-                        cst: cst,
-                        cfop: prod.CFOP || "N/A"
-                    };
-                });
+                    parsedItems.push({
+                        id: i + 1,
+                        description,
+                        ncm,
+                        orig,
+                        cst,
+                        cfop
+                    });
+                }
 
                 setItems(parsedItems);
                 toast({
@@ -117,10 +124,15 @@ export default function NfeProductOriginCalculator() {
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row flex-wrap gap-2 items-center">
-                <Button onClick={() => fileInputRef.current?.click()} className="bg-orange-500 hover:bg-orange-600">
+                <Button onClick={() => fileInputRef.current?.click()} className="bg-primary hover:bg-primary/90">
                     <Upload className="mr-2 h-4 w-4" />
                     Importar XML da NF-e
                 </Button>
+                
+                <Button variant="outline" onClick={() => setIsLegendOpen(true)} className="gap-1.5 border-primary/20 text-primary hover:bg-primary/5">
+                    <HelpCircle className="h-4 w-4" /> Ver Legenda de Origens
+                </Button>
+
                 {fileName && (
                     <div className="flex items-center gap-2 p-2 border rounded-md bg-muted flex-1 sm:flex-none justify-between">
                         <span className="text-sm text-muted-foreground truncate" title={fileName}>{fileName}</span>
@@ -132,31 +144,9 @@ export default function NfeProductOriginCalculator() {
                 <Input type="file" ref={fileInputRef} onChange={handleImportXml} className="hidden" accept=".xml" />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                {/* Painel de Legenda lateral */}
-                <Card className="md:col-span-1 h-fit border border-orange-200/50 bg-orange-500/5 backdrop-blur-sm">
-                    <CardHeader className="p-4">
-                        <CardTitle className="text-sm font-semibold flex items-center gap-1.5 text-orange-600">
-                            <Info className="h-4 w-4" /> Origem da Mercadoria
-                        </CardTitle>
-                        <CardDescription className="text-xs">
-                            Legenda do dígito de Origem (Tabela A do ICMS)
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-4 pt-0 space-y-2">
-                        {Object.entries(ORIGEM_LEGENDA).map(([key, label]) => (
-                            <div key={key} className="flex items-start gap-2 border-b border-orange-200/20 pb-1.5 last:border-0">
-                                <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-orange-500/10 text-orange-600 font-bold text-xs shrink-0">
-                                    {key}
-                                </span>
-                                <span className="text-xs text-muted-foreground leading-tight">{label}</span>
-                            </div>
-                        ))}
-                    </CardContent>
-                </Card>
-
+            <div className="block">
                 {/* Tabela de Produtos */}
-                <Card className="md:col-span-3">
+                <Card className="w-full">
                     <CardHeader className="p-4">
                         <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
                             <FileText className="h-4 w-4 text-primary" /> Produtos do XML
@@ -183,7 +173,7 @@ export default function NfeProductOriginCalculator() {
                                             <TableCell className="font-mono text-xs text-primary">{item.ncm}</TableCell>
                                             <TableCell className="text-center">
                                                 <span 
-                                                    className="inline-flex items-center justify-center w-6 h-6 rounded bg-orange-500/10 text-orange-600 font-bold text-xs" 
+                                                    className="inline-flex items-center justify-center w-6 h-6 rounded bg-primary/10 text-primary font-bold text-xs" 
                                                     title={ORIGEM_LEGENDA[item.orig] || "Não Identificado"}
                                                 >
                                                     {item.orig}
@@ -206,6 +196,30 @@ export default function NfeProductOriginCalculator() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Modal de Legenda */}
+            <Dialog open={isLegendOpen} onOpenChange={setIsLegendOpen}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-1.5 text-primary">
+                            <HelpCircle className="h-4 w-4" /> Origem da Mercadoria
+                        </DialogTitle>
+                        <DialogDescription className="text-xs">
+                            Legenda do dígito de Origem (Tabela A do ICMS)
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-2 mt-2">
+                        {Object.entries(ORIGEM_LEGENDA).map(([key, label]) => (
+                            <div key={key} className="flex items-start gap-2 border-b border-muted pb-1.5 last:border-0">
+                                <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-primary/10 text-primary font-bold text-xs shrink-0">
+                                    {key}
+                                </span>
+                                <span className="text-xs text-muted-foreground leading-tight">{label}</span>
+                            </div>
+                        ))}
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
