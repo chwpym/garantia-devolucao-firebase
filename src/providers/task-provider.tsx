@@ -95,7 +95,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
             {children}
 
             {/* --- Gatilho Flutuante no Topo --- */}
-            <div className="fixed top-2 right-[200px] z-50">
+            <div className="fixed top-2 right-[260px] z-50">
                 <Button 
                     onClick={() => setIsOpen(true)} 
                     variant="outline" 
@@ -110,7 +110,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
             {/* --- Modal Trello Global --- */}
             {isOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                    <div className="bg-card w-full max-w-4xl max-h-[85vh] overflow-y-auto rounded-lg shadow-2xl border flex flex-col m-4 animate-in fade-in-0 zoom-in-95">
+                    <div className="bg-card w-full max-w-6xl max-h-[85vh] overflow-y-auto rounded-lg shadow-2xl border flex flex-col m-4 animate-in fade-in-0 zoom-in-95">
                         
                         {/* Header do Modal */}
                         <div className="p-5 border-b flex items-center justify-between">
