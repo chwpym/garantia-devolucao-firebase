@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, Trash2, ArrowRight, ArrowLeft, X, CheckCircle2, Circle } from 'lucide-react';
+import { Plus, Trash2, ArrowRight, ArrowLeft, X, CheckCircle2, Circle, Pencil, Check } from 'lucide-react';
 import * as db from '@/lib/db';
 import { TaskItem } from '@/lib/db';
 
