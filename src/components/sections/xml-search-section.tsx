@@ -16,9 +16,9 @@ interface CertificadoItem {
     empresa: string;
     cnpj: string;
     hasPassword?: boolean;
-    senha?: string; // Salvar senha em memÃ³ria para remover prompt duplo
+    senha?: string; // Salvar senha em memÃƒÂ³ria para remover prompt duplo
     nomeArquivo?: string;
-    fileBase64?: string; // Manter em memÃ³ria para o teste
+    fileBase64?: string; // Manter em memÃƒÂ³ria para o teste
 }
 
 export default function XmlSearchSection() {
@@ -43,9 +43,23 @@ export default function XmlSearchSection() {
         loadCertificados();
     }, []);
 
+    useEffect(() => {
+        if (selectedCertIndex !== '') {
+            const cert = certificados[parseInt(selectedCertIndex)];
+            const savedNSU = localStorage.getItem(`ultNSU_${cert.cnpj}`);
+            setUltNSU(savedNSU || '0');
+        } else {
+            setUltNSU('0');
+        }
+    }, [selectedCertIndex, certificados]);
+
     const loadCertificados = async () => {
-        // Implement database load later
-        setCertificados([]); // Mock initial
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('xml_search_certificados');
+            if (saved) {
+                setCertificados(JSON.parse(saved));
+            }
+        }
     };
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,7 +67,7 @@ export default function XmlSearchSection() {
         if (!file) return;
 
         if (!file.name.endsWith('.pfx') && !file.name.endsWith('.p12')) {
-            toast({ title: 'Formato invÃ¡lido', description: 'Por favor, selecione um arquivo .pfx ou .p12', variant: 'destructive' });
+            toast({ title: 'Formato invÃƒÂ¡lido', description: 'Por favor, selecione um arquivo .pfx ou .p12', variant: 'destructive' });
             return;
         }
 
@@ -68,7 +82,7 @@ export default function XmlSearchSection() {
 
     const handleSaveCertificate = async () => {
         if (!empresa || !cnpj || !senha || !fileBase64) {
-            toast({ title: 'Campos obrigatÃ³rios', description: 'Preencha todos os campos e selecione o certificado.', variant: 'destructive' });
+            toast({ title: 'Campos obrigatÃƒÂ³rios', description: 'Preencha todos os campos e selecione o certificado.', variant: 'destructive' });
             return;
         }
 
@@ -79,7 +93,7 @@ export default function XmlSearchSection() {
                 empresa,
                 cnpj,
                 hasPassword: !!senha,
-                senha: senha, // Guarda em memÃ³ria para a sessÃ£o
+                senha: senha, // Guarda em memÃƒÂ³ria para a sessÃƒÂ£o
                 nomeArquivo: fileName,
                 fileBase64: fileBase64 || undefined
             };
@@ -95,7 +109,7 @@ export default function XmlSearchSection() {
             
             toast({ title: 'Sucesso', description: 'Certificado salvo localmente!' });
         } catch (error) {
-            toast({ title: 'Erro ao salvar', description: 'NÃ£o foi possÃ­vel salvar o arquivo.', variant: 'destructive' });
+            toast({ title: 'Erro ao salvar', description: 'NÃƒÂ£o foi possÃƒÂ­vel salvar o arquivo.', variant: 'destructive' });
         } finally {
             setLoading(false);
         }
@@ -111,7 +125,7 @@ export default function XmlSearchSection() {
         const inputSenha = cert.senha || window.prompt(`Digite a senha para o certificado da empresa ${cert.empresa}:`);
         
         if (!inputSenha) {
-            toast({ title: 'Cancelado', description: 'Consulta abortada pelo usuÃ¡rio.' });
+            toast({ title: 'Cancelado', description: 'Consulta abortada pelo usuÃƒÂ¡rio.' });
             return;
         }
 
@@ -132,6 +146,10 @@ export default function XmlSearchSection() {
             
             if (data.ultNSU) {
                 setUltNSU(data.ultNSU);
+                const cert = certificados[parseInt(selectedCertIndex)];
+                if (cert) {
+                    localStorage.setItem(`ultNSU_${cert.cnpj}`, data.ultNSU);
+                }
             }
 
             if (data.status === 'success') {
@@ -146,7 +164,7 @@ export default function XmlSearchSection() {
                 }
             }
         } catch (error) {
-            toast({ title: 'Erro na requisiÃ§Ã£o', description: 'NÃ£o foi possÃ­vel falar com a API.', variant: 'destructive' });
+            toast({ title: 'Erro na requisiÃƒÂ§ÃƒÂ£o', description: 'NÃƒÂ£o foi possÃƒÂ­vel falar com a API.', variant: 'destructive' });
         } finally {
             setLoading(false);
         }
@@ -154,7 +172,7 @@ export default function XmlSearchSection() {
 
     const handleDownloadXml = (xmlString?: string, id?: string) => {
         if (!xmlString) {
-            toast({ title: 'Erro', description: 'ConteÃºdo do XML nÃ£o disponÃ­vel.', variant: 'destructive' });
+            toast({ title: 'Erro', description: 'ConteÃƒÂºdo do XML nÃƒÂ£o disponÃƒÂ­vel.', variant: 'destructive' });
             return;
         }
         const blob = new Blob([xmlString], { type: 'text/xml;charset=utf-8' });
@@ -168,7 +186,7 @@ export default function XmlSearchSection() {
 
     const handleVisualizarDanfe = (xmlString?: string) => {
         if (!xmlString) {
-            toast({ title: 'Erro', description: 'ConteÃºdo do XML nÃ£o disponÃ­vel.', variant: 'destructive' });
+            toast({ title: 'Erro', description: 'ConteÃƒÂºdo do XML nÃƒÂ£o disponÃƒÂ­vel.', variant: 'destructive' });
             return;
         }
         // Usando o WebDanfe via POST para converter XML em DANFE na hora em nova aba
@@ -193,7 +211,7 @@ export default function XmlSearchSection() {
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">Buscador de XML SEFAZ</h1>
                 <p className="text-sm text-muted-foreground">
-                    Gerencie certificados e busque Notas Fiscais EletrÃ´nicas emitidas contra seu CNPJ.
+                    Gerencie certificados e busque Notas Fiscais EletrÃƒÂ´nicas emitidas contra seu CNPJ.
                 </p>
             </div>
 
@@ -210,7 +228,7 @@ export default function XmlSearchSection() {
                 {/* --- ABA CERTIFICADOS --- */}
                 <TabsContent value="certificados" className="space-y-4 pt-4">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {/* FormulÃ¡rio de Upload */}
+                        {/* FormulÃƒÂ¡rio de Upload */}
                         <Card className="md:col-span-1 shadow-sm">
                             <CardHeader>
                                 <CardTitle className="text-lg flex items-center gap-2">
@@ -254,7 +272,7 @@ export default function XmlSearchSection() {
                         <Card className="md:col-span-2 shadow-sm">
                             <CardHeader>
                                 <CardTitle className="text-lg">Certificados Salvos</CardTitle>
-                                <CardDescription>MÃºltiplos perfis cadastrados para consulta.</CardDescription>
+                                <CardDescription>MÃƒÂºltiplos perfis cadastrados para consulta.</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <div className="rounded-md border bg-card">
@@ -264,7 +282,7 @@ export default function XmlSearchSection() {
                                                 <TableHead>Empresa</TableHead>
                                                 <TableHead>CNPJ</TableHead>
                                                 <TableHead>Arquivo</TableHead>
-                                                <TableHead className="w-[80px] text-right">AÃ§Ã£o</TableHead>
+                                                <TableHead className="w-[80px] text-right">AÃƒÂ§ÃƒÂ£o</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -335,11 +353,11 @@ export default function XmlSearchSection() {
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
-                                                <TableHead>NÃºmero NF-e</TableHead>
+                                                <TableHead>NÃƒÂºmero NF-e</TableHead>
                                                 <TableHead>Emissor</TableHead>
                                                 <TableHead>Data</TableHead>
                                                 <TableHead>Valor</TableHead>
-                                                <TableHead className="w-[100px] text-right">AÃ§Ã£o</TableHead>
+                                                <TableHead className="w-[100px] text-right">AÃƒÂ§ÃƒÂ£o</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -369,4 +387,5 @@ export default function XmlSearchSection() {
         </div>
     );
 }
+
 
