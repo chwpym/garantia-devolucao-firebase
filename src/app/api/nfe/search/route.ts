@@ -163,18 +163,20 @@ export async function POST(request: Request) {
                         emissor: res.xNome || 'Desconhecido',
                         valor: parseFloat(res.vNF) || 0,
                         data: res.dhEmi ? res.dhEmi.split('T')[0] : 'S/D',
-                        tipo: 'Resumo'
+                        tipo: 'Resumo',
+                        xml: unzipped
                     });
                 } else if (innerParsed.nfeProc) {
                     const infNfe = innerParsed.nfeProc.NFe?.infNFe;
                     if (infNfe) {
                         notasFormatadas.push({
-                            id: infNfe.id || infNfe.Id,
+                            id: innerParsed.nfeProc.protNFe?.infProt?.chNFe || (typeof infNfe.id === 'string' ? infNfe.id.replace('NFe', '') : infNfe.id), 
                             numero: infNfe.ide?.nNF || 'N/A',
                             emissor: infNfe.emit?.xNome || 'Desconhecido',
                             valor: parseFloat(infNfe.total?.ICMSTot?.vNF) || 0,
                             data: infNfe.ide?.dhEmi ? infNfe.ide.dhEmi.split('T')[0] : 'S/D',
-                            tipo: 'Completo'
+                            tipo: 'Completo',
+                            xml: unzipped
                         });
                     }
                 }
