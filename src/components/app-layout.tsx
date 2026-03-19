@@ -11,6 +11,8 @@ import QuickShortcuts from './quick-shortcuts';
 import { useAppStore } from '@/store/app-store';
 import { useShallow } from 'zustand/react/shallow';
 import { UserNav } from './user-nav';
+import { useTaskModal } from '@/providers/task-provider';
+import { CheckCircle2 } from 'lucide-react';
 import { ThemePicker } from './theme-picker';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth'; // Assuming this path for useAuth
@@ -35,6 +37,7 @@ const getViewLabel = (viewId: string): string => {
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const router = useRouter();
+  const { openModal } = useTaskModal();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const { user, signOut } = useAuth();
   const {
@@ -262,6 +265,15 @@ export default function AppLayout({ children }: AppLayoutProps) {
               )}
             </div>
             <QuickShortcuts />
+            <Button 
+                onClick={openModal} 
+                variant="outline" 
+                size="sm" 
+                className="gap-1.5 shadow-md bg-background/60 backdrop-blur-md border-primary/20 hover:border-primary/50 text-foreground"
+            >
+                <CheckCircle2 className="h-4 w-4 text-primary" />
+                <span className="text-xs font-semibold">Minhas Tarefas</span>
+            </Button>
             <div className='flex items-center gap-2'>
               <ThemePicker />
               <UserNav />

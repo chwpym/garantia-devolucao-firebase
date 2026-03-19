@@ -94,18 +94,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         <TaskContext.Provider value={{ isOpen, openModal: () => setIsOpen(true), closeModal: () => setIsOpen(false), tasks, reloadTasks: loadTasks }}>
             {children}
 
-            {/* --- Gatilho Flutuante no Topo --- */}
-            <div className="fixed top-2 right-[260px] z-50">
-                <Button 
-                    onClick={() => setIsOpen(true)} 
-                    variant="outline" 
-                    size="sm" 
-                    className="gap-1.5 shadow-md bg-background/80 backdrop-blur-md border-primary/20 hover:border-primary/40 animate-pulse hover:animate-none"
-                >
-                    <CheckCircle2 className="h-4 w-4 text-primary" />
-                    <span className="text-xs font-semibold">Minhas Tarefas</span>
-                </Button>
-            </div>
+
 
             {/* --- Modal Trello Global --- */}
             {isOpen && (
