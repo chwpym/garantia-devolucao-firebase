@@ -7,7 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, ShieldCheck, Plus, Trash2, Search, Key, Download, Eye } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Checkbox } from '@/components/ui/checkbox';
+import { FileText, ShieldCheck, Plus, Trash2, Search, Key, Download, Eye, ShoppingCart, ListChecks } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import * as db from '@/lib/db'; // Assuming IndexedDB has get/set capabilities
 
@@ -39,10 +42,15 @@ export default function XmlSearchSection() {
     const [notas, setNotas] = useState<any[]>([]);
     const [ultNSU, setUltNSU] = useState<string>('0');
 
-    // NCM states
+        // NCM states
     const [searchNcm, setSearchNcm] = useState<string>('');
     const [ncmResult, setNcmResult] = useState<any>(null);
     const [loadingNcm, setLoadingNcm] = useState<boolean>(false);
+
+    // Products states
+    const [selectedNotaXml, setSelectedNotaXml] = useState<string | null>(null);
+    const [isProductsModalOpen, setIsProductsModalOpen] = useState(false);
+    const [selectedNotaNumero, setSelectedNotaNumero] = useState<string>('');
 
     useEffect(() => {
         loadCertificados();
@@ -195,6 +203,51 @@ export default function XmlSearchSection() {
         a.download = `NFe-${id || 'Nota'}.xml`;
         a.click();
         URL.revokeObjectURL(url);
+    };
+
+    const parseProductsFromXml = (xmlString: string) => {
+        if (!xmlString) return [];
+        try {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlString, "text/xml");
+            const items = xmlDoc.getElementsByTagName("det");
+            const products = [];
+
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                const xProd = item.getElementsByTagName("xProd")[0]?.textContent || 'N/A';
+                const ncm = item.getElementsByTagName("NCM")[0]?.textContent || 'N/A';
+                const vUnCom = item.getElementsByTagName("vUnCom")[0]?.textContent || '0';
+                const qCom = item.getElementsByTagName("qCom")[0]?.textContent || '0';
+
+                const icmsNode = item.getElementsByTagName("ICMS")[0];
+                let orig = 'N/A';
+                let cst = 'N/A';
+
+                if (icmsNode) {
+                    const origNode = icmsNode.getElementsByTagName("orig")[0];
+                    if (origNode) orig = origNode.textContent || 'N/A';
+
+                    // CST ou CSOSN
+                    const cstNode = icmsNode.getElementsByTagName("CST")[0] || icmsNode.getElementsByTagName("CSOSN")[0];
+                    if (cstNode) cst = cstNode.textContent || 'N/A';
+                }
+
+                products.push({
+                    item: i + 1,
+                    xProd,
+                    ncm,
+                    orig,
+                    cst,
+                    qCom: parseFloat(qCom).toFixed(2),
+                    vUnCom: parseFloat(vUnCom).toFixed(2)
+                });
+            }
+            return products;
+        } catch (e) {
+            console.error("Erro ao converter XML:", e);
+            return [];
+        }
     };
 
     const handleVisualizarDanfe = (xmlString?: string) => {
