@@ -145,12 +145,34 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
                                     {tasks.filter(t => t.status === 'todo').map(task => (
                                         <Card key={task.id} className="shadow-sm border bg-card/50">
                                             <CardContent className="p-3">
-                                                <p className="text-sm font-bold">{task.titulo}</p>
-                                                {task.descricao && <p className="text-xs text-muted-foreground mt-1">{task.descricao}</p>}
+                                                {editingTaskId === task.id ? (
+                                                    <div className="space-y-1 p-1">
+                                                        <Input value={editTitle} onChange={e => setEditTitle(e.target.value)} className="h-7 text-xs px-1" />
+                                                        <Input value={editDesc} onChange={e => setEditDesc(e.target.value)} className="h-7 text-xs px-1 text-muted-foreground" placeholder="Descrição..." />
+                                                        <div className="flex gap-1 justify-end mt-1">
+                                                            <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => setEditingTaskId(null)}>
+                                                                <X className="h-3 w-3" />
+                                                            </Button>
+                                                            <Button size="icon" variant="ghost" className="h-5 w-5 text-green-500" onClick={handleUpdateTask}>
+                                                                <Check className="h-3 w-3" />
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <p className="text-sm font-bold">{task.titulo}</p>
+                                                        {task.descricao && <p className="text-xs text-muted-foreground mt-1">{task.descricao}</p>}
+                                                    </>
+                                                )}
                                                 <div className="flex items-center justify-between mt-3 pt-2 border-t">
-                                                    <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => task.id && handleDeleteTask(task.id)}>
-                                                        <Trash2 className="h-3.5 w-3.5" />
-                                                    </Button>
+                                                    <div className="flex items-center gap-0.5">
+                                                        <Button size="icon" variant="ghost" className="h-6 w-6 hover:bg-primary/10" onClick={() => { setEditingTaskId(task.id!); setEditTitle(task.titulo); setEditDesc(task.descricao || ''); }}>
+                                                            <Pencil className="h-3.5 w-3.5" />
+                                                        </Button>
+                                                        <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => task.id && handleDeleteTask(task.id)}>
+                                                            <Trash2 className="h-3.5 w-3.5" />
+                                                        </Button>
+                                                    </div>
                                                     <Button size="sm" variant="outline" className="h-6 gap-1 text-xs" onClick={() => handleMoveTask(task, 'doing')}>
                                                         Fazer <ArrowRight className="h-3 w-3" />
                                                     </Button>
@@ -172,12 +194,34 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
                                     {tasks.filter(t => t.status === 'doing').map(task => (
                                         <Card key={task.id} className="shadow-sm border bg-card/50">
                                             <CardContent className="p-3">
-                                                <p className="text-sm font-bold">{task.titulo}</p>
-                                                {task.descricao && <p className="text-xs text-muted-foreground mt-1">{task.descricao}</p>}
+                                                {editingTaskId === task.id ? (
+                                                    <div className="space-y-1 p-1">
+                                                        <Input value={editTitle} onChange={e => setEditTitle(e.target.value)} className="h-7 text-xs px-1" />
+                                                        <Input value={editDesc} onChange={e => setEditDesc(e.target.value)} className="h-7 text-xs px-1 text-muted-foreground" placeholder="Descrição..." />
+                                                        <div className="flex gap-1 justify-end mt-1">
+                                                            <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => setEditingTaskId(null)}>
+                                                                <X className="h-3 w-3" />
+                                                            </Button>
+                                                            <Button size="icon" variant="ghost" className="h-5 w-5 text-green-500" onClick={handleUpdateTask}>
+                                                                <Check className="h-3 w-3" />
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <p className="text-sm font-bold">{task.titulo}</p>
+                                                        {task.descricao && <p className="text-xs text-muted-foreground mt-1">{task.descricao}</p>}
+                                                    </>
+                                                )}
                                                 <div className="flex items-center justify-between mt-3 pt-2 border-t">
-                                                    <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleMoveTask(task, 'todo')}>
-                                                        <ArrowLeft className="h-3.5 w-3.5" />
-                                                    </Button>
+                                                    <div className="flex items-center gap-1">
+                                                        <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleMoveTask(task, 'todo')}>
+                                                            <ArrowLeft className="h-3.5 w-3.5" />
+                                                        </Button>
+                                                        <Button size="icon" variant="ghost" className="h-6 w-6 hover:bg-primary/10" onClick={() => { setEditingTaskId(task.id!); setEditTitle(task.titulo); setEditDesc(task.descricao || ''); }}>
+                                                            <Pencil className="h-3 w-3" />
+                                                        </Button>
+                                                    </div>
                                                     <Button size="sm" variant="outline" className="h-6 gap-1 text-xs border-green-500/20 hover:bg-green-500/10" onClick={() => handleMoveTask(task, 'done')}>
                                                         Pronto <ArrowRight className="h-3 w-3" />
                                                     </Button>
@@ -199,15 +243,37 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
                                     {tasks.filter(t => t.status === 'done').map(task => (
                                         <Card key={task.id} className="shadow-sm border bg-card/50 bg-green-500/5">
                                             <CardContent className="p-3">
-                                                <p className="text-sm font-bold line-through text-muted-foreground">{task.titulo}</p>
-                                                {task.descricao && <p className="text-xs text-muted-foreground mt-1 line-through">{task.descricao}</p>}
+                                                {editingTaskId === task.id ? (
+                                                    <div className="space-y-1 p-1">
+                                                        <Input value={editTitle} onChange={e => setEditTitle(e.target.value)} className="h-7 text-xs px-1" />
+                                                        <Input value={editDesc} onChange={e => setEditDesc(e.target.value)} className="h-7 text-xs px-1 text-muted-foreground" placeholder="Descrição..." />
+                                                        <div className="flex gap-1 justify-end mt-1">
+                                                            <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => setEditingTaskId(null)}>
+                                                                <X className="h-3 w-3" />
+                                                            </Button>
+                                                            <Button size="icon" variant="ghost" className="h-5 w-5 text-green-500" onClick={handleUpdateTask}>
+                                                                <Check className="h-3 w-3" />
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <p className="text-sm font-bold line-through text-muted-foreground">{task.titulo}</p>
+                                                        {task.descricao && <p className="text-xs text-muted-foreground mt-1 line-through">{task.descricao}</p>}
+                                                    </>
+                                                )}
                                                 <div className="flex items-center justify-between mt-3 pt-2 border-t">
                                                     <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleMoveTask(task, 'doing')}>
                                                         <ArrowLeft className="h-3.5 w-3.5" />
                                                     </Button>
-                                                    <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => task.id && handleDeleteTask(task.id)}>
-                                                        <Trash2 className="h-3.5 w-3.5" />
-                                                    </Button>
+                                                    <div className="flex items-center gap-0.5">
+                                                        <Button size="icon" variant="ghost" className="h-6 w-6 hover:bg-primary/10" onClick={() => { setEditingTaskId(task.id!); setEditTitle(task.titulo); setEditDesc(task.descricao || ''); }}>
+                                                            <Pencil className="h-3.5 w-3.5" />
+                                                        </Button>
+                                                        <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive hover:bg-destructive/10" onClick={() => task.id && handleDeleteTask(task.id)}>
+                                                            <Trash2 className="h-3.5 w-3.5" />
+                                                        </Button>
+                                                    </div>
                                                 </div>
                                             </CardContent>
                                         </Card>
