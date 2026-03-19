@@ -16,9 +16,9 @@ interface CertificadoItem {
     empresa: string;
     cnpj: string;
     hasPassword?: boolean;
-    senha?: string; // Salvar senha em memÃƒÆ’Ã‚Â³ria para remover prompt duplo
+    senha?: string; // Salvar senha em memória para remover prompt duplo
     nomeArquivo?: string;
-    fileBase64?: string; // Manter em memÃƒÆ’Ã‚Â³ria para o teste
+    fileBase64?: string; // Manter em memória para o teste
 }
 
 export default function XmlSearchSection() {
@@ -46,6 +46,12 @@ export default function XmlSearchSection() {
 
     useEffect(() => {
         loadCertificados();
+        if (typeof window !== 'undefined') {
+            const savedIndex = localStorage.getItem('xml_search_selectedCertIndex');
+            if (savedIndex) {
+                setSelectedCertIndex(savedIndex);
+            }
+        }
     }, []);
 
     useEffect(() => {
@@ -72,7 +78,7 @@ export default function XmlSearchSection() {
         if (!file) return;
 
         if (!file.name.endsWith('.pfx') && !file.name.endsWith('.p12')) {
-            toast({ title: 'Formato invÃƒÆ’Ã‚Â¡lido', description: 'Por favor, selecione um arquivo .pfx ou .p12', variant: 'destructive' });
+            toast({ title: 'Formato invalido', description: 'Por favor, selecione um arquivo .pfx ou .p12', variant: 'destructive' });
             return;
         }
 
@@ -87,7 +93,7 @@ export default function XmlSearchSection() {
 
     const handleSaveCertificate = async () => {
         if (!empresa || !cnpj || !senha || !fileBase64) {
-            toast({ title: 'Campos obrigatÃƒÆ’Ã‚Â³rios', description: 'Preencha todos os campos e selecione o certificado.', variant: 'destructive' });
+            toast({ title: 'Campos obrigatórios', description: 'Preencha todos os campos e selecione o certificado.', variant: 'destructive' });
             return;
         }
 
@@ -98,23 +104,23 @@ export default function XmlSearchSection() {
                 empresa,
                 cnpj,
                 hasPassword: !!senha,
-                senha: senha, // Guarda em memÃƒÆ’Ã‚Â³ria para a sessÃƒÆ’Ã‚Â£o
+                senha: senha, // Guarda em memória para a sessÃƒÆ’Ã‚Â£o
                 nomeArquivo: fileName,
                 fileBase64: fileBase64 || undefined
             };
-            
+
             setCertificados([...certificados, newItem]);
-            
+
             // Clear fields
             setEmpresa('');
             setCnpj('');
             setSenha('');
             setFileBase64(null);
             setFileName('');
-            
+
             toast({ title: 'Sucesso', description: 'Certificado salvo localmente!' });
         } catch (error) {
-            toast({ title: 'Erro ao salvar', description: 'NÃƒÆ’Ã‚Â£o foi possÃƒÆ’Ã‚Â­vel salvar o arquivo.', variant: 'destructive' });
+            toast({ title: 'Erro ao salvar', description: 'Não foi possiel salvar o arquivo.', variant: 'destructive' });
         } finally {
             setLoading(false);
         }
@@ -128,9 +134,9 @@ export default function XmlSearchSection() {
 
         const cert = certificados[parseInt(selectedCertIndex)];
         const inputSenha = cert.senha || window.prompt(`Digite a senha para o certificado da empresa ${cert.empresa}:`);
-        
+
         if (!inputSenha) {
-            toast({ title: 'Cancelado', description: 'Consulta abortada pelo usuÃƒÆ’Ã‚Â¡rio.' });
+            toast({ title: 'Cancelado', description: 'Consulta abortada pelo usuário.' });
             return;
         }
 
@@ -148,7 +154,7 @@ export default function XmlSearchSection() {
             });
 
             const data = await response.json();
-            
+
             if (data.ultNSU) {
                 setUltNSU(data.ultNSU);
                 const cert = certificados[parseInt(selectedCertIndex)];
@@ -169,7 +175,7 @@ export default function XmlSearchSection() {
                 }
             }
         } catch (error) {
-            toast({ title: 'Erro na requisiÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o', description: 'NÃƒÆ’Ã‚Â£o foi possÃƒÆ’Ã‚Â­vel falar com a API.', variant: 'destructive' });
+            toast({ title: 'Erro na requisição', description: 'Não foi possível falar com a API.', variant: 'destructive' });
         } finally {
             setLoading(false);
         }
@@ -177,7 +183,7 @@ export default function XmlSearchSection() {
 
     const handleDownloadXml = (xmlString?: string, id?: string) => {
         if (!xmlString) {
-            toast({ title: 'Erro', description: 'ConteÃƒÆ’Ã‚Âºdo do XML nÃƒÆ’Ã‚Â£o disponÃƒÆ’Ã‚Â­vel.', variant: 'destructive' });
+            toast({ title: 'Erro', description: 'Conteúdo do XML não disponí­vel.', variant: 'destructive' });
             return;
         }
         const blob = new Blob([xmlString], { type: 'text/xml;charset=utf-8' });
@@ -191,21 +197,21 @@ export default function XmlSearchSection() {
 
     const handleVisualizarDanfe = (xmlString?: string) => {
         if (!xmlString) {
-            toast({ title: 'Erro', description: 'ConteÃƒÆ’Ã‚Âºdo do XML nÃƒÆ’Ã‚Â£o disponÃƒÆ’Ã‚Â­vel.', variant: 'destructive' });
+            toast({ title: 'Erro', description: 'Conteúdo do XML não disponí­vel..', variant: 'destructive' });
             return;
         }
         // Usando o WebDanfe via POST para converter XML em DANFE na hora em nova aba
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = 'https://webdanfe.com.br/danfe/index.html'; 
+        form.action = 'https://webdanfe.com.br/danfe/index.html';
         form.target = '_blank';
-        
+
         const input = document.createElement('input');
         input.type = 'hidden';
         input.name = 'xml';
         input.value = xmlString;
         form.appendChild(input);
-        
+
         document.body.appendChild(form);
         form.submit();
         document.body.removeChild(form);
@@ -214,7 +220,7 @@ export default function XmlSearchSection() {
     const handleConsultarNcm = async () => {
         const cleanNcm = searchNcm.replace(/\D/g, '');
         if (cleanNcm.length !== 8) {
-            toast({ title: 'Aviso', description: 'O NCM deve conter 8 dÃ­gitos.', variant: 'default' });
+            toast({ title: 'Aviso', description: 'O NCM deve conter 8 dí­gitos.', variant: 'default' });
             return;
         }
         setLoadingNcm(true);
@@ -225,10 +231,10 @@ export default function XmlSearchSection() {
                 const data = await response.json();
                 setNcmResult(data);
             } else {
-                toast({ title: 'Erro', description: 'NCM nÃ£o localizado ou invÃ¡lido.', variant: 'destructive' });
+                toast({ title: 'Erro', description: 'NCM não localizado ou inválido.', variant: 'destructive' });
             }
         } catch (error) {
-            toast({ title: 'Erro', description: 'NÃ£o foi possÃ­vel falar com a API de NCM.', variant: 'destructive' });
+            toast({ title: 'Erro', description: 'Não foi possí­vel falar com a API de NCM.', variant: 'destructive' });
         } finally {
             setLoadingNcm(false);
         }
@@ -239,7 +245,7 @@ export default function XmlSearchSection() {
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">Buscador de XML SEFAZ</h1>
                 <p className="text-sm text-muted-foreground">
-                    Gerencie certificados e busque Notas Fiscais EletrÃƒÆ’Ã‚Â´nicas emitidas contra seu CNPJ.
+                    Gerencie certificados e busque Notas Fiscais Eletronícas emitidas contra seu CNPJ.
                 </p>
             </div>
 
@@ -259,7 +265,7 @@ export default function XmlSearchSection() {
                 {/* --- ABA CERTIFICADOS --- */}
                 <TabsContent value="certificados" className="space-y-4 pt-4">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {/* FormulÃƒÆ’Ã‚Â¡rio de Upload */}
+                        {/* Formulário de Upload */}
                         <Card className="md:col-span-1 shadow-sm">
                             <CardHeader>
                                 <CardTitle className="text-lg flex items-center gap-2">
@@ -303,7 +309,7 @@ export default function XmlSearchSection() {
                         <Card className="md:col-span-2 shadow-sm">
                             <CardHeader>
                                 <CardTitle className="text-lg">Certificados Salvos</CardTitle>
-                                <CardDescription>MÃƒÆ’Ã‚Âºltiplos perfis cadastrados para consulta.</CardDescription>
+                                <CardDescription>Múltiplos perfis cadastrados para consulta.</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <div className="rounded-md border bg-card">
@@ -313,7 +319,7 @@ export default function XmlSearchSection() {
                                                 <TableHead>Empresa</TableHead>
                                                 <TableHead>CNPJ</TableHead>
                                                 <TableHead>Arquivo</TableHead>
-                                                <TableHead className="w-[80px] text-right">AÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o</TableHead>
+                                                <TableHead className="w-[80px] text-right">Ação</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -356,17 +362,22 @@ export default function XmlSearchSection() {
                             <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
                                 <div className="flex items-center gap-1 bg-background border rounded-md px-2 h-9">
                                     <span className="text-xs text-muted-foreground mr-1">NSU:</span>
-                                    <input 
-                                        type="text" 
-                                        className="w-[70px] bg-transparent text-xs text-right outline-none font-mono" 
-                                        value={ultNSU} 
-                                        onChange={(e) => setUltNSU(e.target.value.replace(/\D/g, ''))} 
+                                    <input
+                                        type="text"
+                                        className="w-[70px] bg-transparent text-xs text-right outline-none font-mono"
+                                        value={ultNSU}
+                                        onChange={(e) => setUltNSU(e.target.value.replace(/\D/g, ''))}
                                     />
                                 </div>
-                                <select 
+                                <select
                                     className="h-9 rounded-md border bg-background px-3 text-sm"
                                     value={selectedCertIndex}
-                                    onChange={(e) => setSelectedCertIndex(e.target.value)}
+                                    onChange={(e) => {
+                                        setSelectedCertIndex(e.target.value);
+                                        if (typeof window !== 'undefined') {
+                                            localStorage.setItem('xml_search_selectedCertIndex', e.target.value);
+                                        }
+                                    }}
                                 >
                                     <option value="">Selecione a Empresa...</option>
                                     {certificados.map((c, i) => (
@@ -384,11 +395,11 @@ export default function XmlSearchSection() {
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
-                                                <TableHead>NÃƒÆ’Ã‚Âºmero NF-e</TableHead>
+                                                <TableHead>Número NF-e</TableHead>
                                                 <TableHead>Emissor</TableHead>
                                                 <TableHead>Data</TableHead>
                                                 <TableHead>Valor</TableHead>
-                                                <TableHead className="w-[100px] text-right">AÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o</TableHead>
+                                                <TableHead className="w-[100px] text-right">Ação</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -400,13 +411,13 @@ export default function XmlSearchSection() {
                                                     <TableCell>R$ {nota.valor.toFixed(2)}</TableCell>
                                                     <TableCell className="text-right">
                                                         <div className="flex items-center gap-1 justify-end">
-                                                             <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => handleDownloadXml(nota.xml, nota.numero)} title="Baixar XML">
-                                                                 <Download className="h-4 w-4" />
-                                                             </Button>
-                                                             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={() => handleVisualizarDanfe(nota.xml)} title="Visualizar DANFE">
-                                                                 <Eye className="h-4 w-4" />
-                                                             </Button>
-                                                         </div>
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => handleDownloadXml(nota.xml, nota.numero)} title="Baixar XML">
+                                                                <Download className="h-4 w-4" />
+                                                            </Button>
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={() => handleVisualizarDanfe(nota.xml)} title="Visualizar DANFE">
+                                                                <Eye className="h-4 w-4" />
+                                                            </Button>
+                                                        </div>
                                                     </TableCell>
                                                 </TableRow>
                                             ))}
@@ -431,10 +442,10 @@ export default function XmlSearchSection() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="flex gap-2 max-w-sm">
-                                <Input 
-                                    placeholder="Digite o NCM (8 dígitos)" 
-                                    value={searchNcm} 
-                                    onChange={(e) => setSearchNcm(e.target.value.replace(/\D/g, '').slice(0,8))} 
+                                <Input
+                                    placeholder="Digite o NCM (8 dígitos)"
+                                    value={searchNcm}
+                                    onChange={(e) => setSearchNcm(e.target.value.replace(/\D/g, '').slice(0, 8))}
                                     className="h-9"
                                 />
                                 <Button onClick={handleConsultarNcm} disabled={loadingNcm} className="h-9">
