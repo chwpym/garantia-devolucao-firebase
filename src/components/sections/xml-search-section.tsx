@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,9 +16,9 @@ interface CertificadoItem {
     empresa: string;
     cnpj: string;
     hasPassword?: boolean;
-    senha?: string; // Salvar senha em memÃƒÂ³ria para remover prompt duplo
+    senha?: string; // Salvar senha em memÃƒÆ’Ã‚Â³ria para remover prompt duplo
     nomeArquivo?: string;
-    fileBase64?: string; // Manter em memÃƒÂ³ria para o teste
+    fileBase64?: string; // Manter em memÃƒÆ’Ã‚Â³ria para o teste
 }
 
 export default function XmlSearchSection() {
@@ -38,6 +38,11 @@ export default function XmlSearchSection() {
     const [selectedCertIndex, setSelectedCertIndex] = useState<string>('');
     const [notas, setNotas] = useState<any[]>([]);
     const [ultNSU, setUltNSU] = useState<string>('0');
+
+    // NCM states
+    const [searchNcm, setSearchNcm] = useState<string>('');
+    const [ncmResult, setNcmResult] = useState<any>(null);
+    const [loadingNcm, setLoadingNcm] = useState<boolean>(false);
 
     useEffect(() => {
         loadCertificados();
@@ -67,7 +72,7 @@ export default function XmlSearchSection() {
         if (!file) return;
 
         if (!file.name.endsWith('.pfx') && !file.name.endsWith('.p12')) {
-            toast({ title: 'Formato invÃƒÂ¡lido', description: 'Por favor, selecione um arquivo .pfx ou .p12', variant: 'destructive' });
+            toast({ title: 'Formato invÃƒÆ’Ã‚Â¡lido', description: 'Por favor, selecione um arquivo .pfx ou .p12', variant: 'destructive' });
             return;
         }
 
@@ -82,7 +87,7 @@ export default function XmlSearchSection() {
 
     const handleSaveCertificate = async () => {
         if (!empresa || !cnpj || !senha || !fileBase64) {
-            toast({ title: 'Campos obrigatÃƒÂ³rios', description: 'Preencha todos os campos e selecione o certificado.', variant: 'destructive' });
+            toast({ title: 'Campos obrigatÃƒÆ’Ã‚Â³rios', description: 'Preencha todos os campos e selecione o certificado.', variant: 'destructive' });
             return;
         }
 
@@ -93,7 +98,7 @@ export default function XmlSearchSection() {
                 empresa,
                 cnpj,
                 hasPassword: !!senha,
-                senha: senha, // Guarda em memÃƒÂ³ria para a sessÃƒÂ£o
+                senha: senha, // Guarda em memÃƒÆ’Ã‚Â³ria para a sessÃƒÆ’Ã‚Â£o
                 nomeArquivo: fileName,
                 fileBase64: fileBase64 || undefined
             };
@@ -109,7 +114,7 @@ export default function XmlSearchSection() {
             
             toast({ title: 'Sucesso', description: 'Certificado salvo localmente!' });
         } catch (error) {
-            toast({ title: 'Erro ao salvar', description: 'NÃƒÂ£o foi possÃƒÂ­vel salvar o arquivo.', variant: 'destructive' });
+            toast({ title: 'Erro ao salvar', description: 'NÃƒÆ’Ã‚Â£o foi possÃƒÆ’Ã‚Â­vel salvar o arquivo.', variant: 'destructive' });
         } finally {
             setLoading(false);
         }
@@ -125,7 +130,7 @@ export default function XmlSearchSection() {
         const inputSenha = cert.senha || window.prompt(`Digite a senha para o certificado da empresa ${cert.empresa}:`);
         
         if (!inputSenha) {
-            toast({ title: 'Cancelado', description: 'Consulta abortada pelo usuÃƒÂ¡rio.' });
+            toast({ title: 'Cancelado', description: 'Consulta abortada pelo usuÃƒÆ’Ã‚Â¡rio.' });
             return;
         }
 
@@ -164,7 +169,7 @@ export default function XmlSearchSection() {
                 }
             }
         } catch (error) {
-            toast({ title: 'Erro na requisiÃƒÂ§ÃƒÂ£o', description: 'NÃƒÂ£o foi possÃƒÂ­vel falar com a API.', variant: 'destructive' });
+            toast({ title: 'Erro na requisiÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o', description: 'NÃƒÆ’Ã‚Â£o foi possÃƒÆ’Ã‚Â­vel falar com a API.', variant: 'destructive' });
         } finally {
             setLoading(false);
         }
@@ -172,7 +177,7 @@ export default function XmlSearchSection() {
 
     const handleDownloadXml = (xmlString?: string, id?: string) => {
         if (!xmlString) {
-            toast({ title: 'Erro', description: 'ConteÃƒÂºdo do XML nÃƒÂ£o disponÃƒÂ­vel.', variant: 'destructive' });
+            toast({ title: 'Erro', description: 'ConteÃƒÆ’Ã‚Âºdo do XML nÃƒÆ’Ã‚Â£o disponÃƒÆ’Ã‚Â­vel.', variant: 'destructive' });
             return;
         }
         const blob = new Blob([xmlString], { type: 'text/xml;charset=utf-8' });
@@ -186,7 +191,7 @@ export default function XmlSearchSection() {
 
     const handleVisualizarDanfe = (xmlString?: string) => {
         if (!xmlString) {
-            toast({ title: 'Erro', description: 'ConteÃƒÂºdo do XML nÃƒÂ£o disponÃƒÂ­vel.', variant: 'destructive' });
+            toast({ title: 'Erro', description: 'ConteÃƒÆ’Ã‚Âºdo do XML nÃƒÆ’Ã‚Â£o disponÃƒÆ’Ã‚Â­vel.', variant: 'destructive' });
             return;
         }
         // Usando o WebDanfe via POST para converter XML em DANFE na hora em nova aba
@@ -206,29 +211,55 @@ export default function XmlSearchSection() {
         document.body.removeChild(form);
     };
 
+    const handleConsultarNcm = async () => {
+        const cleanNcm = searchNcm.replace(/\D/g, '');
+        if (cleanNcm.length !== 8) {
+            toast({ title: 'Aviso', description: 'O NCM deve conter 8 dÃ­gitos.', variant: 'default' });
+            return;
+        }
+        setLoadingNcm(true);
+        setNcmResult(null);
+        try {
+            const response = await fetch(`https://brasilapi.com.br/api/ncm/v1/${cleanNcm}`);
+            if (response.ok) {
+                const data = await response.json();
+                setNcmResult(data);
+            } else {
+                toast({ title: 'Erro', description: 'NCM nÃ£o localizado ou invÃ¡lido.', variant: 'destructive' });
+            }
+        } catch (error) {
+            toast({ title: 'Erro', description: 'NÃ£o foi possÃ­vel falar com a API de NCM.', variant: 'destructive' });
+        } finally {
+            setLoadingNcm(false);
+        }
+    };
+
     return (
         <div className="space-y-6">
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">Buscador de XML SEFAZ</h1>
                 <p className="text-sm text-muted-foreground">
-                    Gerencie certificados e busque Notas Fiscais EletrÃƒÂ´nicas emitidas contra seu CNPJ.
+                    Gerencie certificados e busque Notas Fiscais EletrÃƒÆ’Ã‚Â´nicas emitidas contra seu CNPJ.
                 </p>
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 max-w-md">
+                <TabsList className="grid w-full grid-cols-3 max-w-lg">
                     <TabsTrigger value="certificados" className="flex items-center gap-2">
                         <ShieldCheck className="h-4 w-4" /> Certificados
                     </TabsTrigger>
                     <TabsTrigger value="consulta" className="flex items-center gap-2">
                         <Search className="h-4 w-4" /> Consultar
                     </TabsTrigger>
+                    <TabsTrigger value="ncm" className="flex items-center gap-2">
+                        <FileText className="h-4 w-4" /> Consultar NCM
+                    </TabsTrigger>
                 </TabsList>
 
                 {/* --- ABA CERTIFICADOS --- */}
                 <TabsContent value="certificados" className="space-y-4 pt-4">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {/* FormulÃƒÂ¡rio de Upload */}
+                        {/* FormulÃƒÆ’Ã‚Â¡rio de Upload */}
                         <Card className="md:col-span-1 shadow-sm">
                             <CardHeader>
                                 <CardTitle className="text-lg flex items-center gap-2">
@@ -272,7 +303,7 @@ export default function XmlSearchSection() {
                         <Card className="md:col-span-2 shadow-sm">
                             <CardHeader>
                                 <CardTitle className="text-lg">Certificados Salvos</CardTitle>
-                                <CardDescription>MÃƒÂºltiplos perfis cadastrados para consulta.</CardDescription>
+                                <CardDescription>MÃƒÆ’Ã‚Âºltiplos perfis cadastrados para consulta.</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <div className="rounded-md border bg-card">
@@ -282,7 +313,7 @@ export default function XmlSearchSection() {
                                                 <TableHead>Empresa</TableHead>
                                                 <TableHead>CNPJ</TableHead>
                                                 <TableHead>Arquivo</TableHead>
-                                                <TableHead className="w-[80px] text-right">AÃƒÂ§ÃƒÂ£o</TableHead>
+                                                <TableHead className="w-[80px] text-right">AÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -353,11 +384,11 @@ export default function XmlSearchSection() {
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
-                                                <TableHead>NÃƒÂºmero NF-e</TableHead>
+                                                <TableHead>NÃƒÆ’Ã‚Âºmero NF-e</TableHead>
                                                 <TableHead>Emissor</TableHead>
                                                 <TableHead>Data</TableHead>
                                                 <TableHead>Valor</TableHead>
-                                                <TableHead className="w-[100px] text-right">AÃƒÂ§ÃƒÂ£o</TableHead>
+                                                <TableHead className="w-[100px] text-right">AÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -368,7 +399,14 @@ export default function XmlSearchSection() {
                                                     <TableCell>{nota.data}</TableCell>
                                                     <TableCell>R$ {nota.valor.toFixed(2)}</TableCell>
                                                     <TableCell className="text-right">
-                                                        <div className="flex items-center gap-1 justify-end">`r`n                                                             <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => handleDownloadXml(nota.xml, nota.numero)} title="Baixar XML">`r`n                                                                 <Download className="h-4 w-4" />`r`n                                                             </Button>`r`n                                                             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={() => handleVisualizarDanfe(nota.xml)} title="Visualizar DANFE">`r`n                                                                 <Eye className="h-4 w-4" />`r`n                                                             </Button>`r`n                                                         </div>
+                                                        <div className="flex items-center gap-1 justify-end">
+                                                             <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => handleDownloadXml(nota.xml, nota.numero)} title="Baixar XML">
+                                                                 <Download className="h-4 w-4" />
+                                                             </Button>
+                                                             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={() => handleVisualizarDanfe(nota.xml)} title="Visualizar DANFE">
+                                                                 <Eye className="h-4 w-4" />
+                                                             </Button>
+                                                         </div>
                                                     </TableCell>
                                                 </TableRow>
                                             ))}
@@ -383,9 +421,46 @@ export default function XmlSearchSection() {
                         </CardContent>
                     </Card>
                 </TabsContent>
+
+                {/* --- ABA CONSULTA NCM --- */}
+                <TabsContent value="ncm" className="space-y-4 pt-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Consultar NCM Oficial</CardTitle>
+                            <CardDescription>Consulte a Descrição e Vigência de um NCM na Base da Receita Federal.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="flex gap-2 max-w-sm">
+                                <Input 
+                                    placeholder="Digite o NCM (8 dígitos)" 
+                                    value={searchNcm} 
+                                    onChange={(e) => setSearchNcm(e.target.value.replace(/\D/g, '').slice(0,8))} 
+                                    className="h-9"
+                                />
+                                <Button onClick={handleConsultarNcm} disabled={loadingNcm} className="h-9">
+                                    {loadingNcm ? '...' : <Search className="h-4 w-4" />}
+                                </Button>
+                            </div>
+
+                            {ncmResult && (
+                                <div className="rounded-md border bg-muted/20 p-4 space-y-2">
+                                    <div>
+                                        <span className="text-xs text-muted-foreground">Código NCM:</span>
+                                        <p className="font-mono font-bold text-lg text-primary">{ncmResult.codigo}</p>
+                                    </div>
+                                    <div>
+                                        <span className="text-xs text-muted-foreground">Descrição Oficial:</span>
+                                        <p className="text-sm font-medium">{ncmResult.descricao}</p>
+                                    </div>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
             </Tabs>
         </div>
     );
 }
+
 
 
