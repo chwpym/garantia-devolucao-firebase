@@ -16,6 +16,7 @@ interface CertificadoItem {
     empresa: string;
     cnpj: string;
     hasPassword?: boolean;
+    senha?: string; // Salvar senha em memória para remover prompt duplo
     nomeArquivo?: string;
     fileBase64?: string; // Manter em memória para o teste
 }
@@ -78,6 +79,7 @@ export default function XmlSearchSection() {
                 empresa,
                 cnpj,
                 hasPassword: !!senha,
+                senha: senha, // Guarda em memória para a sessão
                 nomeArquivo: fileName,
                 fileBase64: fileBase64 || undefined
             };
@@ -106,7 +108,7 @@ export default function XmlSearchSection() {
         }
 
         const cert = certificados[parseInt(selectedCertIndex)];
-        const inputSenha = window.prompt(`Digite a senha para o certificado da empresa ${cert.empresa}:`);
+        const inputSenha = cert.senha || window.prompt(`Digite a senha para o certificado da empresa ${cert.empresa}:`);
         
         if (!inputSenha) {
             toast({ title: 'Cancelado', description: 'Consulta abortada pelo usuário.' });
@@ -267,6 +269,15 @@ export default function XmlSearchSection() {
                                 <CardDescription>Consulte os XMLs emitidos no ambiente da SEFAZ.</CardDescription>
                             </div>
                             <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                                <div className="flex items-center gap-1 bg-background border rounded-md px-2 h-9">
+                                    <span className="text-xs text-muted-foreground mr-1">NSU:</span>
+                                    <input 
+                                        type="text" 
+                                        className="w-[70px] bg-transparent text-xs text-right outline-none font-mono" 
+                                        value={ultNSU} 
+                                        onChange={(e) => setUltNSU(e.target.value.replace(/\D/g, ''))} 
+                                    />
+                                </div>
                                 <select 
                                     className="h-9 rounded-md border bg-background px-3 text-sm"
                                     value={selectedCertIndex}
