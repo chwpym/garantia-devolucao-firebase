@@ -57,8 +57,10 @@ export default function XmlSearchSection() {
     useEffect(() => {
         if (selectedCertIndex !== '') {
             const cert = certificados[parseInt(selectedCertIndex)];
-            const savedNSU = localStorage.getItem(`ultNSU_${cert.cnpj}`);
-            setUltNSU(savedNSU || '0');
+            if (cert) {
+                const savedNSU = localStorage.getItem(`ultNSU_${cert.cnpj}`);
+                setUltNSU(savedNSU || '0');
+            }
         } else {
             setUltNSU('0');
         }
