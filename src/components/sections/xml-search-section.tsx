@@ -437,38 +437,90 @@ export default function XmlSearchSection() {
 
                 {/* --- ABA CONSULTA NCM --- */}
                 <TabsContent value="ncm" className="space-y-4 pt-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Consultar NCM Oficial</CardTitle>
-                            <CardDescription>Consulte a Descrição e Vigência de um NCM na Base da Receita Federal.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="flex gap-2 max-w-sm">
-                                <Input
-                                    placeholder="Digite o NCM (8 dígitos)"
-                                    value={searchNcm}
-                                    onChange={(e) => setSearchNcm(e.target.value.replace(/\D/g, '').slice(0, 8))}
-                                    className="h-9"
-                                />
-                                <Button onClick={handleConsultarNcm} disabled={loadingNcm} className="h-9">
-                                    {loadingNcm ? '...' : <Search className="h-4 w-4" />}
-                                </Button>
-                            </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Card className="shadow-sm h-fit">
+                            <CardHeader>
+                                <CardTitle className="text-lg">Consultar NCM Oficial</CardTitle>
+                                <CardDescription>Consulte a Descrição e Vigência de um NCM na Base da Receita Federal.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="flex gap-2 max-w-sm">
+                                    <Input
+                                        placeholder="Digite o NCM (8 dígitos)"
+                                        value={searchNcm}
+                                        onChange={(e) => setSearchNcm(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                                        className="h-9"
+                                    />
+                                    <Button onClick={handleConsultarNcm} disabled={loadingNcm} className="h-9">
+                                        {loadingNcm ? '...' : <Search className="h-4 w-4" />}
+                                    </Button>
+                                </div>
 
-                            {ncmResult && (
-                                <div className="rounded-md border bg-muted/20 p-4 space-y-2">
-                                    <div>
-                                        <span className="text-xs text-muted-foreground">Código NCM:</span>
-                                        <p className="font-mono font-bold text-lg text-primary">{ncmResult.codigo}</p>
+                                {ncmResult && (
+                                    <div className="rounded-md border bg-muted/20 p-4 space-y-2">
+                                        <div>
+                                            <span className="text-xs text-muted-foreground">Código NCM:</span>
+                                            <p className="font-mono font-bold text-lg text-primary">{ncmResult.codigo}</p>
+                                        </div>
+                                        <div>
+                                            <span className="text-xs text-muted-foreground">Descrição Oficial:</span>
+                                            <p className="text-sm font-medium">{ncmResult.descricao}</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <span className="text-xs text-muted-foreground">Descrição Oficial:</span>
-                                        <p className="text-sm font-medium">{ncmResult.descricao}</p>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        {/* Tabela de Origem da Mercadoria */}
+                        <Card className="shadow-sm">
+                            <CardHeader>
+                                <CardTitle className="text-lg flex items-center gap-2">
+                                    <FileText className="h-4 w-4 text-primary" /> Origem da Mercadoria (CST/CSOSN)
+                                </CardTitle>
+                                <CardDescription>Legenda do dígito de Origem (Tabela A do ICMS).</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex items-start gap-2 border-b pb-1.5 border-dashed">
+                                        <div className="font-bold bg-primary/10 text-primary w-6 h-6 rounded flex items-center justify-center flex-shrink-0 text-xs">0</div>
+                                        <span>Nacional (Exceto as indicadas nos códigos 3, 4, 5 e 8)</span>
+                                    </div>
+                                    <div className="flex items-start gap-2 border-b pb-1.5 border-dashed">
+                                        <div className="font-bold bg-primary/10 text-primary w-6 h-6 rounded flex items-center justify-center flex-shrink-0 text-xs">1</div>
+                                        <span>Estrangeira - Importação direta (Exceto a do código 6)</span>
+                                    </div>
+                                    <div className="flex items-start gap-2 border-b pb-1.5 border-dashed">
+                                        <div className="font-bold bg-primary/10 text-primary w-6 h-6 rounded flex items-center justify-center flex-shrink-0 text-xs">2</div>
+                                        <span>Estrangeira - Adquirida no mercado interno (Exceto a do 7)</span>
+                                    </div>
+                                    <div className="flex items-start gap-2 border-b pb-1.5 border-dashed">
+                                        <div className="font-bold bg-primary/10 text-primary w-6 h-6 rounded flex items-center justify-center flex-shrink-0 text-xs">3</div>
+                                        <span>Nacional - Conteúdo de Importação superior a 40%</span>
+                                    </div>
+                                    <div className="flex items-start gap-2 border-b pb-1.5 border-dashed">
+                                        <div className="font-bold bg-primary/10 text-primary w-6 h-6 rounded flex items-center justify-center flex-shrink-0 text-xs">4</div>
+                                        <span>Nacional - Produção Processos Produtivos Básicos (PPB)</span>
+                                    </div>
+                                    <div className="flex items-start gap-2 border-b pb-1.5 border-dashed">
+                                        <div className="font-bold bg-primary/10 text-primary w-6 h-6 rounded flex items-center justify-center flex-shrink-0 text-xs">5</div>
+                                        <span>Nacional - Conteúdo de Importação inferior/igual a 40%</span>
+                                    </div>
+                                    <div className="flex items-start gap-2 border-b pb-1.5 border-dashed">
+                                        <div className="font-bold bg-primary/10 text-primary w-6 h-6 rounded flex items-center justify-center flex-shrink-0 text-xs">6</div>
+                                        <span>Estrangeira - Importação direta, sem similar nacional (CAMEX)</span>
+                                    </div>
+                                    <div className="flex items-start gap-2 border-b pb-1.5 border-dashed">
+                                        <div className="font-bold bg-primary/10 text-primary w-6 h-6 rounded flex items-center justify-center flex-shrink-0 text-xs">7</div>
+                                        <span>Estrangeira - Adquirida mercado interno, sem similar (CAMEX)</span>
+                                    </div>
+                                    <div className="flex items-start gap-2">
+                                        <div className="font-bold bg-primary/10 text-primary w-6 h-6 rounded flex items-center justify-center flex-shrink-0 text-xs">8</div>
+                                        <span>Nacional - Conteúdo de Importação superior a 70%</span>
                                     </div>
                                 </div>
-                            )}
-                        </CardContent>
-                    </Card>
+                            </CardContent>
+                        </Card>
+                    </div>
                 </TabsContent>
             </Tabs>
         </div>
