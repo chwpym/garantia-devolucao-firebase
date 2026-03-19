@@ -18,7 +18,7 @@ import { auth, sendPasswordResetEmail } from "./firebase";
 export { auth, sendPasswordResetEmail };
 
 const DB_NAME = "GarantiasDB";
-const DB_VERSION = 12; // Incremented for Phase 14 (Multiple Contacts)
+const DB_VERSION = 13; // Incremented for Phase 14 (Multiple Contacts)
 
 const GARANTIAS_STORE_NAME = "garantias";
 const PERSONS_STORE_NAME = "persons";
@@ -32,6 +32,7 @@ const PRODUCTS_STORE_NAME = "products";
 const SIMULATIONS_STORE_NAME = "simulations";
 const USERS_STORE_NAME = "users"; // New store for user profiles/roles
 const STATUSES_STORE_NAME = "statuses";
+const TASKS_STORE_NAME = "quadro_tarefas";
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
@@ -179,6 +180,12 @@ const getDB = (): Promise<IDBDatabase> => {
         // Create custom statuses store
         if (!dbInstance.objectStoreNames.contains(STATUSES_STORE_NAME)) {
           dbInstance.createObjectStore(STATUSES_STORE_NAME, {
+            keyPath: "id",
+            autoIncrement: true,
+          });
+        }
+        if (!dbInstance.objectStoreNames.contains(TASKS_STORE_NAME)) {
+          dbInstance.createObjectStore(TASKS_STORE_NAME, {
             keyPath: "id",
             autoIncrement: true,
           });
@@ -1402,3 +1409,64 @@ export const deleteStatus = async (id: number): Promise<void> => {
 
 export const clearStatuses = (): Promise<void> =>
   clearStore(STATUSES_STORE_NAME);
+
+// --- Task Functions (Trello Global) ---
+export interface TaskItem {
+  id?: number;
+  titulo: string;
+  descricao?: string;
+  status: 'todo' | 'doing' | 'done';
+  dataCriacao: string;
+}
+
+export const addTask = (task: Omit<TaskItem, "id">): Promise<number> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(TASKS_STORE_NAME, "readwrite");
+      const request = store.add(task);
+      request.onsuccess = (event) => resolve((event.target as IDBRequest).result as number);
+      request.onerror = (event) => reject((event.target as IDBRequest).error);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+export const getAllTasks = (): Promise<TaskItem[]> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(TASKS_STORE_NAME, "readonly");
+      const request = store.getAll();
+      request.onsuccess = (event) => resolve((event.target as IDBRequest).result as TaskItem[]);
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+export const updateTask = (task: TaskItem): Promise<number> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(TASKS_STORE_NAME, "readwrite");
+      const request = store.put(task);
+      request.onsuccess = (event) => resolve((event.target as IDBRequest).result as number);
+      request.onerror = (event) => reject((event.target as IDBRequest).error);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+export const deleteTask = (id: number): Promise<void> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(TASKS_STORE_NAME, "readwrite");
+      const request = store.delete(id);
+      request.onsuccess = () => resolve();
+      request.onerror = (event) => reject((event.target as IDBRequest).error);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};

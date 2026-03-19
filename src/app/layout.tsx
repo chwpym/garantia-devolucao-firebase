@@ -9,6 +9,7 @@ import PwaUpdateAlert from '@/components/pwa-update-alert';
 import { AuthProvider } from '@/components/auth-provider';
 import ClientOnly from '@/components/client-only';
 import ClientManifestInjector from '@/components/client-manifest';
+import { TaskProvider } from '@/providers/task-provider';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -44,7 +45,9 @@ export default function RootLayout({
       <body className="font-body antialiased" suppressHydrationWarning>
         <AuthProvider>
           <ThemeProvider attribute="data-theme" defaultTheme="system" enableSystem>
-            {children}
+            <TaskProvider>
+              {children}
+            </TaskProvider>
             <ClientOnly>
               <Toaster />
               <PwaUpdateAlert />
