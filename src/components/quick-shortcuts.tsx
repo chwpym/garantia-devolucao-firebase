@@ -22,20 +22,20 @@ export default function QuickShortcuts() {
 
     return (
         <div className="hidden md:flex items-center justify-center flex-wrap gap-2">
-            <Button variant="default" onClick={() => handleNavigate('register')}>
-                <Wrench /> Nova Garantia
+            <Button variant="outline" className="gap-1.5 shadow-md bg-background/60 backdrop-blur-md border-primary/20 hover:border-primary/50 text-foreground" onClick={() => handleNavigate('register')}>
+                <Wrench className="h-4 w-4 text-primary" /> Nova Garantia
             </Button>
-            <Button variant="outline" className="bg-orange-400 text-white hover:bg-orange-500 hover:text-white" onClick={() => handleNavigate('batch-register')}>
-                <History /> Garantia em Lote
+            <Button variant="outline" className="gap-1.5 shadow-md bg-background/60 backdrop-blur-md border-orange-400/20 hover:border-orange-500 text-foreground" onClick={() => handleNavigate('batch-register')}>
+                <History className="h-4 w-4 text-orange-400" /> Garantia em Lote
             </Button>
-            <Button variant="accent-blue" onClick={() => handleNavigate('devolucao-register')}>
-                <Undo2 /> Nova Devolução
+            <Button variant="outline" className="gap-1.5 shadow-md bg-background/60 backdrop-blur-md border-[hsl(var(--accent-blue))]/20 hover:border-[hsl(var(--accent-blue))] text-foreground" onClick={() => handleNavigate('devolucao-register')}>
+                <Undo2 className="h-4 w-4 text-[hsl(var(--accent-blue))]" /> Nova Devolução
             </Button>
-            <Button variant="accent-green" onClick={handleNewLoteClick}>
-                <Package /> Novo Lote
+            <Button variant="outline" className="gap-1.5 shadow-md bg-background/60 backdrop-blur-md border-[hsl(var(--accent-green))]/20 hover:border-[hsl(var(--accent-green))] text-foreground" onClick={handleNewLoteClick}>
+                <Package className="h-4 w-4 text-[hsl(var(--accent-green))]" /> Novo Lote
             </Button>
-            <Button variant="outline" className="bg-orange-400 text-white hover:bg-orange-500 hover:text-white" onClick={() => handleNavigate('calculators')}>
-                <CalculatorIcon /> Calculadoras
+            <Button variant="outline" className="gap-1.5 shadow-md bg-background/60 backdrop-blur-md border-orange-400/20 hover:border-orange-500 text-foreground" onClick={() => handleNavigate('calculators')}>
+                <CalculatorIcon className="h-4 w-4 text-orange-400" /> Calculadoras
             </Button>
         </div>
     );
