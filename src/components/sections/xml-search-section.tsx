@@ -42,6 +42,7 @@ export default function XmlSearchSection() {
     const [selectedCertIndex, setSelectedCertIndex] = useState<string>('');
     const [notas, setNotas] = useState<any[]>([]);
     const [ultNSU, setUltNSU] = useState<string>('0');
+    const [meuDanfeKey, setMeuDanfeKey] = useState<string>('');
 
         // NCM states
     const [searchNcm, setSearchNcm] = useState<string>('');
@@ -57,9 +58,10 @@ export default function XmlSearchSection() {
         loadCertificados();
         if (typeof window !== 'undefined') {
             const savedIndex = localStorage.getItem('xml_search_selectedCertIndex');
-            if (savedIndex) {
-                setSelectedCertIndex(savedIndex);
-            }
+            if (savedIndex) setSelectedCertIndex(savedIndex);
+
+            const savedApiKey = localStorage.getItem('meudanfe_api_key');
+            if (savedApiKey) setMeuDanfeKey(savedApiKey);
         }
     }, []);
 
@@ -270,15 +272,53 @@ export default function XmlSearchSection() {
         }
     };
 
-    const handleVisualizarDanfe = (xmlString?: string) => {
+    const handleVisualizarDanfe = async (xmlString?: string) => {
         if (!xmlString) {
             toast({ title: 'Erro', description: 'Conteúdo do XML não disponí­vel..', variant: 'destructive' });
             return;
         }
-        // Usando o WebDanfe via POST para converter XML em DANFE na hora em nova aba
+
+        // Se tiver API Key do MeuDanfe cadastrada, usa ela via API v2 (fetch)
+        if (meuDanfeKey) {
+            setLoading(true);
+            try {
+                const response = await fetch('https://api.meudanfe.com.br/v2/get/nfe/xmltodanfepdf', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Api-Key': meuDanfeKey
+                    },
+                    body: JSON.stringify({ xml: xmlString })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.status === 'success' && data.pdf) {
+                        const link = document.createElement('a');
+                        link.href = `data:application/pdf;base64,${data.pdf}`;
+                        link.download = `DANFE_${Date.now()}.pdf`;
+                        link.click();
+                        toast({ title: 'Sucesso', description: 'DANFE gerada com MeuDanfe!' });
+                        return;
+                    } else {
+                        toast({ title: 'Erro MeuDanfe', description: data.message || 'Erro ao gerar PDF.', variant: 'destructive' });
+                    }
+                } else {
+                    toast({ title: 'Erro na API', description: 'Falha na comunicação com MeuDanfe.', variant: 'destructive' });
+                }
+            } catch (e) {
+                console.error("Erro MeuDanfe:", e);
+                toast({ title: 'Erro', description: 'Erro ao conectar-se ao MeuDanfe.', variant: 'destructive' });
+            } finally {
+                setLoading(false);
+            }
+            return;
+        }
+
+        // FALLBACK: Usando o WebDanfe via POST para converter XML em DANFE na hora em nova aba
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = 'https://webdanfe.com.br/danfe/index.html';
+        form.action = 'https://www.webdanfe.com.br/danfe/GeraDanfe.php';
         form.target = '_blank';
 
         const input = document.createElement('input');
@@ -478,6 +518,22 @@ export default function XmlSearchSection() {
                                     <FilePlus className="h-3.5 w-3.5" /> Gerar DANFE de Arquivo
                                 </Button>
                                 <input type="file" ref={fileInputDanfeRef} className="hidden" accept=".xml" onChange={handleImportXmlForDanfe} />
+                                
+                                <div className="flex items-center gap-1 bg-background border rounded-md px-2 h-9">
+                                    <span className="text-xs text-muted-foreground mr-1">MeuDanfe Key:</span>
+                                    <input
+                                        type="password"
+                                        className="w-[100px] bg-transparent text-xs outline-none font-mono"
+                                        value={meuDanfeKey}
+                                        onChange={(e) => {
+                                            setMeuDanfeKey(e.target.value);
+                                            if (typeof window !== 'undefined') {
+                                                localStorage.setItem('meudanfe_api_key', e.target.value);
+                                            }
+                                        }}
+                                        placeholder="Opcional"
+                                    />
+                                </div>
 
                                 <Button onClick={handleConsultarSefaz} disabled={loading || certificados.length === 0} className="gap-2">
                                     <Search className="h-4 w-4" /> {loading ? 'Consultando...' : 'Consultar SEFAZ'}
