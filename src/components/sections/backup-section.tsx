@@ -22,6 +22,8 @@ interface FullBackupData {
   companyData: Awaited<ReturnType<typeof db.getCompanyData>>;
   products: Awaited<ReturnType<typeof db.getAllProducts>>;
   statuses: Awaited<ReturnType<typeof db.getAllStatuses>>;
+  certificados?: any[];
+  tasks?: any[];
 }
 
 
@@ -40,7 +42,9 @@ export default function BackupSection() {
         devolucoes,
         companyData,
         products,
-        statuses
+        statuses,
+        certificados,
+        tasks
     ] = await Promise.all([
         db.getAllWarranties(),
         db.getAllPersons(),
@@ -50,6 +54,8 @@ export default function BackupSection() {
         db.getCompanyData(),
         db.getAllProducts(),
         db.getAllStatuses(),
+        db.getAllCertificados ? db.getAllCertificados() : Promise.resolve([]),
+        db.getAllTasks ? db.getAllTasks() : Promise.resolve([]),
     ]);
     
     return {
@@ -61,6 +67,8 @@ export default function BackupSection() {
         companyData,
         products,
         statuses,
+        certificados: certificados as any[],
+        tasks: tasks as any[],
     };
   }
 
