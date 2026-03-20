@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
-import { FileText, ShieldCheck, Plus, Trash2, Search, Key, Download, Eye, ShoppingCart, ListChecks } from 'lucide-react';
+import { FileText, ShieldCheck, Plus, Trash2, Search, Key, Download, Eye, ShoppingCart, ListChecks, FilePlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import * as db from '@/lib/db'; // Assuming IndexedDB has get/set capabilities
 
@@ -29,6 +29,7 @@ export default function XmlSearchSection() {
     const [activeTab, setActiveTab] = useState('certificados');
     const [certificados, setCertificados] = useState<CertificadoItem[]>([]);
     const [loading, setLoading] = useState(false);
+    const fileInputDanfeRef = useRef<HTMLInputElement>(null);
 
     // Form states for Certificate
     const [empresa, setEmpresa] = useState('');
@@ -291,6 +292,18 @@ export default function XmlSearchSection() {
         document.body.removeChild(form);
     };
 
+    const handleImportXmlForDanfe = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const xmlString = event.target?.result as string;
+            handleVisualizarDanfe(xmlString);
+        };
+        reader.readAsText(file, 'ISO-8859-1');
+        if (fileInputDanfeRef.current) fileInputDanfeRef.current.value = '';
+    };
+
     const handleConsultarNcm = async () => {
         const cleanNcm = searchNcm.replace(/\D/g, '');
         if (cleanNcm.length !== 8) {
@@ -458,6 +471,14 @@ export default function XmlSearchSection() {
                                         <option key={i} value={i.toString()}>{c.empresa}</option>
                                     ))}
                                 </select>
+
+                                <span className="text-muted-foreground self-center hidden sm:inline">|</span>
+
+                                <Button variant="outline" size="sm" className="h-9 gap-1 text-xs" onClick={() => fileInputDanfeRef.current?.click()}>
+                                    <FilePlus className="h-3.5 w-3.5" /> Gerar DANFE de Arquivo
+                                </Button>
+                                <input type="file" ref={fileInputDanfeRef} className="hidden" accept=".xml" onChange={handleImportXmlForDanfe} />
+
                                 <Button onClick={handleConsultarSefaz} disabled={loading || certificados.length === 0} className="gap-2">
                                     <Search className="h-4 w-4" /> {loading ? 'Consultando...' : 'Consultar SEFAZ'}
                                 </Button>
