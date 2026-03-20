@@ -75,11 +75,19 @@ export default function XmlSearchSection() {
     }, [selectedCertIndex, certificados]);
 
     const loadCertificados = async () => {
-        if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem('xml_search_certificados');
-            if (saved) {
-                setCertificados(JSON.parse(saved));
-            }
+        try {
+            const list = await db.getAllCertificados();
+            const mapped: CertificadoItem[] = list.map((cert: any) => ({
+                id: cert.id,
+                empresa: cert.alias,
+                cnpj: cert.cnpj,
+                senha: cert.senha,
+                hasPassword: !!cert.senha,
+                fileBase64: cert.arquivo
+            }));
+            setCertificados(mapped);
+        } catch (error) {
+            console.error('Erro ao carregar certificados:', error);
         }
     };
 
@@ -109,19 +117,16 @@ export default function XmlSearchSection() {
 
         setLoading(true);
         try {
-            // Save Certificate Logic to indexDB (Encrypted or raw for test)
-            const newItem: CertificadoItem = {
-                empresa,
-                cnpj,
-                hasPassword: !!senha,
-                senha: senha, // Guarda em memória para a sessÃƒÆ’Ã‚Â£o
-                nomeArquivo: fileName,
-                fileBase64: fileBase64 || undefined
-            };
+            await db.addCertificado({
+                alias: empresa,
+                cnpj: cnpj,
+                senha: senha,
+                arquivo: fileBase64,
+                vencimento: ''
+            });
 
-            setCertificados([...certificados, newItem]);
+            await loadCertificados();
 
-            // Clear fields
             setEmpresa('');
             setCnpj('');
             setSenha('');
@@ -130,7 +135,21 @@ export default function XmlSearchSection() {
 
             toast({ title: 'Sucesso', description: 'Certificado salvo localmente!' });
         } catch (error) {
-            toast({ title: 'Erro ao salvar', description: 'Não foi possiel salvar o arquivo.', variant: 'destructive' });
+            toast({ title: 'Erro ao salvar', description: 'Não foi possível salvar o arquivo.', variant: 'destructive' });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDeleteCertificate = async (id?: number) => {
+        if (id === undefined) return;
+        setLoading(true);
+        try {
+            await db.deleteCertificado(id);
+            await loadCertificados();
+            toast({ title: 'Sucesso', description: 'Certificado removido com sucesso!' });
+        } catch (error) {
+            toast({ title: 'Erro', description: 'Falha ao remover certificado.', variant: 'destructive' });
         } finally {
             setLoading(false);
         }
@@ -379,13 +398,13 @@ export default function XmlSearchSection() {
                                         </TableHeader>
                                         <TableBody>
                                             {certificados.length > 0 ? (
-                                                certificados.map((cert, index) => (
-                                                    <TableRow key={index}>
+                                                certificados.map((cert) => (
+                                                    <TableRow key={cert.id}>
                                                         <TableCell className="font-medium">{cert.empresa}</TableCell>
                                                         <TableCell>{cert.cnpj}</TableCell>
                                                         <TableCell className="text-xs text-muted-foreground">{cert.nomeArquivo || '-'}</TableCell>
                                                         <TableCell className="text-right">
-                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDeleteCertificate(cert.id)} disabled={loading}>
                                                                 <Trash2 className="h-4 w-4" />
                                                             </Button>
                                                         </TableCell>
