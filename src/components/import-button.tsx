@@ -28,6 +28,8 @@ interface FullBackupData {
   companyData?: CompanyData;
   products?: Product[];
   statuses?: CustomStatus[];
+  certificados?: any[];
+  tasks?: any[];
 }
 
 
@@ -108,6 +110,8 @@ export function ImportButton({ onDataImported }: ImportButtonProps) {
         db.clearCompanyData(),
         db.clearStatuses(),
         db.clearLoteItems(),
+        db.clearCertificados ? db.clearCertificados() : Promise.resolve(),
+        db.clearTasks ? db.clearTasks() : Promise.resolve(),
       ]);
 
       // Import new data
@@ -149,6 +153,18 @@ export function ImportButton({ onDataImported }: ImportButtonProps) {
       if (dataToImport.companyData) {
         const { ...companyData } = dataToImport.companyData;
         await db.updateCompanyData(companyData);
+      }
+
+      if (dataToImport.certificados) {
+         for (const c of dataToImport.certificados) {
+            await db.addCertificado(c);
+         }
+      }
+
+      if (dataToImport.tasks) {
+         for (const t of dataToImport.tasks) {
+             await db.addTask(t);
+         }
       }
 
       onDataImported();
