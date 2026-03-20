@@ -282,26 +282,27 @@ export default function XmlSearchSection() {
         if (meuDanfeKey) {
             setLoading(true);
             try {
-                const response = await fetch('https://api.meudanfe.com.br/v2/get/nfe/xmltodanfepdf', {
+                const response = await fetch('https://api.meudanfe.com.br/v2/fd/convert/xml-to-da', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Content-Type': 'text/plain',
                         'Api-Key': meuDanfeKey
                     },
-                    body: JSON.stringify({ xml: xmlString })
+                    body: xmlString
                 });
 
                 if (response.ok) {
                     const data = await response.json();
-                    if (data.status === 'success' && data.pdf) {
+                    if (data.data) {
                         const link = document.createElement('a');
-                        link.href = `data:application/pdf;base64,${data.pdf}`;
+                        link.href = `data:application/pdf;base64,${data.data}`;
                         link.download = `DANFE_${Date.now()}.pdf`;
                         link.click();
                         toast({ title: 'Sucesso', description: 'DANFE gerada com MeuDanfe!' });
                         return;
                     } else {
-                        toast({ title: 'Erro MeuDanfe', description: data.message || 'Erro ao gerar PDF.', variant: 'destructive' });
+                        toast({ title: 'Erro MeuDanfe', description: 'Dados do PDF não encontrados na resposta.', variant: 'destructive' });
                     }
                 } else {
                     toast({ title: 'Erro na API', description: 'Falha na comunicação com MeuDanfe.', variant: 'destructive' });
