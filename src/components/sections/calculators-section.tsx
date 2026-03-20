@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calculator, ShoppingCart, Percent, Plus, FileScan, Tag, DivideCircle, Files, Microscope, ArrowLeft, Landmark, Replace } from 'lucide-react';
+import { Calculator, ShoppingCart, Percent, Plus, FileScan, Tag, DivideCircle, Files, Microscope, ArrowLeft, Landmark, Replace, Info } from 'lucide-react';
 import AveragePriceCalculator from '@/components/calculators/average-price-calculator';
 import BatchPricingCalculator from '@/components/calculators/batch-pricing-calculator';
 import CalculateSaleCalculator from '@/components/calculators/calculate-sale-calculator';
@@ -16,10 +16,19 @@ import AdvancedCostAnalysisCalculator from '../calculators/advanced-cost-analysi
 import NfeComparator from '../calculators/nfe-comparator';
 import TaxAnalysisCalculator from '../calculators/tax-analysis-calculator';
 import PurchaseSimulatorCalculator from '../calculators/purchase-simulator-calculator';
+import NfeProductOriginCalculator from '../calculators/nfe-origin-calculator';
 import { cn } from '@/lib/utils';
 
 
 const calculators = [
+  {
+    id: 'nfe-origin-analyzer',
+    icon: Info,
+    title: 'Leitor de Origem de Mercadoria (XML)',
+    description: 'Importe um XML e veja a Origem da Mercadoria (0-8) de cada item rapidamente com a legenda de apoio.',
+    component: NfeProductOriginCalculator,
+    color: 'border-orange-500'
+  },
   {
     id: 'purchase-simulator',
     icon: Replace,

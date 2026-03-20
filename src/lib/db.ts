@@ -18,7 +18,7 @@ import { auth, sendPasswordResetEmail } from "./firebase";
 export { auth, sendPasswordResetEmail };
 
 const DB_NAME = "GarantiasDB";
-const DB_VERSION = 13; // Incremented for Phase 14 (Multiple Contacts)
+const DB_VERSION = 14; // Incremented for Certificados Store
 
 const GARANTIAS_STORE_NAME = "garantias";
 const PERSONS_STORE_NAME = "persons";
@@ -33,6 +33,7 @@ const SIMULATIONS_STORE_NAME = "simulations";
 const USERS_STORE_NAME = "users"; // New store for user profiles/roles
 const STATUSES_STORE_NAME = "statuses";
 const TASKS_STORE_NAME = "quadro_tarefas";
+const CERTIFICADOS_STORE_NAME = "certificados";
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
@@ -189,6 +190,14 @@ const getDB = (): Promise<IDBDatabase> => {
             keyPath: "id",
             autoIncrement: true,
           });
+        }
+
+        if (!dbInstance.objectStoreNames.contains(CERTIFICADOS_STORE_NAME)) {
+          const certStore = dbInstance.createObjectStore(CERTIFICADOS_STORE_NAME, {
+            keyPath: "id",
+            autoIncrement: true,
+          });
+          certStore.createIndex("cnpj", "cnpj", { unique: false });
         }
       };
 
@@ -1465,6 +1474,55 @@ export const deleteTask = (id: number): Promise<void> => {
       const request = store.delete(id);
       request.onsuccess = () => resolve();
       request.onerror = (event) => reject((event.target as IDBRequest).error);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+// --- Certificados Functions ---
+export interface CertificadoItem {
+  id?: number;
+  cnpj: string;
+  alias: string;
+  arquivo: string; // Base64
+  senha?: string;
+  vencimento?: string;
+}
+
+export const addCertificado = (cert: Omit<CertificadoItem, "id">): Promise<number> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(CERTIFICADOS_STORE_NAME, "readwrite");
+      const request = store.add(cert);
+      request.onsuccess = (event) => resolve((event.target as IDBRequest).result as number);
+      request.onerror = (event) => reject((event.target as IDBRequest).error);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+export const getAllCertificados = (): Promise<CertificadoItem[]> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(CERTIFICADOS_STORE_NAME, "readonly");
+      const request = store.getAll();
+      request.onsuccess = (event) => resolve((event.target as IDBRequest).result as CertificadoItem[]);
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+export const deleteCertificado = (id: number): Promise<void> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(CERTIFICADOS_STORE_NAME, "readwrite");
+      const request = store.delete(id);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
     } catch (err) {
       reject(err);
     }
