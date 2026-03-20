@@ -1528,3 +1528,29 @@ export const deleteCertificado = (id: number): Promise<void> => {
     }
   });
 };
+
+export const clearCertificados = (): Promise<void> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(CERTIFICADOS_STORE_NAME, "readwrite");
+      const request = store.clear();
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+export const clearTasks = (): Promise<void> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const store = await getStore(TASKS_STORE_NAME, "readwrite");
+      const request = store.clear();
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
