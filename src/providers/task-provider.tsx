@@ -36,6 +36,11 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     const [newTitle, setNewTitle] = useState('');
     const [newDesc, setNewDesc] = useState('');
 
+    // States para editar tarefa
+    const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
+    const [editTitle, setEditTitle] = useState('');
+    const [editDesc, setEditDesc] = useState('');
+
     useEffect(() => {
         loadTasks();
     }, []);
@@ -87,6 +92,20 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
             loadTasks();
         } catch (error) {
             console.error('Erro ao deletar tarefa:', error);
+        }
+    };
+
+    const handleUpdateTask = async () => {
+        if (!editingTaskId || !editTitle.trim()) return;
+        const task = tasks.find(t => t.id === editingTaskId);
+        if (!task) return;
+
+        try {
+            await db.updateTask({ ...task, titulo: editTitle.trim(), descricao: editDesc.trim() });
+            setEditingTaskId(null);
+            loadTasks();
+        } catch (error) {
+            console.error('Erro ao atualizar tarefa:', error);
         }
     };
 
