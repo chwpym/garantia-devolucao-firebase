@@ -39,15 +39,23 @@ export default function BatchPricingCalculator() {
         { id: 1, description: "", quantity: "1", fatorConversao: "1", originalCost: "", impostos: "", desconto: "", finalCost: "", margin: "", impostoSobreVenda: "", price: "" },
     ]);
     const [globalMargin, setGlobalMargin] = useState("");
+    const [nfeInfo, setNfeInfo] = useState<{ emitterName: string; emitterCnpj: string; nfeNumber: string; } | null>(null);
     const { toast } = useToast();
 
     const onNfeProcessed = (data: NfeData | null) => {
         if (!data) {
             setItems([{ id: 1, description: "", quantity: "1", fatorConversao: "1", originalCost: "", impostos: "", desconto: "", finalCost: "", margin: "", impostoSobreVenda: "", price: "" }]);
+            setNfeInfo(null);
             return;
         }
 
         const { infNFe, det: dets } = data;
+        setNfeInfo({
+            emitterName: infNFe.emit.xNome,
+            emitterCnpj: infNFe.emit.CNPJ,
+            nfeNumber: infNFe.ide.nNF,
+        });
+        
         const total = infNFe.total.ICMSTot;
 
         const totalProdValue = parseFloat(total.vProd) || 0;
@@ -146,7 +154,7 @@ export default function BatchPricingCalculator() {
                 }
                 return item;
             });
-            return prevItems; // Vai retornar atualizado direto, mas o setState precisa clonar se quisermos re-render de valor primitivo, mas o prevItems.map já clona!
+            return newItems; // ERA PREVITEMS (Conserta o travamento do campo)
         });
     };
 
@@ -301,12 +309,23 @@ export default function BatchPricingCalculator() {
                 />
             </div>
 
+            {nfeInfo && items.length > 0 && (
+                <div className="p-4 border rounded-lg bg-muted space-y-2">
+                    <h3 className="text-lg font-medium text-xs sm:text-sm">Informações da NF-e</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2 text-xs">
+                        <div><strong>Emitente:</strong> <span className="text-muted-foreground">{nfeInfo.emitterName}</span></div>
+                        <div><strong>CNPJ:</strong> <span className="text-muted-foreground">{nfeInfo.emitterCnpj}</span></div>
+                        <div><strong>NF-e Nº:</strong> <span className="text-muted-foreground">{nfeInfo.nfeNumber}</span></div>
+                    </div>
+                </div>
+            )}
+
             <div className="overflow-x-auto">
                 <Table>
                     <TableHeader className="bg-muted/50">
                         <TableRow>
-                            <TableHead className="min-w-[250px]">Descrição</TableHead>
-                            <TableHead className="w-[80px]">Qtde</TableHead>
+                            <TableHead className="min-w-[250px] sticky left-0 bg-background/95 backdrop-blur-sm z-10">Descrição</TableHead>
+                            <TableHead className="w-[100px] text-right">Qtde</TableHead>
                             <TableHead className="w-[80px]">Fator</TableHead>
                             <TableHead className="w-[120px]">C. Orig. Un.</TableHead>
                             <TableHead className="w-[120px]">Impostos (+)</TableHead>
@@ -327,53 +346,52 @@ export default function BatchPricingCalculator() {
                             const totalSale = quantity * fator * price;
                             return (
                                 <TableRow key={item.id}>
-                                    <TableCell>
+                                    <TableCell className="sticky left-0 bg-background/95 backdrop-blur-sm z-10 font-medium">
                                         <Input type="text" placeholder="Nome do produto" value={item.description}
-                                            onChange={e => handleItemChange(item.id, 'description', e.target.value)} className="bg-input-calc" />
+                                            onChange={e => handleItemChange(item.id, 'description', e.target.value)} className="bg-input-calc text-xs" />
                                     </TableCell>
                                     <TableCell>
-                                        <Input type="number" step="0.0001" value={item.quantity}
-                                            onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} className="bg-input-calc" />
+                                        <Input type="text" inputMode="decimal" value={item.quantity}
+                                            onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'quantity', val); }} className="bg-input-calc text-right" />
                                     </TableCell>
                                     <TableCell>
-                                        <Input type="number" step="1" placeholder="1" value={item.fatorConversao || "1"}
-                                            onChange={e => handleItemChange(item.id, 'fatorConversao', e.target.value)} className="bg-input-calc font-bold text-accent-blue" />
+                                        <Input type="text" inputMode="decimal" placeholder="1" value={item.fatorConversao || "1"}
+                                            onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'fatorConversao', val); }} className="bg-input-calc font-bold text-accent-blue text-center" />
                                     </TableCell>
                                     <TableCell>
-                                        <Input type="number" step="0.0001" value={item.originalCost}
-                                            onChange={e => handleItemChange(item.id, 'originalCost', e.target.value)} className="bg-input-calc" />
+                                        <Input type="text" inputMode="decimal" value={item.originalCost}
+                                            onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'originalCost', val); }} className="bg-input-calc text-right" />
                                     </TableCell>
                                     <TableCell>
-                                        <Input type="number" step="0.0001" value={item.impostos}
-                                            onChange={e => handleItemChange(item.id, 'impostos', e.target.value)} className="bg-input-calc" />
+                                        <Input type="text" inputMode="decimal" value={item.impostos}
+                                            onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'impostos', val); }} className="bg-input-calc text-right" />
                                     </TableCell>
                                     <TableCell>
-                                        <Input type="number" step="0.0001" value={item.desconto}
-                                            onChange={e => handleItemChange(item.id, 'desconto', e.target.value)} className="bg-input-calc" />
+                                        <Input type="text" inputMode="decimal" value={item.desconto}
+                                            onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'desconto', val); }} className="bg-input-calc text-right" />
                                     </TableCell>
                                     <TableCell>
-                                        <Input type="number" step="0.0001" value={item.finalCost}
-                                            onChange={e => handleItemChange(item.id, 'finalCost', e.target.value)} className="bg-input-calc" disabled />
+                                        <Input type="text" value={item.finalCost ? Number(item.finalCost).toFixed(4) : ""} className="bg-input-calc text-right" disabled />
                                     </TableCell>
                                     <TableCell>
-                                        <Input type="number" step="0.01" value={item.margin}
-                                            onChange={e => handleItemChange(item.id, 'margin', e.target.value)} className="bg-input-calc" />
+                                        <Input type="text" inputMode="decimal" value={item.margin}
+                                            onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'margin', val); }} className="bg-input-calc text-right" />
                                     </TableCell>
                                     <TableCell>
-                                        <Input type="number" step="0.01" placeholder="0" value={item.impostoSobreVenda || ""}
-                                            onChange={e => handleItemChange(item.id, 'impostoSobreVenda', e.target.value)} className="bg-input-calc" />
+                                        <Input type="text" inputMode="decimal" placeholder="0" value={item.impostoSobreVenda || ""}
+                                            onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'impostoSobreVenda', val); }} className="bg-input-calc text-right" />
                                     </TableCell>
                                     <TableCell>
-                                        <Input type="number" step="0.0001" value={item.price}
-                                            onChange={e => handleItemChange(item.id, 'price', e.target.value)} className="bg-input-calc" />
+                                        <Input type="text" inputMode="decimal" value={item.price}
+                                            onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'price', val); }} className="bg-input-calc text-right font-semibold text-primary" />
                                     </TableCell>
                                     <TableCell>
-                                        <div className="w-full h-10 px-3 py-2 rounded-md border border-input bg-muted flex items-center text-sm">
+                                        <div className="w-full h-10 px-3 py-2 rounded-md border border-input bg-muted flex items-center justify-end text-sm font-bold">
                                             {formatCurrency(totalSale)}
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)} disabled={items.length <= 1}>
+                                        <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)} disabled={items.length <= 1} className="h-8 w-8 hover:bg-destructive/10">
                                             <Trash2 className="h-4 w-4 text-destructive" />
                                         </Button>
                                     </TableCell>
