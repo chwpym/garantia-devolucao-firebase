@@ -345,54 +345,52 @@ export default function BatchPricingCalculator() {
                             const price = parseFloat(item.price) || 0;
                             const totalSale = quantity * fator * price;
                             return (
-                                <TableRow key={item.id}>
-                                    <TableCell className="sticky left-0 bg-background/95 backdrop-blur-sm z-10 font-medium">
+                                <TableRow key={item.id} className="hover:bg-muted/30 transition-colors">
+                                    <TableCell className="sticky left-0 bg-background/95 backdrop-blur-sm z-10 font-medium p-1">
                                         <Input type="text" placeholder="Nome do produto" value={item.description}
-                                            onChange={e => handleItemChange(item.id, 'description', e.target.value)} className="bg-input-calc text-xs" />
+                                            onChange={e => handleItemChange(item.id, 'description', e.target.value)} className="bg-transparent border-0 border-b border-transparent focus-visible:border-primary focus-visible:ring-0 shadow-none text-xs h-8 p-1 rounded-none" />
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="p-1">
                                         <Input type="text" inputMode="decimal" value={item.quantity}
-                                            onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'quantity', val); }} className="bg-input-calc text-right" />
+                                            onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'quantity', val); }} className="bg-transparent border-0 border-b border-transparent focus-visible:border-primary focus-visible:ring-0 shadow-none text-right text-xs h-8 p-1 rounded-none" />
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="p-1">
                                         <Input type="text" inputMode="decimal" placeholder="1" value={item.fatorConversao || "1"}
-                                            onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'fatorConversao', val); }} className="bg-input-calc font-bold text-accent-blue text-center" />
+                                            onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'fatorConversao', val); }} className="bg-transparent border-0 border-b border-transparent focus-visible:border-primary focus-visible:ring-0 shadow-none text-center font-bold text-accent-blue text-xs h-8 p-1 rounded-none" />
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="p-1">
                                         <Input type="text" inputMode="decimal" value={item.originalCost}
-                                            onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'originalCost', val); }} className="bg-input-calc text-right" />
+                                            onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'originalCost', val); }} className="bg-transparent border-0 border-b border-transparent focus-visible:border-primary focus-visible:ring-0 shadow-none text-right text-xs h-8 p-1 rounded-none" />
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="p-1">
                                         <Input type="text" inputMode="decimal" value={item.impostos}
-                                            onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'impostos', val); }} className="bg-input-calc text-right" />
+                                            onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'impostos', val); }} className="bg-transparent border-0 border-b border-transparent focus-visible:border-primary focus-visible:ring-0 shadow-none text-right text-xs h-8 p-1 rounded-none" />
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="p-1">
                                         <Input type="text" inputMode="decimal" value={item.desconto}
-                                            onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'desconto', val); }} className="bg-input-calc text-right" />
+                                            onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'desconto', val); }} className="bg-transparent border-0 border-b border-transparent focus-visible:border-primary focus-visible:ring-0 shadow-none text-right text-xs h-8 p-1 rounded-none" />
                                     </TableCell>
-                                    <TableCell>
-                                        <Input type="text" value={item.finalCost ? Number(item.finalCost).toFixed(4) : ""} className="bg-input-calc text-right" disabled />
+                                    <TableCell className="p-1 text-right text-xs font-bold text-purple-400">
+                                        {item.finalCost ? formatCurrency4(Number(item.finalCost)) : "-"}
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="p-1">
                                         <Input type="text" inputMode="decimal" value={item.margin}
-                                            onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'margin', val); }} className="bg-input-calc text-right" />
+                                            onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'margin', val); }} className="bg-transparent border-0 border-b border-transparent focus-visible:border-primary focus-visible:ring-0 shadow-none text-right text-xs h-8 p-1 rounded-none" />
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="p-1">
                                         <Input type="text" inputMode="decimal" placeholder="0" value={item.impostoSobreVenda || ""}
-                                            onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'impostoSobreVenda', val); }} className="bg-input-calc text-right" />
+                                            onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'impostoSobreVenda', val); }} className="bg-transparent border-0 border-b border-transparent focus-visible:border-primary focus-visible:ring-0 shadow-none text-right text-xs h-8 p-1 rounded-none" />
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="p-1">
                                         <Input type="text" inputMode="decimal" value={item.price}
-                                            onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'price', val); }} className="bg-input-calc text-right font-semibold text-primary" />
+                                            onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'price', val); }} className="bg-transparent border-0 border-b border-transparent focus-visible:border-primary focus-visible:ring-0 shadow-none text-right font-semibold text-primary text-xs h-8 p-1 rounded-none" />
                                     </TableCell>
-                                    <TableCell>
-                                        <div className="w-full h-10 px-3 py-2 rounded-md border border-input bg-muted flex items-center justify-end text-sm font-bold">
-                                            {formatCurrency(totalSale)}
-                                        </div>
+                                    <TableCell className="p-1 text-right text-xs font-bold text-green-500">
+                                        {formatCurrency(totalSale)}
                                     </TableCell>
-                                    <TableCell>
-                                        <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)} disabled={items.length <= 1} className="h-8 w-8 hover:bg-destructive/10">
-                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                    <TableCell className="p-1 text-center">
+                                        <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)} disabled={items.length <= 1} className="h-6 w-6 hover:bg-destructive/10">
+                                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
                                         </Button>
                                     </TableCell>
                                 </TableRow>
