@@ -73,7 +73,7 @@ const calculators = [
     id: 'batch-pricing',
     icon: ShoppingCart,
     title: 'Precificação em Lote',
-    description: 'Defina preços de venda para múltiplos produtos em lote.',
+    description: 'Defina preços de venda e analise custos para múltiplos produtos em lote.',
     component: BatchPricingCalculator,
     color: 'border-accent-green'
   },
