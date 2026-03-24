@@ -24,14 +24,21 @@ interface BatchPriceItem {
     id: number;
     description: string;
     quantity: string;
-    fatorConversao?: string; // Fator de Conversão
+    fatorConversao?: string;
     originalCost: string;
-    impostos: string; // IPI + ICMS-ST + Frete + Seguro + Outras
+    impostos: string;
     desconto: string;
-    finalCost: string; // Custo Final Líquido
+    finalCost: string;
     margin: string;
-    impostoSobreVenda?: string; // Imposto sobre Venda (%)
+    impostoSobreVenda?: string;
     price: string;
+    impostosDetail?: {
+        ipi: number;
+        icmsST: number;
+        frete: number;
+        seguro: number;
+        outras: number;
+    }
 }
 
 export default function BatchPricingCalculator() {
@@ -62,6 +69,16 @@ export default function BatchPricingCalculator() {
         const totalFrete = parseFloat(total.vFrete) || 0;
         const totalSeguro = parseFloat(total.vSeg) || 0;
         const totalOutras = parseFloat(total.vOutro) || 0;
+        const extractST = (imposto: any): number => {
+            if (!imposto?.ICMS) return 0;
+            const icms = imposto.ICMS;
+            for (const key in icms) {
+                if (icms[key]?.vICMSST) {
+                    return parseFloat(icms[key].vICMSST) || 0;
+                }
+            }
+            return 0;
+        };
 
         const newItems: BatchPriceItem[] = dets.map((det: NfeProductDetail, index: number) => {
             const prod = det.prod;
@@ -74,7 +91,7 @@ export default function BatchPricingCalculator() {
             const itemWeight = totalProdValue > 0 ? itemTotalCost / totalProdValue : 0;
 
             const ipiValor = parseFloat(imposto?.IPI?.IPITrib?.vIPI) || 0;
-            const stValor = parseFloat(imposto?.ICMS?.ICMSST?.vICMSST) || 0;
+            const stValor = extractST(imposto);
 
             const freteRateado = parseFloat(prod.vFrete) || (totalFrete * itemWeight) || 0;
             const seguroRateado = parseFloat(prod.vSeg) || (totalSeguro * itemWeight) || 0;
@@ -98,9 +115,17 @@ export default function BatchPricingCalculator() {
                 finalCost: finalUnitCost.toString(),
                 margin: "",
                 impostoSobreVenda: "",
-                price: ""
+                price: "",
+                impostosDetail: {
+                    ipi: ipiValor,
+                    icmsST: stValor,
+                    frete: freteRateado,
+                    seguro: seguroRateado,
+                    outras: outrasRateado
+                }
             };
         });
+
         
         setItems(newItems.length > 0 ? newItems : [{ id: 1, description: "", quantity: "1", fatorConversao: "1", originalCost: "", impostos: "", desconto: "", finalCost: "", margin: "", impostoSobreVenda: "", price: "" }]);
 
@@ -294,7 +319,7 @@ export default function BatchPricingCalculator() {
                         placeholder="Ex: 40"
                         value={globalMargin}
                         onChange={(e) => setGlobalMargin(e.target.value)}
-                        className="w-20 h-7 text-xs bg-input-calc text-center px-1 font-bold"
+                        className="w-20 h-7 text-xs bg-muted text-foreground border-input text-center px-1 font-bold"
                     />
                     <Button onClick={applyGlobalMargin} size="icon" className="h-7 w-7">
                         <ChevronsRight className="h-3.5 w-3.5" />
@@ -363,8 +388,26 @@ export default function BatchPricingCalculator() {
                                             onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'originalCost', val); }} className="bg-transparent border-0 border-b border-transparent focus-visible:border-primary focus-visible:ring-0 shadow-none text-right text-xs h-8 p-1 rounded-none" />
                                     </TableCell>
                                     <TableCell className="p-1">
-                                        <Input type="text" inputMode="decimal" value={item.impostos}
-                                            onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'impostos', val); }} className="bg-transparent border-0 border-b border-transparent focus-visible:border-primary focus-visible:ring-0 shadow-none text-right text-xs h-8 p-1 rounded-none" />
+                                        <TooltipProvider>
+                                            <Tooltip delayDuration={100}>
+                                                <TooltipTrigger asChild>
+                                                    <Input type="text" inputMode="decimal" value={item.impostos}
+                                                        onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'impostos', val); }} className="bg-transparent border-0 border-b border-transparent focus-visible:border-primary focus-visible:ring-0 shadow-none text-right text-xs h-8 p-1 rounded-none cursor-help" />
+                                                </TooltipTrigger>
+                                                {item.impostosDetail && (
+                                                    <TooltipContent className="p-2 text-xs space-y-1 bg-popover text-popover-foreground border shadow-md z-30">
+                                                        <p className="font-bold border-b pb-1 mb-1">Detalhamento (por un.)</p>
+                                                        <div className="grid grid-cols-2 gap-x-4">
+                                                            <span>IPI:</span> <span className="text-right">{formatCurrency4(item.impostosDetail.ipi / (parseFloat(item.quantity) || 1))}</span>
+                                                            <span>ICMS-ST:</span> <span className="text-right">{formatCurrency4(item.impostosDetail.icmsST / (parseFloat(item.quantity) || 1))}</span>
+                                                            <span>Frete:</span> <span className="text-right">{formatCurrency4(item.impostosDetail.frete / (parseFloat(item.quantity) || 1))}</span>
+                                                            <span>Seguro:</span> <span className="text-right">{formatCurrency4(item.impostosDetail.seguro / (parseFloat(item.quantity) || 1))}</span>
+                                                            <span>Outras:</span> <span className="text-right">{formatCurrency4(item.impostosDetail.outras / (parseFloat(item.quantity) || 1))}</span>
+                                                        </div>
+                                                    </TooltipContent>
+                                                )}
+                                            </Tooltip>
+                                        </TooltipProvider>
                                     </TableCell>
                                     <TableCell className="p-1">
                                         <Input type="text" inputMode="decimal" value={item.desconto}
