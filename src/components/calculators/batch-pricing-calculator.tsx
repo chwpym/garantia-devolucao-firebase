@@ -441,34 +441,38 @@ export default function BatchPricingCalculator() {
                         })}
                     </TableBody>
                     <TableFooter className="bg-muted">
-                        <TableRow>
-                            <TableCell colSpan={7} className="text-right font-bold">Totais:</TableCell>
-                            <TableCell className="font-bold text-right">
-                                <div className="flex items-center justify-end space-x-2">
+                        <TableRow className="hover:bg-transparent">
+                            <TableCell colSpan={6} className="text-right font-bold text-xs">Totais:</TableCell>
+                            <TableCell className="text-right font-bold text-xs text-purple-400">
+                                {formatCurrency(totals.totalFinalCost)}
+                            </TableCell>
+                            <TableCell className="font-bold text-right text-xs">
+                                <div className="flex items-center justify-end space-x-1">
                                     <span>Média</span>
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
-                                                <Info className="h-4 w-4 text-muted-foreground" />
+                                                <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
                                             </TooltipTrigger>
-                                            <TooltipContent>
+                                            <TooltipContent className="p-2 text-xs">
                                                 <p>Média de margem sobre o custo total</p>
                                             </TooltipContent>
                                         </Tooltip>
                                     </TooltipProvider>
                                 </div>
                             </TableCell>
-                            <TableCell className="font-bold">
-                                <div className="w-full h-10 px-3 py-2 rounded-md border border-input bg-muted flex items-center text-sm font-bold">
+                            <TableCell className="font-bold p-1">
+                                <div className="w-full h-8 px-2 py-1 rounded-md border border-input bg-muted flex items-center justify-center text-xs font-bold">
                                     {`${formatNumber(totals.averageMargin)}%`}
                                 </div>
                             </TableCell>
-                            <TableCell className="font-bold">
-                                <div className="w-full h-10 px-3 py-2 rounded-md border border-input bg-muted flex items-center text-sm font-bold">
+                            <TableCell className="p-1"></TableCell> {/* Espaço gap para Venda Un. */}
+                            <TableCell className="font-bold p-1">
+                                <div className="w-full h-8 px-2 py-1 rounded-md border border-input bg-muted flex items-center justify-end text-xs font-bold text-green-500">
                                     {formatCurrency(totals.totalSaleValue)}
                                 </div>
                             </TableCell>
-                            <TableCell></TableCell>
+                            <TableCell className="p-1"></TableCell>
                         </TableRow>
                     </TableFooter>
                 </Table>
