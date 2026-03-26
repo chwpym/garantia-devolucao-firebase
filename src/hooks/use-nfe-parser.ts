@@ -10,18 +10,35 @@ import { useToast } from '@/hooks/use-toast';
 export interface NfeInfo {
     emitterName: string;
     emitterCnpj: string;
+    emitterCity?: string;
     nfeNumber: string;
 }
 
 export interface NfeProductDetail {
     prod: Record<string, string>;
-    imposto: Record<string, Record<string, Record<string, string>>>;
+    imposto: {
+        ICMS?: Record<string, any>;
+        IPI?: Record<string, any>;
+        PIS?: Record<string, any>;
+        COFINS?: Record<string, any>;
+        IBSCBS?: {
+            gIBSCBS?: {
+                vIBS?: string | number;
+                pIBS?: string | number;
+                gCBS?: {
+                    vCBS?: string | number;
+                    pCBS?: string | number;
+                };
+            };
+        };
+        [key: string]: any;
+    };
 }
 
 export interface InfNFe {
     ['@_Id']: string;
     ide: { nNF: string };
-    emit: { xNome: string; CNPJ: string };
+    emit: { xNome: string; CNPJ: string; enderEmit: { xMun: string; UF: string } };
     det: NfeProductDetail[];
     total: {
         ICMSTot: {
@@ -32,7 +49,22 @@ export interface InfNFe {
             vOutro: string;
             vST: string;
             vIPI: string;
-        }
+            vICMS: string;
+            vPIS: string;
+            vCOFINS: string;
+            vNF: string;
+        };
+        IBSCBSTot?: {
+            vBCIBSCBS?: string;
+            vIBS?: string | number;
+            vCBS?: string | number;
+            gIBS?: {
+                vIBS?: string | number;
+            };
+            gCBS?: {
+                vCBS?: string | number;
+            };
+        };
     }
 }
 
@@ -115,6 +147,7 @@ export function useNfeParser({ onNfeProcessed }: NfeParserProps) {
         fileName,
         handleFileChange,
         clearNfeData,
+        setFileName,
         fileInputRef
     };
 }

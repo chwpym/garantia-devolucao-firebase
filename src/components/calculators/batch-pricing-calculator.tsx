@@ -18,6 +18,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatNumber, formatCurrency4, formatNumber4 } from "@/lib/utils";
 import { useNfeParser, type NfeData, type NfeProductDetail } from "@/hooks/use-nfe-parser";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 
 
 interface BatchPriceItem {
@@ -38,6 +40,8 @@ interface BatchPriceItem {
         frete: number;
         seguro: number;
         outras: number;
+        vIBS?: number;
+        vCBS?: number;
     }
 }
 
@@ -46,6 +50,11 @@ export default function BatchPricingCalculator() {
         { id: 1, description: "", quantity: "1", fatorConversao: "1", originalCost: "", impostos: "", desconto: "", finalCost: "", margin: "", impostoSobreVenda: "", price: "" },
     ]);
     const [globalMargin, setGlobalMargin] = useState("");
+    const [manualFrete, setManualFrete] = useState("");
+    const [manualSeguro, setManualSeguro] = useState("");
+    const [manualOutros, setManualOutros] = useState("");
+    const [manualDesconto, setManualDesconto] = useState("");
+    const [useTaxReform, setUseTaxReform] = useState(false);
     const [nfeInfo, setNfeInfo] = useState<{ emitterName: string; emitterCnpj: string; nfeNumber: string; } | null>(null);
     const { toast } = useToast();
 
@@ -90,7 +99,11 @@ export default function BatchPricingCalculator() {
 
             const itemWeight = totalProdValue > 0 ? itemTotalCost / totalProdValue : 0;
 
-            const ipiValor = parseFloat(imposto?.IPI?.IPITrib?.vIPI) || 0;
+            // Extração de IBS/CBS
+            const vIBS = parseFloat(imposto?.IBSCBS?.gIBSCBS?.vIBS?.toString() || "0") || 0;
+            const vCBS = parseFloat(imposto?.IBSCBS?.gIBSCBS?.gCBS?.vCBS?.toString() || "0") || 0;
+
+            const ipiValor = parseFloat(imposto?.IPI?.IPITrib?.vIPI?.toString() || "0") || 0;
             const stValor = extractST(imposto);
 
             const freteRateado = parseFloat(prod.vFrete) || (totalFrete * itemWeight) || 0;
@@ -98,7 +111,8 @@ export default function BatchPricingCalculator() {
             const descontoTotal = parseFloat(prod.vDesc) || 0;
             const outrasRateado = parseFloat(prod.vOutro) || (totalOutras * itemWeight) || 0;
 
-            const totalImpostosItem = ipiValor + stValor + freteRateado + seguroRateado + outrasRateado;
+            const taxReformValue = useTaxReform ? (vIBS + vCBS) : 0;
+            const totalImpostosItem = ipiValor + stValor + freteRateado + seguroRateado + outrasRateado + taxReformValue;
             const finalTotalCost = itemTotalCost + totalImpostosItem - descontoTotal;
             const finalUnitCost = quantity > 0 ? finalTotalCost / quantity : 0;
             const impostosUnit = quantity > 0 ? totalImpostosItem / quantity : 0;
@@ -121,10 +135,18 @@ export default function BatchPricingCalculator() {
                     icmsST: stValor,
                     frete: freteRateado,
                     seguro: seguroRateado,
-                    outras: outrasRateado
+                    outras: outrasRateado,
+                    vIBS,
+                    vCBS
                 }
             };
         });
+
+        // Reset global manual fields on new import
+        setManualFrete("");
+        setManualSeguro("");
+        setManualOutros("");
+        setManualDesconto("");
 
         
         setItems(newItems.length > 0 ? newItems : [{ id: 1, description: "", quantity: "1", fatorConversao: "1", originalCost: "", impostos: "", desconto: "", finalCost: "", margin: "", impostoSobreVenda: "", price: "" }]);
@@ -185,14 +207,7 @@ export default function BatchPricingCalculator() {
 
     const applyGlobalMargin = () => {
         const marginValue = parseFloat(globalMargin);
-        if (isNaN(marginValue)) {
-            toast({
-                variant: "destructive",
-                title: "Margem Inválida",
-                description: "Por favor, insira um número válido para a margem.",
-            });
-            return;
-        }
+        if (isNaN(marginValue)) return;
 
         setItems(prevItems => {
             return prevItems.map(item => {
@@ -206,20 +221,99 @@ export default function BatchPricingCalculator() {
                     const taxFactor = 1 - impostoSale / 100;
                     const price = taxFactor > 0 ? (costPerSaleUnit * marginFactor) / taxFactor : (costPerSaleUnit * marginFactor);
 
-                    return {
-                        ...item,
-                        margin: globalMargin,
-                        price: price.toFixed(4),
-                    };
+                    return { ...item, margin: globalMargin, price: price.toFixed(4) };
                 }
                 return item;
             });
         });
 
-        toast({
-            title: "Sucesso!",
-            description: `Margem de ${formatNumber(marginValue)}% aplicada a todos os itens.`,
+        toast({ title: "Sucesso!", description: `Margem de ${formatNumber(marginValue)}% aplicada.` });
+    };
+
+    const applyManualRateio = () => {
+        setItems(prevItems => {
+            const totalProd = prevItems.reduce((acc, item) => acc + (parseFloat(item.quantity) || 0) * (parseFloat(item.originalCost) || 0), 0);
+            const mFrete = parseFloat(manualFrete) || 0;
+            const mSeg = parseFloat(manualSeguro) || 0;
+            const mOutros = parseFloat(manualOutros) || 0;
+            const mDesc = parseFloat(manualDesconto) || 0;
+
+            if (totalProd === 0 && (mFrete + mSeg + mOutros + mDesc) > 0) return prevItems;
+
+            return prevItems.map(item => {
+                const quantity = parseFloat(item.quantity) || 1;
+                const itemTotalProd = (parseFloat(item.quantity) || 0) * (parseFloat(item.originalCost) || 0);
+                const itemWeight = totalProd > 0 ? itemTotalProd / totalProd : 0;
+
+                const detail = { ...item.impostosDetail };
+                if (manualFrete) detail.frete = mFrete * itemWeight;
+                if (manualSeguro) detail.seguro = mSeg * itemWeight;
+                if (manualOutros) detail.outras = mOutros * itemWeight;
+                
+                const taxReformValue = useTaxReform ? ((detail.vIBS || 0) + (detail.vCBS || 0)) : 0;
+                const totalImpostosItem = (detail.ipi || 0) + (detail.icmsST || 0) + (detail.frete || 0) + (detail.seguro || 0) + (detail.outras || 0) + taxReformValue;
+                const totalDescontoItem = manualDesconto ? (mDesc * itemWeight) : (parseFloat(item.desconto) * quantity || 0);
+
+                const finalTotalCost = itemTotalProd + totalImpostosItem - totalDescontoItem;
+                const finalUnitCost = quantity > 0 ? finalTotalCost / quantity : 0;
+
+                // Update pricing based on new cost
+                const fator = parseFloat(item.fatorConversao || "1") || 1;
+                const impostoSale = parseFloat(item.impostoSobreVenda || "0") || 0;
+                const marginValue = parseFloat(item.margin) || 0;
+                const costPerSaleUnit = finalUnitCost / fator;
+                let price = 0;
+                if (costPerSaleUnit > 0) {
+                    const marginFactor = 1 + marginValue / 100;
+                    const taxFactor = 1 - impostoSale / 100;
+                    price = taxFactor > 0 ? (costPerSaleUnit * marginFactor) / taxFactor : (costPerSaleUnit * marginFactor);
+                }
+
+                return {
+                    ...item,
+                    impostos: (totalImpostosItem / quantity).toFixed(4),
+                    desconto: (totalDescontoItem / quantity).toFixed(4),
+                    finalCost: finalUnitCost.toFixed(4),
+                    price: price > 0 ? price.toFixed(4) : item.price,
+                    impostosDetail: detail
+                };
+            });
         });
+        toast({ title: "Rateio Aplicado", description: "O custo final de todos os itens foi atualizado com os valores manuais." });
+    };
+
+    // Toggle Tax Reform and Update Costs
+    const toggleTaxReform = (checked: boolean) => {
+        setUseTaxReform(checked);
+        setItems(prevItems => prevItems.map(item => {
+            const quantity = parseFloat(item.quantity) || 1;
+            const detail = { ...item.impostosDetail };
+            const taxReformValue = checked ? ((detail.vIBS || 0) + (detail.vCBS || 0)) : 0;
+            const totalImpostosItem = (detail.ipi || 0) + (detail.icmsST || 0) + (detail.frete || 0) + (detail.seguro || 0) + (detail.outras || 0) + taxReformValue;
+            
+            const itemTotalProd = (parseFloat(item.quantity) || 0) * (parseFloat(item.originalCost) || 0);
+            const totalDescontoItem = parseFloat(item.desconto) * quantity || 0;
+            const finalTotalCost = itemTotalProd + totalImpostosItem - totalDescontoItem;
+            const finalUnitCost = quantity > 0 ? finalTotalCost / quantity : 0;
+
+            const fator = parseFloat(item.fatorConversao || "1") || 1;
+            const impostoSale = parseFloat(item.impostoSobreVenda || "0") || 0;
+            const marginValue = parseFloat(item.margin) || 0;
+            const costPerSaleUnit = finalUnitCost / fator;
+            let price = 0;
+            if (costPerSaleUnit > 0) {
+                const marginFactor = 1 + marginValue / 100;
+                const taxFactor = 1 - impostoSale / 100;
+                price = taxFactor > 0 ? (costPerSaleUnit * marginFactor) / taxFactor : (costPerSaleUnit * marginFactor);
+            }
+
+            return {
+                ...item,
+                impostos: (totalImpostosItem / quantity).toFixed(4),
+                finalCost: finalUnitCost.toFixed(4),
+                price: price > 0 ? price.toFixed(4) : item.price
+            };
+        }));
     };
 
     const addItem = () => {
@@ -319,11 +413,34 @@ export default function BatchPricingCalculator() {
                         placeholder="Ex: 40"
                         value={globalMargin}
                         onChange={(e) => setGlobalMargin(e.target.value)}
-                        className="w-20 h-7 text-xs bg-transparent text-foreground border border-input text-center px-1 font-bold focus-visible:ring-1 focus-visible:ring-primary"
+                        className="w-16 h-7 text-xs bg-transparent text-foreground border border-input text-center px-1 font-bold focus-visible:ring-1 focus-visible:ring-primary"
                     />
-                    <Button onClick={applyGlobalMargin} size="icon" className="h-7 w-7">
+                    <Button onClick={applyGlobalMargin} size="icon" className="h-7 w-7" title="Aplicar margem em todos">
                         <ChevronsRight className="h-3.5 w-3.5" />
                     </Button>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3 bg-accent/5 p-2 rounded-md border border-accent/20">
+                    <div className="flex items-center gap-2">
+                        <Label className="text-[10px] uppercase font-bold text-muted-foreground mr-1">Rateio Manual:</Label>
+                        <div className="flex gap-x-1">
+                            <Input placeholder="Frete" value={manualFrete} onChange={e => setManualFrete(e.target.value)} className="w-20 h-7 text-[10px] bg-background" />
+                            <Input placeholder="Seguro" value={manualSeguro} onChange={e => setManualSeguro(e.target.value)} className="w-16 h-7 text-[10px] bg-background" />
+                            <Input placeholder="Outros" value={manualOutros} onChange={e => setManualOutros(e.target.value)} className="w-16 h-7 text-[10px] bg-background" />
+                            <Input placeholder="Desconto" value={manualDesconto} onChange={e => setManualDesconto(e.target.value)} className="w-16 h-7 text-[10px] bg-background border-destructive/30" />
+                        </div>
+                        <Button onClick={applyManualRateio} size="sm" variant="outline" className="h-7 px-2 text-[10px] bg-accent-blue/10 border-accent-blue/30 text-accent-blue hover:bg-accent-blue hover:text-white transition-all">
+                            Ratear
+                        </Button>
+                    </div>
+
+                    <div className="h-6 w-[1px] bg-border mx-1"></div>
+
+                    <div className="flex items-center gap-2">
+                        <Label htmlFor="tax-reform" className="text-[10px] uppercase font-bold text-muted-foreground cursor-pointer">Reforma (IBS/CBS)</Label>
+                        <Switch id="tax-reform" checked={useTaxReform} onCheckedChange={toggleTaxReform} className="scale-75" />
+                        {useTaxReform && <Badge variant="outline" className="h-5 text-[8px] border-primary text-primary bg-primary/5">Ativo</Badge>}
+                    </div>
                 </div>
                 <Input
                     type="file"
@@ -403,6 +520,14 @@ export default function BatchPricingCalculator() {
                                                             <span>Frete:</span> <span className="text-right">{formatCurrency4(item.impostosDetail.frete / (parseFloat(item.quantity) || 1))}</span>
                                                             <span>Seguro:</span> <span className="text-right">{formatCurrency4(item.impostosDetail.seguro / (parseFloat(item.quantity) || 1))}</span>
                                                             <span>Outras:</span> <span className="text-right">{formatCurrency4(item.impostosDetail.outras / (parseFloat(item.quantity) || 1))}</span>
+                                                            {useTaxReform && (
+                                                                <>
+                                                                    <span className="font-bold text-primary mt-1 border-t pt-1">IBS:</span> 
+                                                                    <span className="text-right text-primary mt-1 border-t pt-1">{formatCurrency4((item.impostosDetail.vIBS || 0) / (parseFloat(item.quantity) || 1))}</span>
+                                                                    <span className="font-bold text-primary">CBS:</span> 
+                                                                    <span className="text-right text-primary">{formatCurrency4((item.impostosDetail.vCBS || 0) / (parseFloat(item.quantity) || 1))}</span>
+                                                                </>
+                                                            )}
                                                         </div>
                                                     </TooltipContent>
                                                 )}

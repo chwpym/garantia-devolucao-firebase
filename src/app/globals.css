@@ -120,8 +120,13 @@
     --destructive: 354 85% 65%;
     --destructive-foreground: 210 40% 98%;
     --border: 234 44% 25%;
-    --input: 234 44% 25%;
+    --input: 234 44% 15%;
+    --input-calc: 234 44% 20%;
     --ring: 221 92% 72%;
+    --accent-blue: 221 83% 60%;
+    --accent-green: 142 71% 45%;
+    --accent-green-dark: 142 80% 15%;
+    --third: 32 95% 72%;
   }
 
   /* Ayu Dark Theme */
@@ -143,8 +148,13 @@
     --destructive: 1 80% 60%;
     --destructive-foreground: 210 40% 98%;
     --border: 222 28% 15%;
-    --input: 222 28% 15%;
+    --input: 222 28% 10%;
+    --input-calc: 222 28% 12%;
     --ring: 41 78% 61%;
+    --accent-blue: 221 83% 60%;
+    --accent-green: 142 71% 45%;
+    --accent-green-dark: 142 80% 10%;
+    --third: 32 95% 72%;
   }
 
   /* Dracula Theme */
@@ -166,9 +176,15 @@
     --destructive: 0 100% 67%;
     --destructive-foreground: 210 40% 98%;
     --border: 231 15% 32%;
-    --input: 231 15% 32%;
+    --input: 231 15% 20%;
+    --input-calc: 231 15% 24%;
     --ring: 326 100% 74%;
+    --accent-blue: 221 83% 60%;
+    --accent-green: 142 71% 45%;
+    --accent-green-dark: 142 80% 15%;
+    --third: 32 95% 72%;
   }
+
 }
 
 @layer base {

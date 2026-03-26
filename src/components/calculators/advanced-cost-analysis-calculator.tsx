@@ -15,8 +15,10 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info } from "lucide-react";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useNfeParser } from "@/hooks/use-nfe-parser";
-import type { NfeData, NfeInfo as NfeParserInfo, NfeProductDetail } from "@/hooks/use-nfe-parser";
+import { useNfeParser, type NfeData, type NfeInfo as NfeParserInfo, type NfeProductDetail } from "@/hooks/use-nfe-parser";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 
 type TaxRegime = 'lucro_real' | 'simples_nacional';
@@ -39,6 +41,8 @@ interface AnalyzedItem {
     finalTotalCost: number;
     conversionFactor: string;
     convertedUnitCost: number;
+    vIBS: number;
+    vCBS: number;
 }
 
 interface NfeInfo extends NfeParserInfo {
@@ -49,16 +53,28 @@ interface NfeInfo extends NfeParserInfo {
 export default function AdvancedCostAnalysisCalculator() {
     const [items, setItems] = useState<AnalyzedItem[]>([]);
     const [nfeInfo, setNfeInfo] = useState<NfeInfo | null>(null);
+    const [manualFrete, setManualFrete] = useState("");
+    const [manualSeguro, setManualSeguro] = useState("");
+    const [manualOutros, setManualOutros] = useState("");
+    const [manualDesconto, setManualDesconto] = useState("");
+    const [useTaxReform, setUseTaxReform] = useState(false);
     const { toast } = useToast();
     const [taxRegime, setTaxRegime] = useState<TaxRegime>('lucro_real');
 
-    const recalculateCosts = (currentItems: Omit<AnalyzedItem, 'finalUnitCost' | 'finalTotalCost' | 'convertedUnitCost'>[], regime: TaxRegime): AnalyzedItem[] => {
+    const recalculateCosts = (currentItems: Omit<AnalyzedItem, 'finalUnitCost' | 'finalTotalCost' | 'convertedUnitCost'>[], regime: TaxRegime, taxReform: boolean): AnalyzedItem[] => {
         return currentItems.map(item => {
             const baseTotalCost = item.totalCost + item.ipi + item.icmsST + item.frete + item.seguro + item.outras - item.desconto;
+            
+            // In Tax Reform, IBS/CBS are added to base cost if reform is ON
+            const taxReformValue = taxReform ? (item.vIBS + item.vCBS) : 0;
+            let finalTotalCost = baseTotalCost + taxReformValue;
 
-            let finalTotalCost = baseTotalCost;
             if (regime === 'lucro_real') {
                 finalTotalCost -= (item.pis + item.cofins);
+                // If tax reform is ON and regime is Lucro Real, we also get credit for IBS/CBS
+                if (taxReform) {
+                    finalTotalCost -= (item.vIBS + item.vCBS);
+                }
             }
 
             const finalUnitCost = item.quantity > 0 ? finalTotalCost / item.quantity : 0;
@@ -122,10 +138,13 @@ export default function AdvancedCostAnalysisCalculator() {
 
             const itemWeight = totalProdValue > 0 ? itemTotalCost / totalProdValue : 0;
 
-            const ipiValor = parseFloat(imposto?.IPI?.IPITrib?.vIPI) || 0;
+            const vIBS = parseFloat(imposto?.IBSCBS?.gIBSCBS?.vIBS?.toString() || "0") || 0;
+            const vCBS = parseFloat(imposto?.IBSCBS?.gIBSCBS?.gCBS?.vCBS?.toString() || "0") || 0;
+
+            const ipiValor = parseFloat(imposto?.IPI?.IPITrib?.vIPI?.toString() || "0") || 0;
             const stValor = extractST(imposto);
-            const pisValor = parseFloat(imposto?.PIS?.PISAliq?.vPIS) || parseFloat(imposto?.PIS?.PISST?.vPIS) || 0;
-            const cofinsValor = parseFloat(imposto?.COFINS?.COFINSAliq?.vCOFINS) || parseFloat(imposto?.COFINS?.COFINSST?.vCOFINS) || 0;
+            const pisValor = parseFloat(imposto?.PIS?.PISAliq?.vPIS?.toString() || "0") || parseFloat(imposto?.PIS?.PISST?.vPIS?.toString() || "0") || 0;
+            const cofinsValor = parseFloat(imposto?.COFINS?.COFINSAliq?.vCOFINS?.toString() || "0") || parseFloat(imposto?.COFINS?.COFINSST?.vCOFINS?.toString() || "0") || 0;
 
             const freteRateado = parseFloat(prod.vFrete) || (totalFrete * itemWeight) || 0;
             const seguroRateado = parseFloat(prod.vSeg) || (totalSeguro * itemWeight) || 0;
@@ -147,11 +166,17 @@ export default function AdvancedCostAnalysisCalculator() {
                 pis: pisValor,
                 cofins: cofinsValor,
                 conversionFactor: "1",
+                vIBS,
+                vCBS
             };
         });
 
-        setItems(recalculateCosts(newItems, taxRegime));
-        setTaxRegime('lucro_real'); // Reset to default on new import
+        setItems(recalculateCosts(newItems, 'lucro_real', useTaxReform));
+        setTaxRegime('lucro_real');
+        setManualFrete("");
+        setManualSeguro("");
+        setManualOutros("");
+        setManualDesconto("");
 
         toast({
             title: "Sucesso!",
@@ -162,10 +187,41 @@ export default function AdvancedCostAnalysisCalculator() {
     const { fileName, handleFileChange, clearNfeData, fileInputRef } = useNfeParser({ onNfeProcessed });
 
 
+
     const handleTaxRegimeChange = (value: string) => {
         const newRegime = value as TaxRegime;
         setTaxRegime(newRegime);
-        setItems(prevItems => recalculateCosts(prevItems, newRegime));
+        setItems(prevItems => recalculateCosts(prevItems, newRegime, useTaxReform));
+    };
+
+    const toggleTaxReform = (checked: boolean) => {
+        setUseTaxReform(checked);
+        setItems(prevItems => recalculateCosts(prevItems, taxRegime, checked));
+    };
+
+    const applyManualRateio = () => {
+        setItems(prevItems => {
+            const totalProdValue = prevItems.reduce((acc, item) => acc + item.totalCost, 0);
+            const mFrete = parseFloat(manualFrete) || 0;
+            const mSeg = parseFloat(manualSeguro) || 0;
+            const mOutros = parseFloat(manualOutros) || 0;
+            const mDesc = parseFloat(manualDesconto) || 0;
+
+            if (totalProdValue === 0 && (mFrete + mSeg + mOutros + mDesc) > 0) return prevItems;
+
+            const updatedRaw = prevItems.map(item => {
+                const itemWeight = totalProdValue > 0 ? item.totalCost / totalProdValue : 0;
+                return {
+                    ...item,
+                    frete: manualFrete ? (mFrete * itemWeight) : item.frete,
+                    seguro: manualSeguro ? (mSeg * itemWeight) : item.seguro,
+                    outras: manualOutros ? (mOutros * itemWeight) : item.outras,
+                    desconto: manualDesconto ? (mDesc * itemWeight) : item.desconto,
+                };
+            });
+            return recalculateCosts(updatedRaw, taxRegime, useTaxReform);
+        });
+        toast({ title: "Rateio Aplicado", description: "Custos atualizados com valores globais." });
     };
 
     const handleConversionFactorChange = (id: number, value: string) => {
@@ -309,6 +365,31 @@ export default function AdvancedCostAnalysisCalculator() {
                     className="hidden"
                     accept=".xml"
                 />
+
+                {items.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-3 bg-accent/5 p-2 rounded-md border border-accent/20">
+                        <div className="flex items-center gap-2">
+                            <Label className="text-[10px] uppercase font-bold text-muted-foreground mr-1">Rateio Manual:</Label>
+                            <div className="flex gap-x-1">
+                                <Input placeholder="Frete" value={manualFrete} onChange={e => setManualFrete(e.target.value)} className="w-20 h-7 text-[10px] bg-background" />
+                                <Input placeholder="Seguro" value={manualSeguro} onChange={e => setManualSeguro(e.target.value)} className="w-16 h-7 text-[10px] bg-background" />
+                                <Input placeholder="Outros" value={manualOutros} onChange={e => setManualOutros(e.target.value)} className="w-16 h-7 text-[10px] bg-background" />
+                                <Input placeholder="Desconto" value={manualDesconto} onChange={e => setManualDesconto(e.target.value)} className="w-16 h-7 text-[10px] bg-background border-destructive/30" />
+                            </div>
+                            <Button onClick={applyManualRateio} size="sm" variant="outline" className="h-7 px-2 text-[10px] bg-accent-blue/10 border-accent-blue/30 text-accent-blue hover:bg-accent-blue hover:text-white transition-all">
+                                Ratear
+                            </Button>
+                        </div>
+
+                        <div className="h-6 w-[1px] bg-border mx-1"></div>
+
+                        <div className="flex items-center gap-2">
+                            <Label htmlFor="tax-reform" className="text-[10px] uppercase font-bold text-muted-foreground cursor-pointer">Reforma (IBS/CBS)</Label>
+                            <Switch id="tax-reform" checked={useTaxReform} onCheckedChange={toggleTaxReform} className="scale-75" />
+                            {useTaxReform && <Badge variant="outline" className="h-5 text-[8px] border-primary text-primary bg-primary/5">Ativo</Badge>}
+                        </div>
+                    </div>
+                )}
             </div>
 
             {items.length > 0 && nfeInfo && (
@@ -342,12 +423,15 @@ export default function AdvancedCostAnalysisCalculator() {
                     </div>
                 </div>
             )}
-            {taxRegime === 'lucro_real' && items.length > 0 && (
-                <Alert>
-                    <Info className="h-4 w-4" />
-                    <AlertTitle>Cálculo de Custo para Lucro Real</AlertTitle>
-                    <AlertDescription>
-                        Os valores de PIS e COFINS estão sendo subtraídos do custo, considerando o crédito destes impostos.
+            {(taxRegime === 'lucro_real' || useTaxReform) && items.length > 0 && (
+                <Alert className="bg-primary/5 border-primary/20">
+                    <Info className="h-4 w-4 text-primary" />
+                    <AlertTitle className="text-primary font-bold">Cálculo de Custo com Créditos Tributários</AlertTitle>
+                    <AlertDescription className="text-xs">
+                        {taxRegime === 'lucro_real' && "Os valores de PIS e COFINS estão sendo subtraídos do custo (crédito)."}
+                        {useTaxReform && taxRegime === 'lucro_real' && <br />}
+                        {useTaxReform && taxRegime === 'lucro_real' && "Com a Reforma ativa, IBS e CBS também geram crédito e são subtraídos no Lucro Real."}
+                        {useTaxReform && taxRegime !== 'lucro_real' && "Com a Reforma ativa, IBS e CBS são somados ao custo final do produto."}
                     </AlertDescription>
                 </Alert>
             )}
@@ -384,7 +468,7 @@ export default function AdvancedCostAnalysisCalculator() {
                                         <Input
                                             type="text"
                                             inputMode="decimal"
-                                            className="h-8 text-right bg-input-calc"
+                                            className="h-8 text-right bg-transparent border-0 border-b border-transparent focus-visible:border-primary focus-visible:ring-0 shadow-none text-xs rounded-none p-1"
                                             value={item.conversionFactor}
                                             onChange={(e) => {
                                                 const val = e.target.value.replace(',', '.');
@@ -413,7 +497,27 @@ export default function AdvancedCostAnalysisCalculator() {
                         <TableFooter>
                             <TableRow className="font-bold bg-muted">
                                 <TableCell className="sticky left-0 bg-muted z-10 text-right" colSpan={4}>Totais:</TableCell>
-                                <TableCell className="text-right">{formatCurrency(totals.totalIPI)}</TableCell>
+                                <TableCell className="text-right">
+                                    <TooltipProvider>
+                                        <Tooltip delayDuration={100}>
+                                            <TooltipTrigger className="cursor-help underline decoration-dotted">
+                                                {formatCurrency(totals.totalIPI)}
+                                            </TooltipTrigger>
+                                            <TooltipContent className="p-2 text-xs">
+                                                <div className="space-y-1">
+                                                    <div className="flex justify-between gap-4"><span>IPI:</span> <span>{formatCurrency(totals.totalIPI)}</span></div>
+                                                    <div className="flex justify-between gap-4"><span>ICMS-ST:</span> <span>{formatCurrency(totals.totalST)}</span></div>
+                                                    {useTaxReform && (
+                                                        <>
+                                                            <div className="flex justify-between gap-4 text-primary font-bold border-t pt-1"><span>IBS:</span> <span>{formatCurrency(items.reduce((acc, i) => acc + i.vIBS, 0))}</span></div>
+                                                            <div className="flex justify-between gap-4 text-primary font-bold"><span>CBS:</span> <span>{formatCurrency(items.reduce((acc, i) => acc + i.vCBS, 0))}</span></div>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </TableCell>
                                 <TableCell className="text-right">{formatCurrency(totals.totalST)}</TableCell>
                                 <TableCell className="text-right">{formatCurrency(totals.totalFrete)}</TableCell>
                                 <TableCell className="text-right">{formatCurrency(totals.totalSeguro)}</TableCell>
