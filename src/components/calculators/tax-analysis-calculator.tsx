@@ -1,16 +1,18 @@
 
+/* No changes needed here, just adding a comment to facilitate replacement if it fails. */
 "use client";
 
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo } from "react";
 import jsPDF from "jspdf";
 import autoTable, { type RowInput } from "jspdf-autotable";
-import { XMLParser } from "fast-xml-parser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Upload, FileX, Printer } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatNumber, formatCurrency4, formatNumber4 } from "@/lib/utils";
+import { useNfeParser, type NfeData, type NfeInfo as NfeParserInfo, type NfeProductDetail } from "@/hooks/use-nfe-parser";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface AnalyzedItem {
     id: number;
@@ -30,214 +32,109 @@ interface AnalyzedItem {
     pPis: number;
     cofins: number;
     pCofins: number;
+    vIbs: number;
+    pIbs: number;
+    vCbs: number;
+    pCbs: number;
 }
 
-interface NfeInfo {
-    emitterName: string;
-    emitterCnpj: string;
-    nfeNumber: string;
+interface NfeInfo extends NfeParserInfo {
     totalIcms: number;
     totalIcmsSt: number;
     totalIpi: number;
     totalPis: number;
     totalCofins: number;
     totalNf: number;
+    totalIbs?: number;
+    totalCbs?: number;
 }
-
-type IcmsGroup = Record<string, { CST: string, vICMS: string, pICMS: string, vICMSST?: string, CSOSN?: string }>;
-type IpiGroup = { IPITrib?: { CST: string, vIPI: string, pIPI: string }, IPINT?: { CST: string } };
-type PisCofinsGroup = { PISAliq?: { vPIS?: string, pPIS?: string, vCOFINS?: string, pCOFINS?: string }, PISST?: { vPIS?: string, pPIS?: string, vCOFINS?: string, pCOFINS?: string }, PISNT?: { CST: string }, COFINSAliq?: { vPIS?: string, pPIS?: string, vCOFINS?: string, pCOFINS?: string }, COFINSST?: { vPIS?: string, pPIS?: string, vCOFINS?: string, pCOFINS?: string }, COFINSNT?: { CST: string } };
-
-
-interface NfeProductDetail {
-    prod: Record<string, string>;
-    imposto: {
-        ICMS: IcmsGroup;
-        IPI: IpiGroup;
-        PIS: PisCofinsGroup;
-        COFINS: PisCofinsGroup;
-    };
-}
-
-
-interface InfNFe {
-    ['@_Id']: string;
-    ide: { nNF: string };
-    emit: { xNome: string; CNPJ: string };
-    det: NfeProductDetail[] | NfeProductDetail;
-    total: {
-        ICMSTot: {
-            vProd: string;
-            vNF: string;
-            vICMS: string;
-            vST: string;
-            vIPI: string;
-            vPIS: string;
-            vCOFINS: string;
-        }
-    }
-}
-
-interface NFeData {
-    nfeProc?: { NFe: { infNFe: InfNFe } };
-    NFe?: { infNFe: InfNFe };
-}
-
 
 export default function TaxAnalysisCalculator() {
     const [items, setItems] = useState<AnalyzedItem[]>([]);
-    const [fileName, setFileName] = useState<string | null>(null);
     const [nfeInfo, setNfeInfo] = useState<NfeInfo | null>(null);
     const { toast } = useToast();
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const getIcmsData = (icmsGroup: IcmsGroup): { vICMS: number, vICMSST: number, pICMS: number, cst: string } => {
-        let vICMS = 0, vICMSST = 0, pICMS = 0, cst = '';
-
-        if (!icmsGroup) return { vICMS, vICMSST, pICMS, cst };
-
-        const icmsKey = Object.keys(icmsGroup)[0];
-        if (icmsKey) {
-            const icmsContent = icmsGroup[icmsKey];
-            if (icmsContent) {
-                vICMS = parseFloat(icmsContent.vICMS) || 0;
-                vICMSST = parseFloat(icmsContent.vICMSST || '0') || 0;
-                pICMS = parseFloat(icmsContent.pICMS) || 0;
-                cst = icmsContent.CST || icmsContent.CSOSN || '';
-            }
+    const onNfeProcessed = (data: NfeData | null) => {
+        if (!data) {
+            setItems([]);
+            setNfeInfo(null);
+            return;
         }
-        return { vICMS, vICMSST, pICMS, cst };
-    }
 
-    const getIpiData = (ipiGroup: IpiGroup): { vIPI: number, pIPI: number } => {
-        let vIPI = 0, pIPI = 0;
-        if (ipiGroup?.IPITrib) {
-            vIPI = parseFloat(ipiGroup.IPITrib.vIPI) || 0;
-            pIPI = parseFloat(ipiGroup.IPITrib.pIPI) || 0;
-        }
-        return { vIPI, pIPI };
-    }
+        const { infNFe, det: dets } = data;
+        const total = infNFe.total.ICMSTot;
+        const totalIBSCBS = infNFe.total.IBSCBSTot;
 
-    const getPisCofinsData = (taxGroup: PisCofinsGroup): { v: number, p: number } => {
-        let v = 0, p = 0;
-        if (taxGroup?.PISAliq) {
-            v = parseFloat(taxGroup.PISAliq.vPIS || taxGroup.PISAliq.vCOFINS || '0') || 0;
-            p = parseFloat(taxGroup.PISAliq.pPIS || taxGroup.PISAliq.pCOFINS || '0') || 0;
-        } else if (taxGroup?.PISST) {
-            v = parseFloat(taxGroup.PISST.vPIS || taxGroup.PISST.vCOFINS || '0') || 0;
-            p = parseFloat(taxGroup.PISST.pPIS || taxGroup.PISST.pCOFINS || '0') || 0;
-        } else if (taxGroup?.COFINSAliq) {
-            v = parseFloat(taxGroup.COFINSAliq.vCOFINS || taxGroup.COFINSAliq.vPIS || '0') || 0;
-            p = parseFloat(taxGroup.COFINSAliq.pCOFINS || taxGroup.COFINSAliq.pPIS || '0') || 0;
-        } else if (taxGroup?.COFINSST) {
-            v = parseFloat(taxGroup.COFINSST.vCOFINS || taxGroup.COFINSST.vPIS || '0') || 0;
-            p = parseFloat(taxGroup.COFINSST.pCOFINS || taxGroup.COFINSST.pPIS || '0') || 0;
-        }
-        return { v, p };
-    }
-
-    const handleImportXml = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
-
-        setFileName(file.name);
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const xmlData = e.target?.result as string;
-                const parser = new XMLParser({ ignoreAttributes: false, parseAttributeValue: true });
-                const jsonObj = parser.parse(xmlData) as NFeData;
-
-                const infNFe: InfNFe | undefined = jsonObj?.nfeProc?.NFe?.infNFe || jsonObj?.NFe?.infNFe;
-                if (!infNFe) {
-                    throw new Error("Estrutura do XML da NF-e inválida: <infNFe> não encontrado.");
-                }
-
-                const dets: NfeProductDetail[] = Array.isArray(infNFe.det) ? infNFe.det : [infNFe.det];
-                const total = infNFe.total?.ICMSTot;
-
-                if (!dets || !total) {
-                    throw new Error("Estrutura do XML da NF-e inválida: <det> ou <ICMSTot> não encontrados.");
-                }
-
-                const newNfeInfo: NfeInfo = {
-                    emitterName: infNFe.emit?.xNome || 'N/A',
-                    emitterCnpj: infNFe.emit?.CNPJ || 'N/A',
-                    nfeNumber: infNFe.ide?.nNF || 'N/A',
-                    totalIcms: parseFloat(total.vICMS) || 0,
-                    totalIcmsSt: parseFloat(total.vST) || 0,
-                    totalIpi: parseFloat(total.vIPI) || 0,
-                    totalPis: parseFloat(total.vPIS) || 0,
-                    totalCofins: parseFloat(total.vCOFINS) || 0,
-                    totalNf: parseFloat(total.vNF) || 0,
-                };
-                setNfeInfo(newNfeInfo);
-
-                const newItems: AnalyzedItem[] = dets.map((det, index: number) => {
-                    const prod = det.prod;
-                    const imposto = det.imposto;
-
-                    const { vICMS, vICMSST, pICMS, cst } = getIcmsData(imposto?.ICMS);
-                    const { vIPI, pIPI } = getIpiData(imposto?.IPI);
-                    const { v: vPIS, p: pPis } = getPisCofinsData(imposto?.PIS);
-                    const { v: vCofins, p: pCofins } = getPisCofinsData(imposto?.COFINS);
-
-                    return {
-                        id: index,
-                        description: prod.xProd || "",
-                        ncm: prod.NCM || "",
-                        cst: cst,
-                        cfop: prod.CFOP || "",
-                        quantity: parseFloat(prod.qCom) || 0,
-                        unitCost: parseFloat(prod.vUnCom) || 0,
-                        totalCost: parseFloat(prod.vProd) || 0,
-                        icms: vICMS,
-                        pIcms: pICMS,
-                        icmsSt: vICMSST,
-                        ipi: vIPI,
-                        pIpi: pIPI,
-                        pis: vPIS,
-                        pPis: pPis,
-                        cofins: vCofins,
-                        pCofins: pCofins
-                    };
-                });
-
-                setItems(newItems);
-
-                toast({
-                    title: "Sucesso!",
-                    description: `${newItems.length} itens importados e analisados da NF-e.`,
-                });
-
-            } catch (error: unknown) {
-                console.error("Erro ao processar o XML:", error);
-                setItems([]);
-                setFileName(null);
-                setNfeInfo(null);
-                const message = error instanceof Error ? error.message : "Não foi possível ler o arquivo XML. Verifique se o formato é uma NF-e válida.";
-                toast({
-                    variant: "destructive",
-                    title: "Erro de Importação",
-                    description: message,
-                });
-            } finally {
-                if (fileInputRef.current) {
-                    fileInputRef.current.value = "";
-                }
-            }
+        const newNfeInfo: NfeInfo = {
+            emitterName: infNFe.emit.xNome,
+            emitterCnpj: infNFe.emit.CNPJ,
+            nfeNumber: infNFe.ide.nNF,
+            totalIcms: parseFloat(total.vICMS) || 0,
+            totalIcmsSt: parseFloat(total.vST) || 0,
+            totalIpi: parseFloat(total.vIPI) || 0,
+            totalPis: parseFloat(total.vPIS) || 0,
+            totalCofins: parseFloat(total.vCOFINS) || 0,
+            totalNf: parseFloat(total.vNF) || 0,
+            totalIbs: parseFloat(totalIBSCBS?.vIBS?.toString() || "0") || 0,
+            totalCbs: parseFloat(totalIBSCBS?.vCBS?.toString() || "0") || 0,
         };
-        reader.readAsText(file, 'ISO-8859-1');
+        setNfeInfo(newNfeInfo);
+
+        const extractST = (imposto: any): number => {
+            if (!imposto?.ICMS) return 0;
+            const icms = imposto.ICMS;
+            for (const key in icms) {
+                if (icms[key]?.vICMSST) return parseFloat(icms[key].vICMSST) || 0;
+            }
+            return 0;
+        };
+
+        const extractCST = (imposto: any): string => {
+            if (!imposto?.ICMS) return "";
+            const icms = imposto.ICMS;
+            for (const key in icms) {
+                if (icms[key]?.CST) return icms[key].CST;
+                if (icms[key]?.CSOSN) return icms[key].CSOSN;
+            }
+            return "";
+        };
+
+        const newItems: AnalyzedItem[] = dets.map((det: NfeProductDetail, index: number) => {
+            const prod = det.prod;
+            const imposto = det.imposto;
+
+            const ibscbs = imposto?.IBSCBS?.gIBSCBS as any;
+
+            return {
+                id: index,
+                description: prod.xProd || "",
+                ncm: prod.NCM || "",
+                cst: extractCST(imposto),
+                cfop: prod.CFOP || "",
+                quantity: parseFloat(prod.qCom) || 0,
+                unitCost: parseFloat(prod.vUnCom) || 0,
+                totalCost: parseFloat(prod.vProd) || 0,
+                icms: parseFloat(imposto?.ICMS?.vICMS?.toString() || "0") || 0,
+                pIcms: parseFloat(imposto?.ICMS?.pICMS?.toString() || "0") || 0,
+                icmsSt: extractST(imposto),
+                ipi: parseFloat(imposto?.IPI?.IPITrib?.vIPI?.toString() || "0") || 0,
+                pIpi: parseFloat(imposto?.IPI?.IPITrib?.pIPI?.toString() || "0") || 0,
+                pis: parseFloat(imposto?.PIS?.PISAliq?.vPIS?.toString() || "0") || 0,
+                pPis: parseFloat(imposto?.PIS?.PISAliq?.pPIS?.toString() || "0") || 0,
+                cofins: parseFloat(imposto?.COFINS?.COFINSAliq?.vCOFINS?.toString() || "0") || 0,
+                pCofins: parseFloat(imposto?.COFINS?.COFINSAliq?.pCOFINS?.toString() || "0") || 0,
+                vIbs: parseFloat(ibscbs?.vIBS?.toString() || "0") || 0,
+                pIbs: parseFloat(ibscbs?.pIBS?.toString() || "0") || 0,
+                vCbs: parseFloat(ibscbs?.gCBS?.vCBS?.toString() || "0") || 0,
+                pCbs: parseFloat(ibscbs?.gCBS?.pCBS?.toString() || "0") || 0,
+            };
+        });
+
+        setItems(newItems);
+        toast({ title: "Sucesso!", description: `${newItems.length} itens importados e analisados.` });
     };
 
-    const clearData = () => {
-        setItems([]);
-        setFileName(null);
-        setNfeInfo(null);
-        if (fileInputRef.current) {
-            fileInputRef.current.value = "";
-        }
-    };
+    const { fileName, handleFileChange, clearNfeData, fileInputRef } = useNfeParser({ onNfeProcessed });
 
     const totals = useMemo(() => {
         return items.reduce((acc, item) => {
@@ -247,17 +144,18 @@ export default function TaxAnalysisCalculator() {
             acc.totalIpi += item.ipi;
             acc.totalPis += item.pis;
             acc.totalCofins += item.cofins;
+            acc.totalIbs += item.vIbs;
+            acc.totalCbs += item.vCbs;
             return acc;
         }, {
-            totalCost: 0, totalIcms: 0, totalIcmsSt: 0, totalIpi: 0, totalPis: 0, totalCofins: 0
+            totalCost: 0, totalIcms: 0, totalIcmsSt: 0, totalIpi: 0, totalPis: 0, totalCofins: 0, totalIbs: 0, totalCbs: 0
         });
     }, [items]);
 
     const generatePdf = () => {
         const doc = new jsPDF({ orientation: "landscape" });
-
         doc.setFontSize(18);
-        doc.text("Análise de Impostos por NF-e", doc.internal.pageSize.getWidth() / 2, 22, { align: "center" });
+        doc.text("Análise Fiscal por NF-e", doc.internal.pageSize.getWidth() / 2, 22, { align: "center" });
 
         if (nfeInfo) {
             doc.setFontSize(10);
@@ -268,55 +166,44 @@ export default function TaxAnalysisCalculator() {
             doc.text(`Valor Total NF-e: ${formatCurrency(nfeInfo.totalNf)}`, doc.internal.pageSize.getWidth() - 14, startY, { align: "right" });
         }
 
-        const head = [['Descrição', 'Qtde', 'Total', 'ICMS', 'pICMS', 'ICMS-ST', 'IPI', 'pIPI', 'PIS', 'pPIS', 'COFINS', 'pCOFINS']];
+        const head = [['Descrição', 'NCM', 'CST', 'CFOP', 'Qtde', 'Total', 'ICMS', 'ST', 'IPI', 'PIS', 'COFINS', 'IBS', 'CBS']];
         const body = items.map(item => [
             item.description,
+            item.ncm,
+            item.cst,
+            item.cfop,
             formatNumber4(item.quantity),
             formatCurrency(item.totalCost),
             formatCurrency(item.icms),
-            `${formatNumber(item.pIcms)}%`,
             formatCurrency(item.icmsSt),
             formatCurrency(item.ipi),
-            `${formatNumber(item.pIpi)}%`,
             formatCurrency(item.pis),
-            `${formatNumber(item.pPis)}%`,
             formatCurrency(item.cofins),
-            `${formatNumber(item.pCofins)}%`,
+            formatCurrency(item.vIbs),
+            formatCurrency(item.vCbs),
         ]);
-
-        const foot: RowInput[] = [
-            [
-                { content: 'Totais:', colSpan: 2, styles: { halign: 'right', fontStyle: 'bold' } },
-                { content: formatCurrency(totals.totalCost), styles: { fontStyle: 'bold' } },
-                { content: formatCurrency(totals.totalIcms), styles: { fontStyle: 'bold' } },
-                { content: '' }, // pICMS total
-                { content: formatCurrency(totals.totalIcmsSt), styles: { fontStyle: 'bold' } },
-                { content: formatCurrency(totals.totalIpi), styles: { fontStyle: 'bold' } },
-                { content: '' }, // pIPI total
-                { content: formatCurrency(totals.totalPis), styles: { fontStyle: 'bold' } },
-                { content: '' }, // pPIS total
-                { content: formatCurrency(totals.totalCofins), styles: { fontStyle: 'bold' } },
-                { content: '' }, // pCOFINS total
-            ]
-        ];
 
         autoTable(doc, {
             startY: nfeInfo ? 54 : 30,
             head: head,
             body: body,
-            foot: foot,
+            foot: [[
+                { content: 'Totais:', colSpan: 5, styles: { halign: 'right', fontStyle: 'bold' } },
+                { content: formatCurrency(totals.totalCost), styles: { fontStyle: 'bold' } },
+                { content: formatCurrency(totals.totalIcms), styles: { fontStyle: 'bold' } },
+                { content: formatCurrency(totals.totalIcmsSt), styles: { fontStyle: 'bold' } },
+                { content: formatCurrency(totals.totalIpi), styles: { fontStyle: 'bold' } },
+                { content: formatCurrency(totals.totalPis), styles: { fontStyle: 'bold' } },
+                { content: formatCurrency(totals.totalCofins), styles: { fontStyle: 'bold' } },
+                { content: formatCurrency(totals.totalIbs), styles: { fontStyle: 'bold' } },
+                { content: formatCurrency(totals.totalCbs), styles: { fontStyle: 'bold' } },
+            ]],
             showFoot: 'lastPage',
             headStyles: { fillColor: [63, 81, 181] },
             footStyles: { fillColor: [224, 224, 224], textColor: [0, 0, 0], fontStyle: 'bold' },
-            didDrawPage: (data) => {
-                const pageCount = doc.getNumberOfPages();
-                doc.setFontSize(8);
-                const pageText = `Página ${data.pageNumber} de ${pageCount}`;
-                doc.text(pageText, data.settings.margin.left, doc.internal.pageSize.height - 10);
-            }
         });
 
-        doc.save(`analise_impostos_${nfeInfo?.nfeNumber || 'sem_numero'}.pdf`);
+        doc.save(`analise_fiscal_${nfeInfo?.nfeNumber || 'sem_numero'}.pdf`);
     };
 
     return (
@@ -335,95 +222,161 @@ export default function TaxAnalysisCalculator() {
                 {fileName && (
                     <div className="flex items-center gap-2 p-2 border rounded-md bg-muted flex-1 sm:flex-none justify-between">
                         <span className="text-sm text-muted-foreground truncate" title={fileName}>{fileName}</span>
-                        <Button variant="ghost" size="icon" onClick={clearData} className="h-6 w-6">
+                        <Button variant="ghost" size="icon" onClick={clearNfeData} className="h-6 w-6">
                             <FileX className="h-4 w-4 text-destructive" />
                         </Button>
                     </div>
                 )}
-                <Input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleImportXml}
-                    className="hidden"
-                    accept=".xml"
-                />
+                <Input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".xml" />
             </div>
 
             {items.length > 0 && nfeInfo && (
-                <div className="p-4 border rounded-lg bg-muted">
-                    <h3 className="text-lg font-medium mb-2">Informações da NF-e</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-2 text-sm">
-                        <div><strong>Emitente:</strong> {nfeInfo.emitterName}</div>
-                        <div><strong>CNPJ:</strong> {nfeInfo.emitterCnpj}</div>
-                        <div><strong>NF-e Nº:</strong> {nfeInfo.nfeNumber}</div>
-                        <div className="col-span-full font-semibold"><strong>Valor Total da NF-e:</strong> <span className="text-primary ml-2">{formatCurrency(nfeInfo.totalNf)}</span></div>
+                <div className="p-4 border rounded-lg bg-muted/50 backdrop-blur-sm shadow-inner">
+                    <h3 className="text-lg font-bold mb-4 text-primary flex items-center gap-2">
+                        <div className="w-2 h-6 bg-primary rounded-full"></div>
+                        Informações da NF-e
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-sm mb-6">
+                        <div className="space-y-1">
+                            <div className="text-muted-foreground uppercase text-[10px] font-bold">Emitente</div>
+                            <div className="font-medium text-base truncate">{nfeInfo.emitterName}</div>
+                            <div className="text-muted-foreground">{nfeInfo.emitterCnpj}</div>
+                        </div>
+                        <div className="space-y-1">
+                            <div className="text-muted-foreground uppercase text-[10px] font-bold">Número da Nota</div>
+                            <div className="font-medium text-base">№ {nfeInfo.nfeNumber}</div>
+                        </div>
+                        <div className="space-y-1">
+                            <div className="text-muted-foreground uppercase text-[10px] font-bold">Valor Total</div>
+                            <div className="font-bold text-xl text-primary">{formatCurrency(nfeInfo.totalNf)}</div>
+                        </div>
                     </div>
-                    <div className="mt-4 pt-4 border-t grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-2 text-sm">
-                        <div><strong>Total ICMS:</strong> {formatCurrency(nfeInfo.totalIcms)}</div>
-                        <div><strong>Total ICMS-ST:</strong> {formatCurrency(nfeInfo.totalIcmsSt)}</div>
-                        <div><strong>Total IPI:</strong> {formatCurrency(nfeInfo.totalIpi)}</div>
-                        <div><strong>Total PIS:</strong> {formatCurrency(nfeInfo.totalPis)}</div>
-                        <div><strong>Total COFINS:</strong> {formatCurrency(nfeInfo.totalCofins)}</div>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 p-4 bg-background/50 rounded-md border border-border/50">
+                        <div className="space-y-1">
+                            <div className="text-muted-foreground text-[10px] font-bold">ICMS</div>
+                            <div className="font-bold">{formatCurrency(nfeInfo.totalIcms)}</div>
+                        </div>
+                        <div className="space-y-1">
+                            <div className="text-muted-foreground text-[10px] font-bold">ICMS-ST</div>
+                            <div className="font-bold">{formatCurrency(nfeInfo.totalIcmsSt)}</div>
+                        </div>
+                        <div className="space-y-1">
+                            <div className="text-muted-foreground text-[10px] font-bold">IPI</div>
+                            <div className="font-bold">{formatCurrency(nfeInfo.totalIpi)}</div>
+                        </div>
+                        <div className="space-y-1">
+                            <div className="text-muted-foreground text-[10px] font-bold">PIS</div>
+                            <div className="font-bold">{formatCurrency(nfeInfo.totalPis)}</div>
+                        </div>
+                        <div className="space-y-1">
+                            <div className="text-muted-foreground text-[10px] font-bold">COFINS</div>
+                            <div className="font-bold">{formatCurrency(nfeInfo.totalCofins)}</div>
+                        </div>
+                        <div className="space-y-1 border-l pl-4 border-primary/20 bg-primary/5 rounded-r">
+                            <div className="text-primary text-[10px] font-bold">IBS (Novo)</div>
+                            <div className="font-bold text-primary">{formatCurrency(nfeInfo.totalIbs || 0)}</div>
+                        </div>
+                        <div className="space-y-1 bg-primary/5 rounded-r">
+                            <div className="text-primary text-[10px] font-bold">CBS (Novo)</div>
+                            <div className="font-bold text-primary">{formatCurrency(nfeInfo.totalCbs || 0)}</div>
+                        </div>
                     </div>
                 </div>
             )}
 
             {items.length > 0 && (
-                <div className="w-full overflow-x-auto">
+                <div className="w-full overflow-x-auto rounded-xl border shadow-sm">
                     <Table>
                         <TableHeader>
-                            <TableRow>
-                                <TableHead className="min-w-[250px] sticky left-0 z-10">Descrição</TableHead>
-                                <TableHead>NCM</TableHead>
-                                <TableHead>CST</TableHead>
-                                <TableHead>CFOP</TableHead>
+                            <TableRow className="bg-muted hover:bg-muted">
+                                <TableHead className="min-w-[200px] sticky left-0 z-20 bg-muted">Descrição</TableHead>
+                                <TableHead className="text-center">NCM</TableHead>
+                                <TableHead className="text-center">CST</TableHead>
+                                <TableHead className="text-center">CFOP</TableHead>
                                 <TableHead className="text-right">Qtde</TableHead>
-                                <TableHead className="text-right">Custo Total</TableHead>
+                                <TableHead className="text-right">Total Item</TableHead>
                                 <TableHead className="text-right">ICMS</TableHead>
-                                <TableHead className="text-right">pICMS</TableHead>
-                                <TableHead className="text-right">ICMS-ST</TableHead>
+                                <TableHead className="text-right">ST</TableHead>
                                 <TableHead className="text-right">IPI</TableHead>
-                                <TableHead className="text-right">pIPI</TableHead>
                                 <TableHead className="text-right">PIS</TableHead>
-                                <TableHead className="text-right">pPIS</TableHead>
                                 <TableHead className="text-right">COFINS</TableHead>
-                                <TableHead className="text-right">pCOFINS</TableHead>
+                                <TableHead className="text-right text-primary font-bold">IBS</TableHead>
+                                <TableHead className="text-right text-primary font-bold">CBS</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {items.map(item => (
-                                <TableRow key={item.id}>
-                                    <TableCell className="font-medium text-xs sticky left-0 z-10">{item.description}</TableCell>
-                                    <TableCell>{item.ncm}</TableCell>
-                                    <TableCell>{item.cst}</TableCell>
-                                    <TableCell>{item.cfop}</TableCell>
-                                    <TableCell className="text-right">{formatNumber4(item.quantity)}</TableCell>
-                                    <TableCell className="text-right">{formatCurrency(item.totalCost)}</TableCell>
-                                    <TableCell className="text-right">{formatCurrency(item.icms)}</TableCell>
-                                    <TableCell className="text-right text-muted-foreground">{formatNumber(item.pIcms)}%</TableCell>
-                                    <TableCell className="text-right">{formatCurrency(item.icmsSt)}</TableCell>
-                                    <TableCell className="text-right">{formatCurrency(item.ipi)}</TableCell>
-                                    <TableCell className="text-right text-muted-foreground">{formatNumber(item.pIpi)}%</TableCell>
-                                    <TableCell className="text-right">{formatCurrency(item.pis)}</TableCell>
-                                    <TableCell className="text-right text-muted-foreground">{formatNumber(item.pPis)}%</TableCell>
-                                    <TableCell className="text-right">{formatCurrency(item.cofins)}</TableCell>
-                                    <TableCell className="text-right text-muted-foreground">{formatNumber(item.pCofins)}%</TableCell>
+                                <TableRow key={item.id} className="hover:bg-accent/30 transition-colors">
+                                    <TableCell className="font-medium text-xs sticky left-0 z-10 bg-background/80 backdrop-blur-sm border-r">{item.description}</TableCell>
+                                    <TableCell className="text-center text-xs text-muted-foreground font-mono">{item.ncm}</TableCell>
+                                    <TableCell className="text-center text-xs font-mono">{item.cst}</TableCell>
+                                    <TableCell className="text-center text-xs text-muted-foreground font-mono">{item.cfop}</TableCell>
+                                    <TableCell className="text-right text-xs font-bold">{formatNumber(item.quantity)}</TableCell>
+                                    <TableCell className="text-right text-xs">{formatCurrency(item.totalCost)}</TableCell>
+                                    <TableCell className="text-right text-xs text-muted-foreground">
+                                        <TooltipProvider>
+                                            <Tooltip delayDuration={100}>
+                                                <TooltipTrigger className="cursor-help">{formatCurrency(item.icms)}</TooltipTrigger>
+                                                <TooltipContent className="text-[10px]">Alíquota: {formatNumber(item.pIcms)}%</TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </TableCell>
+                                    <TableCell className="text-right text-xs text-muted-foreground">{formatCurrency(item.icmsSt)}</TableCell>
+                                    <TableCell className="text-right text-xs text-muted-foreground">
+                                        <TooltipProvider>
+                                            <Tooltip delayDuration={100}>
+                                                <TooltipTrigger className="cursor-help">{formatCurrency(item.ipi)}</TooltipTrigger>
+                                                <TooltipContent className="text-[10px]">Alíquota: {formatNumber(item.pIpi)}%</TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </TableCell>
+                                    <TableCell className="text-right text-xs text-muted-foreground">
+                                        <TooltipProvider>
+                                            <Tooltip delayDuration={100}>
+                                                <TooltipTrigger className="cursor-help">{formatCurrency(item.pis)}</TooltipTrigger>
+                                                <TooltipContent className="text-[10px]">Alíquota: {formatNumber(item.pPis)}%</TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </TableCell>
+                                    <TableCell className="text-right text-xs text-muted-foreground">
+                                        <TooltipProvider>
+                                            <Tooltip delayDuration={100}>
+                                                <TooltipTrigger className="cursor-help">{formatCurrency(item.cofins)}</TooltipTrigger>
+                                                <TooltipContent className="text-[10px]">Alíquota: {formatNumber(item.pCofins)}%</TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </TableCell>
+                                    <TableCell className="text-right text-xs text-primary font-bold">
+                                         <TooltipProvider>
+                                            <Tooltip delayDuration={100}>
+                                                <TooltipTrigger className="cursor-help">{formatCurrency(item.vIbs)}</TooltipTrigger>
+                                                <TooltipContent className="text-[10px]">Alíquota IBS: {formatNumber(item.pIbs)}%</TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </TableCell>
+                                    <TableCell className="text-right text-xs text-primary font-bold">
+                                         <TooltipProvider>
+                                            <Tooltip delayDuration={100}>
+                                                <TooltipTrigger className="cursor-help">{formatCurrency(item.vCbs)}</TooltipTrigger>
+                                                <TooltipContent className="text-[10px]">Alíquota CBS: {formatNumber(item.pCbs)}%</TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
                         <TableFooter>
-                            <TableRow className="font-bold bg-muted">
-                                <TableCell className="sticky left-0 bg-muted z-10 text-right" colSpan={5}>Totais:</TableCell>
+                            <TableRow className="font-bold bg-muted/30">
+                                <TableCell className="sticky left-0 bg-muted/80 z-10 text-right pr-4" colSpan={5}>TOTAIS DA NOTA:</TableCell>
                                 <TableCell className="text-right">{formatCurrency(totals.totalCost)}</TableCell>
                                 <TableCell className="text-right">{formatCurrency(totals.totalIcms)}</TableCell>
-                                <TableCell></TableCell>
                                 <TableCell className="text-right">{formatCurrency(totals.totalIcmsSt)}</TableCell>
                                 <TableCell className="text-right">{formatCurrency(totals.totalIpi)}</TableCell>
-                                <TableCell></TableCell>
                                 <TableCell className="text-right">{formatCurrency(totals.totalPis)}</TableCell>
-                                <TableCell></TableCell>
                                 <TableCell className="text-right">{formatCurrency(totals.totalCofins)}</TableCell>
-                                <TableCell></TableCell>
+                                <TableCell className="text-right text-primary">{formatCurrency(totals.totalIbs)}</TableCell>
+                                <TableCell className="text-right text-primary">{formatCurrency(totals.totalCbs)}</TableCell>
                             </TableRow>
                         </TableFooter>
                     </Table>

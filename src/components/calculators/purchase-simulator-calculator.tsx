@@ -21,6 +21,10 @@ import { Label } from "../ui/label";
 import { format as formatDate, parseISO, addDays } from "date-fns";
 import { DatePickerWithRange } from "../ui/date-range-picker";
 import { DateRange } from "react-day-picker";
+import { useNfeParser, type NfeData, type NfeInfo as NfeParserInfo, type NfeProductDetail } from "@/hooks/use-nfe-parser";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 
 interface SimulatedItem {
@@ -40,32 +44,8 @@ interface SimulatedItem {
     finalUnitCost: number;
     originalTotalCost: number;
     simulatedTotalCost: number;
-}
-
-interface NfeProductDetail {
-    prod: Record<string, string>;
-    imposto: Record<string, Record<string, Record<string, string>>>;
-}
-
-interface InfNFe {
-    ['@_Id']: string;
-    ide: { nNF: string };
-    emit: { xNome: string; CNPJ: string, enderEmit: { xLgr: string, nro: string, xBairro: string, xMun: string, UF: string } };
-    det: NfeProductDetail[] | NfeProductDetail;
-    total: {
-        ICMSTot: {
-            vProd: string;
-            vFrete: string;
-            vSeg: string;
-            vDesc: string;
-            vOutro: string;
-        }
-    }
-}
-
-interface NFeData {
-    nfeProc?: { NFe: { infNFe: InfNFe } };
-    NFe?: { infNFe: InfNFe };
+    vIBS: number;
+    vCBS: number;
 }
 
 interface jsPDFWithAutoTable extends jsPDF {
@@ -86,7 +66,6 @@ const formatCnpj = (value?: string | number) => {
 
 export default function PurchaseSimulatorCalculator() {
     const [items, setItems] = useState<SimulatedItem[]>([]);
-    const [fileName, setFileName] = useState<string | null>(null);
     const [nfeInfo, setNfeInfo] = useState<NfeInfo | null>(null);
     const [simulationName, setSimulationName] = useState("");
     const [originalNfeTotalCost, setOriginalNfeTotalCost] = useState(0);
@@ -98,9 +77,16 @@ export default function PurchaseSimulatorCalculator() {
     const [deleteTarget, setDeleteTarget] = useState<PurchaseSimulation | null>(null);
     const [isLoadingSims, setIsLoadingSims] = useState(true);
     const [activeTab, setActiveTab] = useState("simulator");
+    
+    // Novas variáveis para Rateio e Reforma
+    const [manualFrete, setManualFrete] = useState("");
+    const [manualSeguro, setManualSeguro] = useState("");
+    const [manualOutros, setManualOutros] = useState("");
+    const [manualDesconto, setManualDesconto] = useState("");
+    const [useTaxReform, setUseTaxReform] = useState(false);
 
     const { toast } = useToast();
-    const fileInputRef = useRef<HTMLInputElement>(null);
+
 
     const loadSimulations = useCallback(async () => {
         setIsLoadingSims(true);
@@ -118,8 +104,9 @@ export default function PurchaseSimulatorCalculator() {
         loadSimulations();
     }, [loadSimulations]);
 
-    const calculateCosts = (item: Omit<SimulatedItem, 'id' | 'code' | 'description' | 'finalUnitCost' | 'originalTotalCost' | 'simulatedTotalCost'>) => {
-        const totalAdditionalCosts = item.ipi + item.icmsST + item.frete + item.seguro + item.outras - item.desconto;
+    const calculateCosts = (item: Omit<SimulatedItem, 'id' | 'code' | 'description' | 'finalUnitCost' | 'originalTotalCost' | 'simulatedTotalCost'>, taxReform: boolean) => {
+        const taxReformValue = taxReform ? (item.vIBS + item.vCBS) : 0;
+        const totalAdditionalCosts = item.ipi + item.icmsST + item.frete + item.seguro + item.outras + taxReformValue - item.desconto;
         const additionalCostsPerUnit = item.originalQuantity > 0 ? totalAdditionalCosts / item.originalQuantity : 0;
 
         const finalUnitCost = item.unitCost + additionalCostsPerUnit;
@@ -129,88 +116,120 @@ export default function PurchaseSimulatorCalculator() {
         return { additionalCosts: additionalCostsPerUnit, finalUnitCost, originalTotalCost, simulatedTotalCost };
     };
 
-    const handleImportXml = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
+    const onNfeProcessed = (data: NfeData | null) => {
+        if (!data) {
+            clearData();
+            return;
+        }
 
-        clearData(); // Clear previous simulation before importing a new one
-        setFileName(file.name);
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const xmlData = e.target?.result as string;
-                const parser = new XMLParser({ ignoreAttributes: false, parseAttributeValue: true });
-                const jsonObj = parser.parse(xmlData) as NFeData;
+        const { infNFe, det: dets } = data;
+        const total = infNFe.total.ICMSTot;
+        const totalProdValue = parseFloat(total.vProd) || 0;
 
-                const infNFe: InfNFe | undefined = jsonObj?.nfeProc?.NFe?.infNFe || jsonObj?.NFe?.infNFe;
-                if (!infNFe) throw new Error("Estrutura do XML da NF-e inválida.");
+        const totalFrete = parseFloat(total.vFrete) || 0;
+        const totalSeguro = parseFloat(total.vSeg) || 0;
+        const totalDesconto = parseFloat(total.vDesc) || 0;
+        const totalOutras = parseFloat(total.vOutro) || 0;
 
-                const dets = Array.isArray(infNFe.det) ? infNFe.det : [infNFe.det];
-                const total = infNFe.total.ICMSTot;
-                const totalProdValue = parseFloat(total.vProd);
-
-                const totalFrete = parseFloat(total.vFrete) || 0;
-                const totalSeguro = parseFloat(total.vSeg) || 0;
-                const totalDesconto = parseFloat(total.vDesc) || 0;
-                const totalOutras = parseFloat(total.vOutro) || 0;
-
-
-                const newNfeInfo = {
-                    emitterName: infNFe.emit.xNome,
-                    emitterCnpj: infNFe.emit.CNPJ,
-                    emitterCity: `${infNFe.emit.enderEmit.xMun} - ${infNFe.emit.enderEmit.UF}`,
-                    nfeNumber: infNFe.ide.nNF,
-                };
-                setNfeInfo(newNfeInfo);
-                setSimulationName(`Simulação NF-${newNfeInfo.nfeNumber} (${newNfeInfo.emitterName})`);
-
-                let calculatedOriginalTotal = 0;
-
-                const newItems: SimulatedItem[] = dets.map((det, index) => {
-                    const prod = det.prod;
-                    const imposto = det.imposto;
-                    const itemTotalCost = parseFloat(prod.vProd);
-                    const itemWeight = totalProdValue > 0 ? itemTotalCost / totalProdValue : 0;
-
-                    const baseItem: Omit<SimulatedItem, 'id' | 'code' | 'description' | 'finalUnitCost' | 'originalTotalCost' | 'simulatedTotalCost'> = {
-                        originalQuantity: parseFloat(prod.qCom),
-                        simulatedQuantity: prod.qCom,
-                        unitCost: parseFloat(prod.vUnCom),
-                        additionalCosts: 0, // Placeholder, will be calculated
-                        ipi: parseFloat(imposto?.IPI?.IPITrib?.vIPI) || 0,
-                        icmsST: parseFloat(imposto?.ICMS?.ICMSST?.vICMSST) || 0,
-                        frete: totalProdValue > 0 ? itemWeight * totalFrete : 0,
-                        seguro: totalProdValue > 0 ? itemWeight * totalSeguro : 0,
-                        desconto: totalProdValue > 0 ? itemWeight * totalDesconto : 0,
-                        outras: totalProdValue > 0 ? itemWeight * totalOutras : 0,
-                    };
-
-                    const costs = calculateCosts(baseItem);
-                    calculatedOriginalTotal += costs.originalTotalCost;
-
-                    return {
-                        id: index,
-                        code: prod.cProd,
-                        description: prod.xProd,
-                        ...baseItem,
-                        ...costs,
-                    };
-                });
-
-                setItems(newItems);
-                setOriginalNfeTotalCost(calculatedOriginalTotal);
-
-                toast({ title: "Sucesso!", description: `${newItems.length} itens importados da NF-e.` });
-            } catch (error) {
-                console.error("Erro ao processar o XML:", error);
-                clearData();
-                toast({ variant: "destructive", title: "Erro de Importação", description: "Não foi possível ler o arquivo XML." });
-            } finally {
-                if (fileInputRef.current) fileInputRef.current.value = "";
-            }
+        const newNfeInfo = {
+            emitterName: infNFe.emit.xNome,
+            emitterCnpj: infNFe.emit.CNPJ,
+            emitterCity: `${infNFe.emit.enderEmit.xMun} - ${infNFe.emit.enderEmit.UF}`,
+            nfeNumber: infNFe.ide.nNF,
         };
-        reader.readAsText(file, 'ISO-8859-1');
+        setNfeInfo(newNfeInfo);
+        setSimulationName(`Simulação NF-${newNfeInfo.nfeNumber} (${newNfeInfo.emitterName})`);
+
+        let calculatedOriginalTotal = 0;
+
+        const extractST = (imposto: any): number => {
+            if (!imposto?.ICMS) return 0;
+            const icms = imposto.ICMS;
+            for (const key in icms) {
+                if (icms[key]?.vICMSST) return parseFloat(icms[key].vICMSST) || 0;
+            }
+            return 0;
+        };
+
+        const newItems: SimulatedItem[] = dets.map((det, index) => {
+            const prod = det.prod;
+            const imposto = det.imposto;
+            const itemTotalCost = parseFloat(prod.vProd) || 0;
+            const itemWeight = totalProdValue > 0 ? itemTotalCost / totalProdValue : 0;
+
+            const vIBS = parseFloat(imposto?.IBSCBS?.gIBSCBS?.vIBS?.toString() || "0") || 0;
+            const vCBS = parseFloat(imposto?.IBSCBS?.gIBSCBS?.gCBS?.vCBS?.toString() || "0") || 0;
+
+            const baseItem: Omit<SimulatedItem, 'id' | 'code' | 'description' | 'finalUnitCost' | 'originalTotalCost' | 'simulatedTotalCost'> = {
+                originalQuantity: parseFloat(prod.qCom) || 0,
+                simulatedQuantity: prod.qCom || "0",
+                unitCost: parseFloat(prod.vUnCom) || 0,
+                additionalCosts: 0,
+                ipi: parseFloat(imposto?.IPI?.IPITrib?.vIPI?.toString() || "0") || 0,
+                icmsST: extractST(imposto),
+                frete: parseFloat(prod.vFrete || "0") || (totalFrete * itemWeight) || 0,
+                seguro: parseFloat(prod.vSeg || "0") || (totalSeguro * itemWeight) || 0,
+                desconto: parseFloat(prod.vDesc || "0") || (totalDesconto * itemWeight) || 0,
+                outras: parseFloat(prod.vOutro || "0") || (totalOutras * itemWeight) || 0,
+                vIBS,
+                vCBS
+            };
+
+            const costs = calculateCosts(baseItem, useTaxReform);
+            calculatedOriginalTotal += costs.originalTotalCost;
+
+            return {
+                id: index,
+                code: prod.cProd || "",
+                description: prod.xProd || "",
+                ...baseItem,
+                ...costs,
+            };
+        });
+
+        setItems(newItems);
+        setOriginalNfeTotalCost(calculatedOriginalTotal);
+        toast({ title: "Sucesso!", description: `${newItems.length} itens importados da NF-e.` });
     };
+
+    const { fileName, handleFileChange, clearNfeData, setFileName, fileInputRef } = useNfeParser({ onNfeProcessed });
+
+    const toggleTaxReform = (checked: boolean) => {
+        setUseTaxReform(checked);
+        setItems(prevItems => prevItems.map(item => {
+            const costs = calculateCosts(item, checked);
+            return { ...item, ...costs };
+        }));
+    };
+
+    const applyManualRateio = () => {
+        setItems(prevItems => {
+            const totalProdValue = prevItems.reduce((acc, item) => acc + (item.unitCost * item.originalQuantity), 0);
+            const mFrete = parseFloat(manualFrete) || 0;
+            const mSeg = parseFloat(manualSeguro) || 0;
+            const mOutros = parseFloat(manualOutros) || 0;
+            const mDesc = parseFloat(manualDesconto) || 0;
+
+            if (totalProdValue === 0 && (mFrete + mSeg + mOutros + mDesc) > 0) return prevItems;
+
+            return prevItems.map(item => {
+                const itemTotalValue = item.unitCost * item.originalQuantity;
+                const itemWeight = totalProdValue > 0 ? itemTotalValue / totalProdValue : 0;
+                
+                const updatedItem = {
+                    ...item,
+                    frete: manualFrete ? (mFrete * itemWeight) : item.frete,
+                    seguro: manualSeguro ? (mSeg * itemWeight) : item.seguro,
+                    outras: manualOutros ? (mOutros * itemWeight) : item.outras,
+                    desconto: manualDesconto ? (mDesc * itemWeight) : item.desconto,
+                };
+                const costs = calculateCosts(updatedItem, useTaxReform);
+                return { ...updatedItem, ...costs };
+            });
+        });
+        toast({ title: "Rateio Aplicado", description: "Custos atualizados com valores globais." });
+    };
+
 
     const handleQuantityChange = (id: number, value: string) => {
         setItems(prevItems => prevItems.map(item => {
@@ -230,13 +249,16 @@ export default function PurchaseSimulatorCalculator() {
 
     const clearData = useCallback(() => {
         setItems([]);
-        setFileName(null);
         setNfeInfo(null);
         setSimulationName("");
         setOriginalNfeTotalCost(0);
         setEditingSimulationId(null);
-        if (fileInputRef.current) fileInputRef.current.value = "";
-    }, []);
+        setManualFrete("");
+        setManualSeguro("");
+        setManualOutros("");
+        setManualDesconto("");
+        clearNfeData();
+    }, [clearNfeData]);
 
     const handleClearSearch = () => {
         setSearchQuery("");
@@ -342,7 +364,9 @@ export default function PurchaseSimulatorCalculator() {
                 additionalCosts: additionalCostsApproximation,
                 unitCost: unitCostApproximation,
                 originalTotalCost,
-                simulatedTotalCost
+                simulatedTotalCost,
+                vIBS: 0,
+                vCBS: 0
             };
         });
 
@@ -524,8 +548,33 @@ export default function PurchaseSimulatorCalculator() {
                                     <span className="text-sm text-muted-foreground truncate" title={fileName}>{fileName}</span>
                                 </div>
                             )}
-                            <Input type="file" ref={fileInputRef} onChange={handleImportXml} className="hidden" accept=".xml" />
+                            <Input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".xml" />
                         </div>
+
+                        {items.length > 0 && (
+                            <div className="flex flex-wrap items-center gap-3 bg-accent/5 p-2 rounded-md border border-accent/20">
+                                <div className="flex items-center gap-2">
+                                    <Label className="text-[10px] uppercase font-bold text-muted-foreground mr-1">Rateio Manual:</Label>
+                                    <div className="flex gap-x-1">
+                                        <Input placeholder="Frete" value={manualFrete} onChange={e => setManualFrete(e.target.value)} className="w-20 h-7 text-[10px] bg-background" />
+                                        <Input placeholder="Seguro" value={manualSeguro} onChange={e => setManualSeguro(e.target.value)} className="w-16 h-7 text-[10px] bg-background" />
+                                        <Input placeholder="Outros" value={manualOutros} onChange={e => setManualOutros(e.target.value)} className="w-16 h-7 text-[10px] bg-background" />
+                                        <Input placeholder="Desconto" value={manualDesconto} onChange={e => setManualDesconto(e.target.value)} className="w-16 h-7 text-[10px] bg-background border-destructive/30" />
+                                    </div>
+                                    <Button onClick={applyManualRateio} size="sm" variant="outline" className="h-7 px-2 text-[10px] bg-accent-blue/10 border-accent-blue/30 text-accent-blue hover:bg-accent-blue hover:text-white transition-all">
+                                        Ratear
+                                    </Button>
+                                </div>
+
+                                <div className="h-6 w-[1px] bg-border mx-1"></div>
+
+                                <div className="flex items-center gap-2">
+                                    <Label htmlFor="tax-reform" className="text-[10px] uppercase font-bold text-muted-foreground cursor-pointer">Reforma (IBS/CBS)</Label>
+                                    <Switch id="tax-reform" checked={useTaxReform} onCheckedChange={toggleTaxReform} className="scale-75" />
+                                    {useTaxReform && <Badge variant="outline" className="h-5 text-[8px] border-primary text-primary bg-primary/5">Ativo</Badge>}
+                                </div>
+                            </div>
+                        )}
 
                         {nfeInfo && items.length > 0 && (
                             <Card className="bg-muted">
@@ -600,7 +649,7 @@ export default function PurchaseSimulatorCalculator() {
                                                     <Input
                                                         type="text"
                                                         inputMode="decimal"
-                                                        className="h-8 w-full text-right"
+                                                        className="h-8 w-full text-right bg-transparent border-0 border-b border-transparent focus-visible:border-primary focus-visible:ring-0 shadow-none text-xs rounded-none p-1"
                                                         value={item.simulatedQuantity}
                                                         onChange={(e) => handleQuantityChange(item.id, e.target.value)}
                                                     />
