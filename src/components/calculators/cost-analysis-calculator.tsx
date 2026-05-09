@@ -154,50 +154,50 @@ export default function CostAnalysisCalculator() {
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="space-y-1">
-                    <h2 className="text-2xl font-black tracking-tight flex items-center gap-2 text-slate-800 dark:text-slate-100">
-                        <PieChart className="w-6 h-6 text-indigo-600" /> Análise de Custo de Entrada
+                 <div className="space-y-1">
+                    <h2 className="text-2xl font-black tracking-tight flex items-center gap-2 text-foreground">
+                        <PieChart className="w-6 h-6 text-primary" /> Análise de Custo
                     </h2>
-                    <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Descomposição de Encargos e Rateio de NF-e</p>
+                    <p className="text-xs text-muted-foreground uppercase font-black tracking-wider opacity-70">Descomposição de Encargos e Rateio de NF-e</p>
                 </div>
                 <NfeUploader />
             </div>
 
             {items.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <Card className="bg-white dark:bg-slate-950 border-none shadow-xl rounded-2xl p-5 overflow-hidden relative group">
+                     <Card className="bg-card text-foreground border border-border shadow-xl rounded-2xl p-5 overflow-hidden relative group">
                         <div className="absolute right-[-10px] top-[-10px] opacity-5 group-hover:scale-110 transition-transform">
                             <DollarSign size={80} />
                         </div>
-                        <span className="text-[10px] font-black uppercase text-slate-500 block mb-1">Custo Mercadoria</span>
-                        <p className="text-2xl font-black text-slate-900 dark:text-white">{formatCurrency(totals.totalCost)}</p>
+                        <span className="text-[10px] font-black uppercase text-muted-foreground block mb-1">Custo Mercadoria</span>
+                        <p className="text-2xl font-black text-foreground">{formatCurrency(totals.totalCost)}</p>
                     </Card>
 
-                    <Card className="bg-rose-500 text-white border-none shadow-xl rounded-2xl p-5 overflow-hidden relative">
-                        <span className="text-[10px] font-black uppercase text-white/70 block mb-1">Encargos (+)</span>
+                     <Card className="bg-destructive text-destructive-foreground border-none shadow-xl rounded-2xl p-5 overflow-hidden relative">
+                        <span className="text-[10px] font-black uppercase opacity-70 block mb-1">Encargos (+)</span>
                         <p className="text-2xl font-black">{formatCurrency(totals.totalExtras)}</p>
                     </Card>
-
-                    <Card className="bg-indigo-600 text-white border-none shadow-xl rounded-2xl p-5 overflow-hidden relative">
-                        <span className="text-[10px] font-black uppercase text-white/70 block mb-1">Descontos (-)</span>
+ 
+                    <Card className="bg-primary text-primary-foreground border-none shadow-xl rounded-2xl p-5 overflow-hidden relative">
+                        <span className="text-[10px] font-black uppercase opacity-70 block mb-1">Descontos (-)</span>
                         <p className="text-2xl font-black">{formatCurrency(totals.totalDesconto)}</p>
                     </Card>
-
-                    <Card className="bg-emerald-600 text-white border-none shadow-xl rounded-2xl p-5 overflow-hidden relative">
-                        <span className="text-[10px] font-black uppercase text-white/70 block mb-1">Custo Real Final</span>
+ 
+                    <Card className="bg-accent-green text-background border-none shadow-xl rounded-2xl p-5 overflow-hidden relative">
+                        <span className="text-[10px] font-black uppercase opacity-70 block mb-1">Custo Real Final</span>
                         <p className="text-2xl font-black">{formatCurrency(totals.finalTotal)}</p>
                     </Card>
                 </div>
             )}
 
             {items.length > 0 && (
-                <div className="bg-white dark:bg-slate-950 p-4 rounded-2xl border shadow-sm flex flex-col md:flex-row items-center gap-6">
+                 <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex flex-col md:flex-row items-center gap-6">
                     <div className="flex items-center gap-3">
                         <Switch id="tax-reform-basic" checked={useTaxReform} onCheckedChange={setUseTaxReform} />
-                        <Label htmlFor="tax-reform-basic" className="text-sm font-black cursor-pointer uppercase tracking-tight">Simular Reforma (IBS/CBS)</Label>
+                        <Label htmlFor="tax-reform-basic" className="text-sm font-black cursor-pointer uppercase tracking-tighter">Simular Reforma (IBS/CBS)</Label>
                     </div>
                     <div className="md:ml-auto flex gap-3">
-                        <Button onClick={generatePdf} variant="outline" className="rounded-xl font-bold h-10 border-slate-200">
+                        <Button onClick={generatePdf} variant="outline" className="rounded-xl font-black h-10 border-border">
                             <Printer className="mr-2 h-4 w-4" /> Exportar Relatório
                         </Button>
                     </div>
@@ -205,27 +205,27 @@ export default function CostAnalysisCalculator() {
             )}
 
             {items.length > 0 ? (
-                <div className="rounded-2xl border shadow-2xl overflow-hidden bg-white dark:bg-slate-950">
+                <div className="rounded-2xl border border-border shadow-2xl overflow-hidden bg-card">
                     <div className="overflow-x-auto">
                         <Table>
                             <TableHeader>
-                                <TableRow className="bg-slate-50 dark:bg-slate-900 border-none">
-                                    <TableHead className="text-[10px] font-black uppercase text-slate-500">Cód / Produto</TableHead>
-                                    <TableHead className="text-right text-[10px] font-black uppercase text-slate-500">Qtde</TableHead>
-                                    <TableHead className="text-center text-[10px] font-black uppercase text-slate-500">Fator</TableHead>
-                                    <TableHead className="text-right text-[10px] font-black uppercase text-slate-500">Custo NF</TableHead>
-                                    <TableHead className="text-right text-[10px] font-black uppercase text-rose-500">Encargos (+)</TableHead>
-                                    <TableHead className="text-right text-[10px] font-black uppercase text-indigo-600">C. Un. Final</TableHead>
-                                    <TableHead className="text-right text-[10px] font-black uppercase text-emerald-600">Invest. Total</TableHead>
+                                <TableRow className="bg-muted border-none">
+                                    <TableHead className="text-[10px] font-black uppercase text-muted-foreground">Cód / Produto</TableHead>
+                                    <TableHead className="text-right text-[10px] font-black uppercase text-muted-foreground">Qtde</TableHead>
+                                    <TableHead className="text-center text-[10px] font-black uppercase text-muted-foreground">Fator</TableHead>
+                                    <TableHead className="text-right text-[10px] font-black uppercase text-muted-foreground">Custo NF</TableHead>
+                                    <TableHead className="text-right text-[10px] font-black uppercase text-destructive">Encargos (+)</TableHead>
+                                    <TableHead className="text-right text-[10px] font-black uppercase text-primary">C. Un. Final</TableHead>
+                                    <TableHead className="text-right text-[10px] font-black uppercase text-accent-green">Invest. Total</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {items.map(item => (
-                                    <TableRow key={item.id} className="hover:bg-slate-50 transition-colors border-slate-100">
+                                    <TableRow key={item.id} className="hover:bg-accent/5 transition-colors border-border">
                                         <TableCell>
                                             <div className="flex flex-col">
-                                                <span className="font-mono text-[9px] font-black text-indigo-600">{item.cProd}</span>
-                                                <span className="text-xs font-bold truncate max-w-[250px]">{item.description}</span>
+                                                <span className="font-mono text-[9px] font-black text-primary">{item.cProd}</span>
+                                                <span className="text-xs font-black text-foreground truncate max-w-[250px]">{item.description}</span>
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-right font-mono text-xs font-bold">{formatNumber(item.quantity)}</TableCell>
@@ -233,10 +233,10 @@ export default function CostAnalysisCalculator() {
                                             <Input 
                                                 value={item.conversionFactor} 
                                                 onChange={e => handleFactorChange(item.id, e.target.value)}
-                                                className="h-8 w-16 mx-auto text-center font-black text-xs bg-slate-50 border-slate-100"
+                                                className="h-8 w-16 mx-auto text-center font-black text-xs bg-background border-border"
                                             />
                                         </TableCell>
-                                        <TableCell className="text-right font-mono text-xs font-bold text-slate-600">{formatCurrency4(item.unitCost)}</TableCell>
+                                        <TableCell className="text-right font-mono text-xs font-black text-muted-foreground">{formatCurrency4(item.unitCost)}</TableCell>
                                         <TableCell className="text-right">
                                             <TooltipProvider>
                                                 <Tooltip>
@@ -261,13 +261,13 @@ export default function CostAnalysisCalculator() {
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex flex-col items-end">
-                                                <span className="text-xs font-black text-indigo-700">{formatCurrency4(item.finalUnitCost)}</span>
+                                                <span className="text-xs font-black text-primary">{formatCurrency4(item.finalUnitCost)}</span>
                                                 {parseFloat(item.conversionFactor) !== 1 && (
-                                                    <span className="text-[9px] text-slate-400 font-bold italic">Un. Conv: {formatCurrency4(item.convertedUnitCost)}</span>
+                                                    <span className="text-[9px] text-muted-foreground font-bold italic">Un. Conv: {formatCurrency4(item.convertedUnitCost)}</span>
                                                 )}
                                             </div>
                                         </TableCell>
-                                        <TableCell className="text-right text-xs font-black text-emerald-600">{formatCurrency(item.finalTotalCost)}</TableCell>
+                                        <TableCell className="text-right text-xs font-black text-accent-green">{formatCurrency(item.finalTotalCost)}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>

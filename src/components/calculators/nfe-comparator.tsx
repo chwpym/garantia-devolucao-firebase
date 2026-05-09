@@ -181,10 +181,10 @@ export default function NfeComparator() {
         const grandTotalValue = results.reduce((sum, item) => sum + item.totalValue, 0);
 
         return (
-         <Card className="mt-8 border-none shadow-2xl overflow-hidden rounded-3xl bg-white dark:bg-slate-950">
-            <CardHeader className="bg-slate-900 text-white p-6">
+         <Card className="mt-8 border border-border shadow-2xl overflow-hidden rounded-3xl bg-card">
+            <CardHeader className="bg-foreground text-background p-6">
                 <CardTitle className="text-xl font-black flex items-center gap-3">
-                    <GitCompareArrows size={24} className="text-indigo-400" />
+                    <GitCompareArrows size={24} className="text-primary" />
                     {title}
                 </CardTitle>
             </CardHeader>
@@ -192,41 +192,41 @@ export default function NfeComparator() {
                 <div className="w-full overflow-x-auto">
                     <Table>
                         <TableHeader>
-                            <TableRow className="bg-slate-50 dark:bg-slate-900 border-none">
-                                <TableHead className="text-[10px] font-black uppercase text-slate-500 py-4 px-6">Produto / SKU</TableHead>
-                                <TableHead className="text-center text-[10px] font-black uppercase text-slate-500">Fontes</TableHead>
-                                <TableHead className="text-right text-[10px] font-black uppercase text-slate-500">Volume Total</TableHead>
-                                <TableHead className="text-right text-[10px] font-black uppercase text-indigo-600">Investimento</TableHead>
-                                <TableHead className="text-[10px] font-black uppercase text-slate-500 px-6">Detalhamento por Nota</TableHead>
+                            <TableRow className="bg-muted border-none">
+                                <TableHead className="text-[10px] font-black uppercase text-muted-foreground py-4 px-6">Produto / SKU</TableHead>
+                                <TableHead className="text-center text-[10px] font-black uppercase text-muted-foreground">Fontes</TableHead>
+                                <TableHead className="text-right text-[10px] font-black uppercase text-muted-foreground">Volume Total</TableHead>
+                                <TableHead className="text-right text-[10px] font-black uppercase text-primary">Investimento</TableHead>
+                                <TableHead className="text-[10px] font-black uppercase text-muted-foreground px-6">Detalhamento por Nota</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {results.map((result) => (
-                                <TableRow key={`${result.code}-${result.description}`} className="hover:bg-slate-50 transition-colors border-slate-100">
+                             {results.map((result) => (
+                                <TableRow key={`${result.code}-${result.description}`} className="hover:bg-accent/5 transition-colors border-border">
                                     <TableCell className="px-6 py-4">
                                         <div className="flex flex-col">
-                                            <span className="text-xs font-black text-slate-900 dark:text-white leading-tight mb-1">{result.description}</span>
-                                            <span className="font-mono text-[10px] font-black text-indigo-600">{result.code}</span>
+                                            <span className="text-xs font-black text-foreground leading-tight mb-1">{result.description}</span>
+                                            <span className="font-mono text-[10px] font-black text-primary">{result.code}</span>
                                         </div>
                                     </TableCell>
-                                    <TableCell className="text-center">
-                                        <Badge variant="secondary" className="bg-slate-100 text-slate-700 font-black text-[10px] rounded-lg border-none">
+                                     <TableCell className="text-center">
+                                        <Badge variant="secondary" className="bg-accent text-accent-foreground font-black text-[10px] rounded-lg border-none">
                                             {result.nfeCount} XMLS
                                         </Badge>
                                     </TableCell>
-                                    <TableCell className="text-right font-black text-xs text-slate-600">{formatNumber(result.totalQuantity)}</TableCell>
-                                    <TableCell className="text-right font-black text-xs text-indigo-600">{formatCurrency(result.totalValue)}</TableCell>
-                                    <TableCell className="px-6">
+                                     <TableCell className="text-right font-black text-xs text-muted-foreground">{formatNumber(result.totalQuantity)}</TableCell>
+                                    <TableCell className="text-right font-black text-xs text-primary">{formatCurrency(result.totalValue)}</TableCell>
+                                     <TableCell className="px-6">
                                         <div className="flex flex-col gap-2 py-2">
                                             {result.occurrences.map((occ, index) => (
-                                                <div key={index} className="text-[9px] p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 relative group/item">
+                                                <div key={index} className="text-[9px] p-3 rounded-xl bg-accent/20 border border-border relative group/item">
                                                    <div className="flex justify-between items-center mb-1">
-                                                       <span className="font-black text-slate-500 uppercase tracking-tighter truncate max-w-[120px]">{occ.emitterName}</span>
-                                                       <span className="text-indigo-600 font-black">NF: {occ.nfeNumber}</span>
+                                                       <span className="font-black text-muted-foreground uppercase tracking-tighter truncate max-w-[120px]">{occ.emitterName}</span>
+                                                       <span className="text-primary font-black">NF: {occ.nfeNumber}</span>
                                                    </div>
                                                    <div className="flex justify-between items-center">
-                                                        <span className="text-slate-400 font-bold">Qtde: {formatNumber(occ.quantity)}</span>
-                                                        <span className="font-medium text-primary whitespace-nowrap">{formatCurrency4(occ.unitCost)}</span>
+                                                        <span className="text-muted-foreground/70 font-bold">Qtde: {formatNumber(occ.quantity)}</span>
+                                                        <span className="font-medium text-foreground whitespace-nowrap">{formatCurrency4(occ.unitCost)}</span>
                                                    </div>
                                                 </div>
                                             ))}
@@ -237,9 +237,9 @@ export default function NfeComparator() {
                         </TableBody>
                     </Table>
                 </div>
-                <div className="bg-slate-900 p-6 flex justify-between items-center text-white">
+                 <div className="bg-foreground text-background p-6 flex justify-between items-center">
                     <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Investimento Total nos Resultados</span>
-                    <span className="text-2xl font-black text-emerald-400">{formatCurrency(grandTotalValue)}</span>
+                    <span className="text-2xl font-black text-accent-green">{formatCurrency(grandTotalValue)}</span>
                 </div>
             </CardContent>
         </Card>
@@ -249,68 +249,67 @@ export default function NfeComparator() {
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="space-y-1">
+                 <div className="space-y-1">
                     <h2 className="text-2xl font-black tracking-tight flex items-center gap-2">
-                        <GitCompareArrows className="w-6 h-6 text-indigo-600" /> Comparador Estratégico de NF-e
+                        <GitCompareArrows className="w-6 h-6 text-primary" /> Comparador Estratégico de NF-e
                     </h2>
-                    <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Histórico de Preços e Análise de Divergências entre Notas</p>
+                    <p className="text-xs text-muted-foreground uppercase font-black tracking-wider opacity-70">Histórico de Preços e Análise de Divergências entre Notas</p>
                 </div>
                 <NfeUploader />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                 <Card className="md:col-span-1 border-none shadow-xl rounded-3xl bg-white dark:bg-slate-950 p-6 space-y-6">
+                  <Card className="md:col-span-1 border border-border shadow-xl rounded-3xl bg-card p-6 space-y-6">
                     <div className="space-y-4">
-                        <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest flex items-center gap-2">
+                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest flex items-center gap-2">
                             <History size={14} /> Pesquisar Histórico
                         </Label>
                         <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                             <Input 
                                 placeholder="SKU ou Nome do Produto..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                                className="pl-10 h-11 font-bold text-sm bg-slate-50 border-slate-100 rounded-xl"
+                                className="pl-10 h-11 font-black text-sm bg-background border-border focus:border-primary rounded-xl transition-all"
                             />
                         </div>
                         <div className="flex gap-2">
-                            <Button onClick={handleSearch} disabled={isSearching || !allNfes.length} className="flex-1 h-11 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl">
+                            <Button onClick={handleSearch} disabled={isSearching || !allNfes.length} className="flex-1 h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-xl">
                                 {isSearching ? "Buscando..." : "Buscar Agora"}
                             </Button>
                             {allNfes.length > 1 && (
-                                <Button onClick={handleCompare} variant="outline" disabled={isComparing} className="flex-1 h-11 border-indigo-200 text-indigo-600 font-black rounded-xl">
-                                    Compare Duplicados
+                                <Button onClick={handleCompare} variant="outline" disabled={isComparing} className="flex-1 h-11 border-primary/20 text-primary font-black rounded-xl">
+                                    Comparar
                                 </Button>
                             )}
                         </div>
                         {allNfes.length > 0 && (
-                            <Button onClick={clearAll} variant="ghost" className="w-full text-rose-500 hover:bg-rose-50 font-bold text-xs uppercase tracking-widest">
-                                <Trash2 size={14} className="mr-2" /> Limpar Sessão
+                            <Button onClick={clearAll} variant="ghost" className="w-full text-destructive hover:bg-destructive/10 font-black text-[10px] uppercase tracking-widest rounded-xl">
+                                <Trash2 size={14} className="mr-2" /> Limpar Tudo
                             </Button>
                         )}
                     </div>
                  </Card>
-
-                 <Card className="md:col-span-2 border-none shadow-xl rounded-3xl bg-slate-900 text-white p-8 relative overflow-hidden group">
+                   <Card className="md:col-span-2 border border-border shadow-xl rounded-3xl bg-foreground text-background p-8 relative overflow-hidden group">
                     <div className="absolute right-[-20px] top-[-20px] opacity-10 group-hover:scale-110 transition-transform">
                         <Files size={150} />
                     </div>
                     <div className="relative z-10 space-y-6">
                         <div className="flex items-center gap-3">
-                            <Badge className="bg-indigo-500 text-white font-black rounded-lg border-none px-3 h-8 text-sm">
+                            <Badge className="bg-primary text-primary-foreground font-black rounded-lg border-none px-3 h-8 text-sm shadow-md">
                                 {allNfes.length} XMLS
                             </Badge>
-                            <h3 className="text-xl font-black">Fluxo de Dados Ativo</h3>
+                            <h3 className="text-xl font-black tracking-tight">Fluxo de Dados Ativo</h3>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
                             <div className="space-y-1">
-                                <span className="text-[9px] font-black uppercase text-slate-400">Total Produtos</span>
+                                <span className="text-[9px] font-black uppercase opacity-60">Total Produtos</span>
                                 <p className="text-xl font-black">{allNfes.reduce((acc, n) => acc + n.items.length, 0)}</p>
                             </div>
                             <div className="space-y-1">
-                                <span className="text-[9px] font-black uppercase text-slate-400">Investimento</span>
-                                <p className="text-xl font-black text-emerald-400">{formatCurrency(allNfes.reduce((acc, n) => acc + n.totals.vNF, 0))}</p>
+                                <span className="text-[9px] font-black uppercase opacity-60">Investimento</span>
+                                <p className="text-xl font-black text-accent-green">{formatCurrency(allNfes.reduce((acc, n) => acc + n.totals.vNF, 0))}</p>
                             </div>
                         </div>
                     </div>
@@ -321,39 +320,39 @@ export default function NfeComparator() {
                 <div className="space-y-4 pt-4">
                      <Accordion type="multiple" className="w-full space-y-3">
                         {allNfes.map((nfe, index) => (
-                            <AccordionItem value={nfe.header.chave || `nfe-${index}`} key={nfe.header.chave || `nfe-${index}`} className="border-none shadow-sm rounded-2xl bg-white dark:bg-slate-950 px-6 overflow-hidden">
-                                <AccordionTrigger className="hover:no-underline py-5 group">
+                            <AccordionItem value={nfe.header.chave || `nfe-${index}`} key={nfe.header.chave || `nfe-${index}`} className="border border-border shadow-sm rounded-2xl bg-card px-6 overflow-hidden">
+                                <AccordionTrigger className="hover:no-underline py-5 group transition-all">
                                     <div className="flex flex-col text-left gap-1">
                                       <div className="flex items-center gap-2">
-                                          <span className="font-black text-slate-900 dark:text-white uppercase text-[10px] tracking-widest">
+                                          <span className="font-black text-foreground uppercase text-[10px] tracking-widest opacity-80">
                                               {nfe.emit.xNome}
                                           </span>
-                                          <Badge variant="outline" className="text-[9px] font-black border-slate-200">NF {nfe.header.nNF}</Badge>
+                                          <Badge variant="outline" className="text-[9px] font-black border-border">NF {nfe.header.nNF}</Badge>
                                       </div>
-                                      <div className="flex items-center gap-4 text-[10px] text-slate-400 font-bold uppercase tracking-tight">
+                                      <div className="flex items-center gap-4 text-[10px] text-muted-foreground font-black uppercase tracking-tighter">
                                           <span className="flex items-center gap-1"><Files size={10} /> {nfe.items.length} Itens</span>
-                                          <span className="flex items-center gap-1 text-emerald-600"><DollarSign size={10} /> {formatCurrency(nfe.totals.vNF)}</span>
+                                          <span className="flex items-center gap-1 text-accent-green"><DollarSign size={10} /> {formatCurrency(nfe.totals.vNF)}</span>
                                       </div>
                                     </div>
                                 </AccordionTrigger>
-                                <AccordionContent className="pb-6">
-                                    <div className="w-full overflow-hidden rounded-2xl border border-slate-100 bg-slate-50/30">
+                                 <AccordionContent className="pb-6">
+                                    <div className="w-full overflow-hidden rounded-2xl border border-border bg-accent/10">
                                         <Table>
                                             <TableHeader>
-                                                <TableRow className="hover:bg-transparent bg-slate-50">
-                                                    <TableHead className="text-[9px] font-black uppercase py-3">Código</TableHead>
-                                                    <TableHead className="text-[9px] font-black uppercase">Descrição</TableHead>
-                                                    <TableHead className="text-right text-[9px] font-black uppercase">Qtd</TableHead>
-                                                    <TableHead className="text-right text-[9px] font-black uppercase">Custo Unit.</TableHead>
+                                                <TableRow className="hover:bg-transparent bg-muted/50">
+                                                    <TableHead className="text-[9px] font-black uppercase py-3 text-muted-foreground">Código</TableHead>
+                                                    <TableHead className="text-[9px] font-black uppercase text-muted-foreground">Descrição</TableHead>
+                                                    <TableHead className="text-right text-[9px] font-black uppercase text-muted-foreground">Qtd</TableHead>
+                                                    <TableHead className="text-right text-[9px] font-black uppercase text-muted-foreground">Custo Unit.</TableHead>
                                                 </TableRow>
                                             </TableHeader>
-                                            <TableBody>
+                                             <TableBody>
                                                 {nfe.items.map((prod, idx) => (
-                                                    <TableRow key={`${nfe.header.chave}-${idx}`} className="hover:bg-white border-slate-100">
-                                                        <TableCell className="font-mono text-[10px] font-black text-indigo-600">{prod.cProd}</TableCell>
-                                                        <TableCell className="text-[10px] font-bold text-slate-700 leading-tight">{prod.xProd}</TableCell>
+                                                    <TableRow key={`${nfe.header.chave}-${idx}`} className="hover:bg-background/80 border-border">
+                                                        <TableCell className="font-mono text-[10px] font-black text-primary">{prod.cProd}</TableCell>
+                                                        <TableCell className="text-[10px] font-bold text-foreground leading-tight">{prod.xProd}</TableCell>
                                                         <TableCell className="text-right font-mono text-[10px]">{formatNumber(prod.qCom)}</TableCell>
-                                                        <TableCell className="text-right font-mono text-[10px] font-black text-slate-900">{formatCurrency4(prod.vUnCom)}</TableCell>
+                                                        <TableCell className="text-right font-mono text-[10px] font-black text-foreground">{formatCurrency4(prod.vUnCom)}</TableCell>
                                                     </TableRow>
                                                 ))}
                                             </TableBody>
@@ -371,11 +370,11 @@ export default function NfeComparator() {
 
             {!allNfes.length && (
                 <div className="flex flex-col items-center justify-center py-24 border-2 border-dashed rounded-[2.5rem] bg-muted/20 border-muted-foreground/10 text-center">
-                    <div className="w-16 h-16 rounded-3xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center mb-6">
-                        <GitCompareArrows className="w-8 h-8 text-indigo-400 opacity-50" />
+                     <div className="w-16 h-16 rounded-3xl bg-primary/10 flex items-center justify-center mb-6">
+                        <GitCompareArrows className="w-8 h-8 text-primary opacity-50" />
                     </div>
-                    <h3 className="text-xl font-black text-slate-800 dark:text-slate-200">Comparação Inteligente</h3>
-                    <p className="text-sm text-muted-foreground max-w-sm mt-2">Importe dois ou mais arquivos XML para cruzar dados de fornecedores e auditar variações de custos unitários.</p>
+                    <h3 className="text-xl font-black text-foreground">Comparação Inteligente</h3>
+                    <p className="text-sm text-muted-foreground max-w-sm mt-2 font-medium">Importe dois ou mais arquivos XML para cruzar dados de fornecedores e auditar variações de custos unitários.</p>
                 </div>
             )}
         </div>

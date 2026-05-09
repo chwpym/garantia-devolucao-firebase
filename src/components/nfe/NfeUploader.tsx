@@ -8,46 +8,46 @@ import { useNfeParser } from '@/hooks/use-nfe-parser';
 import { useNfeStore } from '@/store/use-nfe-store';
 
 export function NfeUploader() {
-    const { currentNfe, clearAll } = useNfeStore();
+    const { currentNfe, allNfes, clearAll } = useNfeStore();
     const { handleFileChange, fileInputRef } = useNfeParser();
 
-    if (currentNfe) {
-        return (
-            <div className="flex items-center gap-2 p-2 border rounded-xl bg-primary/5 border-primary/20 animate-in fade-in slide-in-from-top-1">
-                <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-primary uppercase tracking-wider">NF-e Carregada</span>
-                    <span className="text-sm font-medium truncate max-w-[200px]">
-                        {currentNfe.header.nNF} - {currentNfe.emit.xNome}
-                    </span>
-                </div>
-                <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={clearAll} 
-                    className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                >
-                    <FileX className="h-4 w-4" />
-                </Button>
-            </div>
-        );
-    }
-
     return (
-        <div className="relative">
-            <Button 
-                onClick={() => fileInputRef.current?.click()} 
-                className="h-11 px-6 shadow-md hover:shadow-lg transition-all"
-            >
-                <Upload className="mr-2 h-4 w-4" />
-                Importar XML da NF-e
-            </Button>
-            <Input 
-                type="file" 
-                ref={fileInputRef} 
-                onChange={handleFileChange}
-                className="hidden" 
-                accept=".xml"
-            />
+        <div className="flex items-center gap-3">
+            <div className="relative">
+                <Button 
+                    onClick={() => fileInputRef.current?.click()} 
+                    variant="outline"
+                    className="h-10 px-4 shadow-sm border-primary/20 text-primary hover:bg-primary/5 transition-all bg-background/50 backdrop-blur-sm"
+                >
+                    <Upload className="mr-2 h-4 w-4" />
+                    {allNfes.length > 0 ? "Adicionar XML" : "Importar XML"}
+                </Button>
+                <Input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    onChange={handleFileChange}
+                    className="hidden" 
+                    accept=".xml"
+                    multiple
+                />
+            </div>
+
+            {allNfes.length > 0 && (
+                <div className="flex items-center gap-1.5 p-1.5 px-3 border rounded-full bg-accent/30 border-border animate-in fade-in slide-in-from-right-1">
+                    <span className="text-[10px] font-black text-foreground/60 uppercase tracking-tighter">
+                        {allNfes.length} XML{allNfes.length > 1 ? 's' : ''}
+                    </span>
+                    <div className="h-3 w-[1px] bg-border mx-1" />
+                    <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={clearAll} 
+                        className="h-6 w-6 text-destructive hover:bg-destructive/10 rounded-full"
+                    >
+                        <FileX className="h-3 w-3" />
+                    </Button>
+                </div>
+            )}
         </div>
     );
 }

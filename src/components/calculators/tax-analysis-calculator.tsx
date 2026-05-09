@@ -134,45 +134,45 @@ export default function TaxAnalysisCalculator() {
         <div className="space-y-6 animate-in fade-in duration-500">
             {/* Header Padronizado */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="space-y-1">
-                    <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                        <ShieldCheck className="w-6 h-6 text-slate-700" />
+                 <div className="space-y-1">
+                    <h2 className="text-2xl font-black tracking-tight text-foreground flex items-center gap-2">
+                        <ShieldCheck className="w-6 h-6 text-primary" />
                         Auditoria Fiscal de Entrada
                     </h2>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Análise de Impostos e Reforma Tributária</p>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider font-black opacity-70">Análise de Impostos e Reforma Tributária</p>
                 </div>
                 <NfeUploader />
             </div>
 
             {items.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <Card className="bg-slate-900 text-white shadow-lg border-none overflow-hidden relative">
+                     <Card className="bg-card text-foreground shadow-lg border border-border overflow-hidden relative">
                         <CardContent className="p-4 space-y-1">
-                            <span className="text-[10px] font-bold uppercase opacity-60">Total ICMS + ST</span>
-                            <p className="text-2xl font-black text-blue-400">{formatCurrency(totals.icms + totals.st)}</p>
+                            <span className="text-[10px] font-black uppercase opacity-60">Total ICMS + ST</span>
+                            <p className="text-2xl font-black text-primary">{formatCurrency(totals.icms + totals.st)}</p>
+                        </CardContent>
+                    </Card>
+ 
+                    <Card className="bg-card text-foreground shadow-lg border border-border overflow-hidden relative">
+                        <CardContent className="p-4 space-y-1">
+                            <span className="text-[10px] font-black uppercase opacity-60">Total IPI</span>
+                            <p className="text-2xl font-black text-destructive">{formatCurrency(totals.ipi)}</p>
+                        </CardContent>
+                    </Card>
+ 
+                    <Card className="bg-card text-foreground shadow-lg border border-border overflow-hidden relative">
+                        <CardContent className="p-4 space-y-1">
+                            <span className="text-[10px] font-black uppercase opacity-60">PIS / COFINS Total</span>
+                            <p className="text-2xl font-black text-accent-green">{formatCurrency(totals.pis + totals.cofins)}</p>
                         </CardContent>
                     </Card>
 
-                    <Card className="bg-slate-900 text-white shadow-lg border-none overflow-hidden relative">
-                        <CardContent className="p-4 space-y-1">
-                            <span className="text-[10px] font-bold uppercase opacity-60">Total IPI</span>
-                            <p className="text-2xl font-black text-rose-400">{formatCurrency(totals.ipi)}</p>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="bg-slate-900 text-white shadow-lg border-none overflow-hidden relative">
-                        <CardContent className="p-4 space-y-1">
-                            <span className="text-[10px] font-bold uppercase opacity-60">PIS / COFINS Total</span>
-                            <p className="text-2xl font-black text-emerald-400">{formatCurrency(totals.pis + totals.cofins)}</p>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="bg-indigo-600 text-white shadow-lg border-none overflow-hidden relative">
+                     <Card className="bg-primary text-primary-foreground shadow-lg border-none overflow-hidden relative">
                         <div className="absolute right-[-5px] top-[-5px] opacity-10">
                             <Landmark size={60} />
                         </div>
                         <CardContent className="p-4 space-y-1">
-                            <span className="text-[10px] font-bold uppercase opacity-80">IBS / CBS (Reforma)</span>
+                            <span className="text-[10px] font-black uppercase opacity-80">IBS / CBS (Reforma)</span>
                             <p className="text-2xl font-black">{formatCurrency(totals.ibs + totals.cbs)}</p>
                         </CardContent>
                     </Card>
@@ -189,41 +189,41 @@ export default function TaxAnalysisCalculator() {
             )}
 
             {items.length > 0 ? (
-                <div className="rounded-xl border shadow-xl overflow-hidden bg-white dark:bg-slate-950">
+                <div className="rounded-xl border border-border shadow-xl overflow-hidden bg-card">
                     <div className="overflow-x-auto">
                         <Table>
                             <TableHeader>
-                                <TableRow className="bg-slate-50 dark:bg-slate-900">
-                                    <TableHead className="w-[120px] text-[10px] font-black uppercase text-slate-500">Cód. Forn.</TableHead>
-                                    <TableHead className="min-w-[200px] text-[10px] font-black uppercase text-slate-500">Descrição</TableHead>
-                                    <TableHead className="text-center text-[10px] font-black uppercase text-slate-500">NCM / CST</TableHead>
-                                    <TableHead className="text-right text-[10px] font-black uppercase text-slate-500">Total Item</TableHead>
-                                    <TableHead className="text-right text-[10px] font-black uppercase text-slate-500 text-blue-600">ICMS</TableHead>
-                                    <TableHead className="text-right text-[10px] font-black uppercase text-slate-500 text-blue-600">ST</TableHead>
-                                    <TableHead className="text-right text-[10px] font-black uppercase text-slate-500 text-rose-600">IPI</TableHead>
-                                    <TableHead className="text-right text-[10px] font-black uppercase text-slate-500 text-emerald-600">PIS/COF</TableHead>
-                                    <TableHead className="text-right text-[10px] font-black uppercase text-indigo-600">IBS/CBS</TableHead>
+                                <TableRow className="bg-muted">
+                                    <TableHead className="w-[120px] text-[10px] font-black uppercase text-muted-foreground">Cód. Forn.</TableHead>
+                                    <TableHead className="min-w-[200px] text-[10px] font-black uppercase text-muted-foreground">Descrição</TableHead>
+                                    <TableHead className="text-center text-[10px] font-black uppercase text-muted-foreground">NCM / CST</TableHead>
+                                    <TableHead className="text-right text-[10px] font-black uppercase text-muted-foreground">Total Item</TableHead>
+                                    <TableHead className="text-right text-[10px] font-black uppercase text-primary">ICMS</TableHead>
+                                    <TableHead className="text-right text-[10px] font-black uppercase text-primary">ST</TableHead>
+                                    <TableHead className="text-right text-[10px] font-black uppercase text-destructive">IPI</TableHead>
+                                    <TableHead className="text-right text-[10px] font-black uppercase text-accent-green">PIS/COF</TableHead>
+                                    <TableHead className="text-right text-[10px] font-black uppercase text-primary">IBS/CBS</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {items.map(item => (
-                                    <TableRow key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
-                                        <TableCell className="font-mono text-[10px] font-bold text-slate-500">{item.cProd}</TableCell>
-                                        <TableCell className="text-xs font-medium truncate max-w-[250px]">{item.description}</TableCell>
-                                        <TableCell className="text-center">
+                                 {items.map(item => (
+                                    <TableRow key={item.id} className="hover:bg-accent/5 transition-colors">
+                                        <TableCell className="font-mono text-[10px] font-black text-muted-foreground">{item.cProd}</TableCell>
+                                        <TableCell className="text-xs font-black text-foreground truncate max-w-[250px]">{item.description}</TableCell>
+                                         <TableCell className="text-center">
                                             <div className="flex flex-col">
-                                                <span className="text-[10px] font-mono font-bold text-slate-400">{item.ncm}</span>
-                                                <Badge variant="outline" className="text-[9px] h-4 px-1 mx-auto font-mono">{item.cst}</Badge>
+                                                <span className="text-[10px] font-mono font-black text-muted-foreground opacity-50">{item.ncm}</span>
+                                                <Badge variant="outline" className="text-[9px] h-4 px-1 mx-auto font-black border-border">{item.cst}</Badge>
                                             </div>
                                         </TableCell>
-                                        <TableCell className="text-right text-xs font-mono">{formatCurrency(item.totalCost)}</TableCell>
+                                         <TableCell className="text-right text-xs font-mono font-black">{formatCurrency(item.totalCost)}</TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex flex-col items-end">
-                                                <span className="text-xs font-bold text-blue-600">{formatCurrency(item.icms.value)}</span>
-                                                <span className="text-[9px] text-muted-foreground">{item.icms.rate}%</span>
+                                                <span className="text-xs font-black text-primary">{formatCurrency(item.icms.value)}</span>
+                                                <span className="text-[9px] text-muted-foreground font-bold">{item.icms.rate}%</span>
                                             </div>
                                         </TableCell>
-                                        <TableCell className="text-right text-xs font-bold text-blue-600">{formatCurrency(item.st)}</TableCell>
+                                        <TableCell className="text-right text-xs font-black text-primary">{formatCurrency(item.st)}</TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex flex-col items-end">
                                                 <span className="text-xs font-bold text-rose-600">{formatCurrency(item.ipi.value)}</span>
@@ -233,45 +233,45 @@ export default function TaxAnalysisCalculator() {
                                         <TableCell className="text-right">
                                             <TooltipProvider>
                                                 <Tooltip>
-                                                    <TooltipTrigger className="text-xs font-bold text-emerald-600 underline decoration-dotted">
+                                                    <TooltipTrigger className="text-xs font-black text-accent-green underline decoration-dotted">
                                                         {formatCurrency(item.pis.value + item.cofins.value)}
                                                     </TooltipTrigger>
                                                     <TooltipContent className="p-2 text-[10px] space-y-1">
-                                                        <div className="flex justify-between gap-4"><span>PIS ({item.pis.rate}%):</span> <span>{formatCurrency(item.pis.value)}</span></div>
-                                                        <div className="flex justify-between gap-4"><span>COFINS ({item.cofins.rate}%):</span> <span>{formatCurrency(item.cofins.value)}</span></div>
+                                                        <div className="flex justify-between gap-4 font-black"><span>PIS ({item.pis.rate}%):</span> <span>{formatCurrency(item.pis.value)}</span></div>
+                                                        <div className="flex justify-between gap-4 font-black"><span>COFINS ({item.cofins.rate}%):</span> <span>{formatCurrency(item.cofins.value)}</span></div>
                                                     </TooltipContent>
                                                 </Tooltip>
                                             </TooltipProvider>
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex flex-col items-end">
-                                                <span className="text-xs font-black text-indigo-600">{formatCurrency(item.ibs.value + item.cbs.value)}</span>
-                                                <span className="text-[9px] text-indigo-400">Σ {item.ibs.rate + item.cbs.rate}%</span>
+                                                <span className="text-xs font-black text-primary">{formatCurrency(item.ibs.value + item.cbs.value)}</span>
+                                                <span className="text-[9px] text-primary opacity-70 font-black">Σ {item.ibs.rate + item.cbs.rate}%</span>
                                             </div>
                                         </TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
-                            <TableFooter className="bg-slate-900 text-white">
-                                <TableRow>
+                             <TableFooter className="bg-foreground text-background">
+                                <TableRow className="hover:bg-transparent">
                                     <TableCell colSpan={4} className="text-right text-[10px] font-black uppercase opacity-60">Carga Tributária Total:</TableCell>
-                                    <TableCell className="text-right text-xs font-bold text-blue-400">{formatCurrency(totals.icms)}</TableCell>
-                                    <TableCell className="text-right text-xs font-bold text-blue-400">{formatCurrency(totals.st)}</TableCell>
-                                    <TableCell className="text-right text-xs font-bold text-rose-400">{formatCurrency(totals.ipi)}</TableCell>
-                                    <TableCell className="text-right text-xs font-bold text-emerald-400">{formatCurrency(totals.pis + totals.cofins)}</TableCell>
-                                    <TableCell className="text-right text-xs font-black text-indigo-400">{formatCurrency(totals.ibs + totals.cbs)}</TableCell>
+                                    <TableCell className="text-right text-xs font-black text-background">{formatCurrency(totals.icms)}</TableCell>
+                                    <TableCell className="text-right text-xs font-black text-background">{formatCurrency(totals.st)}</TableCell>
+                                    <TableCell className="text-right text-xs font-black text-background">{formatCurrency(totals.ipi)}</TableCell>
+                                    <TableCell className="text-right text-xs font-black text-background">{formatCurrency(totals.pis + totals.cofins)}</TableCell>
+                                    <TableCell className="text-right text-xs font-black text-background">{formatCurrency(totals.ibs + totals.cbs)}</TableCell>
                                 </TableRow>
                             </TableFooter>
                         </Table>
                     </div>
                 </div>
             ) : (
-                <div className="flex flex-col items-center justify-center py-24 border-2 border-dashed rounded-3xl bg-muted/20 border-muted-foreground/10 text-center">
-                    <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-900/30 flex items-center justify-center mb-4">
-                        <ShieldCheck className="w-8 h-8 text-slate-400 opacity-50" />
+                <div className="flex flex-col items-center justify-center py-24 border-2 border-dashed rounded-3xl bg-muted/20 border-border text-center">
+                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                        <ShieldCheck className="w-8 h-8 text-muted-foreground opacity-50" />
                     </div>
-                    <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">Aguardando Documento XML</h3>
-                    <p className="text-sm text-muted-foreground max-w-sm mt-2">Importe o XML para realizar uma auditoria completa de impostos e visualizar o impacto da Reforma Tributária.</p>
+                    <h3 className="text-xl font-black text-foreground">Aguardando Documento XML</h3>
+                    <p className="text-sm text-muted-foreground max-w-sm mt-2 font-medium">Importe o XML para realizar uma auditoria completa de impostos e visualizar o impacto da Reforma Tributária.</p>
                 </div>
             )}
         </div>

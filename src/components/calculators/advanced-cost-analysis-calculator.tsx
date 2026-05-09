@@ -267,11 +267,11 @@ export default function AdvancedCostAnalysisCalculator() {
             {/* Header Padronizado */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1">
-                    <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                    <h2 className="text-2xl font-black tracking-tight text-foreground flex items-center gap-2">
                         <Calculator className="w-6 h-6 text-primary" />
-                        Análise Técnica de Custo Final
+                        Análise Técnica Pro
                     </h2>
-                    <p className="text-xs text-muted-foreground">Cálculo profundo de custo unitário com rateio, impostos e créditos</p>
+                    <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider opacity-70">Cálculo profundo de custo unitário com rateio, impostos e créditos</p>
                 </div>
                 <NfeUploader />
             </div>
@@ -334,19 +334,19 @@ export default function AdvancedCostAnalysisCalculator() {
                         <CardContent className="p-6">
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
                                 <div className="space-y-1">
-                                    <span className="text-[10px] uppercase font-bold text-muted-foreground">Total Mercadorias</span>
-                                    <p className="text-lg font-bold">{formatCurrency(totals.totalCost)}</p>
+                                    <span className="text-[10px] uppercase font-bold text-muted-foreground opacity-60">Total Mercadorias</span>
+                                    <p className="text-lg font-black">{formatCurrency(totals.totalCost)}</p>
                                 </div>
                                 <div className="space-y-1">
-                                    <span className="text-[10px] uppercase font-bold text-muted-foreground">Impostos Somados</span>
-                                    <p className="text-lg font-bold text-destructive">{formatCurrency(totals.totalIPI + totals.totalST)}</p>
+                                    <span className="text-[10px] uppercase font-bold text-muted-foreground opacity-60">Impostos Somados</span>
+                                    <p className="text-lg font-black text-destructive">{formatCurrency(totals.totalIPI + totals.totalST)}</p>
                                 </div>
                                 <div className="space-y-1">
-                                    <span className="text-[10px] uppercase font-bold text-muted-foreground">Créditos (PIS/COF)</span>
-                                    <p className="text-lg font-bold text-emerald-600">-{formatCurrency(taxRegime === 'lucro_real' ? totals.totalPIS + totals.totalCOFINS : 0)}</p>
+                                    <span className="text-[10px] uppercase font-bold text-muted-foreground opacity-60">Créditos (PIS/COF)</span>
+                                    <p className="text-lg font-black text-accent-green">-{formatCurrency(taxRegime === 'lucro_real' ? totals.totalPIS + totals.totalCOFINS : 0)}</p>
                                 </div>
-                                <div className="space-y-1 p-3 rounded-lg bg-primary/10 border border-primary/20">
-                                    <span className="text-[10px] uppercase font-bold text-primary">Custo Final Líquido</span>
+                                <div className="space-y-1 p-3 rounded-lg bg-primary/10 border border-primary/20 shadow-inner">
+                                    <span className="text-[10px] uppercase font-black text-primary opacity-80">Custo Final Líquido</span>
                                     <p className="text-xl font-black text-primary">{formatCurrency(totals.finalTotalCost)}</p>
                                 </div>
                             </div>
@@ -375,9 +375,9 @@ export default function AdvancedCostAnalysisCalculator() {
                                     <TableHead className="text-right text-xs font-bold">Custo Orig.</TableHead>
                                     <TableHead className="text-right text-xs font-bold">IPI/ST</TableHead>
                                     <TableHead className="text-right text-xs font-bold">Despesas</TableHead>
-                                    <TableHead className="text-right text-xs font-bold text-emerald-600">Créditos</TableHead>
-                                    <TableHead className="text-right text-xs font-bold text-primary">C. Un. Final</TableHead>
-                                    <TableHead className="text-right text-xs font-bold text-third">C. Un. Conv.</TableHead>
+                                    <TableHead className="text-right text-xs font-black text-accent-green">Créditos</TableHead>
+                                    <TableHead className="text-right text-xs font-black text-primary">C. Un. Final</TableHead>
+                                    <TableHead className="text-right text-xs font-black text-foreground opacity-70">C. Un. Conv.</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -397,11 +397,11 @@ export default function AdvancedCostAnalysisCalculator() {
                                         <TableCell className="text-right font-mono text-xs">{formatCurrency4(item.unitCost)}</TableCell>
                                         <TableCell className="text-right font-mono text-xs text-destructive">{formatCurrency(item.ipi + item.icmsST)}</TableCell>
                                         <TableCell className="text-right font-mono text-xs">{formatCurrency(item.frete + item.seguro + item.outras - item.desconto)}</TableCell>
-                                        <TableCell className="text-right font-mono text-xs text-emerald-600">
+                                        <TableCell className="text-right font-mono text-xs text-accent-green font-bold">
                                             {taxRegime === 'lucro_real' ? formatCurrency(item.pis + item.cofins + (useTaxReform ? item.vIBS + item.vCBS : 0)) : 'R$ 0,00'}
                                         </TableCell>
                                         <TableCell className="text-right font-mono text-xs font-black text-primary">{formatCurrency4(item.finalUnitCost)}</TableCell>
-                                        <TableCell className="text-right font-mono text-xs font-black text-third">{formatCurrency4(item.convertedUnitCost)}</TableCell>
+                                        <TableCell className="text-right font-mono text-xs font-black text-foreground opacity-70">{formatCurrency4(item.convertedUnitCost)}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>

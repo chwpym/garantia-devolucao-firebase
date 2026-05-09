@@ -55,15 +55,17 @@ export function useNfeParser({ onNfeProcessed }: NfeParserProps = {}) {
     }, [onNfeProcessed, toast, addNfe, setCurrentNfe]);
 
     const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
+        const files = event.target.files;
+        if (!files || files.length === 0) return;
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const xmlData = e.target?.result as string;
-            processXml(xmlData, file.name);
-        };
-        reader.readAsText(file, 'ISO-8859-1'); // Encoding para NF-e
+        Array.from(files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const xmlData = e.target?.result as string;
+                processXml(xmlData, file.name);
+            };
+            reader.readAsText(file, 'ISO-8859-1'); // Encoding para NF-e
+        });
     }, [processXml]);
 
     const clearNfeData = useCallback(() => {

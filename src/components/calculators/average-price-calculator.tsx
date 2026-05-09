@@ -62,12 +62,12 @@ export default function AveragePriceCalculator() {
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Header Padronizado */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-slate-100 flex items-center gap-2">
-            <Calculator className="w-6 h-6 text-blue-600" />
+         <div className="space-y-1">
+          <h2 className="text-2xl font-black tracking-tight text-foreground flex items-center gap-2">
+            <Calculator className="w-6 h-6 text-primary" />
             Cálculo de Preço Médio
           </h2>
-          <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Equalização de Estoque e Compras</p>
+          <p className="text-xs text-muted-foreground uppercase tracking-wider font-black opacity-70">Equalização de Estoque e Compras</p>
         </div>
         <div className="flex items-center gap-2">
             <NfeUploader />
@@ -75,111 +75,111 @@ export default function AveragePriceCalculator() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="border-none shadow-xl bg-white dark:bg-slate-950 overflow-hidden rounded-2xl relative">
-          <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+         <Card className="border border-border shadow-xl bg-card text-foreground overflow-hidden rounded-2xl relative">
+          <div className="absolute top-0 left-0 w-1 h-full bg-primary"></div>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-black uppercase text-slate-500 flex items-center gap-2">
+            <CardTitle className="text-sm font-black uppercase text-muted-foreground flex items-center gap-2 opacity-70">
                 <History className="h-4 w-4" /> Primeiro Lote (Estoque)
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-xs font-bold text-slate-500 uppercase">Quantidade Atual</Label>
+              <Label className="text-xs font-black text-muted-foreground uppercase opacity-70">Quantidade Atual</Label>
               <Input
                 name="quantity"
                 type="number"
                 placeholder="0.00"
                 value={firstPurchase.quantity}
                 onChange={handlePurchaseChange(setFirstPurchase)}
-                className="h-11 font-black text-lg"
+                className="h-11 font-black text-lg bg-background border-border"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-xs font-bold text-slate-500 uppercase">Custo Unitário Atual</Label>
+              <Label className="text-xs font-black text-muted-foreground uppercase opacity-70">Custo Unitário Atual</Label>
               <Input
                 name="price"
                 type="number"
                 placeholder="R$ 0,00"
                 value={firstPurchase.price}
                 onChange={handlePurchaseChange(setFirstPurchase)}
-                className="h-11 font-black text-lg"
+                className="h-11 font-black text-lg bg-background border-border"
               />
             </div>
-            <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
-              <span className="text-[10px] font-bold text-slate-400 uppercase">Valor do Lote:</span>
-              <span className="font-mono text-sm font-bold text-slate-600">{formatCurrency(calculations.total1)}</span>
+            <div className="pt-2 border-t border-border flex justify-between items-center">
+              <span className="text-[10px] font-black text-muted-foreground uppercase opacity-60">Valor do Lote:</span>
+              <span className="font-mono text-sm font-black text-foreground">{formatCurrency(calculations.total1)}</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-none shadow-xl bg-white dark:bg-slate-950 overflow-hidden rounded-2xl relative">
-          <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
+         <Card className="border border-border shadow-xl bg-card text-foreground overflow-hidden rounded-2xl relative">
+          <div className="absolute top-0 left-0 w-1 h-full bg-accent-green"></div>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-black uppercase text-slate-500 flex items-center gap-2">
+            <CardTitle className="text-sm font-black uppercase text-muted-foreground flex items-center gap-2 opacity-70">
                 <Package className="h-4 w-4" /> Segundo Lote (Nova Compra)
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-xs font-bold text-slate-500 uppercase">Quantidade Nova</Label>
+              <Label className="text-xs font-black text-muted-foreground uppercase opacity-70">Quantidade Nova</Label>
               <Input
                 name="quantity"
                 type="number"
                 placeholder="0.00"
                 value={secondPurchase.quantity}
                 onChange={handlePurchaseChange(setSecondPurchase)}
-                className="h-11 font-black text-lg"
+                className="h-11 font-black text-lg bg-background border-border"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-xs font-bold text-slate-500 uppercase">Custo Unitário Novo</Label>
+              <Label className="text-xs font-black text-muted-foreground uppercase opacity-70">Custo Unitário Novo</Label>
               <Input
                 name="price"
                 type="number"
                 placeholder="R$ 0,00"
                 value={secondPurchase.price}
                 onChange={handlePurchaseChange(setSecondPurchase)}
-                className="h-11 font-black text-lg"
+                className="h-11 font-black text-lg bg-background border-border"
               />
             </div>
-            <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
-              <span className="text-[10px] font-bold text-slate-400 uppercase">Valor do Lote:</span>
-              <span className="font-mono text-sm font-bold text-slate-600">{formatCurrency(calculations.total2)}</span>
+            <div className="pt-2 border-t border-border flex justify-between items-center">
+              <span className="text-[10px] font-black text-muted-foreground uppercase opacity-60">Valor do Lote:</span>
+              <span className="font-mono text-sm font-black text-foreground">{formatCurrency(calculations.total2)}</span>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="border-none shadow-2xl bg-slate-900 text-white overflow-hidden rounded-2xl relative">
+       <Card className="border-none shadow-2xl bg-foreground text-background overflow-hidden rounded-2xl relative">
         <div className="absolute right-[-20px] top-[-20px] opacity-10">
           <TrendingUp size={120} />
         </div>
         <CardContent className="p-8 grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="space-y-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Quantidade Final</span>
+                <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Quantidade Final</span>
                 <p className="text-3xl font-black">{formatNumber(calculations.totalQuantity)}</p>
-                <p className="text-[10px] text-slate-500 font-medium">Soma total das unidades em estoque.</p>
+                <p className="text-[10px] opacity-50 font-black">Soma total das unidades em estoque.</p>
             </div>
-            <div className="space-y-1 border-slate-800 md:border-l md:pl-8">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Investimento Total</span>
-                <p className="text-3xl font-black text-indigo-400">{formatCurrency(calculations.totalInvested)}</p>
-                <p className="text-[10px] text-slate-500 font-medium">Capital total alocado neste produto.</p>
+            <div className="space-y-1 border-background/10 md:border-l md:pl-8">
+                <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Investimento Total</span>
+                <p className="text-3xl font-black text-primary">{formatCurrency(calculations.totalInvested)}</p>
+                <p className="text-[10px] opacity-50 font-black">Capital total alocado neste produto.</p>
             </div>
-            <div className="space-y-1 border-slate-800 md:border-l md:pl-8 relative">
-                <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Novo Preço Médio</span>
+            <div className="space-y-1 border-background/10 md:border-l md:pl-8 relative">
+                <span className="text-[10px] font-black text-primary uppercase tracking-widest">Novo Preço Médio</span>
                 <div className="flex items-center gap-3">
-                    <p className="text-4xl font-black text-white">{formatCurrency4(calculations.averagePrice)}</p>
-                    <Button variant="ghost" size="icon" onClick={handleCopy} className="h-8 w-8 text-slate-400 hover:text-white hover:bg-white/10 rounded-full">
+                    <p className="text-4xl font-black">{formatCurrency4(calculations.averagePrice)}</p>
+                    <Button variant="ghost" size="icon" onClick={handleCopy} className="h-8 w-8 text-background/40 hover:text-background hover:bg-background/10 rounded-full">
                         <Copy size={16} />
                     </Button>
                 </div>
-                <p className="text-[10px] text-slate-500 font-medium">Custo unitário equalizado após as compras.</p>
+                <p className="text-[10px] opacity-50 font-black">Custo unitário equalizado após as compras.</p>
             </div>
         </CardContent>
       </Card>
 
-      <div className="flex justify-center">
-        <Button variant="ghost" onClick={clearFields} className="text-rose-500 hover:text-rose-600 hover:bg-rose-50">
+       <div className="flex justify-center">
+        <Button variant="ghost" onClick={clearFields} className="text-destructive hover:text-destructive hover:bg-destructive/10 font-black rounded-xl">
           <Trash2 className="mr-2 h-4 w-4" /> Limpar Todos os Campos
         </Button>
       </div>
