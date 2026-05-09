@@ -1,132 +1,28 @@
-"use client";
 
-import { useState, useMemo, useCallback } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+'use client';
+
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Copy, Trash2 } from "lucide-react";
+import { Copy, Trash2, Calculator, Info, TrendingUp, History, Package } from "lucide-react";
 import { formatCurrency, formatNumber, formatCurrency4, formatNumber4 } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useNfeStore } from "@/store/use-nfe-store";
+import { NfeUploader } from "@/components/nfe/NfeUploader";
+import { Badge } from "@/components/ui/badge";
 
 interface Purchase {
   quantity: string;
   price: string;
 }
 
-interface PurchaseCardProps {
-  title: string;
-  purchase: Purchase;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  totalValue: number;
-}
-
-function PurchaseCard({ title, purchase, onChange, totalValue }: PurchaseCardProps) {
-  return (
-    <Card className="shadow-lg">
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-2">
-          <Label htmlFor={`quantity-${title}`}>Quantidade</Label>
-          <Input
-            id={`quantity-${title}`}
-            name="quantity"
-            type="number"
-            step="0.0001"
-            placeholder="Ex: 100"
-            value={purchase.quantity}
-            onChange={onChange}
-            className="text-base"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor={`price-${title}`}>Preço Unitário</Label>
-          <Input
-            id={`price-${title}`}
-            name="price"
-            type="number"
-            step="0.0001"
-            placeholder="Ex: 10,50"
-            value={purchase.price}
-            onChange={onChange}
-            className="text-base"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label>Valor Total</Label>
-          <div className="w-full h-10 px-3 py-2 rounded-md border border-input bg-input flex items-center text-base">
-            {formatCurrency4(totalValue)}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-interface ResultCardProps {
-  totalQuantity: number;
-  totalInvested: number;
-  averagePrice: number;
-}
-
-function ResultCard({ totalQuantity, totalInvested, averagePrice }: ResultCardProps) {
-  const { toast } = useToast();
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(averagePrice.toString());
-    toast({
-      title: "Copiado!",
-      description: "Preço médio copiado para a área de transferência.",
-    });
-  };
-
-  return (
-    <Card className="shadow-lg">
-      <CardHeader>
-        <CardTitle>Resultado Final</CardTitle>
-      </CardHeader>
-      <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <ResultItem label="Quantidade Total" value={formatNumber4(totalQuantity)} />
-        <ResultItem label="Valor Total Investido" value={formatCurrency4(totalInvested)} />
-        <ResultItem 
-            label="Preço Médio" 
-            value={formatCurrency4(averagePrice)} 
-            isPrimary 
-            onCopy={handleCopy} 
-        />
-      </CardContent>
-    </Card>
-  );
-}
-
-interface ResultItemProps {
-  label: string;
-  value: string;
-  isPrimary?: boolean;
-  onCopy?: () => void;
-}
-
-function ResultItem({ label, value, isPrimary = false, onCopy }: ResultItemProps) {
-  return (
-    <div className={`relative flex flex-col items-center justify-center p-4 rounded-lg bg-muted ${isPrimary ? 'border border-primary bg-primary/5' : ''}`}>
-      <p className="text-sm text-muted-foreground">{label}</p>
-      <div className="flex items-center gap-2 mt-1">
-        <p className={`text-2xl font-bold ${isPrimary ? 'text-primary' : ''}`}>{value}</p>
-        {isPrimary && onCopy && (
-           <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:text-primary/80" onClick={onCopy} title="Copiar valor">
-               <Copy className="h-4 w-4" />
-           </Button>
-        )}
-      </div>
-    </div>
-  );
-}
-
 export default function AveragePriceCalculator() {
+  const { currentNfe } = useNfeStore();
   const [firstPurchase, setFirstPurchase] = useState<Purchase>({ quantity: "", price: "" });
   const [secondPurchase, setSecondPurchase] = useState<Purchase>({ quantity: "", price: "" });
+  const { toast } = useToast();
 
   const handlePurchaseChange = (setter: React.Dispatch<React.SetStateAction<Purchase>>) => 
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -154,35 +50,139 @@ export default function AveragePriceCalculator() {
     return { total1, total2, totalQuantity, totalInvested, averagePrice };
   }, [firstPurchase, secondPurchase]);
 
+  const handleCopy = () => {
+    navigator.clipboard.writeText(calculations.averagePrice.toFixed(4));
+    toast({
+      title: "Copiado!",
+      description: "Preço médio copiado para a área de transferência.",
+    });
+  };
+
   return (
-    <>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-        <PurchaseCard
-          title="Primeira Compra"
-          purchase={firstPurchase}
-          onChange={handlePurchaseChange(setFirstPurchase)}
-          totalValue={calculations.total1}
-        />
-        <PurchaseCard
-          title="Segunda Compra"
-          purchase={secondPurchase}
-          onChange={handlePurchaseChange(setSecondPurchase)}
-          totalValue={calculations.total2}
-        />
+    <div className="space-y-8 animate-in fade-in duration-500">
+      {/* Header Padronizado */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <Calculator className="w-6 h-6 text-blue-600" />
+            Cálculo de Preço Médio
+          </h2>
+          <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Equalização de Estoque e Compras</p>
+        </div>
+        <div className="flex items-center gap-2">
+            <NfeUploader />
+        </div>
       </div>
 
-      <ResultCard
-        totalQuantity={calculations.totalQuantity}
-        totalInvested={calculations.totalInvested}
-        averagePrice={calculations.averagePrice}
-      />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="border-none shadow-xl bg-white dark:bg-slate-950 overflow-hidden rounded-2xl relative">
+          <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-black uppercase text-slate-500 flex items-center gap-2">
+                <History className="h-4 w-4" /> Primeiro Lote (Estoque)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-slate-500 uppercase">Quantidade Atual</Label>
+              <Input
+                name="quantity"
+                type="number"
+                placeholder="0.00"
+                value={firstPurchase.quantity}
+                onChange={handlePurchaseChange(setFirstPurchase)}
+                className="h-11 font-black text-lg"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-slate-500 uppercase">Custo Unitário Atual</Label>
+              <Input
+                name="price"
+                type="number"
+                placeholder="R$ 0,00"
+                value={firstPurchase.price}
+                onChange={handlePurchaseChange(setFirstPurchase)}
+                className="h-11 font-black text-lg"
+              />
+            </div>
+            <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
+              <span className="text-[10px] font-bold text-slate-400 uppercase">Valor do Lote:</span>
+              <span className="font-mono text-sm font-bold text-slate-600">{formatCurrency(calculations.total1)}</span>
+            </div>
+          </CardContent>
+        </Card>
 
-      <div className="mt-8 flex justify-center">
-        <Button variant="destructive" onClick={clearFields}>
-          <Trash2 className="mr-2 h-4 w-4" />
-          Limpar Campos
+        <Card className="border-none shadow-xl bg-white dark:bg-slate-950 overflow-hidden rounded-2xl relative">
+          <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-black uppercase text-slate-500 flex items-center gap-2">
+                <Package className="h-4 w-4" /> Segundo Lote (Nova Compra)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-slate-500 uppercase">Quantidade Nova</Label>
+              <Input
+                name="quantity"
+                type="number"
+                placeholder="0.00"
+                value={secondPurchase.quantity}
+                onChange={handlePurchaseChange(setSecondPurchase)}
+                className="h-11 font-black text-lg"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-slate-500 uppercase">Custo Unitário Novo</Label>
+              <Input
+                name="price"
+                type="number"
+                placeholder="R$ 0,00"
+                value={secondPurchase.price}
+                onChange={handlePurchaseChange(setSecondPurchase)}
+                className="h-11 font-black text-lg"
+              />
+            </div>
+            <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
+              <span className="text-[10px] font-bold text-slate-400 uppercase">Valor do Lote:</span>
+              <span className="font-mono text-sm font-bold text-slate-600">{formatCurrency(calculations.total2)}</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="border-none shadow-2xl bg-slate-900 text-white overflow-hidden rounded-2xl relative">
+        <div className="absolute right-[-20px] top-[-20px] opacity-10">
+          <TrendingUp size={120} />
+        </div>
+        <CardContent className="p-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="space-y-1">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Quantidade Final</span>
+                <p className="text-3xl font-black">{formatNumber(calculations.totalQuantity)}</p>
+                <p className="text-[10px] text-slate-500 font-medium">Soma total das unidades em estoque.</p>
+            </div>
+            <div className="space-y-1 border-slate-800 md:border-l md:pl-8">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Investimento Total</span>
+                <p className="text-3xl font-black text-indigo-400">{formatCurrency(calculations.totalInvested)}</p>
+                <p className="text-[10px] text-slate-500 font-medium">Capital total alocado neste produto.</p>
+            </div>
+            <div className="space-y-1 border-slate-800 md:border-l md:pl-8 relative">
+                <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Novo Preço Médio</span>
+                <div className="flex items-center gap-3">
+                    <p className="text-4xl font-black text-white">{formatCurrency4(calculations.averagePrice)}</p>
+                    <Button variant="ghost" size="icon" onClick={handleCopy} className="h-8 w-8 text-slate-400 hover:text-white hover:bg-white/10 rounded-full">
+                        <Copy size={16} />
+                    </Button>
+                </div>
+                <p className="text-[10px] text-slate-500 font-medium">Custo unitário equalizado após as compras.</p>
+            </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-center">
+        <Button variant="ghost" onClick={clearFields} className="text-rose-500 hover:text-rose-600 hover:bg-rose-50">
+          <Trash2 className="mr-2 h-4 w-4" /> Limpar Todos os Campos
         </Button>
       </div>
-    </>
+    </div>
   );
 }

@@ -274,6 +274,18 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
             };
 
             if (editingId) {
+                if (currentDevolucao?.status === 'Finalizada') {
+                    const originalItensLength = currentDevolucao.itens?.length || 0;
+                    if (data.itens.length > originalItensLength) {
+                        toast({
+                            title: 'Edição Bloqueada',
+                            description: 'Não é possível adicionar novas peças em uma devolução já finalizada.',
+                            variant: 'destructive'
+                        });
+                        return; // Halt save
+                    }
+                }
+
                 const devolucaoData = {
                     ...devolucaoBaseData,
                     id: editingId,
@@ -288,15 +300,11 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                 if (shouldExit) {
                     onSave();
                 } else {
-                    // Limpa o formulário para novo lançamento, mantendo opcionalmente apenas a observação
-                    const currentObs = form.getValues('observacaoGeral');
-                    form.reset(defaultFormValues);
-                    if (currentObs) form.setValue('observacaoGeral', currentObs);
-                    
+                    // Apenas atualiza, não limpa a tela se estiver editando
                     window.dispatchEvent(new CustomEvent('datachanged'));
                     toast({
-                        title: 'Tudo pronto!',
-                        description: 'O cadastro foi atualizado. Tela limpa para novo lançamento.'
+                        title: 'Atualizado!',
+                        description: 'As alterações foram salvas com sucesso.'
                     });
                 }
 
@@ -315,7 +323,10 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                 } else {
                     // Limpa o formulário para novo lançamento, mantendo opcionalmente apenas a observação
                     const currentObs = form.getValues('observacaoGeral');
-                    form.reset(defaultFormValues);
+                    form.reset(); // Clear form state completely
+                    form.reset(defaultFormValues); // Set to default values
+                    replace(defaultFormValues.itens); // Force field array reset
+                    
                     if (currentObs) form.setValue('observacaoGeral', currentObs);
 
                     window.dispatchEvent(new CustomEvent('datachanged'));
@@ -466,17 +477,19 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                     <h3 className='text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2'>
                                         Peças Devolvidas
                                     </h3>
-                                    <Button type="button" size="sm" onClick={() => append({ codigoPeca: '', descricaoPeca: '', quantidade: 1 })} className='gap-2 shadow-sm'>
-                                        <PlusCircle className="h-4 w-4" />
-                                        Adicionar Peça
-                                    </Button>
+                                    {(!editingId || form.watch('status') !== 'Finalizada') && (
+                                        <Button type="button" size="sm" onClick={() => append({ codigoPeca: '', descricaoPeca: '', quantidade: 1 })} className='gap-2 shadow-sm'>
+                                            <PlusCircle className="h-4 w-4" />
+                                            Adicionar Peça
+                                        </Button>
+                                    )}
                                 </div>
 
                                 {fields.map((item, index) => (
                                     <Card key={item.id} className='relative bg-transparent shadow-none border border-muted/20'>
                                         <CardHeader className='p-3 border-b flex flex-row items-center justify-between'>
                                             <span className='text-xs font-bold text-primary italic'>Peça #{index + 1}</span>
-                                            {fields.length > 1 && (
+                                            {fields.length > 1 && (!editingId || form.watch('status') !== 'Finalizada') && (
                                                 <Button
                                                     type="button"
                                                     variant="ghost"
@@ -498,6 +511,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                                             <FormLabel className='text-xs'>Código / Peça <span className='text-destructive'>*</span></FormLabel>
                                                             <ComboboxProduct
                                                                 value={field.value}
+                                                                autoFocus={index === fields.length - 1} // Auto-focus no ultimo adicionado
                                                                 onProductSelect={(product) => handleProductSelect(product, index)}
                                                                 onInputChange={(val) => {
                                                                     field.onChange(val);
@@ -709,7 +723,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                                     disabled={form.formState.isSubmitting}
                                     onClick={() => setShouldExit(false)}
                                 >
-                                    {form.formState.isSubmitting ? "..." : "Salvar e Continuar"}
+                                    {form.formState.isSubmitting ? "..." : (editingId ? "Apenas Salvar" : "Salvar e Continuar")}
                                 </Button>
                                 <Button
                                     type="submit"

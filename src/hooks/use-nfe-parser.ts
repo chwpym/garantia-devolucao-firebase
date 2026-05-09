@@ -2,107 +2,38 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
-import { XMLParser } from 'fast-xml-parser';
 import { useToast } from '@/hooks/use-toast';
-
-// --- Tipos exportados para serem usados pelos componentes ---
-
-export interface NfeInfo {
-    emitterName: string;
-    emitterCnpj: string;
-    emitterCity?: string;
-    nfeNumber: string;
-}
-
-export interface NfeProductDetail {
-    prod: Record<string, string>;
-    imposto: {
-        ICMS?: Record<string, any>;
-        IPI?: Record<string, any>;
-        PIS?: Record<string, any>;
-        COFINS?: Record<string, any>;
-        IBSCBS?: {
-            gIBSCBS?: {
-                vIBS?: string | number;
-                pIBS?: string | number;
-                gCBS?: {
-                    vCBS?: string | number;
-                    pCBS?: string | number;
-                };
-            };
-        };
-        [key: string]: any;
-    };
-}
-
-export interface InfNFe {
-    ['@_Id']: string;
-    ide: { nNF: string };
-    emit: { xNome: string; CNPJ: string; enderEmit: { xMun: string; UF: string } };
-    det: NfeProductDetail[];
-    total: {
-        ICMSTot: {
-            vProd: string;
-            vFrete: string;
-            vSeg: string;
-            vDesc: string;
-            vOutro: string;
-            vST: string;
-            vIPI: string;
-            vICMS: string;
-            vPIS: string;
-            vCOFINS: string;
-            vNF: string;
-        };
-        IBSCBSTot?: {
-            vBCIBSCBS?: string;
-            vIBS?: string | number;
-            vCBS?: string | number;
-            gIBS?: {
-                vIBS?: string | number;
-            };
-            gCBS?: {
-                vCBS?: string | number;
-            };
-        };
-    }
-}
-
-export interface NfeData {
-    infNFe: InfNFe;
-    det: NfeProductDetail[];
-}
+import { parseNfeXml, ParsedNfe } from '@/lib/nfe-parser';
+import { useNfeStore } from '@/store/use-nfe-store';
 
 interface NfeParserProps {
-    onNfeProcessed: (data: NfeData | null) => void;
+    onNfeProcessed?: (data: ParsedNfe | null) => void;
 }
 
-// --- O Hook ---
-
-export function useNfeParser({ onNfeProcessed }: NfeParserProps) {
+export function useNfeParser({ onNfeProcessed }: NfeParserProps = {}) {
     const [fileName, setFileName] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
+    const { addNfe, setCurrentNfe } = useNfeStore();
 
     const processXml = useCallback((xmlData: string, currentFileName: string) => {
         try {
-            const parser = new XMLParser({ ignoreAttributes: false, parseAttributeValue: true });
-            const jsonObj = parser.parse(xmlData);
+            const parsedNfe = parseNfeXml(xmlData);
+            
+            // Sincroniza com a store global
+            addNfe(parsedNfe);
+            setCurrentNfe(parsedNfe);
 
-            const infNFe: InfNFe | undefined = jsonObj?.nfeProc?.NFe?.infNFe || jsonObj?.NFe?.infNFe;
-            if (!infNFe) {
-                throw new Error("Estrutura do XML da NF-e inválida: <infNFe> não encontrado.");
+            if (onNfeProcessed) {
+                onNfeProcessed(parsedNfe);
             }
-
-            const dets: NfeProductDetail[] = Array.isArray(infNFe.det) ? infNFe.det : [infNFe.det];
-            const total = infNFe.total?.ICMSTot;
-
-            if (!dets || !total) {
-                throw new Error("Estrutura do XML da NF-e inválida: <det> ou <ICMSTot> não encontrados.");
-            }
-
-            onNfeProcessed({ infNFe, det: dets });
+            
             setFileName(currentFileName);
+
+            toast({
+                title: "Sucesso!",
+                description: `NF-e ${parsedNfe.header.nNF} importada com sucesso.`,
+            });
 
         } catch (error: unknown) {
             console.error("Erro ao processar o XML:", error);
@@ -114,14 +45,14 @@ export function useNfeParser({ onNfeProcessed }: NfeParserProps) {
                 description: message,
             });
 
-            onNfeProcessed(null);
+            if (onNfeProcessed) onNfeProcessed(null);
             setFileName(null);
         } finally {
             if (fileInputRef.current) {
                 fileInputRef.current.value = "";
             }
         }
-    }, [onNfeProcessed, toast]);
+    }, [onNfeProcessed, toast, addNfe, setCurrentNfe]);
 
     const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -137,17 +68,19 @@ export function useNfeParser({ onNfeProcessed }: NfeParserProps) {
 
     const clearNfeData = useCallback(() => {
         setFileName(null);
-        onNfeProcessed(null);
+        if (onNfeProcessed) onNfeProcessed(null);
+        setCurrentNfe(null);
         if (fileInputRef.current) {
             fileInputRef.current.value = "";
         }
-    }, [onNfeProcessed]);
+    }, [onNfeProcessed, setCurrentNfe]);
 
     return {
         fileName,
         handleFileChange,
         clearNfeData,
         setFileName,
-        fileInputRef
+        fileInputRef,
+        processXml
     };
 }

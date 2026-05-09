@@ -19,6 +19,7 @@ interface ComboboxProductProps {
   placeholder?: string;
   searchPlaceholder?: string;
   addEntityLabel?: string;
+  autoFocus?: boolean;
 }
 
 export default function ComboboxProduct({
@@ -28,7 +29,8 @@ export default function ComboboxProduct({
   onAddNew,
   placeholder = "Aguardando...",
   searchPlaceholder = "Buscar produto por código ou descrição...",
-  addEntityLabel = "Cadastrar Novo Produto"
+  addEntityLabel = "Cadastrar Novo Produto",
+  autoFocus = false
 }: ComboboxProductProps) {
   const { products } = useAppStore();
   const [isPopoverOpen, setPopoverOpen] = useState(false);
@@ -64,6 +66,7 @@ export default function ComboboxProduct({
             <Input
               value={value}
               autoComplete="off"
+              autoFocus={autoFocus}
               onChange={(e) => {
                 onInputChange(e.target.value);
                 if (e.target.value) {

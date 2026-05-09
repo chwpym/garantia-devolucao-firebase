@@ -1,30 +1,31 @@
 
-"use client";
+'use client';
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import jsPDF from "jspdf";
 import autoTable, { RowInput, Styles } from "jspdf-autotable";
 import type { UserOptions } from "jspdf-autotable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Upload, FileX, Printer } from "lucide-react";
+import { Printer, Info, Calculator, FileCheck, History } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatNumber, formatCurrency4, formatNumber4 } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info } from "lucide-react";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useNfeParser, type NfeData, type NfeInfo as NfeParserInfo, type NfeProductDetail } from "@/hooks/use-nfe-parser";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-
+import { useNfeStore } from "@/store/use-nfe-store";
+import { NfeUploader } from "@/components/nfe/NfeUploader";
+import { Card, CardContent } from "@/components/ui/card";
 
 type TaxRegime = 'lucro_real' | 'simples_nacional';
 
 interface AnalyzedItem {
-    id: number;
+    id: string;
+    cProd: string;
     description: string;
     quantity: number;
     unitCost: number;
@@ -37,41 +38,92 @@ interface AnalyzedItem {
     outras: number;
     pis: number;
     cofins: number;
+    vIBS: number;
+    vCBS: number;
     finalUnitCost: number;
     finalTotalCost: number;
     conversionFactor: string;
     convertedUnitCost: number;
-    vIBS: number;
-    vCBS: number;
 }
-
-interface NfeInfo extends NfeParserInfo {
-    totalGrossValue: number;
-}
-
 
 export default function AdvancedCostAnalysisCalculator() {
+    const { currentNfe } = useNfeStore();
     const [items, setItems] = useState<AnalyzedItem[]>([]);
-    const [nfeInfo, setNfeInfo] = useState<NfeInfo | null>(null);
     const [manualFrete, setManualFrete] = useState("");
     const [manualSeguro, setManualSeguro] = useState("");
     const [manualOutros, setManualOutros] = useState("");
     const [manualDesconto, setManualDesconto] = useState("");
     const [useTaxReform, setUseTaxReform] = useState(false);
-    const { toast } = useToast();
     const [taxRegime, setTaxRegime] = useState<TaxRegime>('lucro_real');
+    const { toast } = useToast();
 
-    const recalculateCosts = (currentItems: Omit<AnalyzedItem, 'finalUnitCost' | 'finalTotalCost' | 'convertedUnitCost'>[], regime: TaxRegime, taxReform: boolean): AnalyzedItem[] => {
+    // Sincroniza com a nota carregada no Store Global
+    useEffect(() => {
+        if (!currentNfe) {
+            setItems([]);
+            return;
+        }
+
+        const totalProdFromXml = currentNfe.totals.vProd || 0;
+        const totalFrete = currentNfe.totals.vFrete || 0;
+        const totalSeguro = currentNfe.totals.vSeg || 0;
+        const totalDesconto = currentNfe.totals.vDesc || 0;
+        const totalOutras = currentNfe.totals.vOutro || 0;
+
+        const newItems: AnalyzedItem[] = currentNfe.items.map((item, index) => {
+            const itemWeight = totalProdFromXml > 0 ? item.vProd / totalProdFromXml : 0;
+
+            // Rateio proporcional automático dos valores da nota se não estiverem discriminados no item
+            const freteRateado = item.vFrete || (totalFrete * itemWeight);
+            const seguroRateado = item.vSeg || (totalSeguro * itemWeight);
+            const descontoRateado = item.vDesc || (totalDesconto * itemWeight);
+            const outrasRateado = item.vOutro || (totalOutras * itemWeight);
+
+            return {
+                id: `${currentNfe.header.chave}-${index}`,
+                cProd: item.cProd,
+                description: item.xProd,
+                quantity: item.qCom,
+                unitCost: item.vUnCom,
+                totalCost: item.vProd,
+                ipi: item.taxes.vIPI || 0,
+                icmsST: item.taxes.vICMSST || 0,
+                frete: freteRateado,
+                seguro: seguroRateado,
+                desconto: descontoRateado,
+                outras: outrasRateado,
+                pis: item.taxes.vPIS || 0,
+                cofins: item.taxes.vCOFINS || 0,
+                vIBS: item.taxes.vIBS || 0,
+                vCBS: item.taxes.vCBS || 0,
+                finalUnitCost: 0, // Calculado no recalculate
+                finalTotalCost: 0,
+                conversionFactor: "1",
+                convertedUnitCost: 0
+            };
+        });
+
+        const calculated = recalculateCosts(newItems, taxRegime, useTaxReform);
+        setItems(calculated);
+
+        toast({
+            title: "Itens Importados",
+            description: `${newItems.length} produtos da NF-e ${currentNfe.header.nNF} carregados para análise.`,
+        });
+    }, [currentNfe]);
+
+    const recalculateCosts = (currentItems: AnalyzedItem[], regime: TaxRegime, taxReform: boolean): AnalyzedItem[] => {
         return currentItems.map(item => {
+            // Custo base: Valor Mercadoria + IPI + ST + Frete + Seguro + Outras - Desconto
             const baseTotalCost = item.totalCost + item.ipi + item.icmsST + item.frete + item.seguro + item.outras - item.desconto;
             
-            // In Tax Reform, IBS/CBS are added to base cost if reform is ON
+            // Na Reforma Tributária, IBS/CBS são somados ao custo se a reforma estiver ativa
             const taxReformValue = taxReform ? (item.vIBS + item.vCBS) : 0;
             let finalTotalCost = baseTotalCost + taxReformValue;
 
+            // No Lucro Real, o PIS/COFINS (e IBS/CBS se reforma ativa) são créditos recuperáveis e devem ser subtraídos do custo
             if (regime === 'lucro_real') {
                 finalTotalCost -= (item.pis + item.cofins);
-                // If tax reform is ON and regime is Lucro Real, we also get credit for IBS/CBS
                 if (taxReform) {
                     finalTotalCost -= (item.vIBS + item.vCBS);
                 }
@@ -90,126 +142,28 @@ export default function AdvancedCostAnalysisCalculator() {
         });
     };
 
-    const onNfeProcessed = (data: NfeData | null) => {
-        if (!data) {
-            setItems([]);
-            setNfeInfo(null);
-            return;
-        }
-
-        const { infNFe, det: dets } = data;
-        const total = infNFe.total.ICMSTot;
-
-        const totalProdValue = parseFloat(total.vProd) || 0;
-        const totalFrete = parseFloat(total.vFrete) || 0;
-        const totalSeguro = parseFloat(total.vSeg) || 0;
-        const totalDesconto = parseFloat(total.vDesc) || 0;
-        const totalOutras = parseFloat(total.vOutro) || 0;
-        const totalST = parseFloat(total.vST) || 0;
-        const totalIPI = parseFloat(total.vIPI) || 0;
-
-        const newNfeInfo: NfeInfo = {
-            emitterName: infNFe.emit.xNome,
-            emitterCnpj: infNFe.emit.CNPJ,
-            nfeNumber: infNFe.ide.nNF,
-            totalGrossValue: totalProdValue + totalFrete + totalSeguro + totalOutras + totalST + totalIPI,
-        };
-        setNfeInfo(newNfeInfo);
-
-        const extractST = (imposto: any): number => {
-            if (!imposto?.ICMS) return 0;
-            const icms = imposto.ICMS;
-            // Iterate through all possible ICMS tags (ICMS00, ICMS10, ICMSST, etc.)
-            for (const key in icms) {
-                if (icms[key]?.vICMSST) {
-                    return parseFloat(icms[key].vICMSST) || 0;
-                }
-            }
-            return 0;
-        };
-
-        const newItems: Omit<AnalyzedItem, 'finalUnitCost' | 'finalTotalCost' | 'convertedUnitCost'>[] = dets.map((det: NfeProductDetail, index: number) => {
-            const prod = det.prod;
-            const imposto = det.imposto;
-
-            const quantity = parseFloat(prod.qCom) || 0;
-            const unitCost = parseFloat(prod.vUnCom) || 0;
-            const itemTotalCost = parseFloat(prod.vProd) || 0;
-
-            const itemWeight = totalProdValue > 0 ? itemTotalCost / totalProdValue : 0;
-
-            const vIBS = parseFloat(imposto?.IBSCBS?.gIBSCBS?.vIBS?.toString() || "0") || 0;
-            const vCBS = parseFloat(imposto?.IBSCBS?.gIBSCBS?.gCBS?.vCBS?.toString() || "0") || 0;
-
-            const ipiValor = parseFloat(imposto?.IPI?.IPITrib?.vIPI?.toString() || "0") || 0;
-            const stValor = extractST(imposto);
-            const pisValor = parseFloat(imposto?.PIS?.PISAliq?.vPIS?.toString() || "0") || parseFloat(imposto?.PIS?.PISST?.vPIS?.toString() || "0") || 0;
-            const cofinsValor = parseFloat(imposto?.COFINS?.COFINSAliq?.vCOFINS?.toString() || "0") || parseFloat(imposto?.COFINS?.COFINSST?.vCOFINS?.toString() || "0") || 0;
-
-            const freteRateado = parseFloat(prod.vFrete) || (totalFrete * itemWeight) || 0;
-            const seguroRateado = parseFloat(prod.vSeg) || (totalSeguro * itemWeight) || 0;
-            const descontoRateado = parseFloat(prod.vDesc) || (totalDesconto * itemWeight) || 0;
-            const outrasRateado = parseFloat(prod.vOutro) || (totalOutras * itemWeight) || 0;
-
-            return {
-                id: index,
-                description: prod.xProd || "",
-                quantity: quantity,
-                unitCost: unitCost,
-                totalCost: itemTotalCost,
-                ipi: ipiValor,
-                icmsST: stValor,
-                frete: freteRateado,
-                seguro: seguroRateado,
-                desconto: descontoRateado,
-                outras: outrasRateado,
-                pis: pisValor,
-                cofins: cofinsValor,
-                conversionFactor: "1",
-                vIBS,
-                vCBS
-            };
-        });
-
-        setItems(recalculateCosts(newItems, 'lucro_real', useTaxReform));
-        setTaxRegime('lucro_real');
-        setManualFrete("");
-        setManualSeguro("");
-        setManualOutros("");
-        setManualDesconto("");
-
-        toast({
-            title: "Sucesso!",
-            description: `${newItems.length} itens importados e analisados da NF-e.`,
-        });
-    }
-
-    const { fileName, handleFileChange, clearNfeData, fileInputRef } = useNfeParser({ onNfeProcessed });
-
-
-
     const handleTaxRegimeChange = (value: string) => {
         const newRegime = value as TaxRegime;
         setTaxRegime(newRegime);
-        setItems(prevItems => recalculateCosts(prevItems, newRegime, useTaxReform));
+        setItems(prev => recalculateCosts(prev, newRegime, useTaxReform));
     };
 
     const toggleTaxReform = (checked: boolean) => {
         setUseTaxReform(checked);
-        setItems(prevItems => recalculateCosts(prevItems, taxRegime, checked));
+        setItems(prev => recalculateCosts(prev, taxRegime, checked));
     };
 
     const applyManualRateio = () => {
-        setItems(prevItems => {
-            const totalProdValue = prevItems.reduce((acc, item) => acc + item.totalCost, 0);
+        setItems(prev => {
+            const totalProdValue = prev.reduce((acc, item) => acc + item.totalCost, 0);
             const mFrete = parseFloat(manualFrete) || 0;
             const mSeg = parseFloat(manualSeguro) || 0;
             const mOutros = parseFloat(manualOutros) || 0;
             const mDesc = parseFloat(manualDesconto) || 0;
 
-            if (totalProdValue === 0 && (mFrete + mSeg + mOutros + mDesc) > 0) return prevItems;
+            if (totalProdValue === 0 && (mFrete + mSeg + mOutros + mDesc) > 0) return prev;
 
-            const updatedRaw = prevItems.map(item => {
+            const updatedRaw = prev.map(item => {
                 const itemWeight = totalProdValue > 0 ? item.totalCost / totalProdValue : 0;
                 return {
                     ...item,
@@ -221,12 +175,12 @@ export default function AdvancedCostAnalysisCalculator() {
             });
             return recalculateCosts(updatedRaw, taxRegime, useTaxReform);
         });
-        toast({ title: "Rateio Aplicado", description: "Custos atualizados com valores globais." });
+        toast({ title: "Rateio Aplicado", description: "Custos atualizados com novos valores globais." });
     };
 
-    const handleConversionFactorChange = (id: number, value: string) => {
-        setItems(prevItems =>
-            prevItems.map(item => {
+    const handleConversionFactorChange = (id: string, value: string) => {
+        setItems(prev =>
+            prev.map(item => {
                 if (item.id === id) {
                     const factor = parseFloat(value) || 1;
                     const convertedUnitCost = factor > 0 ? item.finalUnitCost / factor : 0;
@@ -256,280 +210,213 @@ export default function AdvancedCostAnalysisCalculator() {
         });
     }, [items]);
 
-    const totalWithoutPisCofins = useMemo(() => {
-        if (taxRegime === 'simples_nacional') return totals.finalTotalCost;
-        return totals.finalTotalCost + totals.totalPIS + totals.totalCOFINS;
-    }, [totals, taxRegime]);
-
     const generatePdf = () => {
         const doc = new jsPDF({ orientation: "landscape" });
 
         doc.setFontSize(18);
         doc.text("Análise de Custo Avançada por NF-e", doc.internal.pageSize.getWidth() / 2, 22, { align: "center" });
 
-        if (nfeInfo) {
+        if (currentNfe) {
             doc.setFontSize(10);
             const startY = 32;
-            doc.text(`NF-e: ${nfeInfo.nfeNumber}`, 14, startY);
-            doc.text(`Emitente: ${nfeInfo.emitterName}`, 14, startY + 6);
-            doc.text(`CNPJ: ${nfeInfo.emitterCnpj}`, 14, startY + 12);
+            doc.text(`NF-e: ${currentNfe.header.nNF} | Chave: ${currentNfe.header.chave}`, 14, startY);
+            doc.text(`Emitente: ${currentNfe.emit.xNome} | CNPJ: ${currentNfe.emit.CNPJ}`, 14, startY + 6);
             doc.text(`Regime: ${taxRegime === 'lucro_real' ? 'Lucro Real' : 'Simples Nacional'}`, doc.internal.pageSize.getWidth() - 14, startY, { align: "right" });
-            doc.text(`Custo Total Final: ${formatCurrency(totals.finalTotalCost)}`, doc.internal.pageSize.getWidth() - 14, startY + 6, { align: "right" });
+            doc.text(`Custo Total Líquido: ${formatCurrency(totals.finalTotalCost)}`, doc.internal.pageSize.getWidth() - 14, startY + 6, { align: "right" });
         }
 
-        const head = [['Descrição', 'Qtde', 'Fator Conv.', 'C. Un. Orig.', 'IPI', 'ICMS-ST', 'Frete', 'Seguro', 'Desconto', 'Outras', 'PIS', 'COFINS', 'C. Un. Final', 'C. Un. Final (Conv.)', 'C. Total Final']];
+        const head = [['Cód.', 'Descrição', 'Qtde', 'Fator', 'C. Un. Orig.', 'IPI', 'ST', 'Frete', 'Seguro', 'Outras', 'PIS/COF', 'C. Un. Final', 'C. Un. Final (Conv.)', 'C. Total Final']];
         const body = items.map(item => [
+            item.cProd,
             item.description,
-            formatNumber4(item.quantity),
-            formatNumber4(parseFloat(item.conversionFactor) || 1),
+            formatNumber(item.quantity),
+            item.conversionFactor,
             formatCurrency4(item.unitCost),
-            formatCurrency4(item.ipi),
-            formatCurrency4(item.icmsST),
-            formatCurrency4(item.frete),
-            formatCurrency4(item.seguro),
-            formatCurrency4(item.desconto),
-            formatCurrency4(item.outras),
-            formatCurrency4(item.pis),
-            formatCurrency4(item.cofins),
+            formatCurrency(item.ipi),
+            formatCurrency(item.icmsST),
+            formatCurrency(item.frete),
+            formatCurrency(item.seguro),
+            formatCurrency(item.outras),
+            formatCurrency(item.pis + item.cofins),
             formatCurrency4(item.finalUnitCost),
             formatCurrency4(item.convertedUnitCost),
             formatCurrency(item.finalTotalCost),
         ]);
 
-        const footStyles: Partial<Styles> = { fontStyle: 'bold', fillColor: [224, 224, 224], textColor: [0, 0, 0] };
-
-        const foot: RowInput[] = [
-            [
-                { content: 'Totais:', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } },
-                { content: formatCurrency(totals.totalIPI), styles: { fontStyle: 'bold' } },
-                { content: formatCurrency(totals.totalST), styles: { fontStyle: 'bold' } },
-                { content: formatCurrency(totals.totalFrete), styles: { fontStyle: 'bold' } },
-                { content: formatCurrency(totals.totalSeguro), styles: { fontStyle: 'bold' } },
-                { content: formatCurrency(totals.totalDesconto), styles: { fontStyle: 'bold' } },
-                { content: formatCurrency(totals.totalOutras), styles: { fontStyle: 'bold' } },
-                { content: formatCurrency(totals.totalPIS), styles: { fontStyle: 'bold' } },
-                { content: formatCurrency(totals.totalCOFINS), styles: { fontStyle: 'bold' } },
-                { content: '' },
-                { content: '' },
-                { content: formatCurrency(totals.finalTotalCost), styles: { fontStyle: 'bold', fillColor: [232, 245, 233] } },
-            ]
-        ];
-
         autoTable(doc, {
-            startY: nfeInfo ? 54 : 30,
+            startY: 48,
             head: head,
             body: body,
-            foot: foot,
-            showFoot: 'lastPage',
+            theme: 'striped',
             headStyles: { fillColor: [63, 81, 181] },
-            footStyles: footStyles,
-            didDrawPage: (data: NonNullable<UserOptions['didDrawPage']>['arguments'][0]) => {
-                const pageCount = doc.internal.pages.length;
+            foot: [[
+                { content: 'Totais:', colSpan: 11, styles: { halign: 'right', fontStyle: 'bold' } },
+                { content: formatCurrency(totals.finalTotalCost), colSpan: 3, styles: { fontStyle: 'bold', fillColor: [232, 245, 233] } }
+            ]],
+            didDrawPage: (data) => {
                 doc.setFontSize(8);
-                const pageText = `Página ${data.pageNumber} de ${pageCount}`;
-                doc.text(pageText, data.settings.margin.left, doc.internal.pageSize.height - 10);
-                if (fileName) {
-                    doc.text(`Arquivo: ${fileName}`, doc.internal.pageSize.width - data.settings.margin.right, doc.internal.pageSize.height - 10, { align: 'right' });
-                }
+                doc.text(`Gerado via Synergia OS - ${new Date().toLocaleDateString()}`, data.settings.margin.left, doc.internal.pageSize.height - 10);
             }
         });
 
-        doc.save(`analise_custo_avancada_${nfeInfo?.nfeNumber || 'sem_numero'}.pdf`);
+        doc.save(`analise_custo_${currentNfe?.header.nNF || 'nfe'}.pdf`);
     };
 
     return (
-        <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row flex-wrap gap-2 items-center">
-                <Button onClick={() => fileInputRef.current?.click()}>
-                    <Upload className="mr-2 h-4 w-4" />
-                    Importar XML da NF-e
-                </Button>
-                {items.length > 0 && (
-                    <Button onClick={generatePdf} variant="secondary">
-                        <Printer className="mr-2 h-4 w-4" />
-                        Gerar PDF
-                    </Button>
-                )}
-                {fileName && (
-                    <div className="flex items-center gap-2 p-2 border rounded-md bg-muted flex-1 sm:flex-none justify-between">
-                        <span className="text-sm text-muted-foreground truncate" title={fileName}>{fileName}</span>
-                        <Button variant="ghost" size="icon" onClick={clearNfeData} className="h-6 w-6">
-                            <FileX className="h-4 w-4 text-destructive" />
-                        </Button>
-                    </div>
-                )}
-                <Input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    className="hidden"
-                    accept=".xml"
-                />
-
-                {items.length > 0 && (
-                    <div className="flex flex-wrap items-center gap-3 bg-accent/5 p-2 rounded-md border border-accent/20">
-                        <div className="flex items-center gap-2">
-                            <Label className="text-[10px] uppercase font-bold text-muted-foreground mr-1">Rateio Manual:</Label>
-                            <div className="flex gap-x-1">
-                                <Input placeholder="Frete" value={manualFrete} onChange={e => setManualFrete(e.target.value)} className="w-20 h-7 text-[10px] bg-background" />
-                                <Input placeholder="Seguro" value={manualSeguro} onChange={e => setManualSeguro(e.target.value)} className="w-16 h-7 text-[10px] bg-background" />
-                                <Input placeholder="Outros" value={manualOutros} onChange={e => setManualOutros(e.target.value)} className="w-16 h-7 text-[10px] bg-background" />
-                                <Input placeholder="Desconto" value={manualDesconto} onChange={e => setManualDesconto(e.target.value)} className="w-16 h-7 text-[10px] bg-background border-destructive/30" />
-                            </div>
-                            <Button onClick={applyManualRateio} size="sm" variant="outline" className="h-7 px-2 text-[10px] bg-accent-blue/10 border-accent-blue/30 text-accent-blue hover:bg-accent-blue hover:text-white transition-all">
-                                Ratear
-                            </Button>
-                        </div>
-
-                        <div className="h-6 w-[1px] bg-border mx-1"></div>
-
-                        <div className="flex items-center gap-2">
-                            <Label htmlFor="tax-reform" className="text-[10px] uppercase font-bold text-muted-foreground cursor-pointer">Reforma (IBS/CBS)</Label>
-                            <Switch id="tax-reform" checked={useTaxReform} onCheckedChange={toggleTaxReform} className="scale-75" />
-                            {useTaxReform && <Badge variant="outline" className="h-5 text-[8px] border-primary text-primary bg-primary/5">Ativo</Badge>}
-                        </div>
-                    </div>
-                )}
+        <div className="space-y-6 animate-in fade-in duration-500">
+            {/* Header Padronizado */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="space-y-1">
+                    <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                        <Calculator className="w-6 h-6 text-primary" />
+                        Análise Técnica de Custo Final
+                    </h2>
+                    <p className="text-xs text-muted-foreground">Cálculo profundo de custo unitário com rateio, impostos e créditos</p>
+                </div>
+                <NfeUploader />
             </div>
 
-            {items.length > 0 && nfeInfo && (
-                <div className="flex flex-col md:flex-row gap-4 md:items-center p-4 border rounded-lg bg-muted">
-                    <div className="space-y-2 flex-1">
-                        <h3 className="text-lg font-medium">Informações da NF-e</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-2 text-sm">
-                            <div><strong>Emitente:</strong> {nfeInfo.emitterName}</div>
-                            <div><strong>CNPJ:</strong> {nfeInfo.emitterCnpj}</div>
-                            <div><strong>NF-e Nº:</strong> {nfeInfo.nfeNumber}</div>
-                            <div><strong>Total Bruto (s/ desc):</strong> {formatCurrency4(nfeInfo.totalGrossValue)}</div>
-                            <div className="font-semibold text-sm"><strong>Custo Total (sem crédito PIS/COFINS):</strong> <span className="font-bold ml-2">{formatCurrency4(totalWithoutPisCofins)}</span></div>
-                            <div className="font-semibold col-span-full">
-                                <strong>Custo Total Final ({taxRegime === 'lucro_real' ? 'c/ crédito PIS/COFINS' : 's/ crédito PIS/COFINS'}):</strong>
-                                <span className="font-bold text-primary ml-2">{formatCurrency4(totals.finalTotalCost)}</span>
+            {items.length > 0 && (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Painel de Configuração */}
+                    <Card className="lg:col-span-1 shadow-md border-primary/10">
+                        <CardContent className="p-6 space-y-6">
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label className="text-sm font-bold flex items-center gap-2">
+                                        <FileCheck className="w-4 h-4 text-primary" />
+                                        Configurações de Imposto
+                                    </Label>
+                                    <Select onValueChange={handleTaxRegimeChange} value={taxRegime}>
+                                        <SelectTrigger className="h-11">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="lucro_real">Lucro Real (C/ Crédito)</SelectItem>
+                                            <SelectItem value="simples_nacional">Simples Nacional (S/ Crédito)</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary/10">
+                                    <div className="space-y-0.5">
+                                        <Label htmlFor="tax-reform" className="text-sm font-bold cursor-pointer">Simular Reforma Tributária</Label>
+                                        <p className="text-[10px] text-muted-foreground">Aplica IBS/CBS (novas regras)</p>
+                                    </div>
+                                    <Switch id="tax-reform" checked={useTaxReform} onCheckedChange={toggleTaxReform} />
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="tax-regime">Regime Tributário (Cálculo)</Label>
-                        <Select onValueChange={handleTaxRegimeChange} value={taxRegime}>
-                            <SelectTrigger id="tax-regime" className="w-full md:w-[280px]">
-                                <SelectValue placeholder="Selecione o regime" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="lucro_real">Lucro Real (com crédito PIS/COFINS)</SelectItem>
-                                <SelectItem value="simples_nacional">Simples Nacional (sem crédito PIS/COFINS)</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <p className="text-xs text-muted-foreground">Define se o PIS/COFINS será abatido do custo.</p>
+
+                            <div className="space-y-4 pt-4 border-t">
+                                <Label className="text-sm font-bold flex items-center gap-2">
+                                    <History className="w-4 h-4 text-primary" />
+                                    Rateio Manual Extra
+                                </Label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1">
+                                        <Label className="text-[10px] uppercase text-muted-foreground font-bold">Frete Extra</Label>
+                                        <Input placeholder="R$ 0,00" value={manualFrete} onChange={e => setManualFrete(e.target.value)} className="h-9 font-mono" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-[10px] uppercase text-muted-foreground font-bold">Outros Custos</Label>
+                                        <Input placeholder="R$ 0,00" value={manualOutros} onChange={e => setManualOutros(e.target.value)} className="h-9 font-mono" />
+                                    </div>
+                                </div>
+                                <Button onClick={applyManualRateio} variant="outline" className="w-full h-10 border-primary/20 text-primary hover:bg-primary/5">
+                                    Aplicar Rateio aos Itens
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Resumo de Totais */}
+                    <Card className="lg:col-span-2 shadow-md border-primary/10 bg-primary/[0.02]">
+                        <CardContent className="p-6">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+                                <div className="space-y-1">
+                                    <span className="text-[10px] uppercase font-bold text-muted-foreground">Total Mercadorias</span>
+                                    <p className="text-lg font-bold">{formatCurrency(totals.totalCost)}</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <span className="text-[10px] uppercase font-bold text-muted-foreground">Impostos Somados</span>
+                                    <p className="text-lg font-bold text-destructive">{formatCurrency(totals.totalIPI + totals.totalST)}</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <span className="text-[10px] uppercase font-bold text-muted-foreground">Créditos (PIS/COF)</span>
+                                    <p className="text-lg font-bold text-emerald-600">-{formatCurrency(taxRegime === 'lucro_real' ? totals.totalPIS + totals.totalCOFINS : 0)}</p>
+                                </div>
+                                <div className="space-y-1 p-3 rounded-lg bg-primary/10 border border-primary/20">
+                                    <span className="text-[10px] uppercase font-bold text-primary">Custo Final Líquido</span>
+                                    <p className="text-xl font-black text-primary">{formatCurrency(totals.finalTotalCost)}</p>
+                                </div>
+                            </div>
+
+                            <div className="mt-8 flex gap-3">
+                                <Button onClick={generatePdf} className="h-11 shadow-lg bg-primary hover:bg-primary/90">
+                                    <Printer className="mr-2 h-4 w-4" />
+                                    Gerar Relatório Técnico PDF
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
+
+            {items.length > 0 && (
+                <div className="rounded-xl border shadow-lg overflow-hidden bg-card">
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="bg-muted/50">
+                                    <TableHead className="w-[120px] text-xs font-bold">Cód. Forn.</TableHead>
+                                    <TableHead className="min-w-[250px] text-xs font-bold">Descrição do Produto</TableHead>
+                                    <TableHead className="text-right text-xs font-bold">Qtde</TableHead>
+                                    <TableHead className="w-[100px] text-xs font-bold">Fator Conv.</TableHead>
+                                    <TableHead className="text-right text-xs font-bold">Custo Orig.</TableHead>
+                                    <TableHead className="text-right text-xs font-bold">IPI/ST</TableHead>
+                                    <TableHead className="text-right text-xs font-bold">Despesas</TableHead>
+                                    <TableHead className="text-right text-xs font-bold text-emerald-600">Créditos</TableHead>
+                                    <TableHead className="text-right text-xs font-bold text-primary">C. Un. Final</TableHead>
+                                    <TableHead className="text-right text-xs font-bold text-third">C. Un. Conv.</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {items.map(item => (
+                                    <TableRow key={item.id} className="hover:bg-primary/5 transition-colors">
+                                        <TableCell className="font-mono text-[11px] font-bold text-primary">{item.cProd}</TableCell>
+                                        <TableCell className="text-xs">{item.description}</TableCell>
+                                        <TableCell className="text-right font-mono text-xs">{formatNumber(item.quantity)}</TableCell>
+                                        <TableCell>
+                                            <Input
+                                                type="text"
+                                                className="h-8 text-right font-mono text-xs focus-visible:ring-primary"
+                                                value={item.conversionFactor}
+                                                onChange={(e) => handleConversionFactorChange(item.id, e.target.value)}
+                                            />
+                                        </TableCell>
+                                        <TableCell className="text-right font-mono text-xs">{formatCurrency4(item.unitCost)}</TableCell>
+                                        <TableCell className="text-right font-mono text-xs text-destructive">{formatCurrency(item.ipi + item.icmsST)}</TableCell>
+                                        <TableCell className="text-right font-mono text-xs">{formatCurrency(item.frete + item.seguro + item.outras - item.desconto)}</TableCell>
+                                        <TableCell className="text-right font-mono text-xs text-emerald-600">
+                                            {taxRegime === 'lucro_real' ? formatCurrency(item.pis + item.cofins + (useTaxReform ? item.vIBS + item.vCBS : 0)) : 'R$ 0,00'}
+                                        </TableCell>
+                                        <TableCell className="text-right font-mono text-xs font-black text-primary">{formatCurrency4(item.finalUnitCost)}</TableCell>
+                                        <TableCell className="text-right font-mono text-xs font-black text-third">{formatCurrency4(item.convertedUnitCost)}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
                     </div>
                 </div>
             )}
-            {(taxRegime === 'lucro_real' || useTaxReform) && items.length > 0 && (
-                <Alert className="bg-primary/5 border-primary/20">
-                    <Info className="h-4 w-4 text-primary" />
-                    <AlertTitle className="text-primary font-bold">Cálculo de Custo com Créditos Tributários</AlertTitle>
-                    <AlertDescription className="text-xs">
-                        {taxRegime === 'lucro_real' && "Os valores de PIS e COFINS estão sendo subtraídos do custo (crédito)."}
-                        {useTaxReform && taxRegime === 'lucro_real' && <br />}
-                        {useTaxReform && taxRegime === 'lucro_real' && "Com a Reforma ativa, IBS e CBS também geram crédito e são subtraídos no Lucro Real."}
-                        {useTaxReform && taxRegime !== 'lucro_real' && "Com a Reforma ativa, IBS e CBS são somados ao custo final do produto."}
-                    </AlertDescription>
-                </Alert>
-            )}
 
-
-            {items.length > 0 && (
-                <div className="w-full overflow-x-auto">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="min-w-[250px] sticky left-0 z-10">Descrição</TableHead>
-                                <TableHead className="text-right">Qtde</TableHead>
-                                <TableHead className="w-[150px]">Fator Conv.</TableHead>
-                                <TableHead className="text-right">C. Un. Orig.</TableHead>
-                                <TableHead className="text-right">IPI</TableHead>
-                                <TableHead className="text-right">ICMS-ST</TableHead>
-                                <TableHead className="text-right">Frete</TableHead>
-                                <TableHead className="text-right">Seguro</TableHead>
-                                <TableHead className="text-right">Desconto</TableHead>
-                                <TableHead className="text-right">Outras</TableHead>
-                                <TableHead className="text-right text-accent-green">PIS</TableHead>
-                                <TableHead className="text-right text-accent-green">COFINS</TableHead>
-                                <TableHead className="text-right text-primary font-bold">C. Un. Final</TableHead>
-                                <TableHead className="text-right text-third font-bold">C. Un. Final (Conv.)</TableHead>
-                                <TableHead className="text-right text-primary font-bold">C. Total Final</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {items.map(item => (
-                                <TableRow key={item.id}>
-                                    <TableCell className="font-medium text-xs sticky left-0 z-10">{item.description}</TableCell>
-                                    <TableCell className="text-right">{formatNumber(item.quantity)}</TableCell>
-                                    <TableCell>
-                                        <Input
-                                            type="text"
-                                            inputMode="decimal"
-                                            className="h-8 text-right bg-transparent border-0 border-b border-transparent focus-visible:border-primary focus-visible:ring-0 shadow-none text-xs rounded-none p-1"
-                                            value={item.conversionFactor}
-                                            onChange={(e) => {
-                                                const val = e.target.value.replace(',', '.');
-                                                if (val === '' || !isNaN(Number(val))) {
-                                                    handleConversionFactorChange(item.id, val);
-                                                }
-                                            }}
-                                            placeholder="1"
-                                        />
-                                    </TableCell>
-                                    <TableCell className="text-right">{formatCurrency4(item.unitCost)}</TableCell>
-                                    <TableCell className="text-right">{formatCurrency4(item.ipi)}</TableCell>
-                                    <TableCell className="text-right">{formatCurrency4(item.icmsST)}</TableCell>
-                                    <TableCell className="text-right">{formatCurrency4(item.frete)}</TableCell>
-                                    <TableCell className="text-right">{formatCurrency4(item.seguro)}</TableCell>
-                                    <TableCell className="text-right">{formatCurrency4(item.desconto)}</TableCell>
-                                    <TableCell className="text-right">{formatCurrency4(item.outras)}</TableCell>
-                                    <TableCell className="text-right text-accent-green">{formatCurrency4(item.pis)}</TableCell>
-                                    <TableCell className="text-right text-accent-green">{formatCurrency4(item.cofins)}</TableCell>
-                                    <TableCell className="text-right font-bold text-primary">{formatCurrency4(item.finalUnitCost)}</TableCell>
-                                    <TableCell className="text-right font-bold text-third">{formatCurrency4(item.convertedUnitCost)}</TableCell>
-                                    <TableCell className="text-right font-bold text-primary">{formatCurrency(item.finalTotalCost)}</TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                        <TableFooter>
-                            <TableRow className="font-bold bg-muted">
-                                <TableCell className="sticky left-0 bg-muted z-10 text-right" colSpan={4}>Totais:</TableCell>
-                                <TableCell className="text-right">
-                                    <TooltipProvider>
-                                        <Tooltip delayDuration={100}>
-                                            <TooltipTrigger className="cursor-help underline decoration-dotted">
-                                                {formatCurrency(totals.totalIPI)}
-                                            </TooltipTrigger>
-                                            <TooltipContent className="p-2 text-xs">
-                                                <div className="space-y-1">
-                                                    <div className="flex justify-between gap-4"><span>IPI:</span> <span>{formatCurrency(totals.totalIPI)}</span></div>
-                                                    <div className="flex justify-between gap-4"><span>ICMS-ST:</span> <span>{formatCurrency(totals.totalST)}</span></div>
-                                                    {useTaxReform && (
-                                                        <>
-                                                            <div className="flex justify-between gap-4 text-primary font-bold border-t pt-1"><span>IBS:</span> <span>{formatCurrency(items.reduce((acc, i) => acc + i.vIBS, 0))}</span></div>
-                                                            <div className="flex justify-between gap-4 text-primary font-bold"><span>CBS:</span> <span>{formatCurrency(items.reduce((acc, i) => acc + i.vCBS, 0))}</span></div>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                </TableCell>
-                                <TableCell className="text-right">{formatCurrency(totals.totalST)}</TableCell>
-                                <TableCell className="text-right">{formatCurrency(totals.totalFrete)}</TableCell>
-                                <TableCell className="text-right">{formatCurrency(totals.totalSeguro)}</TableCell>
-                                <TableCell className="text-right">{formatCurrency(totals.totalDesconto)}</TableCell>
-                                <TableCell className="text-right">{formatCurrency(totals.totalOutras)}</TableCell>
-                                <TableCell className="text-right text-accent-green">{formatCurrency(totals.totalPIS)}</TableCell>
-                                <TableCell className="text-right text-accent-green">{formatCurrency(totals.totalCOFINS)}</TableCell>
-                                <TableCell colSpan={2} className="text-right">Custo Total Final:</TableCell>
-                                <TableCell className="text-right text-primary">{formatCurrency(totals.finalTotalCost)}</TableCell>
-                            </TableRow>
-                        </TableFooter>
-                    </Table>
+            {!currentNfe && (
+                <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed rounded-3xl bg-muted/20 border-muted-foreground/10 text-center">
+                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                        <Calculator className="w-8 h-8 text-primary/40" />
+                    </div>
+                    <h3 className="text-lg font-bold text-muted-foreground">Nenhuma NF-e carregada</h3>
+                    <p className="text-sm text-muted-foreground max-w-xs mt-1">Carregue um arquivo XML para iniciar a análise técnica de custos</p>
                 </div>
             )}
         </div>
