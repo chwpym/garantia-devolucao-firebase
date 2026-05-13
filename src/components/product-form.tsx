@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { DialogFooter } from './ui/dialog';
 
 const formSchema = z.object({
-  codigo: z.string().min(1, { message: 'O código é obrigatório.' }).transform(val => val.trim().toUpperCase()),
+  codigo: z.string().optional().transform(val => val ? val.trim().toUpperCase() : ''),
   descricao: z.string().min(2, { message: 'A descrição deve ter pelo menos 2 caracteres.' }).transform(val => val.trim().toUpperCase()),
   referencia: z.string().optional(),
   marca: z.string().optional(),
@@ -55,35 +55,26 @@ export default function ProductForm({ onSave, editingProduct, onClear }: Product
 
   const handleSave = async (data: ProductFormValues) => {
     try {
-      // Validação de duplicidade ANTES de salvar
-      if (!editingProduct?.id) {
-        // Apenas valida ao criar novo produto (não ao editar)
-        const existing = await db.getProductByCode(data.codigo);
-        if (existing) {
-          toast({
-            title: 'Produto Duplicado',
-            description: `Já existe um produto com o código "${data.codigo}".`,
-            variant: 'destructive',
-          });
-          return;
-        }
-      }
-
       if (editingProduct?.id && editingProduct.id !== -1) {
-        // Ao editar, não alteramos o código. Usamos o código original.
+        // Ao editar, o código é sempre o ID
         const updatedProduct = {
           ...editingProduct,
           ...data,
-          codigo: editingProduct.codigo
+          codigo: String(editingProduct.id)
         };
         await db.updateProduct(updatedProduct);
         toast({ title: 'Sucesso', description: 'Produto atualizado com sucesso.' });
         onSave(updatedProduct);
       } else {
-        const id = await db.addProduct(data);
-        const newProduct = { ...data, id };
+        // Ao criar, salvamos com um código temporário e depois atualizamos com o ID real
+        const tempData = { ...data, codigo: 'TEMP_' + Date.now() };
+        const id = await db.addProduct(tempData);
+        
+        const finalProduct = { ...tempData, id, codigo: String(id) };
+        await db.updateProduct(finalProduct);
+        
         toast({ title: 'Sucesso', description: 'Produto salvo com sucesso.' });
-        onSave(newProduct);
+        onSave(finalProduct);
       }
       form.reset(defaultFormValues);
       await reloadData('products');
@@ -106,12 +97,14 @@ export default function ProductForm({ onSave, editingProduct, onClear }: Product
           control={form.control}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Código</FormLabel>
+              <FormLabel>Código (Automático)</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="Código original"
+                  placeholder={editingProduct?.id ? String(editingProduct.id) : "Gerado ao salvar"}
                   {...field}
-                  disabled={false}
+                  value={editingProduct?.id ? String(editingProduct.id) : field.value}
+                  disabled={true}
+                  className="bg-muted cursor-not-allowed"
                 />
               </FormControl>
               <FormMessage />
