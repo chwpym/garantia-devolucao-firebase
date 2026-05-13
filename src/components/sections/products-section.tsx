@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { Product } from '@/lib/types';
 import * as db from '@/lib/db';
 import InventoryImporter from '../inventory/inventory-importer';
+import BrandReconciliation from '../inventory/brand-reconciliation';
 
 import {
   Card,
@@ -224,6 +225,7 @@ export default function ProductsSection() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <BrandReconciliation />
           <InventoryImporter />
           <Dialog open={isFormModalOpen} onOpenChange={(isOpen) => {
             setIsFormModalOpen(isOpen);
