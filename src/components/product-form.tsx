@@ -18,8 +18,8 @@ import { DialogFooter } from './ui/dialog';
 const formSchema = z.object({
   codigo: z.string().optional().transform(val => val ? val.trim().toUpperCase() : ''),
   descricao: z.string().min(2, { message: 'A descrição deve ter pelo menos 2 caracteres.' }).transform(val => val.trim().toUpperCase()),
-  referencia: z.string().optional(),
-  marca: z.string().optional(),
+  referencia: z.string().optional().transform(val => val ? val.trim().toUpperCase() : ''),
+  marca: z.string().optional().transform(val => val ? val.trim().toUpperCase() : ''),
   codigoExterno: z.string().optional(),
 });
 

@@ -35,9 +35,9 @@ import { smartSearch } from '@/lib/search-utils';
 
 const itemDevolucaoSchema = z.object({
     id: z.number().optional(),
-    codigoPeca: z.string().optional(),
-    descricaoPeca: z.string().optional(),
-    quantidade: z.coerce.number().min(1, 'Quantidade deve ser no mínimo 1').optional(),
+    codigoPeca: z.string().min(1, 'Código da peça é obrigatório'),
+    descricaoPeca: z.string().min(1, 'Descrição da peça é obrigatória'),
+    quantidade: z.coerce.number().min(1, 'Quantidade deve ser no mínimo 1'),
 });
 
 const devolucaoSchema = z.object({
