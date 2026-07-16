@@ -4,7 +4,11 @@
 import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calculator, ShoppingCart, Percent, Plus, FileScan, Tag, DivideCircle, Files, Microscope, ArrowLeft, Landmark, Replace, Info } from 'lucide-react';
+import { 
+    Calculator, ShoppingCart, Percent, Plus, FileScan, Tag, 
+    DivideCircle, Files, Microscope, ArrowLeft, Landmark, 
+    Replace, Info, ChevronRight, Sparkles
+} from 'lucide-react';
 import AveragePriceCalculator from '@/components/calculators/average-price-calculator';
 import BatchPricingCalculator from '@/components/calculators/batch-pricing-calculator';
 import CalculateSaleCalculator from '@/components/calculators/calculate-sale-calculator';
@@ -19,106 +23,116 @@ import PurchaseSimulatorCalculator from '../calculators/purchase-simulator-calcu
 import NfeProductOriginCalculator from '../calculators/nfe-origin-calculator';
 import { cn } from '@/lib/utils';
 
-
 const calculators = [
   {
     id: 'nfe-origin-analyzer',
     icon: Info,
-    title: 'Leitor de Origem de Mercadoria (XML)',
-    description: 'Importe um XML e veja a Origem da Mercadoria (0-8) de cada item rapidamente com a legenda de apoio.',
+    title: 'Origem de Mercadoria',
+    description: 'Análise automática da Origem (Legenda 0-8) via XML.',
     component: NfeProductOriginCalculator,
-    color: 'border-orange-500'
+    color: 'text-primary',
+    bg: 'bg-primary/10'
   },
   {
     id: 'purchase-simulator',
     icon: Replace,
-    title: 'Simulador de Compra por NF-e',
-    description: 'Simule compras alterando quantidades e itens de um XML.',
+    title: 'Simulador de Compra',
+    description: 'Simule alterações de preços e quantidades em notas fiscais.',
     component: PurchaseSimulatorCalculator,
-    color: 'border-primary'
+    color: 'text-primary',
+    bg: 'bg-primary/10'
   },
   {
     id: 'tax-analysis',
     icon: Landmark,
-    title: 'Análise de Impostos da NF-e',
-    description: 'Extrai todos os impostos (ICMS, IPI, PIS/COFINS) de uma NF-e.',
+    title: 'Análise de Impostos',
+    description: 'Auditoria completa de ICMS, IPI e PIS/COFINS por item.',
     component: TaxAnalysisCalculator,
-    color: 'border-accent-blue'
-  },
-  {
-    id: 'advanced-cost-analysis',
-    icon: Microscope,
-    title: 'Análise de Custo Avançada',
-    description: 'Análise detalhada de NF-e com crédito de PIS/COFINS.',
-    component: AdvancedCostAnalysisCalculator,
-    color: 'border-accent-green'
+    color: 'text-primary',
+    bg: 'bg-primary/10'
   },
   {
     id: 'cost-analysis',
     icon: FileScan,
-    title: 'Análise de Custo por NF-e',
-    description: 'Importe uma NF-e para calcular o custo real dos produtos.',
+    title: 'Análise de Custo',
+    description: 'Decomposição de custos com rateio automático de despesas.',
     component: CostAnalysisCalculator,
-    color: 'border-primary'
+    color: 'text-accent-green',
+    bg: 'bg-accent-green/10'
+  },
+  {
+    id: 'advanced-cost-analysis',
+    icon: Microscope,
+    title: 'Análise Técnica Pro',
+    description: 'Cálculo profundo com créditos de impostos e Reforma Tributária.',
+    component: AdvancedCostAnalysisCalculator,
+    color: 'text-primary',
+    bg: 'bg-primary/10'
   },
   {
     id: 'compare-nfe',
     icon: Files,
-    title: 'Comparador de NF-e',
-    description: 'Compare produtos entre múltiplos arquivos XML de NF-e.',
+    title: 'Comparador de XMLs',
+    description: 'Compare variações de preços entre múltiplas notas fiscais.',
     component: NfeComparator,
-    color: 'border-accent-blue'
+    color: 'text-foreground/70',
+    bg: 'bg-muted/50'
   },
   {
     id: 'batch-pricing',
     icon: ShoppingCart,
     title: 'Precificação em Lote',
-    description: 'Defina preços de venda e analise custos para múltiplos produtos em lote.',
+    description: 'Defina preços de venda estratégicos para toda a nota.',
     component: BatchPricingCalculator,
-    color: 'border-accent-green'
+    color: 'text-primary',
+    bg: 'bg-primary/10'
   },
   {
     id: 'calculate-sale',
     icon: Tag,
-    title: 'Calcular Venda',
-    description: 'Calcule o preço de venda a partir do custo e margem.',
+    title: 'Markup & Venda',
+    description: 'Encontre o preço ideal baseado na margem desejada.',
     component: CalculateSaleCalculator,
-    color: 'border-primary'
+    color: 'text-primary',
+    bg: 'bg-primary/10'
   },
   {
     id: 'average-price',
     icon: Calculator,
     title: 'Preço Médio',
-    description: 'Calcule o preço médio de suas compras de ativos.',
+    description: 'Calcule a média ponderada de estoque e aquisições.',
     component: AveragePriceCalculator,
-    color: 'border-accent-blue'
+    color: 'text-primary',
+    bg: 'bg-primary/10'
   },
   {
     id: 'unit-cost',
     icon: DivideCircle,
     title: 'Custo Unitário',
-    description: 'Encontre o custo por item a partir do total e quantidade.',
+    description: 'Cálculo simples de divisão por quantidade.',
     component: UnitCostCalculator,
-    color: 'border-accent-green'
+    color: 'text-primary',
+    bg: 'bg-primary/10'
   },
   {
     id: 'calculate-percent',
     icon: Percent,
-    title: 'Calcular Porcentagem',
-    description: 'Encontre o valor de uma porcentagem de um número.',
+    title: 'Porcentagem',
+    description: 'Extração rápida de valores percentuais.',
     component: CalculatePercentCalculator,
-    color: 'border-primary'
+    color: 'text-primary',
+    bg: 'bg-primary/10'
   },
   {
     id: 'sum-percent',
     icon: Plus,
-    title: 'Somar com Porcentagem',
-    description: 'Adicione uma porcentagem a um valor inicial.',
+    title: 'Acréscimo %',
+    description: 'Soma rápida de margens e taxas.',
     component: SumPercentCalculator,
-    color: 'border-accent-blue'
+    color: 'text-primary',
+    bg: 'bg-primary/10'
   },
 ];
-
 
 export default function CalculatorsSection() {
     const [activeCalculatorId, setActiveCalculatorId] = useState<string | null>(null);
@@ -128,14 +142,23 @@ export default function CalculatorsSection() {
 
     if (activeCalculator && ActiveCalculatorComponent) {
         return (
-             <div className="space-y-8">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+             <div className="space-y-8 animate-in fade-in duration-500">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-card p-6 rounded-[2rem] shadow-md border border-border">
                     <div>
-                         <Button variant="ghost" onClick={() => setActiveCalculatorId(null)} className="mb-2 -ml-4">
-                            <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para Ferramentas
+                         <Button 
+                            variant="ghost" 
+                            onClick={() => setActiveCalculatorId(null)} 
+                            className="mb-4 -ml-2 text-muted-foreground hover:text-primary transition-colors font-black uppercase text-[10px] tracking-widest"
+                        >
+                            <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para o Painel
                         </Button>
-                        <h1 className="text-3xl font-bold tracking-tight">{activeCalculator.title}</h1>
-                        <p className="text-lg text-muted-foreground">
+                        <div className="flex items-center gap-4">
+                            <div className={cn("p-3 rounded-2xl shadow-inner", activeCalculator.bg)}>
+                                <activeCalculator.icon className={cn("h-7 w-7", activeCalculator.color)} />
+                            </div>
+                            <h1 className="text-3xl font-black tracking-tight text-foreground">{activeCalculator.title}</h1>
+                        </div>
+                        <p className="text-muted-foreground mt-3 max-w-2xl font-black opacity-70 text-xs uppercase tracking-wide">
                             {activeCalculator.description}
                         </p>
                     </div>
@@ -146,39 +169,51 @@ export default function CalculatorsSection() {
     }
 
   return (
-    <div className="space-y-8">
-        <div>
-            <h1 className="text-3xl font-bold tracking-tight">Calculadoras e Ferramentas</h1>
-            <p className="text-lg text-muted-foreground">
-                Uma coleção de ferramentas úteis para o seu dia a dia.
-            </p>
+     <div className="space-y-10 animate-in fade-in duration-700">
+        <div className="relative overflow-hidden bg-foreground text-background rounded-[2.5rem] p-12 shadow-2xl">
+            <div className="absolute right-[-40px] top-[-40px] opacity-10 rotate-12">
+                <Sparkles size={300} />
+            </div>
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div>
+                    <h1 className="text-5xl font-black tracking-tighter">Fiscal Calculator Suite</h1>
+                    <p className="text-background/80 mt-3 text-lg font-black uppercase tracking-tight max-w-xl leading-snug opacity-70">
+                        Ferramentas inteligentes para auditoria fiscal, análise de custos e formação de preços estratégica.
+                    </p>
+                </div>
+                <div className="flex shrink-0">
+                     <div className="bg-background/10 backdrop-blur-md p-4 px-6 rounded-2xl border border-background/20">
+                         <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Total de Ferramentas</span>
+                         <p className="text-3xl font-black">{calculators.length}</p>
+                     </div>
+                </div>
+            </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {calculators.map((calc) => (
-            <Card key={calc.id} className="flex flex-col transition-shadow duration-300 hover:shadow-lg">
-                <CardHeader>
-                <div className="flex items-start justify-between">
-                    <div>
-                    <CardTitle className="flex items-center gap-2">
-                        <calc.icon className={cn("h-6 w-6", 
-                            calc.id.includes('cost') || calc.id.includes('pricing') ? 'text-accent-green' :
-                            calc.id.includes('compare') || calc.id.includes('average') ? 'text-accent-blue' :
-                            'text-primary'
-                        )} />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+             {calculators.map((calc) => (
+            <Card 
+                key={calc.id} 
+                className="group relative flex flex-col border border-border shadow-md hover:shadow-2xl transition-all duration-500 rounded-[2.5rem] overflow-hidden bg-card cursor-pointer border-opacity-50"
+                onClick={() => setActiveCalculatorId(calc.id)}
+            >
+                <div className={cn("h-1.5 w-full", calc.bg.replace('/10', ''))} />
+                <CardHeader className="p-8 pb-4">
+                    <div className={cn("w-16 h-16 rounded-[1.5rem] flex items-center justify-center mb-6 transition-transform group-hover:scale-110 duration-500 shadow-sm border border-border/10", calc.bg)}>
+                        <calc.icon className={cn("h-8 w-8", calc.color)} />
+                    </div>
+                    <CardTitle className="text-xl font-black tracking-tight group-hover:text-primary transition-colors">
                         {calc.title}
                     </CardTitle>
-                    <CardDescription className="mt-2">{calc.description}</CardDescription>
-                    </div>
-                </div>
+                    <CardDescription className="mt-3 text-muted-foreground font-black opacity-70 text-xs uppercase tracking-wide leading-relaxed">
+                        {calc.description}
+                    </CardDescription>
                 </CardHeader>
-                <CardContent className="flex-grow flex items-end">
-                <Button 
-                    className="w-full" 
-                    onClick={() => setActiveCalculatorId(calc.id)}
-                >
-                    Acessar
-                </Button>
+                <CardContent className="p-8 pt-4 flex items-center justify-between mt-auto">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-primary transition-colors">Acessar Ferramenta</span>
+                    <div className="w-11 h-11 rounded-2xl bg-muted flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all duration-500 shadow-sm">
+                        <ChevronRight className="h-5 w-5" />
+                    </div>
                 </CardContent>
             </Card>
             ))}
@@ -186,4 +221,3 @@ export default function CalculatorsSection() {
     </div>
   );
 }
-    

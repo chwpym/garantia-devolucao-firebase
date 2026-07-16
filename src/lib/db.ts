@@ -75,12 +75,14 @@ const getDB = (): Promise<IDBDatabase> => {
             autoIncrement: true,
           });
         }
-        const personStore =
-          request.transaction?.objectStore(PERSONS_STORE_NAME);
-        if (personStore && !personStore.indexNames.contains("codigoExterno")) {
-          personStore.createIndex("codigoExterno", "codigoExterno", {
-            unique: false,
-          });
+        const upgradeTransaction = (event.target as IDBOpenDBRequest).transaction;
+        if (upgradeTransaction && dbInstance.objectStoreNames.contains(PERSONS_STORE_NAME)) {
+          const personStore = upgradeTransaction.objectStore(PERSONS_STORE_NAME);
+          if (!personStore.indexNames.contains("codigoExterno")) {
+            personStore.createIndex("codigoExterno", "codigoExterno", {
+              unique: false,
+            });
+          }
         }
 
         if (!dbInstance.objectStoreNames.contains(SUPPLIERS_STORE_NAME)) {
@@ -89,15 +91,13 @@ const getDB = (): Promise<IDBDatabase> => {
             autoIncrement: true,
           });
         }
-        const supplierStore =
-          request.transaction?.objectStore(SUPPLIERS_STORE_NAME);
-        if (
-          supplierStore &&
-          !supplierStore.indexNames.contains("codigoExterno")
-        ) {
-          supplierStore.createIndex("codigoExterno", "codigoExterno", {
-            unique: false,
-          });
+        if (upgradeTransaction && dbInstance.objectStoreNames.contains(SUPPLIERS_STORE_NAME)) {
+          const supplierStore = upgradeTransaction.objectStore(SUPPLIERS_STORE_NAME);
+          if (!supplierStore.indexNames.contains("codigoExterno")) {
+            supplierStore.createIndex("codigoExterno", "codigoExterno", {
+              unique: false,
+            });
+          }
         }
         if (!dbInstance.objectStoreNames.contains(LOTES_STORE_NAME)) {
           dbInstance.createObjectStore(LOTES_STORE_NAME, {
@@ -139,15 +139,13 @@ const getDB = (): Promise<IDBDatabase> => {
           );
           productStore.createIndex("codigo", "codigo", { unique: true });
         }
-        const productStore =
-          request.transaction?.objectStore(PRODUCTS_STORE_NAME);
-        if (
-          productStore &&
-          !productStore.indexNames.contains("codigoExterno")
-        ) {
-          productStore.createIndex("codigoExterno", "codigoExterno", {
-            unique: false,
-          });
+        if (upgradeTransaction && dbInstance.objectStoreNames.contains(PRODUCTS_STORE_NAME)) {
+          const productStore = upgradeTransaction.objectStore(PRODUCTS_STORE_NAME);
+          if (!productStore.indexNames.contains("codigoExterno")) {
+            productStore.createIndex("codigoExterno", "codigoExterno", {
+              unique: false,
+            });
+          }
         }
         if (!dbInstance.objectStoreNames.contains(SIMULATIONS_STORE_NAME)) {
           const simulationStore = dbInstance.createObjectStore(
@@ -443,57 +441,73 @@ async function migrateLotesToFases() {
  */
 export const migrateContactsToArrays = async (): Promise<void> => {
   try {
-    // 1. Persons
-    const persons = await getAllPersons();
-    for (const p of persons) {
-      let changed = false;
-      if (p.telefone && (!p.telefones || p.telefones.length === 0)) {
-        p.telefones = [p.telefone];
-        changed = true;
-      }
-      if (p.email && (!p.emails || p.emails.length === 0)) {
-        p.emails = [p.email];
-        changed = true;
-      }
-      if (changed) await updatePerson(p);
+    const db = await getDB();
+
+    // 1. Persons — all writes in a single transaction
+    const allPersons = await getAllPersons();
+    const personsToUpdate = allPersons.filter(p => {
+      const raw = p as unknown as Record<string, unknown>;
+      return (raw.telefone && (!p.telefones || p.telefones.length === 0)) ||
+             (raw.email && (!p.emails || p.emails.length === 0));
+    });
+
+    if (personsToUpdate.length > 0) {
+      await new Promise<void>((resolve, reject) => {
+        const tx = db.transaction(PERSONS_STORE_NAME, "readwrite");
+        const store = tx.objectStore(PERSONS_STORE_NAME);
+        personsToUpdate.forEach(p => {
+          const raw = p as unknown as Record<string, unknown>;
+          if (raw.telefone && (!p.telefones || p.telefones.length === 0)) {
+            p.telefones = [raw.telefone as string];
+          }
+          if (raw.email && (!p.emails || p.emails.length === 0)) {
+            p.emails = [raw.email as string];
+          }
+          store.put(p);
+        });
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
     }
 
-    // 2. Suppliers
-    const suppliers = await getAllSuppliers();
-    for (const s of suppliers) {
-      let changed = false;
-      // Note: Supplier doesn't have single 'email' field in interface but might have it in data
-      // Based on types.ts, Supplier only had razaoSocial, nomeFantasia, cnpj, cidade, cep, endereco, bairro, codigoExterno
-      // Wait, let me check Supplier interface again.
-      // interface Supplier { id?: number; razaoSocial: string; nomeFantasia: string; cnpj: string; cidade: string; cep?: string; endereco?: string; bairro?: string; codigoExterno?: string; telefones?: string[]; emails?: string[]; }
-      // It didn't have single 'telefone' or 'email'.
-      // But maybe some records have it from previous versions?
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const raw = s as any;
-      if (raw.telefone && (!s.telefones || s.telefones.length === 0)) {
-        s.telefones = [raw.telefone];
-        changed = true;
-      }
-      if (raw.email && (!s.emails || s.emails.length === 0)) {
-        s.emails = [raw.email];
-        changed = true;
-      }
-      if (changed) await updateSupplier(s);
+    // 2. Suppliers — all writes in a single transaction
+    const allSuppliers = await getAllSuppliers();
+    const suppliersToUpdate = allSuppliers.filter(s => {
+      const raw = s as unknown as Record<string, unknown>;
+      return (raw.telefone && (!s.telefones || s.telefones.length === 0)) ||
+             (raw.email && (!s.emails || s.emails.length === 0));
+    });
+
+    if (suppliersToUpdate.length > 0) {
+      await new Promise<void>((resolve, reject) => {
+        const tx = db.transaction(SUPPLIERS_STORE_NAME, "readwrite");
+        const store = tx.objectStore(SUPPLIERS_STORE_NAME);
+        suppliersToUpdate.forEach(s => {
+          const raw = s as unknown as Record<string, unknown>;
+          if (raw.telefone && (!s.telefones || s.telefones.length === 0)) {
+            s.telefones = [raw.telefone as string];
+          }
+          if (raw.email && (!s.emails || s.emails.length === 0)) {
+            s.emails = [raw.email as string];
+          }
+          store.put(s);
+        });
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
     }
 
-    // 3. Company Data
+    // 3. Company Data — single record, low cost
     const company = await getCompanyData();
     if (company) {
+      const raw = company as unknown as Record<string, unknown>;
       let changed = false;
-      if (
-        company.telefone &&
-        (!company.telefones || company.telefones.length === 0)
-      ) {
-        company.telefones = [company.telefone];
+      if (raw.telefone && (!company.telefones || company.telefones.length === 0)) {
+        company.telefones = [raw.telefone as string];
         changed = true;
       }
-      if (company.email && (!company.emails || company.emails.length === 0)) {
-        company.emails = [company.email];
+      if (raw.email && (!company.emails || company.emails.length === 0)) {
+        company.emails = [raw.email as string];
         changed = true;
       }
       if (changed) await updateCompanyData(company);
@@ -502,6 +516,7 @@ export const migrateContactsToArrays = async (): Promise<void> => {
     console.warn("Failed to migrate contacts:", err);
   }
 };
+
 
 // --- User Profile Functions ---
 

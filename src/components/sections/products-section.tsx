@@ -5,6 +5,8 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { Product } from '@/lib/types';
 import * as db from '@/lib/db';
+import InventoryImporter from '../inventory/inventory-importer';
+import BrandReconciliation from '../inventory/brand-reconciliation';
 
 import {
   Card,
@@ -222,30 +224,34 @@ export default function ProductsSection() {
             Gerencie seu catálogo de produtos.
           </p>
         </div>
-        <Dialog open={isFormModalOpen} onOpenChange={(isOpen) => {
-          setIsFormModalOpen(isOpen);
-          if (!isOpen) {
-            setEditingProduct(null);
-          }
-        }}>
-          <DialogTrigger asChild>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Cadastrar Novo
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{editingProduct ? 'Editar Produto' : 'Novo Produto'}</DialogTitle>
-              <DialogDescription>Preencha os dados do produto abaixo.</DialogDescription>
-            </DialogHeader>
-            <ProductForm
-              onSave={handleSave}
-              editingProduct={editingProduct}
-              onClear={() => setEditingProduct(null)}
-            />
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-2">
+          <BrandReconciliation />
+          <InventoryImporter />
+          <Dialog open={isFormModalOpen} onOpenChange={(isOpen) => {
+            setIsFormModalOpen(isOpen);
+            if (!isOpen) {
+              setEditingProduct(null);
+            }
+          }}>
+            <DialogTrigger asChild>
+              <Button>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Cadastrar Novo
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{editingProduct ? 'Editar Produto' : 'Novo Produto'}</DialogTitle>
+                <DialogDescription>Preencha os dados do produto abaixo.</DialogDescription>
+              </DialogHeader>
+              <ProductForm
+                onSave={handleSave}
+                editingProduct={editingProduct}
+                onClear={() => setEditingProduct(null)}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <Card className="shadow-lg">

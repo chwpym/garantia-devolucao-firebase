@@ -22,9 +22,9 @@ const formSchema = z.object({
   nomeFantasia: z.string().min(2, { message: 'O nome fantasia deve ter pelo menos 2 caracteres.' }).transform(val => val.trim().toUpperCase()),
   cnpj: z.string().optional(),
   cep: z.string().optional(),
-  endereco: z.string().optional(),
-  bairro: z.string().optional(),
-  cidade: z.string().optional(),
+  endereco: z.string().optional().transform(val => val ? val.trim().toUpperCase() : ''),
+  bairro: z.string().optional().transform(val => val ? val.trim().toUpperCase() : ''),
+  cidade: z.string().optional().transform(val => val ? val.trim().toUpperCase() : ''),
   codigoExterno: z.string().optional(),
 });
 

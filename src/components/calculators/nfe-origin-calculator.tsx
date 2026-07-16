@@ -1,14 +1,18 @@
-"use client";
 
-import { useState, useRef } from "react";
+'use client';
+
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Upload, FileX, Info, FileText, HelpCircle } from "lucide-react";
+import { Info, FileText, Globe, HelpCircle, PackageSearch, Landmark } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useNfeStore } from "@/store/use-nfe-store";
+import { NfeUploader } from "@/components/nfe/NfeUploader";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const ORIGEM_LEGENDA: Record<string, string> = {
     "0": "Nacional (Exceto as indicadas nos códigos 3, 4, 5 e 8)",
@@ -22,8 +26,9 @@ const ORIGEM_LEGENDA: Record<string, string> = {
     "8": "Nacional - Conteúdo de Importação superior a 70%"
 };
 
-interface ProductItem {
-    id: number;
+interface OriginItem {
+    id: string;
+    cProd: string;
     description: string;
     ncm: string;
     orig: string;
@@ -32,192 +37,171 @@ interface ProductItem {
 }
 
 export default function NfeProductOriginCalculator() {
-    const [items, setItems] = useState<ProductItem[]>([]);
-    const [fileName, setFileName] = useState<string | null>(null);
+    const { currentNfe } = useNfeStore();
+    const [items, setItems] = useState<OriginItem[]>([]);
     const [isLegendOpen, setIsLegendOpen] = useState(false);
     const { toast } = useToast();
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleImportXml = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
+    useEffect(() => {
+        if (!currentNfe) {
+            setItems([]);
+            return;
+        }
 
-        setFileName(file.name);
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const xmlData = e.target?.result as string;
-                const parser = new DOMParser();
-                const xmlDoc = parser.parseFromString(xmlData, "text/xml");
+        const newItems: OriginItem[] = currentNfe.items.map((item, index) => ({
+            id: `${currentNfe.header.chave}-${index}`,
+            cProd: item.cProd,
+            description: item.xProd,
+            ncm: item.NCM || "",
+            orig: item.orig || "0",
+            cst: item.CST || "",
+            cfop: item.CFOP || ""
+        }));
 
-                let infNFe = xmlDoc.getElementsByTagName("infNFe")[0];
-                if (!infNFe) {
-                    throw new Error("Estrutura do XML inválida ou <infNFe> não encontrado.");
-                }
-
-                const dets = xmlDoc.getElementsByTagName("det");
-                if (!dets || dets.length === 0) {
-                    throw new Error("Nenhum produto (tag <det>) localizado no XML.");
-                }
-
-                const parsedItems: ProductItem[] = [];
-                for (let i = 0; i < dets.length; i++) {
-                    const det = dets[i];
-                    const prod = det.getElementsByTagName("prod")[0];
-                    const imposto = det.getElementsByTagName("imposto")[0];
-
-                    const description = prod?.getElementsByTagName("xProd")[0]?.textContent || "N/A";
-                    const ncm = prod?.getElementsByTagName("NCM")[0]?.textContent || "N/A";
-                    const cfop = prod?.getElementsByTagName("CFOP")[0]?.textContent || "N/A";
-
-                    let orig = "N/A";
-                    let cst = "N/A";
-
-                    if (imposto) {
-                        const icmsGroup = imposto.getElementsByTagName("ICMS")[0];
-                        if (icmsGroup && icmsGroup.children.length > 0) {
-                            const icmsContent = icmsGroup.children[0]; // ICMS00, ICMS10, ICMS60, etc.
-                            orig = icmsContent.getElementsByTagName("orig")[0]?.textContent || "N/A";
-                            const cstNode = icmsContent.getElementsByTagName("CST")[0] || icmsContent.getElementsByTagName("CSOSN")[0];
-                            cst = cstNode?.textContent || "N/A";
-                        }
-                    }
-
-                    parsedItems.push({
-                        id: i + 1,
-                        description,
-                        ncm,
-                        orig,
-                        cst,
-                        cfop
-                    });
-                }
-
-                setItems(parsedItems);
-                toast({
-                    title: "Sucesso!",
-                    description: `${parsedItems.length} produtos importados e analisados.`,
-                });
-
-            } catch (error: any) {
-                console.error("Erro no processamento:", error);
-                setItems([]);
-                setFileName(null);
-                toast({
-                    variant: "destructive",
-                    title: "Erro de Importação",
-                    description: error.message || "Não foi possível ler o arquivo XML.",
-                });
-            } finally {
-                if (fileInputRef.current) fileInputRef.current.value = "";
-            }
-        };
-        reader.readAsText(file, 'ISO-8859-1');
-    };
-
-    const clearData = () => {
-        setItems([]);
-        setFileName(null);
-        if (fileInputRef.current) fileInputRef.current.value = "";
-    };
+        setItems(newItems);
+        toast({
+            title: "Mapeamento de Origens",
+            description: `${newItems.length} produtos da NF-e ${currentNfe.header.nNF} classificados.`,
+        });
+    }, [currentNfe, toast]);
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row flex-wrap gap-2 items-center">
-                <Button onClick={() => fileInputRef.current?.click()} className="bg-primary hover:bg-primary/90">
-                    <Upload className="mr-2 h-4 w-4" />
-                    Importar XML da NF-e
-                </Button>
-                
-                <Button variant="outline" onClick={() => setIsLegendOpen(true)} className="gap-1.5 border-primary/20 text-primary hover:bg-primary/5">
-                    <HelpCircle className="h-4 w-4" /> Ver Legenda de Origens
-                </Button>
-
-                {fileName && (
-                    <div className="flex items-center gap-2 p-2 border rounded-md bg-muted flex-1 sm:flex-none justify-between">
-                        <span className="text-sm text-muted-foreground truncate" title={fileName}>{fileName}</span>
-                        <Button variant="ghost" size="icon" onClick={clearData} className="h-6 w-6">
-                            <FileX className="h-4 w-4 text-destructive" />
-                        </Button>
-                    </div>
-                )}
-                <Input type="file" ref={fileInputRef} onChange={handleImportXml} className="hidden" accept=".xml" />
+        <div className="space-y-6 animate-in fade-in duration-500">
+            {/* Header Padronizado */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="space-y-1">
+                    <h2 className="text-2xl font-black tracking-tight text-foreground flex items-center gap-2">
+                        <Globe className="w-6 h-6 text-primary" />
+                        Origem da Mercadoria
+                    </h2>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider font-black opacity-70">Análise de Nacionalidade e Conteúdo de Importação</p>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setIsLegendOpen(true)} className="h-9 shadow-sm border-border hover:bg-muted font-black rounded-xl">
+                        <HelpCircle className="mr-2 h-4 w-4" /> Legenda de Origens
+                    </Button>
+                    <NfeUploader />
+                </div>
             </div>
 
-            <div className="block">
-                {/* Tabela de Produtos */}
-                <Card className="w-full">
-                    <CardHeader className="p-4">
-                        <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
-                            <FileText className="h-4 w-4 text-primary" /> Produtos do XML
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        <ScrollArea className="h-[55vh] rounded-md border-t">
-                            <Table>
-                                <TableHeader className="sticky top-0 bg-background z-10 shadow-sm border-b">
-                                    <TableRow>
-                                        <TableHead className="w-12 text-center">Item</TableHead>
-                                        <TableHead>Descrição</TableHead>
-                                        <TableHead className="w-24">NCM</TableHead>
-                                        <TableHead className="w-16 text-center">Origem</TableHead>
-                                        <TableHead className="w-20 text-center">CST/CSOSN</TableHead>
-                                        <TableHead className="w-16">CFOP</TableHead>
+            {items.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Card className="bg-primary text-primary-foreground shadow-lg border-none overflow-hidden relative">
+                        <CardContent className="p-4 flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-background/20 flex items-center justify-center shrink-0">
+                                <Globe size={24} />
+                            </div>
+                            <div className="space-y-0.5">
+                                <span className="text-[10px] font-black uppercase opacity-80">Nacionais</span>
+                                <p className="text-2xl font-black">{items.filter(i => ['0', '3', '4', '5', '8'].includes(i.orig)).length}</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="bg-foreground text-background shadow-lg border-none overflow-hidden relative">
+                        <CardContent className="p-4 flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-background/10 flex items-center justify-center shrink-0">
+                                <PackageSearch size={24} className="text-primary" />
+                            </div>
+                            <div className="space-y-0.5">
+                                <span className="text-[10px] font-black uppercase opacity-60">Importados / Adq. Interno</span>
+                                <p className="text-2xl font-black text-primary">{items.filter(i => ['1', '2', '6', '7'].includes(i.orig)).length}</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="bg-card text-card-foreground shadow-sm border border-border overflow-hidden relative">
+                        <CardContent className="p-4 flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                                <FileText size={24} />
+                            </div>
+                            <div className="space-y-0.5">
+                                <span className="text-[10px] font-black uppercase opacity-80">Total de Itens</span>
+                                <p className="text-2xl font-black">{items.length}</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
+
+            {items.length > 0 ? (
+                <div className="rounded-xl border border-border shadow-xl overflow-hidden bg-card text-foreground">
+                    <ScrollArea className="h-[60vh]">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="bg-muted/50 border-b border-border">
+                                    <TableHead className="w-[120px] text-[10px] font-black uppercase text-muted-foreground opacity-70">Cód. Forn.</TableHead>
+                                    <TableHead className="min-w-[250px] text-[10px] font-black uppercase text-muted-foreground opacity-70">Descrição do Produto</TableHead>
+                                    <TableHead className="text-center text-[10px] font-black uppercase text-muted-foreground opacity-70">NCM</TableHead>
+                                    <TableHead className="text-center text-[10px] font-black uppercase text-muted-foreground opacity-70">Origem (Tabela A)</TableHead>
+                                    <TableHead className="text-center text-[10px] font-black uppercase text-muted-foreground opacity-70">CST/CFOP</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {items.map(item => (
+                                    <TableRow key={item.id} className="hover:bg-muted/30 transition-colors border-b border-border/50">
+                                        <TableCell className="font-mono text-[10px] font-black text-primary">{item.cProd}</TableCell>
+                                        <TableCell className="text-xs font-black">{item.description}</TableCell>
+                                        <TableCell className="text-center font-mono text-[10px] text-muted-foreground opacity-60 font-black">{item.ncm}</TableCell>
+                                        <TableCell className="text-center">
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger>
+                                                        <Badge variant={['0', '4', '5'].includes(item.orig) ? "secondary" : "default"} className="h-6 w-6 p-0 flex items-center justify-center font-black rounded-lg">
+                                                            {item.orig}
+                                                        </Badge>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent className="max-w-xs p-3 rounded-xl border border-border shadow-2xl bg-card text-foreground">
+                                                        <p className="text-[10px] font-black uppercase border-b border-border mb-1 pb-1 opacity-70">Origem do Produto</p>
+                                                        <p className="text-xs leading-tight font-black">{ORIGEM_LEGENDA[item.orig] || "Não identificada"}</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        </TableCell>
+                                        <TableCell className="text-center">
+                                            <div className="flex flex-col items-center">
+                                                <span className="text-[10px] font-mono font-black text-foreground">{item.cst}</span>
+                                                <span className="text-[9px] text-muted-foreground font-black opacity-60 uppercase">CFOP: {item.cfop}</span>
+                                            </div>
+                                        </TableCell>
                                     </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {items.map((item) => (
-                                        <TableRow key={item.id} className="hover:bg-muted/30">
-                                            <TableCell className="text-center font-mono text-xs">{item.id}</TableCell>
-                                            <TableCell className="font-medium text-xs">{item.description}</TableCell>
-                                            <TableCell className="font-mono text-xs text-primary">{item.ncm}</TableCell>
-                                            <TableCell className="text-center">
-                                                <span 
-                                                    className="inline-flex items-center justify-center w-6 h-6 rounded bg-primary/10 text-primary font-bold text-xs" 
-                                                    title={ORIGEM_LEGENDA[item.orig] || "Não Identificado"}
-                                                >
-                                                    {item.orig}
-                                                </span>
-                                            </TableCell>
-                                            <TableCell className="text-center font-mono text-xs">{item.cst}</TableCell>
-                                            <TableCell className="font-mono text-xs">{item.cfop}</TableCell>
-                                        </TableRow>
-                                    ))}
-                                    {items.length === 0 && (
-                                        <TableRow>
-                                            <TableCell colSpan={6} className="h-[40vh] text-center text-muted-foreground italic">
-                                                Importe um arquivo XML para visualizar as origens dos produtos.
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </ScrollArea>
-                    </CardContent>
-                </Card>
-            </div>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </ScrollArea>
+                </div>
+            ) : (
+                <div className="flex flex-col items-center justify-center py-24 border-2 border-dashed rounded-3xl bg-muted/20 border-border text-center">
+                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                        <Globe className="w-8 h-8 text-muted-foreground opacity-50" />
+                    </div>
+                    <h3 className="text-xl font-black text-foreground">Aguardando Importação</h3>
+                    <p className="text-sm text-muted-foreground max-w-sm mt-2 font-medium">Carregue o XML para mapear automaticamente a origem de cada produto conforme a legislação vigente.</p>
+                </div>
+            )}
 
-            {/* Modal de Legenda */}
             <Dialog open={isLegendOpen} onOpenChange={setIsLegendOpen}>
-                <DialogContent className="max-w-md">
+                <DialogContent className="max-w-md rounded-2xl border border-border shadow-2xl bg-card text-foreground">
                     <DialogHeader>
-                        <DialogTitle className="flex items-center gap-1.5 text-primary">
-                            <HelpCircle className="h-4 w-4" /> Origem da Mercadoria
+                        <DialogTitle className="flex items-center gap-2 text-primary font-black">
+                            <Landmark className="h-5 w-5" /> Tabela A - Origem
                         </DialogTitle>
-                        <DialogDescription className="text-xs">
-                            Legenda do dígito de Origem (Tabela A do ICMS)
+                        <DialogDescription className="text-[10px] font-black uppercase opacity-70">
+                            Definição dos códigos de origem utilizados no ICMS
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="space-y-2 mt-2">
-                        {Object.entries(ORIGEM_LEGENDA).map(([key, label]) => (
-                            <div key={key} className="flex items-start gap-2 border-b border-muted pb-1.5 last:border-0">
-                                <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-primary/10 text-primary font-bold text-xs shrink-0">
-                                    {key}
-                                </span>
-                                <span className="text-xs text-muted-foreground leading-tight">{label}</span>
-                            </div>
-                        ))}
-                    </div>
+                    <ScrollArea className="max-h-[60vh] pr-4 mt-4">
+                        <div className="space-y-2">
+                            {Object.entries(ORIGEM_LEGENDA).map(([key, label]) => (
+                                <div key={key} className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 border border-border/50">
+                                    <Badge className="h-6 w-6 p-0 shrink-0 flex items-center justify-center font-black rounded-lg bg-primary text-primary-foreground">
+                                        {key}
+                                    </Badge>
+                                    <span className="text-[11px] leading-snug font-black text-foreground opacity-80">{label}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </ScrollArea>
                 </DialogContent>
             </Dialog>
         </div>

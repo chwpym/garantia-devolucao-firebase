@@ -1,13 +1,13 @@
 
-"use client";
+'use client';
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Trash2, PlusCircle, Info, Printer, Upload, ChevronsRight } from "lucide-react";
+import { Trash2, PlusCircle, Info, Printer, ChevronsRight, Tag, Percent, ArrowRightLeft, Calculator, TrendingUp, DollarSign } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import {
     Tooltip,
@@ -16,602 +16,315 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
-import { formatCurrency, formatNumber, formatCurrency4, formatNumber4 } from "@/lib/utils";
-import { useNfeParser, type NfeData, type NfeProductDetail } from "@/hooks/use-nfe-parser";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
-
+import { formatCurrency, formatNumber, formatCurrency4 } from "@/lib/utils";
+import { useNfeStore } from "@/store/use-nfe-store";
+import { NfeUploader } from "@/components/nfe/NfeUploader";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface BatchPriceItem {
-    id: number;
+    id: string;
+    cProd: string;
     description: string;
-    quantity: string;
-    fatorConversao?: string;
-    originalCost: string;
-    impostos: string;
-    desconto: string;
-    finalCost: string;
+    quantity: number;
+    originalUnitCost: number;
+    impostosUnit: number;
+    descontoUnit: number;
+    finalUnitCost: number;
+    fatorConversao: string;
     margin: string;
-    impostoSobreVenda?: string;
+    impostoSobreVenda: string;
     price: string;
-    impostosDetail?: {
-        ipi: number;
-        icmsST: number;
-        frete: number;
-        seguro: number;
-        outras: number;
-        vIBS?: number;
-        vCBS?: number;
-    }
+    vIPI?: number;
+    vICMSST?: number;
+    vIBS?: number;
+    vCBS?: number;
 }
 
 export default function BatchPricingCalculator() {
-    const [items, setItems] = useState<BatchPriceItem[]>([
-        { id: 1, description: "", quantity: "1", fatorConversao: "1", originalCost: "", impostos: "", desconto: "", finalCost: "", margin: "", impostoSobreVenda: "", price: "" },
-    ]);
+    const { currentNfe } = useNfeStore();
+    const [items, setItems] = useState<BatchPriceItem[]>([]);
     const [globalMargin, setGlobalMargin] = useState("");
-    const [manualFrete, setManualFrete] = useState("");
-    const [manualSeguro, setManualSeguro] = useState("");
-    const [manualOutros, setManualOutros] = useState("");
-    const [manualDesconto, setManualDesconto] = useState("");
-    const [useTaxReform, setUseTaxReform] = useState(false);
-    const [nfeInfo, setNfeInfo] = useState<{ emitterName: string; emitterCnpj: string; nfeNumber: string; } | null>(null);
     const { toast } = useToast();
 
-    const onNfeProcessed = (data: NfeData | null) => {
-        if (!data) {
-            setItems([{ id: 1, description: "", quantity: "1", fatorConversao: "1", originalCost: "", impostos: "", desconto: "", finalCost: "", margin: "", impostoSobreVenda: "", price: "" }]);
-            setNfeInfo(null);
+    useEffect(() => {
+        if (!currentNfe) {
+            setItems([]);
             return;
         }
 
-        const { infNFe, det: dets } = data;
-        setNfeInfo({
-            emitterName: infNFe.emit.xNome,
-            emitterCnpj: infNFe.emit.CNPJ,
-            nfeNumber: infNFe.ide.nNF,
-        });
-        
-        const total = infNFe.total.ICMSTot;
+        const totalProdFromXml = currentNfe.totals.vProd || 0;
+        const totalFrete = currentNfe.totals.vFrete || 0;
+        const totalSeguro = currentNfe.totals.vSeg || 0;
+        const totalDesconto = currentNfe.totals.vDesc || 0;
+        const totalOutras = currentNfe.totals.vOutro || 0;
 
-        const totalProdValue = parseFloat(total.vProd) || 0;
-        const totalFrete = parseFloat(total.vFrete) || 0;
-        const totalSeguro = parseFloat(total.vSeg) || 0;
-        const totalOutras = parseFloat(total.vOutro) || 0;
-        const extractST = (imposto: any): number => {
-            if (!imposto?.ICMS) return 0;
-            const icms = imposto.ICMS;
-            for (const key in icms) {
-                if (icms[key]?.vICMSST) {
-                    return parseFloat(icms[key].vICMSST) || 0;
-                }
-            }
-            return 0;
-        };
+        const newItems: BatchPriceItem[] = currentNfe.items.map((item, index) => {
+            const itemWeight = totalProdFromXml > 0 ? item.vProd / totalProdFromXml : 0;
+            
+            const freteRateado = item.vFrete || (totalFrete * itemWeight);
+            const seguroRateado = item.vSeg || (totalSeguro * itemWeight);
+            const outrasRateado = item.vOutro || (totalOutras * itemWeight);
+            const descontoRateado = item.vDesc || (totalDesconto * itemWeight);
 
-        const newItems: BatchPriceItem[] = dets.map((det: NfeProductDetail, index: number) => {
-            const prod = det.prod;
-            const imposto = det.imposto;
+            const vIPI = item.taxes.vIPI || 0;
+            const vICMSST = item.taxes.vICMSST || 0;
+            const vIBS = item.taxes.vIBS || 0;
+            const vCBS = item.taxes.vCBS || 0;
 
-            const quantity = parseFloat(prod.qCom) || 0;
-            const originalUnitCost = parseFloat(prod.vUnCom) || 0;
-            const itemTotalCost = parseFloat(prod.vProd) || 0;
-
-            const itemWeight = totalProdValue > 0 ? itemTotalCost / totalProdValue : 0;
-
-            // Extração de IBS/CBS
-            const vIBS = parseFloat(imposto?.IBSCBS?.gIBSCBS?.vIBS?.toString() || "0") || 0;
-            const vCBS = parseFloat(imposto?.IBSCBS?.gIBSCBS?.gCBS?.vCBS?.toString() || "0") || 0;
-
-            const ipiValor = parseFloat(imposto?.IPI?.IPITrib?.vIPI?.toString() || "0") || 0;
-            const stValor = extractST(imposto);
-
-            const freteRateado = parseFloat(prod.vFrete) || (totalFrete * itemWeight) || 0;
-            const seguroRateado = parseFloat(prod.vSeg) || (totalSeguro * itemWeight) || 0;
-            const descontoTotal = parseFloat(prod.vDesc) || 0;
-            const outrasRateado = parseFloat(prod.vOutro) || (totalOutras * itemWeight) || 0;
-
-            const taxReformValue = useTaxReform ? (vIBS + vCBS) : 0;
-            const totalImpostosItem = ipiValor + stValor + freteRateado + seguroRateado + outrasRateado + taxReformValue;
-            const finalTotalCost = itemTotalCost + totalImpostosItem - descontoTotal;
-            const finalUnitCost = quantity > 0 ? finalTotalCost / quantity : 0;
-            const impostosUnit = quantity > 0 ? totalImpostosItem / quantity : 0;
-            const descontoUnit = quantity > 0 ? descontoTotal / quantity : 0;
+            const totalExtrasItem = vIPI + vICMSST + freteRateado + seguroRateado + outrasRateado;
+            const impostosUnit = item.qCom > 0 ? totalExtrasItem / item.qCom : 0;
+            const descontoUnit = item.qCom > 0 ? descontoRateado / item.qCom : 0;
+            
+            const finalUnitCost = item.vUnCom + impostosUnit - descontoUnit;
 
             return {
-                id: index,
-                description: prod.xProd || "",
-                quantity: Number(quantity.toFixed(4)).toString(),
+                id: `${currentNfe.header.chave}-${index}`,
+                cProd: item.cProd,
+                description: item.xProd,
+                quantity: item.qCom,
+                originalUnitCost: item.vUnCom,
+                impostosUnit: impostosUnit,
+                descontoUnit: descontoUnit,
+                finalUnitCost: finalUnitCost,
                 fatorConversao: "1",
-                originalCost: Number(originalUnitCost.toFixed(4)).toString(),
-                impostos: Number(impostosUnit.toFixed(4)).toString(),
-                desconto: Number(descontoUnit.toFixed(4)).toString(),
-                finalCost: Number(finalUnitCost.toFixed(4)).toString(),
                 margin: "",
                 impostoSobreVenda: "",
                 price: "",
-                impostosDetail: {
-                    ipi: ipiValor,
-                    icmsST: stValor,
-                    frete: freteRateado,
-                    seguro: seguroRateado,
-                    outras: outrasRateado,
-                    vIBS,
-                    vCBS
-                }
+                vIPI,
+                vICMSST,
+                vIBS,
+                vCBS
             };
         });
 
-        // Reset global manual fields on new import
-        setManualFrete("");
-        setManualSeguro("");
-        setManualOutros("");
-        setManualDesconto("");
-
-        
-        setItems(newItems.length > 0 ? newItems : [{ id: 1, description: "", quantity: "1", fatorConversao: "1", originalCost: "", impostos: "", desconto: "", finalCost: "", margin: "", impostoSobreVenda: "", price: "" }]);
-
+        setItems(newItems);
         toast({
-            title: "Sucesso!",
-            description: `${newItems.length} itens importados da NF-e.`,
+            title: "Tabela Preenchida",
+            description: `${newItems.length} itens importados para precificação.`,
         });
-    };
+    }, [currentNfe, toast]);
 
-    const { handleFileChange, fileInputRef } = useNfeParser({ onNfeProcessed });
+    const calculatePricing = useCallback((item: BatchPriceItem, field: string, value: string): BatchPriceItem => {
+        const updatedItem = { ...item };
+        
+        if (field === 'margin') updatedItem.margin = value;
+        if (field === 'price') updatedItem.price = value;
+        if (field === 'impostoSobreVenda') updatedItem.impostoSobreVenda = value;
+        if (field === 'fatorConversao') updatedItem.fatorConversao = value;
 
+        const marginVal = parseFloat(updatedItem.margin) || 0;
+        const priceVal = parseFloat(updatedItem.price) || 0;
+        const taxVal = parseFloat(updatedItem.impostoSobreVenda) || 0;
+        const factor = parseFloat(updatedItem.fatorConversao) || 1;
+        
+        const costPerSaleUnit = item.finalUnitCost / factor;
 
-    const handleItemChange = (id: number, field: keyof BatchPriceItem, value: string) => {
-        setItems(prevItems => {
-            const newItems = prevItems.map(item => {
-                if (item.id === id) {
-                    const updatedItem = { ...item, [field]: value };
-
-                    const finalCost = parseFloat(updatedItem.finalCost) || 0;
-                    const fator = parseFloat(updatedItem.fatorConversao || "1") || 1;
-                    const impostoSale = parseFloat(updatedItem.impostoSobreVenda || "0") || 0;
-                    let margin = parseFloat(updatedItem.margin) || 0;
-                    let price = parseFloat(updatedItem.price) || 0;
-
-                    const costPerSaleUnit = finalCost / fator;
-
-                    if (costPerSaleUnit > 0) {
-                        if (field === 'margin' || field === 'finalCost' || field === 'fatorConversao' || field === 'impostoSobreVenda') {
-                            // Preço = Custo * (1 + Margem/100) / (1 - ImpostoVenda/100)
-                            const marginFactor = 1 + margin / 100;
-                            const taxFactor = 1 - impostoSale / 100;
-                            
-                            if (taxFactor > 0) {
-                                price = (costPerSaleUnit * marginFactor) / taxFactor;
-                            } else {
-                                price = costPerSaleUnit * marginFactor; // Fallback
-                            }
-                            updatedItem.price = price.toFixed(4);
-                        } else if (field === 'price') {
-                            margin = costPerSaleUnit > 0 
-                                ? (((price * (1 - impostoSale / 100)) - costPerSaleUnit) / costPerSaleUnit) * 100 
-                                : 0;
-                            updatedItem.margin = margin.toFixed(2);
-                        }
-                    } else {
-                        updatedItem.price = "";
-                        updatedItem.margin = "";
-                    }
-
-                    return updatedItem;
+        if (costPerSaleUnit > 0) {
+            if (field !== 'price') {
+                const marginFactor = 1 + (marginVal / 100);
+                const taxFactor = 1 - (taxVal / 100);
+                if (taxFactor > 0) {
+                    updatedItem.price = ((costPerSaleUnit * marginFactor) / taxFactor).toFixed(4);
                 }
-                return item;
-            });
-            return newItems; // ERA PREVITEMS (Conserta o travamento do campo)
-        });
+            } else if (field === 'price') {
+                const taxFactor = 1 - (taxVal / 100);
+                const actualRevenue = priceVal * taxFactor;
+                updatedItem.margin = (((actualRevenue - costPerSaleUnit) / costPerSaleUnit) * 100).toFixed(2);
+            }
+        }
+
+        return updatedItem;
+    }, []);
+
+    const handleItemChange = (id: string, field: string, value: string) => {
+        setItems(prev => prev.map(item => item.id === id ? calculatePricing(item, field, value) : item));
     };
 
     const applyGlobalMargin = () => {
-        const marginValue = parseFloat(globalMargin);
-        if (isNaN(marginValue)) return;
-
-        setItems(prevItems => {
-            return prevItems.map(item => {
-                const finalCost = parseFloat(item.finalCost) || 0;
-                const fator = parseFloat(item.fatorConversao || "1") || 1;
-                const impostoSale = parseFloat(item.impostoSobreVenda || "0") || 0;
-                const costPerSaleUnit = finalCost / fator;
-
-                if (costPerSaleUnit > 0) {
-                    const marginFactor = 1 + marginValue / 100;
-                    const taxFactor = 1 - impostoSale / 100;
-                    const price = taxFactor > 0 ? (costPerSaleUnit * marginFactor) / taxFactor : (costPerSaleUnit * marginFactor);
-
-                    return { ...item, margin: globalMargin, price: price.toFixed(4) };
-                }
-                return item;
-            });
-        });
-
-        toast({ title: "Sucesso!", description: `Margem de ${formatNumber(marginValue)}% aplicada.` });
-    };
-
-    const applyManualRateio = () => {
-        setItems(prevItems => {
-            const totalProd = prevItems.reduce((acc, item) => acc + (parseFloat(item.quantity) || 0) * (parseFloat(item.originalCost) || 0), 0);
-            const mFrete = parseFloat(manualFrete) || 0;
-            const mSeg = parseFloat(manualSeguro) || 0;
-            const mOutros = parseFloat(manualOutros) || 0;
-            const mDesc = parseFloat(manualDesconto) || 0;
-
-            if (totalProd === 0 && (mFrete + mSeg + mOutros + mDesc) > 0) return prevItems;
-
-            return prevItems.map(item => {
-                const quantity = parseFloat(item.quantity) || 1;
-                const itemTotalProd = (parseFloat(item.quantity) || 0) * (parseFloat(item.originalCost) || 0);
-                const itemWeight = totalProd > 0 ? itemTotalProd / totalProd : 0;
-
-                const detail = { ...item.impostosDetail };
-                if (manualFrete) detail.frete = mFrete * itemWeight;
-                if (manualSeguro) detail.seguro = mSeg * itemWeight;
-                if (manualOutros) detail.outras = mOutros * itemWeight;
-                
-                const taxReformValue = useTaxReform ? ((detail.vIBS || 0) + (detail.vCBS || 0)) : 0;
-                const totalImpostosItem = (detail.ipi || 0) + (detail.icmsST || 0) + (detail.frete || 0) + (detail.seguro || 0) + (detail.outras || 0) + taxReformValue;
-                const totalDescontoItem = manualDesconto ? (mDesc * itemWeight) : (parseFloat(item.desconto) * quantity || 0);
-
-                const finalTotalCost = itemTotalProd + totalImpostosItem - totalDescontoItem;
-                const finalUnitCost = quantity > 0 ? finalTotalCost / quantity : 0;
-
-                // Update pricing based on new cost
-                const fator = parseFloat(item.fatorConversao || "1") || 1;
-                const impostoSale = parseFloat(item.impostoSobreVenda || "0") || 0;
-                const marginValue = parseFloat(item.margin) || 0;
-                const costPerSaleUnit = finalUnitCost / fator;
-                let price = 0;
-                if (costPerSaleUnit > 0) {
-                    const marginFactor = 1 + marginValue / 100;
-                    const taxFactor = 1 - impostoSale / 100;
-                    price = taxFactor > 0 ? (costPerSaleUnit * marginFactor) / taxFactor : (costPerSaleUnit * marginFactor);
-                }
-
-                return {
-                    ...item,
-                    impostos: (totalImpostosItem / quantity).toFixed(4),
-                    desconto: (totalDescontoItem / quantity).toFixed(4),
-                    finalCost: finalUnitCost.toFixed(4),
-                    price: price > 0 ? price.toFixed(4) : item.price,
-                    impostosDetail: detail
-                };
-            });
-        });
-        toast({ title: "Rateio Aplicado", description: "O custo final de todos os itens foi atualizado com os valores manuais." });
-    };
-
-    // Toggle Tax Reform and Update Costs
-    const toggleTaxReform = (checked: boolean) => {
-        setUseTaxReform(checked);
-        setItems(prevItems => prevItems.map(item => {
-            const quantity = parseFloat(item.quantity) || 1;
-            const detail = { ...item.impostosDetail };
-            const taxReformValue = checked ? ((detail.vIBS || 0) + (detail.vCBS || 0)) : 0;
-            const totalImpostosItem = (detail.ipi || 0) + (detail.icmsST || 0) + (detail.frete || 0) + (detail.seguro || 0) + (detail.outras || 0) + taxReformValue;
-            
-            const itemTotalProd = (parseFloat(item.quantity) || 0) * (parseFloat(item.originalCost) || 0);
-            const totalDescontoItem = parseFloat(item.desconto) * quantity || 0;
-            const finalTotalCost = itemTotalProd + totalImpostosItem - totalDescontoItem;
-            const finalUnitCost = quantity > 0 ? finalTotalCost / quantity : 0;
-
-            const fator = parseFloat(item.fatorConversao || "1") || 1;
-            const impostoSale = parseFloat(item.impostoSobreVenda || "0") || 0;
-            const marginValue = parseFloat(item.margin) || 0;
-            const costPerSaleUnit = finalUnitCost / fator;
-            let price = 0;
-            if (costPerSaleUnit > 0) {
-                const marginFactor = 1 + marginValue / 100;
-                const taxFactor = 1 - impostoSale / 100;
-                price = taxFactor > 0 ? (costPerSaleUnit * marginFactor) / taxFactor : (costPerSaleUnit * marginFactor);
-            }
-
-            return {
-                ...item,
-                impostos: (totalImpostosItem / quantity).toFixed(4),
-                finalCost: finalUnitCost.toFixed(4),
-                price: price > 0 ? price.toFixed(4) : item.price
-            };
-        }));
+        if (!globalMargin) return;
+        setItems(prev => prev.map(item => calculatePricing(item, 'margin', globalMargin)));
+        toast({ title: "Margem Aplicada" });
     };
 
     const addItem = () => {
-        setItems(prev => [
-            ...prev,
-            { id: prev.length, description: "", quantity: "1", originalCost: "", impostos: "", desconto: "", finalCost: "", margin: "", price: "" },
-        ]);
-    };
-
-    const removeItem = (id: number) => {
-        setItems(prev => prev.filter(item => item.id !== id));
+        const newItem: BatchPriceItem = {
+            id: Math.random().toString(36).substr(2, 9),
+            cProd: "",
+            description: "Novo Item Manual",
+            quantity: 1,
+            originalUnitCost: 0,
+            impostosUnit: 0,
+            descontoUnit: 0,
+            finalUnitCost: 0,
+            fatorConversao: "1",
+            margin: "",
+            impostoSobreVenda: "",
+            price: ""
+        };
+        setItems(prev => [...prev, newItem]);
     };
 
     const totals = useMemo(() => {
-        const totalFinalCost = items.reduce((acc, item) => {
-            const quantity = parseFloat(item.quantity) || 0;
-            const cost = parseFloat(item.finalCost) || 0;
-            return acc + (quantity * cost);
+        const totalCost = items.reduce((acc, i) => acc + (i.quantity * i.finalUnitCost), 0);
+        const totalSale = items.reduce((acc, i) => {
+            const p = parseFloat(i.price) || 0;
+            const f = parseFloat(i.fatorConversao) || 1;
+            return acc + (i.quantity * f * p);
         }, 0);
-
-        const totalSaleValue = items.reduce((acc, item) => {
-            const quantity = parseFloat(item.quantity) || 0;
-            const fator = parseFloat(item.fatorConversao || "1") || 1;
-            const price = parseFloat(item.price) || 0;
-            return acc + (quantity * fator * price);
-        }, 0);
-
-        const averageMargin = totalFinalCost > 0 ? ((totalSaleValue - totalFinalCost) / totalFinalCost) * 100 : 0;
-
-        return { totalFinalCost, totalSaleValue, averageMargin };
+        const avgMargin = totalCost > 0 ? ((totalSale - totalCost) / totalCost) * 100 : 0;
+        return { totalCost, totalSale, avgMargin };
     }, [items]);
-
 
     const generatePdf = () => {
         const doc = new jsPDF({ orientation: "landscape" });
-
         doc.setFontSize(18);
-        doc.text("Precificação de Lote", 14, 22);
+        doc.text("Tabela de Precificação Estratégica", 14, 22);
+
+        const head = [['Cód.', 'Descrição', 'Qtde', 'Fator', 'Custo Unit.', 'Margem', 'Preço Unit.', 'Venda Total']];
+        const body = items.map(i => [
+            i.cProd, i.description, formatNumber(i.quantity), i.fatorConversao,
+            formatCurrency4(i.finalUnitCost), `${i.margin}%`, formatCurrency4(parseFloat(i.price) || 0),
+            formatCurrency((parseFloat(i.price) || 0) * i.quantity * (parseFloat(i.fatorConversao) || 1))
+        ]);
 
         autoTable(doc, {
-            startY: 30,
-            head: [['Descrição', 'Qtde', 'Fator', 'C. Orig. Un.', 'Impostos Imp.', 'Desc. Un.', 'C. Final Un.', 'Margem (%)', 'Imp. Venda (%)', 'Venda Un.', 'Venda Total']],
-            body: items.map(item => {
-                const quantity = parseFloat(item.quantity) || 0;
-                const fator = parseFloat(item.fatorConversao || "1") || 1;
-                const price = parseFloat(item.price) || 0;
-                const totalSale = quantity * fator * price;
-                return [
-                    item.description,
-                    formatNumber4(quantity),
-                    formatNumber4(fator),
-                    formatCurrency4(parseFloat(item.originalCost) || 0),
-                    formatCurrency4(parseFloat(item.impostos) || 0),
-                    formatCurrency4(parseFloat(item.desconto) || 0),
-                    formatCurrency4(parseFloat(item.finalCost) || 0),
-                    `${formatNumber(parseFloat(item.margin) || 0)}%`,
-                    `${formatNumber(parseFloat(item.impostoSobreVenda || "0") || 0)}%`,
-                    formatCurrency4(price),
-                    formatCurrency(totalSale)
-                ];
-            }),
-            foot: [
-                [
-                    { content: 'Totais:', colSpan: 6, styles: { halign: 'right', fontStyle: 'bold' } },
-                    { content: 'Média:', styles: { halign: 'right', fontStyle: 'bold' } },
-                    { content: `${formatNumber(totals.averageMargin)}%`, styles: { fontStyle: 'bold' } },
-                    { content: formatCurrency(totals.totalSaleValue), styles: { fontStyle: 'bold' } },
-                ]
-            ],
-            headStyles: { fillColor: [63, 81, 181] },
-            footStyles: { fillColor: [224, 224, 224], textColor: [0, 0, 0], fontStyle: 'bold' },
+            startY: 30, head, body, theme: 'grid',
+            headStyles: { fillColor: [15, 23, 42] },
+            foot: [['Totais:', '', '', '', '', '', '', formatCurrency(totals.totalSale)]],
+            footStyles: { fontStyle: 'bold', fillColor: [241, 245, 249] }
         });
 
-        doc.save("precificacao_lote.pdf");
+        doc.save(`precificacao_${currentNfe?.header.nNF || 'lote'}.pdf`);
     };
 
     return (
-        <div className="pt-4 space-y-4">
-            <div className="flex flex-col sm:flex-row flex-wrap gap-3 items-center bg-muted/20 p-4 rounded-lg border">
-                <div className="flex gap-2 mr-auto">
-                    <Button onClick={generatePdf} size="sm" disabled={items.length === 0 || (items.length === 1 && !items[0].description)} className="bg-primary/90 hover:bg-primary">
-                        <Printer className="mr-2 h-3.5 w-3.5" />
-                        Gerar PDF
-                    </Button>
-                    <Button onClick={() => fileInputRef.current?.click()} size="sm" variant="secondary">
-                        <Upload className="mr-2 h-3.5 w-3.5" />
-                        Importar XML
-                    </Button>
+        <div className="space-y-6 animate-in fade-in duration-500">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                 <div className="space-y-1">
+                    <h2 className="text-2xl font-black tracking-tight flex items-center gap-2 text-foreground">
+                        <Tag className="w-6 h-6 text-primary" /> Precificação em Lote
+                    </h2>
+                    <p className="text-xs text-muted-foreground uppercase font-black tracking-wider opacity-70">Gestão de Margens e Markup Estratégico</p>
                 </div>
-
-                <div className="flex items-center gap-2 bg-background/50 p-1.5 px-3 rounded-md border text-sm">
-                    <Label htmlFor="global-margin" className="whitespace-nowrap font-medium text-xs">Margem Global (%):</Label>
-                    <Input
-                        id="global-margin"
-                        type="text"
-                        inputMode="decimal"
-                        placeholder="Ex: 40"
-                        value={globalMargin}
-                        onChange={(e) => setGlobalMargin(e.target.value)}
-                        className="w-16 h-7 text-xs bg-transparent text-foreground border border-input text-center px-1 font-bold focus-visible:ring-1 focus-visible:ring-primary"
-                    />
-                    <Button onClick={applyGlobalMargin} size="icon" className="h-7 w-7" title="Aplicar margem em todos">
-                        <ChevronsRight className="h-3.5 w-3.5" />
-                    </Button>
+                <div className="flex items-center gap-2">
+                    <NfeUploader />
                 </div>
-
-                <div className="flex flex-wrap items-center gap-3 bg-accent/5 p-2 rounded-md border border-accent/20">
-                    <div className="flex items-center gap-2">
-                        <Label className="text-[10px] uppercase font-bold text-muted-foreground mr-1">Rateio Manual:</Label>
-                        <div className="flex gap-x-1">
-                            <Input placeholder="Frete" value={manualFrete} onChange={e => setManualFrete(e.target.value)} className="w-20 h-7 text-[10px] bg-background" />
-                            <Input placeholder="Seguro" value={manualSeguro} onChange={e => setManualSeguro(e.target.value)} className="w-16 h-7 text-[10px] bg-background" />
-                            <Input placeholder="Outros" value={manualOutros} onChange={e => setManualOutros(e.target.value)} className="w-16 h-7 text-[10px] bg-background" />
-                            <Input placeholder="Desconto" value={manualDesconto} onChange={e => setManualDesconto(e.target.value)} className="w-16 h-7 text-[10px] bg-background border-destructive/30" />
-                        </div>
-                        <Button onClick={applyManualRateio} size="sm" variant="outline" className="h-7 px-2 text-[10px] bg-accent-blue/10 border-accent-blue/30 text-accent-blue hover:bg-accent-blue hover:text-white transition-all">
-                            Ratear
-                        </Button>
-                    </div>
-
-                    <div className="h-6 w-[1px] bg-border mx-1"></div>
-
-                    <div className="flex items-center gap-2">
-                        <Label htmlFor="tax-reform" className="text-[10px] uppercase font-bold text-muted-foreground cursor-pointer">Reforma (IBS/CBS)</Label>
-                        <Switch id="tax-reform" checked={useTaxReform} onCheckedChange={toggleTaxReform} className="scale-75" />
-                        {useTaxReform && <Badge variant="outline" className="h-5 text-[8px] border-primary text-primary bg-primary/5">Ativo</Badge>}
-                    </div>
-                </div>
-                <Input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    className="hidden"
-                    accept=".xml"
-                />
             </div>
 
-            {nfeInfo && items.length > 0 && (
-                <div className="p-4 border rounded-lg bg-muted space-y-2">
-                    <h3 className="text-lg font-medium text-xs sm:text-sm">Informações da NF-e</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2 text-xs">
-                        <div><strong>Emitente:</strong> <span className="text-muted-foreground">{nfeInfo.emitterName}</span></div>
-                        <div><strong>CNPJ:</strong> <span className="text-muted-foreground">{nfeInfo.emitterCnpj}</span></div>
-                        <div><strong>NF-e Nº:</strong> <span className="text-muted-foreground">{nfeInfo.nfeNumber}</span></div>
-                    </div>
+            {items.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                     <Card className="bg-card text-foreground border border-border shadow-xl rounded-2xl p-4">
+                        <Label className="text-[10px] font-black uppercase text-muted-foreground mb-2 block opacity-70">Margem Global</Label>
+                        <div className="flex gap-2">
+                            <Input placeholder="%" value={globalMargin} onChange={e => setGlobalMargin(e.target.value)} className="h-10 font-black bg-background border-border" />
+                            <Button onClick={applyGlobalMargin} size="icon" className="shrink-0 bg-primary hover:bg-primary/90 text-primary-foreground">
+                                <ChevronsRight size={18} />
+                            </Button>
+                        </div>
+                    </Card>
+
+                     <Card className="bg-foreground text-background border-none shadow-xl rounded-2xl p-4 flex flex-col justify-center">
+                        <span className="text-[10px] font-black uppercase opacity-60">Investimento Total</span>
+                        <p className="text-xl font-black">{formatCurrency(totals.totalCost)}</p>
+                    </Card>
+
+                     <Card className="bg-primary text-primary-foreground border-none shadow-xl rounded-2xl p-4 flex flex-col justify-center">
+                        <span className="text-[10px] font-black uppercase opacity-70">Venda Total Prevista</span>
+                        <p className="text-xl font-black">{formatCurrency(totals.totalSale)}</p>
+                    </Card>
+
+                     <Card className="bg-accent-green text-background border-none shadow-xl rounded-2xl p-4 flex flex-col justify-center">
+                        <span className="text-[10px] font-black uppercase opacity-70">Margem Média Geral</span>
+                        <p className="text-xl font-black">{formatNumber(totals.avgMargin)}%</p>
+                    </Card>
                 </div>
             )}
 
-            <div className="overflow-x-auto">
-                <Table>
-                    <TableHeader className="bg-muted/50">
-                        <TableRow>
-                            <TableHead className="min-w-[250px] sticky left-0 bg-background/95 backdrop-blur-sm z-10">Descrição</TableHead>
-                            <TableHead className="w-[100px] text-right">Qtde</TableHead>
-                            <TableHead className="w-[80px]">Fator</TableHead>
-                            <TableHead className="w-[120px]">C. Orig. Un.</TableHead>
-                            <TableHead className="w-[120px]">Impostos (+)</TableHead>
-                            <TableHead className="w-[120px]">Desconto (-)</TableHead>
-                            <TableHead className="w-[120px]">C. Final Un.</TableHead>
-                            <TableHead className="w-[120px]">Margem (%)</TableHead>
-                            <TableHead className="w-[110px]">Imp. Venda (%)</TableHead>
-                            <TableHead className="w-[120px]">Venda Un.</TableHead>
-                            <TableHead className="w-[120px]">Venda Total</TableHead>
-                            <TableHead className="w-[50px]"></TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {items.map(item => {
-                            const quantity = parseFloat(item.quantity) || 0;
-                            const fator = parseFloat(item.fatorConversao || "1") || 1;
-                            const price = parseFloat(item.price) || 0;
-                            const totalSale = quantity * fator * price;
-                            return (
-                                <TableRow key={item.id} className="hover:bg-muted/30 transition-colors">
-                                    <TableCell className="sticky left-0 bg-background/95 backdrop-blur-sm z-10 font-medium p-1">
-                                        <Input type="text" placeholder="Nome do produto" value={item.description}
-                                            onChange={e => handleItemChange(item.id, 'description', e.target.value)} className="bg-transparent border-0 border-b border-transparent focus-visible:border-primary focus-visible:ring-0 shadow-none text-xs h-8 p-1 rounded-none" />
+            {items.length > 0 && (
+                <div className="rounded-2xl border border-border shadow-2xl overflow-hidden bg-card">
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="bg-muted border-none">
+                                <TableHead className="text-[10px] font-black uppercase text-muted-foreground">Item / Descrição</TableHead>
+                                <TableHead className="text-right text-[10px] font-black uppercase text-muted-foreground">Custo Final</TableHead>
+                                <TableHead className="text-center text-[10px] font-black uppercase text-muted-foreground">Fator</TableHead>
+                                <TableHead className="text-right text-[10px] font-black uppercase text-primary">Margem %</TableHead>
+                                <TableHead className="text-right text-[10px] font-black uppercase text-destructive">Imposto %</TableHead>
+                                <TableHead className="text-right text-[10px] font-black uppercase text-accent-green">P. Venda</TableHead>
+                                <TableHead className="text-right text-[10px] font-black uppercase text-muted-foreground">Venda Total</TableHead>
+                                <TableHead className="w-12"></TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                             {items.map(item => (
+                                <TableRow key={item.id} className="hover:bg-accent/5 group border-border">
+                                    <TableCell>
+                                        <div className="flex flex-col">
+                                            <span className="font-mono text-[9px] font-black text-primary">{item.cProd || 'MANUAL'}</span>
+                                            <span className="text-xs font-black text-foreground truncate max-w-[200px]">{item.description}</span>
+                                        </div>
                                     </TableCell>
-                                    <TableCell className="p-1">
-                                        <Input type="text" inputMode="decimal" value={item.quantity}
-                                            onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'quantity', val); }} className="bg-transparent border-0 border-b border-transparent focus-visible:border-primary focus-visible:ring-0 shadow-none text-right text-xs h-8 p-1 rounded-none" />
-                                    </TableCell>
-                                    <TableCell className="p-1">
-                                        <Input type="text" inputMode="decimal" placeholder="1" value={item.fatorConversao || "1"}
-                                            onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'fatorConversao', val); }} className="bg-transparent border-0 border-b border-transparent focus-visible:border-primary focus-visible:ring-0 shadow-none text-center font-bold text-accent-blue text-xs h-8 p-1 rounded-none" />
-                                    </TableCell>
-                                    <TableCell className="p-1">
-                                        <Input type="text" inputMode="decimal" value={item.originalCost}
-                                            onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'originalCost', val); }} className="bg-transparent border-0 border-b border-transparent focus-visible:border-primary focus-visible:ring-0 shadow-none text-right text-xs h-8 p-1 rounded-none" />
-                                    </TableCell>
-                                    <TableCell className="p-1">
+                                 <TableCell className="text-right font-mono text-xs font-black text-muted-foreground">
                                         <TooltipProvider>
-                                            <Tooltip delayDuration={100}>
-                                                <TooltipTrigger asChild>
-                                                    <Input type="text" inputMode="decimal" value={item.impostos}
-                                                        onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'impostos', val); }} className="bg-transparent border-0 border-b border-transparent focus-visible:border-primary focus-visible:ring-0 shadow-none text-right text-xs h-8 p-1 rounded-none cursor-help" />
-                                                </TooltipTrigger>
-                                                {item.impostosDetail && (
-                                                    <TooltipContent className="p-2 text-xs space-y-1 bg-popover text-popover-foreground border shadow-md z-30">
-                                                        <p className="font-bold border-b pb-1 mb-1">Detalhamento (por un.)</p>
-                                                        <div className="grid grid-cols-2 gap-x-4">
-                                                            <span>IPI:</span> <span className="text-right">{formatCurrency4(item.impostosDetail.ipi / (parseFloat(item.quantity) || 1))}</span>
-                                                            <span>ICMS-ST:</span> <span className="text-right">{formatCurrency4(item.impostosDetail.icmsST / (parseFloat(item.quantity) || 1))}</span>
-                                                            <span>Frete:</span> <span className="text-right">{formatCurrency4(item.impostosDetail.frete / (parseFloat(item.quantity) || 1))}</span>
-                                                            <span>Seguro:</span> <span className="text-right">{formatCurrency4(item.impostosDetail.seguro / (parseFloat(item.quantity) || 1))}</span>
-                                                            <span>Outras:</span> <span className="text-right">{formatCurrency4(item.impostosDetail.outras / (parseFloat(item.quantity) || 1))}</span>
-                                                            {useTaxReform && (
-                                                                <>
-                                                                    <span className="font-bold text-primary mt-1 border-t pt-1">IBS:</span> 
-                                                                    <span className="text-right text-primary mt-1 border-t pt-1">{formatCurrency4((item.impostosDetail.vIBS || 0) / (parseFloat(item.quantity) || 1))}</span>
-                                                                    <span className="font-bold text-primary">CBS:</span> 
-                                                                    <span className="text-right text-primary">{formatCurrency4((item.impostosDetail.vCBS || 0) / (parseFloat(item.quantity) || 1))}</span>
-                                                                </>
-                                                            )}
-                                                        </div>
-                                                    </TooltipContent>
-                                                )}
+                                            <Tooltip>
+                                                <TooltipTrigger className="cursor-help border-b border-dotted border-border">{formatCurrency4(item.finalUnitCost)}</TooltipTrigger>
+                                                <TooltipContent className="p-3 rounded-xl border-none shadow-2xl bg-foreground text-background">
+                                                    <div className="text-[10px] space-y-1 font-black">
+                                                        <div className="flex justify-between gap-6"><span>IPI:</span> <span>{formatCurrency4(item.vIPI || 0)}</span></div>
+                                                        <div className="flex justify-between gap-6"><span>ICMS-ST:</span> <span>{formatCurrency4(item.vICMSST || 0)}</span></div>
+                                                        <div className="flex justify-between gap-6 text-accent-green"><span>Desconto:</span> <span>-{formatCurrency4(item.descontoUnit || 0)}</span></div>
+                                                    </div>
+                                                </TooltipContent>
                                             </Tooltip>
                                         </TooltipProvider>
                                     </TableCell>
-                                    <TableCell className="p-1">
-                                        <Input type="text" inputMode="decimal" value={item.desconto}
-                                            onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'desconto', val); }} className="bg-transparent border-0 border-b border-transparent focus-visible:border-primary focus-visible:ring-0 shadow-none text-right text-xs h-8 p-1 rounded-none" />
+                                     <TableCell>
+                                        <Input value={item.fatorConversao} onChange={e => handleItemChange(item.id, 'fatorConversao', e.target.value)} className="h-8 w-16 mx-auto text-center font-black text-xs bg-background border-border" />
                                     </TableCell>
-                                    <TableCell className="p-1 text-right text-xs font-bold text-purple-400">
-                                        {item.finalCost ? formatCurrency4(Number(item.finalCost)) : "-"}
+                                     <TableCell>
+                                        <Input value={item.margin} onChange={e => handleItemChange(item.id, 'margin', e.target.value)} className="h-8 w-20 ml-auto text-right font-black text-xs bg-primary/5 border-primary/20 text-primary" />
                                     </TableCell>
-                                    <TableCell className="p-1">
-                                        <Input type="text" inputMode="decimal" value={item.margin}
-                                            onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'margin', val); }} className="bg-transparent border-0 border-b border-transparent focus-visible:border-primary focus-visible:ring-0 shadow-none text-right text-xs h-8 p-1 rounded-none" />
+                                     <TableCell>
+                                        <Input value={item.impostoSobreVenda} onChange={e => handleItemChange(item.id, 'impostoSobreVenda', e.target.value)} className="h-8 w-16 ml-auto text-right font-black text-xs bg-destructive/5 border-destructive/20 text-destructive" />
                                     </TableCell>
-                                    <TableCell className="p-1">
-                                        <Input type="text" inputMode="decimal" placeholder="0" value={item.impostoSobreVenda || ""}
-                                            onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'impostoSobreVenda', val); }} className="bg-transparent border-0 border-b border-transparent focus-visible:border-primary focus-visible:ring-0 shadow-none text-right text-xs h-8 p-1 rounded-none" />
+                                     <TableCell>
+                                        <Input value={item.price} onChange={e => handleItemChange(item.id, 'price', e.target.value)} className="h-8 w-24 ml-auto text-right font-black text-xs bg-accent-green/5 border-accent-green/20 text-accent-green" />
                                     </TableCell>
-                                    <TableCell className="p-1">
-                                        <Input type="text" inputMode="decimal" value={item.price}
-                                            onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || !isNaN(Number(val))) handleItemChange(item.id, 'price', val); }} className="bg-transparent border-0 border-b border-transparent focus-visible:border-primary focus-visible:ring-0 shadow-none text-right font-semibold text-primary text-xs h-8 p-1 rounded-none" />
+                                     <TableCell className="text-right font-black text-xs text-foreground">
+                                        {formatCurrency((parseFloat(item.price) || 0) * item.quantity * (parseFloat(item.fatorConversao) || 1))}
                                     </TableCell>
-                                    <TableCell className="p-1 text-right text-xs font-bold text-green-500">
-                                        {formatCurrency(totalSale)}
-                                    </TableCell>
-                                    <TableCell className="p-1 text-center">
-                                        <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)} disabled={items.length <= 1} className="h-6 w-6 hover:bg-destructive/10">
-                                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                                     <TableCell>
+                                        <Button variant="ghost" size="icon" onClick={() => setItems(prev => prev.filter(i => i.id !== item.id))} className="h-8 w-8 text-destructive opacity-0 group-hover:opacity-100 transition-opacity rounded-xl">
+                                            <Trash2 size={14} />
                                         </Button>
                                     </TableCell>
                                 </TableRow>
-                            );
-                        })}
-                    </TableBody>
-                    <TableFooter className="bg-muted">
-                        <TableRow className="hover:bg-transparent">
-                            <TableCell colSpan={6} className="text-right font-bold text-xs">Totais:</TableCell>
-                            <TableCell className="text-right font-bold text-xs text-purple-400">
-                                {formatCurrency(totals.totalFinalCost)}
-                            </TableCell>
-                            <TableCell className="font-bold text-right text-xs">
-                                <div className="flex items-center justify-end space-x-1">
-                                    <span>Média</span>
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
-                                            </TooltipTrigger>
-                                            <TooltipContent className="p-2 text-xs">
-                                                <p>Média de margem sobre o custo total</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                </div>
-                            </TableCell>
-                            <TableCell className="font-bold p-1">
-                                <div className="w-full h-8 px-2 py-1 rounded-md border border-input bg-muted flex items-center justify-center text-xs font-bold">
-                                    {`${formatNumber(totals.averageMargin)}%`}
-                                </div>
-                            </TableCell>
-                            <TableCell className="p-1"></TableCell> {/* Espaço gap para Venda Un. */}
-                            <TableCell className="font-bold p-1">
-                                <div className="w-full h-8 px-2 py-1 rounded-md border border-input bg-muted flex items-center justify-end text-xs font-bold text-green-500">
-                                    {formatCurrency(totals.totalSaleValue)}
-                                </div>
-                            </TableCell>
-                            <TableCell className="p-1"></TableCell>
-                        </TableRow>
-                    </TableFooter>
-                </Table>
-            </div>
-            <div className="flex flex-wrap gap-2">
-                <Button onClick={addItem} variant="outline">
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Adicionar Item
-                </Button>
-                <Button onClick={() => setItems([{ id: 1, description: "", quantity: "1", originalCost: "", impostos: "", desconto: "", finalCost: "", margin: "", price: "" }])} variant="ghost" className="text-destructive">
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Limpar Tabela
-                </Button>
-            </div>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+            )}
+
+            {items.length > 0 && (
+                 <div className="flex justify-between items-center bg-card p-4 rounded-2xl border border-border">
+                    <Button onClick={addItem} variant="outline" className="rounded-xl border-dashed font-black">
+                        <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Item Manual
+                    </Button>
+                    <Button onClick={generatePdf} className="bg-foreground text-background rounded-xl font-black shadow-lg">
+                        <Printer className="mr-2 h-4 w-4" /> Exportar Tabela Completa (PDF)
+                    </Button>
+                </div>
+            )}
+
+            {!items.length && (
+                <div className="flex flex-col items-center justify-center py-24 border-2 border-dashed rounded-3xl bg-muted/20 border-muted-foreground/10 text-center">
+                    <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-900/30 flex items-center justify-center mb-4">
+                        <Tag className="w-8 h-8 text-slate-400 opacity-50" />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">Precificação Estratégica</h3>
+                    <p className="text-sm text-muted-foreground max-w-sm mt-2">Importe uma NF-e para precificar todos os itens de uma só vez, aplicando margens e impostos sobre venda.</p>
+                </div>
+            )}
         </div>
     );
 }
