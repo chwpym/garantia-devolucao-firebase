@@ -244,7 +244,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
     };
 
     const filteredProducts = productSearch
-        ? products.filter(p => smartSearch(p, productSearch, ['codigo', 'descricao', 'referencia', 'marca']))
+        ? products.filter(p => smartSearch(p, productSearch, ['codigo', 'descricao', 'referencia', 'marca', 'codigoExterno']))
             .slice(0, 5)
         : [];
 
