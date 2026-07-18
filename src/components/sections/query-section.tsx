@@ -187,7 +187,8 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
         'status',
         'requisicaoVenda',
         'requisicoesGarantia',
-        'notaFiscalRetorno'
+        'notaFiscalRetorno',
+        'codigoExterno'
       ])) {
         return false;
       }
@@ -292,13 +293,13 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
 
   // --- Stats Calculation ---
   const stats = useMemo(() => {
-    const total = warranties.length;
+    const total = filteredWarranties.length;
     let pending = 0;
     let approved = 0;
     let rejected = 0;
     let paid = 0;
 
-    warranties.forEach(w => {
+    filteredWarranties.forEach(w => {
       const status = w.status || '';
       if (status === 'Aguardando Envio' || status === 'Enviado para Análise') pending++;
       if (status.startsWith('Aprovada')) approved++;
@@ -307,7 +308,7 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
     });
 
     return { total, pending, approved, rejected, paid };
-  }, [warranties]);
+  }, [filteredWarranties]);
 
   // --- Bulk Actions ---
   const handleBulkStatusChange = async (newStatus: string) => {

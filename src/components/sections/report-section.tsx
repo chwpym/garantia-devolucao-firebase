@@ -79,7 +79,8 @@ export default function ReportSection() {
         'defeito',
         'status',
         'requisicaoVenda',
-        'requisicoesGarantia'
+        'requisicoesGarantia',
+        'codigoExterno'
       ])) {
         return false;
       }
