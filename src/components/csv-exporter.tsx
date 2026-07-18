@@ -33,6 +33,7 @@ const FIELD_CONFIG: Record<DataType, Record<string, string>> = {
     dataRegistro: 'Data de Registro',
     status: 'Status',
     loteId: 'ID do Lote',
+    codigoExterno: 'Cód. Externo (ERP)',
   },
   devolutions: {
     id: 'ID Devolução',
@@ -51,15 +52,20 @@ const FIELD_CONFIG: Record<DataType, Record<string, string>> = {
   persons: {
     id: 'ID',
     nome: 'Nome',
+    razaoSocial: 'Razão Social',
+    nomeFantasia: 'Nome Fantasia',
     tipo: 'Tipo',
     cpfCnpj: 'CPF/CNPJ',
     telefone: 'Telefone',
+    telefones: 'Telefones (Adicionais)',
     email: 'Email',
+    emails: 'Emails (Adicionais)',
     cep: 'CEP',
     endereco: 'Endereço',
     bairro: 'Bairro',
     cidade: 'Cidade/UF',
     observacao: 'Observação',
+    codigoExterno: 'Cód. Externo (ERP)',
   },
   suppliers: {
     id: 'ID',
@@ -67,6 +73,12 @@ const FIELD_CONFIG: Record<DataType, Record<string, string>> = {
     nomeFantasia: 'Nome Fantasia',
     cnpj: 'CNPJ',
     cidade: 'Cidade/UF',
+    cep: 'CEP',
+    endereco: 'Endereço',
+    bairro: 'Bairro',
+    codigoExterno: 'Cód. Externo (ERP)',
+    telefones: 'Telefones',
+    emails: 'Emails',
   },
   products: {
     id: 'ID',
@@ -74,6 +86,7 @@ const FIELD_CONFIG: Record<DataType, Record<string, string>> = {
     descricao: 'Descrição',
     marca: 'Marca',
     referencia: 'Referência',
+    codigoExterno: 'Cód. Externo (ERP)',
   },
 };
 
@@ -134,7 +147,11 @@ export default function CsvExporter() {
     if (value === null || value === undefined) {
         return '';
     }
-    const strValue = String(value);
+    let valToFormat = value;
+    if (Array.isArray(valToFormat)) {
+        valToFormat = valToFormat.join('; ');
+    }
+    const strValue = String(valToFormat);
     // If the value contains a comma, a quote, or a newline, wrap it in double quotes.
     if (/[",\n\r]/.test(strValue)) {
         return `"${strValue.replace(/"/g, '""')}"`;
