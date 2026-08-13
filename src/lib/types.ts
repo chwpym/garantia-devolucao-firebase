@@ -94,6 +94,8 @@ export interface LoteItem {
 export interface CompanyData {
   id?: number;
   nomeEmpresa?: string;
+  razaoSocial?: string;
+  nomeFantasia?: string;
   cnpj?: string;
   cep?: string;
   endereco?: string;
@@ -187,5 +189,6 @@ export interface CustomStatus {
   id?: number;
   nome: string;
   cor: string;
+  corTexto?: string;
   aplicavelEm: StatusApplicability[];
 }

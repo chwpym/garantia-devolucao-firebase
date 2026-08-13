@@ -141,8 +141,13 @@ export default function StatusSection() {
                                                 style={{ backgroundColor: status.cor }}
                                             />
                                             <div className="flex flex-col">
-                                                <span className="font-medium">{status.nome}</span>
-                                                <div className="flex flex-wrap gap-1 mt-1">
+                                                <span 
+                                                    className="font-medium px-2 py-0.5 rounded-md text-sm border shadow-sm"
+                                                    style={{ backgroundColor: status.cor, color: status.corTexto || '#ffffff' }}
+                                                >
+                                                    {status.nome}
+                                                </span>
+                                                <div className="flex flex-wrap gap-1 mt-2">
                                                     {status.aplicavelEm.map(app => (
                                                         <Badge key={app} variant="secondary" className="text-[10px] px-1 py-0 h-4">
                                                             {app === 'garantia' ? 'Garantia' : app === 'lote' ? 'Lote' : app === 'devolucao' ? 'Devolução' : 'Req.'}

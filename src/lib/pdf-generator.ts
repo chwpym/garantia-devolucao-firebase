@@ -64,7 +64,8 @@ const addStandardHeader = (doc: jsPDF, companyData: CompanyData | null, title: s
 
     // Company Name - Reduced to 10
     doc.setFontSize(10).setFont('helvetica', 'bold');
-    doc.text(companyData?.nomeEmpresa || 'Relatório', margin, cursorY);
+    const companyDisplayName = companyData?.nomeFantasia || companyData?.razaoSocial || companyData?.nomeEmpresa || 'Relatório';
+    doc.text(companyDisplayName, margin, cursorY);
 
     doc.setFontSize(10).setFont('helvetica', 'normal');
     const date = new Date().toLocaleDateString('pt-BR');
@@ -126,9 +127,10 @@ const addProfessionalHeader = (doc: jsPDF, companyData: CompanyData | null, lote
     let cursorY = 15;
 
     // --- Company Info ---
-    if (companyData?.nomeEmpresa) {
+    const professionalDisplayName = companyData?.nomeFantasia || companyData?.razaoSocial || companyData?.nomeEmpresa;
+    if (professionalDisplayName) {
         doc.setFontSize(10).setFont('helvetica', 'bold');
-        doc.text(companyData.nomeEmpresa, pageWidth / 2, cursorY, { align: 'center' });
+        doc.text(professionalDisplayName, pageWidth / 2, cursorY, { align: 'center' });
         cursorY += 5;
     }
     doc.setFontSize(9).setFont('helvetica', 'normal');
