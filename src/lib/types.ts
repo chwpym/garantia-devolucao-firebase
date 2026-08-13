@@ -137,6 +137,7 @@ export interface ItemDevolucao {
   id?: number;
   devolucaoId: number;
   codigoPeca: string;
+  codigoExternoPeca?: string;
   descricaoPeca: string;
   quantidade: number;
 }

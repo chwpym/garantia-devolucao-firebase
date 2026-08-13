@@ -107,7 +107,7 @@ export default function WarrantyTable({
                 />
               </TableHead>
               <SortableHeader sortKey="dataRegistro">Data</SortableHeader>
-              <SortableHeader sortKey="codigo">Código</SortableHeader>
+              <SortableHeader sortKey="codigo">Código (ERP / Int)</SortableHeader>
               <SortableHeader sortKey="descricao">Descrição</SortableHeader>
               <SortableHeader sortKey="quantidade">Qtd.</SortableHeader>
               <SortableHeader sortKey="fornecedor">Fornecedor</SortableHeader>
@@ -131,7 +131,16 @@ export default function WarrantyTable({
                   <TableCell>
                     {warranty.dataRegistro ? format(parseISO(warranty.dataRegistro), 'dd/MM/yyyy') : '-'}
                   </TableCell>
-                  <TableCell className="font-medium">{warranty.codigo || '-'}</TableCell>
+                  <TableCell>
+                    {warranty.codigoExterno ? (
+                      <div className="flex flex-col">
+                        <span className="font-medium">{warranty.codigoExterno}</span>
+                        <span className="text-xs text-muted-foreground">{warranty.codigo}</span>
+                      </div>
+                    ) : (
+                      <span className="font-medium">{warranty.codigo || '-'}</span>
+                    )}
+                  </TableCell>
                   <TableCell>{warranty.descricao || '-'}</TableCell>
                   <TableCell>{warranty.quantidade || '-'}</TableCell>
                   <TableCell>{warranty.fornecedor || '-'}</TableCell>

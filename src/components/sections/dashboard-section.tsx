@@ -570,7 +570,16 @@ export default function DashboardSection({ openTab: setActiveView }: DashboardSe
                                             recentWarranties.map(w => (
                                                 <TableRow key={w.id}>
                                                     <TableCell>{w.dataRegistro ? format(parseISO(w.dataRegistro), 'dd/MM/yyyy') : '-'}</TableCell>
-                                                    <TableCell className="font-mono text-xs">{w.codigo}</TableCell>
+                                                    <TableCell>
+                                                        {w.codigoExterno ? (
+                                                            <div className="flex flex-col">
+                                                                <span className="font-mono text-xs">{w.codigoExterno}</span>
+                                                                <span className="text-[10px] text-muted-foreground">{w.codigo}</span>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="font-mono text-xs">{w.codigo || '-'}</span>
+                                                        )}
+                                                    </TableCell>
                                                     <TableCell className="font-medium max-w-[200px] truncate">{w.descricao}</TableCell>
                                                     <TableCell>{w.fornecedor}</TableCell>
                                                     <TableCell>

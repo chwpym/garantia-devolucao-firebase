@@ -36,6 +36,7 @@ import { smartSearch } from '@/lib/search-utils';
 const itemDevolucaoSchema = z.object({
     id: z.number().optional(),
     codigoPeca: z.string().min(1, 'Código da peça é obrigatório'),
+    codigoExternoPeca: z.string().optional(),
     descricaoPeca: z.string().min(1, 'Descrição da peça é obrigatória'),
     quantidade: z.coerce.number().min(1, 'Quantidade deve ser no mínimo 1'),
 });
@@ -293,6 +294,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                 const itensData = data.itens.map(item => ({
                     id: item.id,
                     codigoPeca: item.codigoPeca || '',
+                    codigoExternoPeca: item.codigoExternoPeca || undefined,
                     descricaoPeca: item.descricaoPeca || '',
                     quantidade: item.quantidade || 1,
                 }));
@@ -314,6 +316,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                 };
                 const itensData = data.itens.map(item => ({
                     codigoPeca: item.codigoPeca || '',
+                    codigoExternoPeca: item.codigoExternoPeca || undefined,
                     descricaoPeca: item.descricaoPeca || '',
                     quantidade: item.quantidade || 1,
                 }));
@@ -380,6 +383,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
 
     const handleProductSelect = (product: Product, index: number) => {
         form.setValue(`itens.${index}.codigoPeca`, product.codigo);
+        form.setValue(`itens.${index}.codigoExternoPeca`, product.codigoExterno || undefined);
         form.setValue(`itens.${index}.descricaoPeca`, product.descricao);
     };
 

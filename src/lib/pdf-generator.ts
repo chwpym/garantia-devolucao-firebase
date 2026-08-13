@@ -287,6 +287,9 @@ export function generatePdf(input: GeneratePdfInput): string {
         const warrantyRecord = warranty as Record<string, string | number | boolean | null | undefined>;
         return selectedFields.map(field => {
             const key = field as keyof Omit<Warranty, 'id'>;
+            if (key === 'codigo') {
+                return warrantyRecord.codigoExterno || warrantyRecord.codigo || '-';
+            }
             const value = warrantyRecord[key];
             if (key === 'dataRegistro' && typeof value === 'string') {
                 return format(parseISO(value), 'dd/MM/yyyy');
@@ -403,7 +406,7 @@ export function generateDevolucoesPdf(input: GenerateDevolucoesPdfInput): string
             item.dataDevolucao ? format(parseISO(item.dataDevolucao), 'dd/MM/yyyy') : '-',
             item.cliente || '-',
             item.requisicaoVenda || '-',
-            item.codigoPeca || '-',
+            item.codigoExternoPeca || item.codigoPeca || '-',
             item.descricaoPeca || '-',
             item.quantidade?.toString() || '-',
             item.acaoRequisicao || '-',
