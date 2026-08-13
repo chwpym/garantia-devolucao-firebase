@@ -77,13 +77,27 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
 
   const loadData = useCallback(async () => {
     try {
-      const [allWarranties, allLotes, allPersons, allStatuses] = await Promise.all([
+      const [allWarranties, allLotes, allPersons, allStatuses, allProducts] = await Promise.all([
         db.getAllWarranties(),
         db.getAllLotes(),
         db.getAllPersons(),
-        db.getAllStatuses()
+        db.getAllStatuses(),
+        db.getAllProducts()
       ]);
-      setWarranties(allWarranties);
+
+      const enrichedWarranties = allWarranties.map(warranty => {
+        const matchedProduct = allProducts.find(p => 
+          p.codigo === warranty.codigo || 
+          p.referencia === warranty.codigo || 
+          p.codigoExterno === warranty.codigo
+        );
+        return {
+          ...warranty,
+          codigoExterno: matchedProduct?.codigoExterno || warranty.codigoExterno,
+        };
+      });
+
+      setWarranties(enrichedWarranties);
       setOpenLotes(allLotes.filter(l => l.status === 'Aberto'));
       setPersons(allPersons);
       setCustomStatuses(allStatuses);

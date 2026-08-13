@@ -60,8 +60,6 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
                 db.getAllProducts()
             ]);
 
-            const productMap = new Map(products.map(p => [p.codigo, p.codigoExterno]));
-
             const flatData = data.flatMap(devolucao => {
                 if (!devolucao.itens || data.length === 0) {
                     return [{
@@ -69,13 +67,20 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
                         id: devolucao.id!,
                     }];
                 }
-                return devolucao.itens.map(item => ({
-                    ...devolucao,
-                    ...item,
-                    codigoExternoPeca: item.codigoExternoPeca || productMap.get(item.codigoPeca),
-                    id: devolucao.id!,
-                    itemId: item.id!,
-                }));
+                return devolucao.itens.map(item => {
+                    const matchedProduct = products.find(p => 
+                        p.codigo === item.codigoPeca || 
+                        p.referencia === item.codigoPeca || 
+                        p.codigoExterno === item.codigoPeca
+                    );
+                    return {
+                        ...devolucao,
+                        ...item,
+                        codigoExternoPeca: matchedProduct?.codigoExterno || item.codigoExternoPeca,
+                        id: devolucao.id!,
+                        itemId: item.id!,
+                    };
+                });
             });
 
             setDevolucoes(flatData);
