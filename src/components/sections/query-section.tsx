@@ -183,12 +183,16 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
         'descricao',
         'fornecedor',
         'cliente',
+        'mecanico',
         'defeito',
         'status',
         'requisicaoVenda',
         'requisicoesGarantia',
+        'nfCompra',
+        'notaFiscalSaida',
         'notaFiscalRetorno',
-        'codigoExterno'
+        'codigoExterno',
+        'observacao'
       ])) {
         return false;
       }

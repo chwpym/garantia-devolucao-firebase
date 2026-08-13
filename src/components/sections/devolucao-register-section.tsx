@@ -348,7 +348,12 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
 
     const handleCancel = () => {
         goBack(); // Usa a ação do store para voltar
-    }
+    };
+
+    const handleLimpar = () => {
+        form.reset(defaultFormValues);
+        replace(defaultFormValues.itens);
+    };
 
     const handleProductSaved = (newProduct: Product) => {
         if (activeItemIndex !== null) {
@@ -713,9 +718,16 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
 
                         </CardContent>
                         <CardFooter className="flex-none flex justify-between items-center gap-2 py-4 border-t bg-muted/5">
-                            <Button type="button" variant="ghost" onClick={handleCancel} disabled={form.formState.isSubmitting}>
-                                Cancelar
-                            </Button>
+                            <div className="flex gap-2">
+                                <Button type="button" variant="ghost" onClick={handleCancel} disabled={form.formState.isSubmitting}>
+                                    Cancelar
+                                </Button>
+                                {!editingId && (
+                                    <Button type="button" variant="ghost" onClick={handleLimpar} disabled={form.formState.isSubmitting} className="text-muted-foreground hover:text-foreground">
+                                        Limpar
+                                    </Button>
+                                )}
+                            </div>
                             <div className="flex gap-2">
                                 <Button
                                     type="submit"
