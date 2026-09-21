@@ -421,7 +421,7 @@ export default function QuerySection({ setActiveView, onEdit, onClone }: QuerySe
       <div className="flex-none space-y-4">
 
         <div className="flex flex-col xl:flex-row gap-4">
-          <div className="flex flex-col md:flex-row gap-2 flex-grow">
+          <div className="flex flex-col md:flex-row gap-2 flex-grow md:items-center">
             <SearchInput
               placeholder="Buscar por código, descrição..."
               value={searchTerm}
