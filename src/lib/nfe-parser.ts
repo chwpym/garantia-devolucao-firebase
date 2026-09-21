@@ -115,13 +115,13 @@ export interface ParsedNfe {
     dest: NfeDest;
     items: NfeItem[];
     totals: NfeTotals;
-    raw?: any; // Mantido para compatibilidade se necessário
+    raw?: unknown; // Mantido para compatibilidade se necessário
 }
 
 /**
  * Função utilitária para garantir que um valor seja um número
  */
-export function parseNumberSafe(value: any): number {
+export function parseNumberSafe(value: unknown): number {
     if (value === null || value === undefined) return 0;
     const num = typeof value === 'number' ? value : parseFloat(String(value));
     return isNaN(num) ? 0 : num;
@@ -160,23 +160,23 @@ export function parseNfeXml(xmlString: string): ParsedNfe {
     const ibscbsTot = nfeNode.total?.IBSCBSTot || {};
 
     const detList = ensureArray(nfeNode.det);
-    const items: NfeItem[] = detList.map((det: any, index: number) => {
+    const items: NfeItem[] = detList.map((det: Record<string, any>, index: number) => {
         const prod = det.prod || {};
         const imposto = det.imposto || {};
 
         // Lógica de extração de ICMS (Várias tags possíveis: ICMS00, ICMS10, ICMS60, etc.)
-        const icmsNode = imposto.ICMS ? Object.values(imposto.ICMS)[0] as any : {};
+        const icmsNode = imposto.ICMS ? Object.values(imposto.ICMS)[0] as Record<string, any> : {};
         
         // Lógica de extração de IPI
-        let ipiNode = {} as any;
+        let ipiNode: Record<string, any> = {};
         if (imposto.IPI) {
             if (imposto.IPI.IPITrib) ipiNode = imposto.IPI.IPITrib;
             else if (imposto.IPI.IPINT) ipiNode = imposto.IPI.IPINT;
         }
 
         // Lógica de extração de PIS/COFINS
-        const pisNode = imposto.PIS ? Object.values(imposto.PIS)[0] as any : {};
-        const cofinsNode = imposto.COFINS ? Object.values(imposto.COFINS)[0] as any : {};
+        const pisNode = imposto.PIS ? Object.values(imposto.PIS)[0] as Record<string, any> : {};
+        const cofinsNode = imposto.COFINS ? Object.values(imposto.COFINS)[0] as Record<string, any> : {};
 
         // Lógica de Reforma Tributária (IBS/CBS)
         // A estrutura pode variar, mas geralmente está dentro de gIBSCBS ou similar
