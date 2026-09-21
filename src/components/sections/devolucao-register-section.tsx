@@ -36,6 +36,7 @@ import { smartSearch } from '@/lib/search-utils';
 const itemDevolucaoSchema = z.object({
     id: z.number().optional(),
     codigoPeca: z.string().min(1, 'Código da peça é obrigatório'),
+    codigoExternoPeca: z.string().optional(),
     descricaoPeca: z.string().min(1, 'Descrição da peça é obrigatória'),
     quantidade: z.coerce.number().min(1, 'Quantidade deve ser no mínimo 1'),
 });
@@ -293,6 +294,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                 const itensData = data.itens.map(item => ({
                     id: item.id,
                     codigoPeca: item.codigoPeca || '',
+                    codigoExternoPeca: item.codigoExternoPeca || undefined,
                     descricaoPeca: item.descricaoPeca || '',
                     quantidade: item.quantidade || 1,
                 }));
@@ -314,6 +316,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
                 };
                 const itensData = data.itens.map(item => ({
                     codigoPeca: item.codigoPeca || '',
+                    codigoExternoPeca: item.codigoExternoPeca || undefined,
                     descricaoPeca: item.descricaoPeca || '',
                     quantidade: item.quantidade || 1,
                 }));
@@ -348,7 +351,12 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
 
     const handleCancel = () => {
         goBack(); // Usa a ação do store para voltar
-    }
+    };
+
+    const handleLimpar = () => {
+        form.reset(defaultFormValues);
+        replace(defaultFormValues.itens);
+    };
 
     const handleProductSaved = (newProduct: Product) => {
         if (activeItemIndex !== null) {
@@ -375,6 +383,7 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
 
     const handleProductSelect = (product: Product, index: number) => {
         form.setValue(`itens.${index}.codigoPeca`, product.codigo);
+        form.setValue(`itens.${index}.codigoExternoPeca`, product.codigoExterno || undefined);
         form.setValue(`itens.${index}.descricaoPeca`, product.descricao);
     };
 
@@ -713,9 +722,16 @@ export default function DevolucaoRegisterSection({ editingId, onSave }: Devoluca
 
                         </CardContent>
                         <CardFooter className="flex-none flex justify-between items-center gap-2 py-4 border-t bg-muted/5">
-                            <Button type="button" variant="ghost" onClick={handleCancel} disabled={form.formState.isSubmitting}>
-                                Cancelar
-                            </Button>
+                            <div className="flex gap-2">
+                                <Button type="button" variant="ghost" onClick={handleCancel} disabled={form.formState.isSubmitting}>
+                                    Cancelar
+                                </Button>
+                                {!editingId && (
+                                    <Button type="button" variant="ghost" onClick={handleLimpar} disabled={form.formState.isSubmitting} className="text-muted-foreground hover:text-foreground">
+                                        Limpar
+                                    </Button>
+                                )}
+                            </div>
                             <div className="flex gap-2">
                                 <Button
                                     type="submit"

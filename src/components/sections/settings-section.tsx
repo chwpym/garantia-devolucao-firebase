@@ -15,7 +15,9 @@ import { Button } from '@/components/ui/button';
 import { formatPhoneNumber, formatCpfCnpj } from '@/lib/utils';
 
 const formSchema = z.object({
-    nomeEmpresa: z.string().min(2, { message: "O nome da empresa é obrigatório." }).optional(),
+    nomeEmpresa: z.string().optional(),
+    razaoSocial: z.string().optional(),
+    nomeFantasia: z.string().optional(),
     cnpj: z.string().optional(),
     cep: z.string().optional(),
     endereco: z.string().optional(),
@@ -29,6 +31,8 @@ type CompanyFormValues = z.infer<typeof formSchema>;
 
 const defaultFormValues: CompanyFormValues = {
     nomeEmpresa: '',
+    razaoSocial: '',
+    nomeFantasia: '',
     cnpj: '',
     cep: '',
     endereco: '',
@@ -69,6 +73,8 @@ export default function SettingsSection() {
                         ...defaultFormValues,
                         ...data,
                         nomeEmpresa: data.nomeEmpresa || '',
+                        razaoSocial: data.razaoSocial || '',
+                        nomeFantasia: data.nomeFantasia || '',
                         cnpj: data.cnpj ? formatCpfCnpj(data.cnpj) : '',
                         cep: data.cep || '',
                         endereco: data.endereco || '',
@@ -163,14 +169,38 @@ export default function SettingsSection() {
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(handleSave)}>
                         <CardContent className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <FormField
+                                    name="nomeFantasia"
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <FormItem className="md:col-span-1">
+                                            <FormLabel>Nome Fantasia</FormLabel>
+                                            <FormControl><Input placeholder="Minha Loja" {...field} /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    name="razaoSocial"
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <FormItem className="md:col-span-1">
+                                            <FormLabel>Razão Social</FormLabel>
+                                            <FormControl><Input placeholder="Razão Social Ltda" {...field} /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <FormField
                                     name="nomeEmpresa"
                                     control={form.control}
                                     render={({ field }) => (
                                         <FormItem className="md:col-span-2">
-                                            <FormLabel>Nome da Empresa</FormLabel>
-                                            <FormControl><Input placeholder="Minha Empresa Ltda" {...field} /></FormControl>
+                                            <FormLabel>Nome da Empresa (Antigo)</FormLabel>
+                                            <FormControl><Input placeholder="Nome genérico" {...field} /></FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}

@@ -99,7 +99,7 @@ export function StatusBadge({ type, status, className }: StatusBadgeProps) {
     if (customStatus?.cor) {
         return (
             <Badge 
-                style={{ backgroundColor: customStatus.cor, color: '#fff' }} 
+                style={{ backgroundColor: customStatus.cor, color: customStatus.corTexto || '#ffffff' }} 
                 className={cn("whitespace-nowrap border-none", className)}
             >
                 {status}

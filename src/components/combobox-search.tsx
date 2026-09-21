@@ -37,7 +37,7 @@ export default function ComboboxSearch({
     if (!value) return [];
     
     return products.filter(product => 
-        smartSearch(product, value, ['codigo', 'descricao', 'marca', 'referencia'])
+        smartSearch(product, value, ['codigo', 'descricao', 'marca', 'referencia', 'codigoExterno'])
     ).slice(0, 15);
   }, [products, value]);
 

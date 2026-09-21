@@ -54,7 +54,7 @@ export default function ComboboxProduct({
     }
 
     return products
-      .filter(p => smartSearch(p, debouncedSearchTerm, ['codigo', 'descricao', 'referencia', 'marca']))
+      .filter(p => smartSearch(p, debouncedSearchTerm, ['codigo', 'descricao', 'referencia', 'marca', 'codigoExterno']))
       .slice(0, 15); // Hard limit to prevent DOM massive rendering lag
   }, [products, debouncedSearchTerm]);
 

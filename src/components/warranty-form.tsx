@@ -79,7 +79,7 @@ const defaultValues: WarrantyFormValues = {
     notaFiscalSaida: '',
     notaFiscalRetorno: '',
     observacao: '',
-    status: '',
+    status: 'Aguardando Envio',
     loteId: null,
     photos: [],
     marca: '',
@@ -108,7 +108,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
         defaultValues: selectedWarranty ? {
             ...selectedWarranty,
             quantidade: selectedWarranty.quantidade ?? 1,
-            status: selectedWarranty.status ?? 'Aguardando Envio',
+            status: isClone ? 'Aguardando Envio' : (selectedWarranty.status ?? 'Aguardando Envio'),
             photos: selectedWarranty.photos ?? [],
         } : defaultValues,
     });
@@ -149,14 +149,17 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
         window.dispatchEvent(new CustomEvent('datachanged'));
     };
 
-    const handleClear = () => {
+    const handleCancel = () => {
         if (selectedWarranty) {
             goBack(); // If we were editing, go back
-        } else {
-            form.reset(defaultValues); // If it's a new form, just clear it
         }
-        onClear();
-    }
+        onClear(); // This typically closes the form
+    };
+
+    const handleLimpar = () => {
+        form.reset(defaultValues);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && e.target instanceof HTMLElement && !(e.target instanceof HTMLTextAreaElement)) {
@@ -244,7 +247,7 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
     };
 
     const filteredProducts = productSearch
-        ? products.filter(p => smartSearch(p, productSearch, ['codigo', 'descricao', 'referencia', 'marca']))
+        ? products.filter(p => smartSearch(p, productSearch, ['codigo', 'descricao', 'referencia', 'marca', 'codigoExterno']))
             .slice(0, 5)
         : [];
 
@@ -558,9 +561,16 @@ export default function WarrantyForm({ selectedWarranty, onSave, onClear, isModa
 
                 </CardContent>
                 <CardFooter className="flex-none flex justify-between items-center gap-2 py-4 border-t bg-muted/5">
-                    <Button type="button" variant="ghost" onClick={handleClear} disabled={isSubmitting}>
-                        Cancelar
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button type="button" variant="ghost" onClick={handleCancel} disabled={isSubmitting}>
+                            Cancelar
+                        </Button>
+                        {!selectedWarranty && (
+                            <Button type="button" variant="ghost" onClick={handleLimpar} disabled={isSubmitting} className="text-muted-foreground hover:text-foreground">
+                                Limpar
+                            </Button>
+                        )}
+                    </div>
                     <div className="flex gap-2">
                         {!isClone && (
                             <Button

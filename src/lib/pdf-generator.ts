@@ -64,7 +64,8 @@ const addStandardHeader = (doc: jsPDF, companyData: CompanyData | null, title: s
 
     // Company Name - Reduced to 10
     doc.setFontSize(10).setFont('helvetica', 'bold');
-    doc.text(companyData?.nomeEmpresa || 'Relatório', margin, cursorY);
+    const companyDisplayName = companyData?.nomeFantasia || companyData?.razaoSocial || companyData?.nomeEmpresa || 'Relatório';
+    doc.text(companyDisplayName, margin, cursorY);
 
     doc.setFontSize(10).setFont('helvetica', 'normal');
     const date = new Date().toLocaleDateString('pt-BR');
@@ -126,9 +127,10 @@ const addProfessionalHeader = (doc: jsPDF, companyData: CompanyData | null, lote
     let cursorY = 15;
 
     // --- Company Info ---
-    if (companyData?.nomeEmpresa) {
+    const professionalDisplayName = companyData?.nomeFantasia || companyData?.razaoSocial || companyData?.nomeEmpresa;
+    if (professionalDisplayName) {
         doc.setFontSize(10).setFont('helvetica', 'bold');
-        doc.text(companyData.nomeEmpresa, pageWidth / 2, cursorY, { align: 'center' });
+        doc.text(professionalDisplayName, pageWidth / 2, cursorY, { align: 'center' });
         cursorY += 5;
     }
     doc.setFontSize(9).setFont('helvetica', 'normal');
@@ -285,6 +287,9 @@ export function generatePdf(input: GeneratePdfInput): string {
         const warrantyRecord = warranty as Record<string, string | number | boolean | null | undefined>;
         return selectedFields.map(field => {
             const key = field as keyof Omit<Warranty, 'id'>;
+            if (key === 'codigo') {
+                return warrantyRecord.codigoExterno || warrantyRecord.codigo || '-';
+            }
             const value = warrantyRecord[key];
             if (key === 'dataRegistro' && typeof value === 'string') {
                 return format(parseISO(value), 'dd/MM/yyyy');
@@ -401,7 +406,7 @@ export function generateDevolucoesPdf(input: GenerateDevolucoesPdfInput): string
             item.dataDevolucao ? format(parseISO(item.dataDevolucao), 'dd/MM/yyyy') : '-',
             item.cliente || '-',
             item.requisicaoVenda || '-',
-            item.codigoPeca || '-',
+            item.codigoExternoPeca || item.codigoPeca || '-',
             item.descricaoPeca || '-',
             item.quantidade?.toString() || '-',
             item.acaoRequisicao || '-',

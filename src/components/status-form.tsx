@@ -25,6 +25,7 @@ const applicabilityOptions: { id: StatusApplicability; label: string }[] = [
 const formSchema = z.object({
     nome: z.string().min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' }),
     cor: z.string().regex(/^#[0-9A-F]{6}$/i, { message: 'Cor inválida. Use o formato hexadecimal, ex: #RRGGBB' }),
+    corTexto: z.string().regex(/^#[0-9A-F]{6}$/i, { message: 'Cor inválida.' }).optional(),
     aplicavelEm: z.array(z.string()).refine((value) => value.some((item) => item), {
         message: 'Selecione pelo menos um módulo de aplicação.',
     }),
@@ -43,8 +44,8 @@ export default function StatusForm({ onSave, editingStatus }: StatusFormProps) {
     const form = useForm<StatusFormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: editingStatus
-            ? { ...editingStatus, cor: editingStatus.cor || '#000000' }
-            : { nome: '', cor: '#6B7280', aplicavelEm: [] },
+            ? { ...editingStatus, cor: editingStatus.cor || '#000000', corTexto: editingStatus.corTexto || '#ffffff' }
+            : { nome: '', cor: '#6B7280', corTexto: '#ffffff', aplicavelEm: [] },
     });
 
     useEffect(() => {
@@ -52,6 +53,7 @@ export default function StatusForm({ onSave, editingStatus }: StatusFormProps) {
             form.reset({
                 ...editingStatus,
                 cor: editingStatus.cor || '#000000',
+                corTexto: editingStatus.corTexto || '#ffffff',
             });
         }
     }, [editingStatus, form]);
@@ -115,7 +117,7 @@ export default function StatusForm({ onSave, editingStatus }: StatusFormProps) {
                         control={form.control}
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Cor</FormLabel>
+                                <FormLabel>Cor do Fundo</FormLabel>
                                 <div className='flex items-center gap-2'>
                                     <FormControl>
                                         <Input type="color" {...field} className="p-1 h-10 w-14" />
@@ -124,6 +126,27 @@ export default function StatusForm({ onSave, editingStatus }: StatusFormProps) {
                                         value={field.value}
                                         onChange={field.onChange}
                                         placeholder="#RRGGBB"
+                                        maxLength={7}
+                                    />
+                                </div>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        name="corTexto"
+                        control={form.control}
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Cor do Texto</FormLabel>
+                                <div className='flex items-center gap-2'>
+                                    <FormControl>
+                                        <Input type="color" {...field} className="p-1 h-10 w-14" />
+                                    </FormControl>
+                                    <Input
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        placeholder="#FFFFFF"
                                         maxLength={7}
                                     />
                                 </div>

@@ -55,7 +55,10 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
         setIsLoading(true);
         try {
             await db.initDB();
-            const data = await db.getAllDevolucoes();
+            const [data, products] = await Promise.all([
+                db.getAllDevolucoes(),
+                db.getAllProducts()
+            ]);
 
             const flatData = data.flatMap(devolucao => {
                 if (!devolucao.itens || data.length === 0) {
@@ -64,12 +67,20 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
                         id: devolucao.id!,
                     }];
                 }
-                return devolucao.itens.map(item => ({
-                    ...devolucao,
-                    ...item,
-                    id: devolucao.id!,
-                    itemId: item.id!,
-                }));
+                return devolucao.itens.map(item => {
+                    const matchedProduct = products.find(p => 
+                        p.codigo === item.codigoPeca || 
+                        p.referencia === item.codigoPeca || 
+                        p.codigoExterno === item.codigoPeca
+                    );
+                    return {
+                        ...devolucao,
+                        ...item,
+                        codigoExternoPeca: matchedProduct?.codigoExterno || item.codigoExternoPeca,
+                        id: devolucao.id!,
+                        itemId: item.id!,
+                    };
+                });
             });
 
             setDevolucoes(flatData);
@@ -117,7 +128,7 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
 
         if (lowercasedTerm) {
             filtered = filtered.filter(item =>
-                smartSearch(item, searchTerm, ['cliente', 'mecanico', 'requisicaoVenda', 'codigoPeca', 'descricaoPeca', 'status'])
+                smartSearch(item, searchTerm, ['cliente', 'mecanico', 'requisicaoVenda', 'codigoPeca', 'codigoExternoPeca', 'descricaoPeca', 'status'])
             );
         }
 
@@ -229,7 +240,7 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
             item.dataDevolucao ? format(parseISO(item.dataDevolucao), 'dd/MM/yyyy') : '',
             `"${item.cliente || ''}"`,
             `"${item.requisicaoVenda || ''}"`,
-            `"${item.codigoPeca || ''}"`,
+            `"${item.codigoExternoPeca || item.codigoPeca || ''}"`,
             `"${item.descricaoPeca || ''}"`,
             item.quantidade || 0,
             `"${item.acaoRequisicao || ''}"`,
@@ -313,7 +324,7 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
                             <SortableHeader sortKey="dataDevolucao">Data Dev.</SortableHeader>
                             <SortableHeader sortKey="cliente">Cliente</SortableHeader>
                             <SortableHeader sortKey="requisicaoVenda" className="truncate max-w-[120px]">Cond./Req.</SortableHeader>
-                            <SortableHeader sortKey="codigoPeca">Código Peça</SortableHeader>
+                            <SortableHeader sortKey="codigoPeca">Código Peça (ERP / Int)</SortableHeader>
                             <SortableHeader sortKey="descricaoPeca">Descrição Peça</SortableHeader>
                             <SortableHeader sortKey="quantidade">Qtd.</SortableHeader>
                             <SortableHeader sortKey="acaoRequisicao">Ação Req.</SortableHeader>
@@ -348,7 +359,16 @@ export default function DevolucaoQuerySection({ onEdit }: DevolucaoQuerySectionP
                                         </div>
                                     </TableCell>
                                     <TableCell>{item.requisicaoVenda}</TableCell>
-                                    <TableCell className="font-medium">{item.codigoPeca || '-'}</TableCell>
+                                    <TableCell>
+                                        {item.codigoExternoPeca ? (
+                                            <div className="flex flex-col">
+                                                <span className="font-medium">{item.codigoExternoPeca}</span>
+                                                <span className="text-xs text-muted-foreground">{item.codigoPeca}</span>
+                                            </div>
+                                        ) : (
+                                            <span className="font-medium">{item.codigoPeca || '-'}</span>
+                                        )}
+                                    </TableCell>
                                     <TableCell>{item.descricaoPeca || '-'}</TableCell>
                                     <TableCell>{item.quantidade || '-'}</TableCell>
                                     <TableCell>

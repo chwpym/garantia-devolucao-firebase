@@ -134,14 +134,14 @@ export const useAppStore = create<AppState>((set, get) => ({
         db.getAllStatuses(),
       ]);
       set({
-        products: products.sort((a, b) => a.descricao.localeCompare(b.descricao)),
-        persons: persons.sort((a, b) => a.nome.localeCompare(b.nome)),
-        suppliers: suppliers.sort((a, b) => a.nomeFantasia.localeCompare(b.nomeFantasia)),
-        statuses: statuses.sort((a, b) => a.nome.localeCompare(b.nome)),
+        products: [...products].sort((a, b) => a.descricao.localeCompare(b.descricao)),
+        persons: [...persons].sort((a, b) => a.nome.localeCompare(b.nome)),
+        suppliers: [...suppliers].sort((a, b) => a.nomeFantasia.localeCompare(b.nomeFantasia)),
+        statuses: [...statuses].sort((a, b) => a.nome.localeCompare(b.nome)),
         isDataLoaded: true
       });
-    } catch (error) {
-      console.error("Failed to load initial app data:", error);
+    } catch (error: unknown) {
+      console.error("Failed to load initial app data:", error instanceof Error ? error.message : error);
     }
   },
 
@@ -149,22 +149,22 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       if (!dataType || dataType === 'products') {
         const products = await db.getAllProducts();
-        set({ products: [...products.sort((a, b) => a.descricao.localeCompare(b.descricao))] });
+        set({ products: [...products].sort((a, b) => a.descricao.localeCompare(b.descricao)) });
       }
       if (!dataType || dataType === 'persons') {
         const persons = await db.getAllPersons();
-        set({ persons: [...persons.sort((a, b) => a.nome.localeCompare(b.nome))] });
+        set({ persons: [...persons].sort((a, b) => a.nome.localeCompare(b.nome)) });
       }
       if (!dataType || dataType === 'suppliers') {
         const suppliers = await db.getAllSuppliers();
-        set({ suppliers: [...suppliers.sort((a, b) => a.nomeFantasia.localeCompare(b.nomeFantasia))] });
+        set({ suppliers: [...suppliers].sort((a, b) => a.nomeFantasia.localeCompare(b.nomeFantasia)) });
       }
       if (!dataType || dataType === 'statuses') {
         const statuses = await db.getAllStatuses();
-        set({ statuses: [...statuses.sort((a, b) => a.nome.localeCompare(b.nome))] });
+        set({ statuses: [...statuses].sort((a, b) => a.nome.localeCompare(b.nome)) });
       }
-    } catch (error) {
-      console.error("Failed to reload data:", error);
+    } catch (error: unknown) {
+      console.error("Failed to reload data:", error instanceof Error ? error.message : error);
     }
   },
 
