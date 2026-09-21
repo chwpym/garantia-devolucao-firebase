@@ -48,28 +48,26 @@ export function DatePickerWithRange({
   }
 
   return (
-    <div className={cn("grid gap-2", className)}>
-      <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
-        <input 
-          type="date" 
-          value={dateToInputValue(date?.from)}
-          onChange={handleFromChange}
-          className="flex h-10 w-full sm:w-[150px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-          placeholder="Data Inicial"
-          title="Data Inicial"
-        />
-        <span className="hidden sm:inline text-muted-foreground">-</span>
-        <input 
-          type="date" 
-          value={dateToInputValue(date?.to)}
-          onChange={handleToChange}
-          className="flex h-10 w-full sm:w-[150px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-          placeholder="Data Final"
-          title="Data Final"
-        />
-      </div>
+    <div className={cn("flex flex-col sm:flex-row gap-2 items-start sm:items-center", className)}>
+      <input 
+        type="date" 
+        value={dateToInputValue(date?.from)}
+        onChange={handleFromChange}
+        className="flex h-10 w-full sm:w-[150px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        placeholder="Data Inicial"
+        title="Data Inicial"
+      />
+      <span className="hidden sm:block text-muted-foreground">-</span>
+      <input 
+        type="date" 
+        value={dateToInputValue(date?.to)}
+        onChange={handleToChange}
+        className="flex h-10 w-full sm:w-[150px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        placeholder="Data Final"
+        title="Data Final"
+      />
       {error && (
-        <span className="text-xs text-destructive font-medium">{error}</span>
+        <span className="text-xs text-destructive font-medium ml-2">{error}</span>
       )}
     </div>
   )
