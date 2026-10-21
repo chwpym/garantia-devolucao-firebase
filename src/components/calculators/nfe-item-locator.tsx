@@ -11,7 +11,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useToast } from '@/hooks/use-toast';
 import { useNfeStore } from '@/store/use-nfe-store';
 import { NfeUploader } from '@/components/nfe/NfeUploader';
-import { formatCurrency, formatCurrency4, formatNumber } from '@/lib/utils';
+import { cn, formatCurrency, formatCurrency4, formatNumber } from '@/lib/utils';
 import {
     Search,
     Copy,
@@ -20,7 +20,6 @@ import {
     FileText,
     Hash,
     KeyRound,
-    Calendar,
     X,
     CheckSquare,
     Sparkles
@@ -281,13 +280,13 @@ export default function NfeItemLocatorCalculator() {
                                         >
                                             <button
                                                 onClick={() => setSelectedNfeChave(isSelected ? 'ALL' : chaveClean)}
-                                                className={`h-5 px-2 text-[10px] font-bold uppercase flex items-center gap-1 transition-colors ${
+                                                className={`h-5 px-2 text-[10px] font-bold uppercase flex items-center gap-1 transition-colors whitespace-nowrap ${
                                                     isSelected
                                                         ? 'bg-primary text-primary-foreground'
                                                         : 'hover:bg-muted text-foreground'
                                                 }`}
                                             >
-                                                <FileText className="w-2.5 h-2.5" />
+                                                <FileText className="w-2.5 h-2.5 shrink-0" />
                                                 NF {nfe.header.nNF}
                                                 <span className="opacity-70 text-[9px]">({formatDateBr(nfe.header.dhEmi)})</span>
                                             </button>
@@ -316,29 +315,29 @@ export default function NfeItemLocatorCalculator() {
 
             {allNfes.length > 0 ? (
                 <>
-                    {/* Tabela Principal Densa e Ampla */}
+                    {/* Tabela Principal Densa, Dinâmica e Balanceada */}
                     <div className="rounded-xl border border-border shadow-md overflow-hidden bg-card">
                         <div className="overflow-x-auto">
                             <Table>
                                 <TableHeader className="bg-muted/70">
                                     <TableRow className="border-b border-border h-8">
-                                        <TableHead className="w-[36px] py-1.5 px-2 text-center text-[10px] font-black uppercase text-muted-foreground">OK</TableHead>
-                                        <TableHead className="w-[76px] py-1.5 px-2 text-center text-[10px] font-black uppercase text-primary">
+                                        <TableHead className="w-[38px] py-1.5 px-2 text-center text-[10px] font-black uppercase text-muted-foreground">OK</TableHead>
+                                        <TableHead className="w-[68px] py-1.5 px-2 text-center text-[10px] font-black uppercase text-primary whitespace-nowrap">
                                             # XML
                                         </TableHead>
-                                        <TableHead className="w-[135px] py-1.5 px-2 text-[10px] font-black uppercase text-muted-foreground">
+                                        <TableHead className="w-[130px] py-1.5 px-2 text-[10px] font-black uppercase text-muted-foreground whitespace-nowrap">
                                             Cód. Fabricante
                                         </TableHead>
-                                        <TableHead className="min-w-[240px] py-1.5 px-2 text-[10px] font-black uppercase text-muted-foreground">
+                                        <TableHead className="w-[28%] max-w-[290px] py-1.5 px-2 text-[10px] font-black uppercase text-muted-foreground">
                                             Descrição do Produto (XML)
                                         </TableHead>
-                                        <TableHead className="w-[140px] py-1.5 px-2 text-[10px] font-black uppercase text-muted-foreground">
+                                        <TableHead className="min-w-[205px] py-1.5 px-3 text-[10px] font-black uppercase text-muted-foreground whitespace-nowrap">
                                             NF Origem / Data
                                         </TableHead>
-                                        <TableHead className="w-[245px] py-1.5 px-2 text-[10px] font-black uppercase text-muted-foreground">
+                                        <TableHead className="min-w-[235px] py-1.5 px-2 text-[10px] font-black uppercase text-muted-foreground whitespace-nowrap">
                                             Chave de Acesso (44 Díg.)
                                         </TableHead>
-                                        <TableHead className="w-[145px] py-1.5 px-2 text-right text-[10px] font-black uppercase text-muted-foreground">
+                                        <TableHead className="w-[140px] py-1.5 px-2 text-right text-[10px] font-black uppercase text-muted-foreground whitespace-nowrap">
                                             Qtde / Preço Un.
                                         </TableHead>
                                     </TableRow>
@@ -350,32 +349,48 @@ export default function NfeItemLocatorCalculator() {
                                             return (
                                                 <TableRow
                                                     key={item.uid}
-                                                    className={`transition-colors border-b border-border/50 ${
-                                                        isChecked ? 'bg-primary/5 hover:bg-primary/10' : 'hover:bg-muted/30'
-                                                    }`}
+                                                    onClick={() => toggleCheck(item.uid)}
+                                                    className={cn(
+                                                        "transition-all duration-200 border-b border-border/50 cursor-pointer",
+                                                        isChecked
+                                                            ? "bg-muted/20 opacity-45 hover:opacity-65"
+                                                            : "hover:bg-muted/30"
+                                                    )}
                                                 >
-                                                    {/* Checkbox */}
-                                                    <TableCell className="py-1.5 px-2 text-center">
+                                                    {/* Checkbox Estilo Checklist (Verde quando marcado) */}
+                                                    <TableCell
+                                                        className="py-1.5 px-2 text-center"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
                                                         <Checkbox
                                                             checked={isChecked}
                                                             onCheckedChange={() => toggleCheck(item.uid)}
                                                             aria-label={`Marcar item ${item.cProd}`}
+                                                            className="h-4 w-4 rounded data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500 data-[state=checked]:text-white"
                                                         />
                                                     </TableCell>
 
                                                     {/* Posição do Item no XML (nItem) */}
-                                                    <TableCell className="py-1.5 px-2 text-center">
+                                                    <TableCell
+                                                        className="py-1.5 px-2 text-center"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
                                                         <TooltipProvider>
                                                             <Tooltip>
                                                                 <TooltipTrigger asChild>
                                                                     <button
                                                                         onClick={() => handleCopy(String(item.nItem), 'Nº do Item XML', `nitem-${item.uid}`)}
-                                                                        className="inline-flex items-center justify-center gap-0.5 px-2 py-0.5 rounded-md bg-primary text-primary-foreground font-mono text-xs font-black shadow-sm hover:opacity-90 active:scale-95 transition-all"
+                                                                        className={cn(
+                                                                            "inline-flex items-center justify-center gap-0.5 px-2 py-0.5 rounded-md font-mono text-xs font-black shadow-sm hover:opacity-90 active:scale-95 transition-all whitespace-nowrap",
+                                                                            isChecked
+                                                                                ? "bg-muted text-muted-foreground line-through"
+                                                                                : "bg-primary text-primary-foreground"
+                                                                        )}
                                                                     >
-                                                                        <Hash className="w-3 h-3 opacity-80" />
+                                                                        <Hash className="w-3 h-3 opacity-80 shrink-0" />
                                                                         {item.nItem}
                                                                         {copiedId === `nitem-${item.uid}` && (
-                                                                            <Check className="w-3 h-3 ml-0.5" />
+                                                                            <Check className="w-3 h-3 ml-0.5 shrink-0" />
                                                                         )}
                                                                     </button>
                                                                 </TooltipTrigger>
@@ -387,9 +402,17 @@ export default function NfeItemLocatorCalculator() {
                                                     </TableCell>
 
                                                     {/* Código do Fabricante + NCM */}
-                                                    <TableCell className="py-1.5 px-2">
+                                                    <TableCell
+                                                        className="py-1.5 px-2"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
                                                         <div className="flex items-center gap-1">
-                                                            <span className="font-mono text-[11px] font-black text-primary break-all leading-tight">
+                                                            <span
+                                                                className={cn(
+                                                                    "font-mono text-[11px] font-black break-all leading-tight",
+                                                                    isChecked ? "line-through text-muted-foreground" : "text-primary"
+                                                                )}
+                                                            >
                                                                 {item.cProd}
                                                             </span>
                                                             <button
@@ -404,15 +427,21 @@ export default function NfeItemLocatorCalculator() {
                                                                 )}
                                                             </button>
                                                         </div>
-                                                        <span className="text-[9px] font-mono text-muted-foreground block leading-none mt-0.5">
+                                                        <span className={cn("text-[9px] font-mono text-muted-foreground block leading-none mt-0.5", isChecked && "line-through")}>
                                                             NCM: {item.NCM}
                                                         </span>
                                                     </TableCell>
 
-                                                    {/* Descrição Completa do Produto */}
-                                                    <TableCell className="py-1.5 px-2">
+                                                    {/* Descrição do Produto (XML) com largura equilibrada */}
+                                                    <TableCell className="py-1.5 px-2 max-w-[290px]">
                                                         <div className="flex flex-col gap-0.5">
-                                                            <span className="text-[11px] font-bold text-foreground leading-tight">
+                                                            <span
+                                                                className={cn(
+                                                                    "text-[11px] font-bold leading-tight truncate",
+                                                                    isChecked ? "line-through text-muted-foreground" : "text-foreground"
+                                                                )}
+                                                                title={item.xProd}
+                                                            >
                                                                 {item.xProd}
                                                             </span>
                                                             <div className="flex flex-wrap items-center gap-1">
@@ -429,26 +458,42 @@ export default function NfeItemLocatorCalculator() {
                                                         </div>
                                                     </TableCell>
 
-                                                    {/* NF de Origem, Série e Emissão */}
-                                                    <TableCell className="py-1.5 px-2">
-                                                        <div className="flex items-center gap-1">
-                                                            <Badge className="bg-foreground text-background hover:bg-foreground/90 font-mono text-[10px] font-black px-1.5 py-0 h-4 rounded">
+                                                    {/* NF de Origem, Série e Emissão (Sem quebrar linha no número da NF) */}
+                                                    <TableCell className="py-1.5 px-3 whitespace-nowrap">
+                                                        <div className="flex items-center gap-1.5 flex-nowrap">
+                                                            <span
+                                                                className={cn(
+                                                                    "inline-flex items-center font-mono text-[10px] font-black px-1.5 py-0.5 rounded whitespace-nowrap shrink-0",
+                                                                    isChecked
+                                                                        ? "bg-muted text-muted-foreground line-through"
+                                                                        : "bg-foreground text-background"
+                                                                )}
+                                                            >
                                                                 NF {item.nNF}
-                                                            </Badge>
-                                                            <span className="text-[9px] font-bold text-muted-foreground">
+                                                            </span>
+                                                            <span className={cn("text-[10px] font-bold text-muted-foreground whitespace-nowrap shrink-0", isChecked && "line-through")}>
                                                                 S:{item.serie}
                                                             </span>
-                                                            <span className="text-[9px] font-semibold text-muted-foreground ml-0.5">
+                                                            <span className={cn("text-[10px] font-semibold text-muted-foreground whitespace-nowrap shrink-0", isChecked && "line-through")}>
                                                                 {item.dhEmiFormatted}
                                                             </span>
                                                         </div>
-                                                        <span className="text-[9px] text-muted-foreground/80 truncate block max-w-[135px] mt-0.5" title={item.emitNome}>
+                                                        <span
+                                                            className={cn(
+                                                                "text-[9px] text-muted-foreground/80 truncate block max-w-[195px] mt-0.5",
+                                                                isChecked && "line-through"
+                                                            )}
+                                                            title={item.emitNome}
+                                                        >
                                                             {item.emitNome}
                                                         </span>
                                                     </TableCell>
 
                                                     {/* Chave de Acesso Compacta Copiável */}
-                                                    <TableCell className="py-1.5 px-2">
+                                                    <TableCell
+                                                        className="py-1.5 px-2"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
                                                         {item.chave ? (
                                                             <div className="flex items-center gap-1.5">
                                                                 <button
@@ -468,7 +513,12 @@ export default function NfeItemLocatorCalculator() {
                                                                         </>
                                                                     )}
                                                                 </button>
-                                                                <span className="font-mono text-[9px] text-muted-foreground select-all leading-tight break-all">
+                                                                <span
+                                                                    className={cn(
+                                                                        "font-mono text-[9px] text-muted-foreground select-all leading-tight break-all",
+                                                                        isChecked && "line-through"
+                                                                    )}
+                                                                >
                                                                     {item.chave}
                                                                 </span>
                                                             </div>
@@ -478,12 +528,22 @@ export default function NfeItemLocatorCalculator() {
                                                     </TableCell>
 
                                                     {/* Quantidade e Preço Unitário */}
-                                                    <TableCell className="py-1.5 px-2 text-right">
+                                                    <TableCell className="py-1.5 px-2 text-right whitespace-nowrap">
                                                         <div className="flex flex-col items-end leading-tight">
-                                                            <span className="text-[11px] font-mono font-black text-foreground">
+                                                            <span
+                                                                className={cn(
+                                                                    "text-[11px] font-mono font-black",
+                                                                    isChecked ? "line-through text-muted-foreground" : "text-foreground"
+                                                                )}
+                                                            >
                                                                 {formatCurrency4(item.vUnCom)} <span className="text-[9px] text-muted-foreground font-semibold">({formatNumber(item.qCom)} {item.uCom})</span>
                                                             </span>
-                                                            <span className="text-[9px] font-mono font-bold text-primary">
+                                                            <span
+                                                                className={cn(
+                                                                    "text-[9px] font-mono font-bold",
+                                                                    isChecked ? "line-through text-muted-foreground" : "text-primary"
+                                                                )}
+                                                            >
                                                                 Tot: {formatCurrency(item.vProd)}
                                                                 {item.vICMS > 0 ? ` | ICMS: ${formatCurrency(item.vICMS)}` : ''}
                                                             </span>
