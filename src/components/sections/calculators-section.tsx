@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
     Calculator, ShoppingCart, Percent, Plus, FileScan, Tag, 
@@ -151,7 +151,7 @@ export default function CalculatorsSection() {
 
     if (activeCalculator && ActiveCalculatorComponent) {
         return (
-            <div className="space-y-3 animate-in fade-in duration-300">
+            <div className="space-y-3 pr-3 pb-4 animate-in fade-in duration-300">
                 <div className="flex flex-wrap items-center justify-between gap-3 bg-card px-4 py-2.5 rounded-xl shadow-sm border border-border">
                     <div className="flex items-center gap-3">
                         <Button 
@@ -182,56 +182,63 @@ export default function CalculatorsSection() {
         );
     }
 
-  return (
-     <div className="space-y-10 animate-in fade-in duration-700">
-        <div className="relative overflow-hidden bg-foreground text-background rounded-[2.5rem] p-12 shadow-2xl">
-            <div className="absolute right-[-40px] top-[-40px] opacity-10 rotate-12">
-                <Sparkles size={300} />
-            </div>
-            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div>
-                    <h1 className="text-5xl font-black tracking-tighter">Fiscal Calculator Suite</h1>
-                    <p className="text-background/80 mt-3 text-lg font-black uppercase tracking-tight max-w-xl leading-snug opacity-70">
-                        Ferramentas inteligentes para auditoria fiscal, análise de custos e formação de preços estratégica.
-                    </p>
+    return (
+        <div className="space-y-5 pr-3 pb-4 animate-in fade-in duration-500">
+            {/* Banner Superior Compacto */}
+            <div className="relative overflow-hidden bg-foreground text-background rounded-2xl px-6 py-5 shadow-lg">
+                <div className="absolute right-[-20px] top-[-20px] opacity-10 rotate-12 pointer-events-none">
+                    <Sparkles size={160} />
                 </div>
-                <div className="flex shrink-0">
-                     <div className="bg-background/10 backdrop-blur-md p-4 px-6 rounded-2xl border border-background/20">
-                         <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Total de Ferramentas</span>
-                         <p className="text-3xl font-black">{calculators.length}</p>
-                     </div>
+                <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl md:text-3xl font-black tracking-tight">Fiscal Calculator Suite</h1>
+                        <p className="text-background/80 mt-1 text-xs font-bold uppercase tracking-wide opacity-75">
+                            Ferramentas inteligentes para auditoria fiscal, análise de custos e formação de preços estratégica.
+                        </p>
+                    </div>
+                    <div className="flex shrink-0">
+                        <div className="bg-background/10 backdrop-blur-md py-2 px-4 rounded-xl border border-background/20 flex items-center gap-3">
+                            <span className="text-[10px] font-black uppercase tracking-widest opacity-70">Ferramentas</span>
+                            <p className="text-xl font-black">{calculators.length}</p>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-             {calculators.map((calc) => (
-            <Card 
-                key={calc.id} 
-                className="group relative flex flex-col border border-border shadow-md hover:shadow-2xl transition-all duration-500 rounded-[2.5rem] overflow-hidden bg-card cursor-pointer border-opacity-50"
-                onClick={() => setActiveCalculatorId(calc.id)}
-            >
-                <div className={cn("h-1.5 w-full", calc.bg.replace('/10', ''))} />
-                <CardHeader className="p-8 pb-4">
-                    <div className={cn("w-16 h-16 rounded-[1.5rem] flex items-center justify-center mb-6 transition-transform group-hover:scale-110 duration-500 shadow-sm border border-border/10", calc.bg)}>
-                        <calc.icon className={cn("h-8 w-8", calc.color)} />
-                    </div>
-                    <CardTitle className="text-xl font-black tracking-tight group-hover:text-primary transition-colors">
-                        {calc.title}
-                    </CardTitle>
-                    <CardDescription className="mt-3 text-muted-foreground font-black opacity-70 text-xs uppercase tracking-wide leading-relaxed">
-                        {calc.description}
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="p-8 pt-4 flex items-center justify-between mt-auto">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-primary transition-colors">Acessar Ferramenta</span>
-                    <div className="w-11 h-11 rounded-2xl bg-muted flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all duration-500 shadow-sm">
-                        <ChevronRight className="h-5 w-5" />
-                    </div>
-                </CardContent>
-            </Card>
-            ))}
+            {/* Grid de Cards Compactos com Ícone e Nome Lado a Lado */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
+                {calculators.map((calc) => (
+                    <Card 
+                        key={calc.id} 
+                        className="group relative flex flex-col justify-between border border-border shadow-sm hover:shadow-lg hover:border-primary/40 transition-all duration-300 rounded-2xl overflow-hidden bg-card cursor-pointer p-4"
+                        onClick={() => setActiveCalculatorId(calc.id)}
+                    >
+                        <div className={cn("absolute top-0 left-0 right-0 h-1", calc.bg.replace('/10', ''))} />
+
+                        <div className="space-y-2 pt-0.5">
+                            {/* Ícone + Título Lado a Lado */}
+                            <div className="flex items-center justify-between gap-2.5">
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                    <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 duration-300 border border-border/10", calc.bg)}>
+                                        <calc.icon className={cn("h-4 w-4", calc.color)} />
+                                    </div>
+                                    <h3 className="text-sm font-black tracking-tight text-foreground group-hover:text-primary transition-colors truncate">
+                                        {calc.title}
+                                    </h3>
+                                </div>
+                                <div className="w-7 h-7 rounded-lg bg-muted/60 flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                                    <ChevronRight className="h-3.5 w-3.5" />
+                                </div>
+                            </div>
+
+                            {/* Descrição Compacta */}
+                            <p className="text-muted-foreground font-semibold text-[11px] leading-snug line-clamp-2 opacity-80">
+                                {calc.description}
+                            </p>
+                        </div>
+                    </Card>
+                ))}
+            </div>
         </div>
-    </div>
-  );
+    );
 }
