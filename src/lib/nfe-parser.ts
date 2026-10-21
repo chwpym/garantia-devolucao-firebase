@@ -78,6 +78,7 @@ export interface NfeItem {
     cEAN?: string;
     xProd: string;
     NCM: string;
+    CEST?: string;
     CFOP: string;
     uCom: string;
     qCom: number;
@@ -143,7 +144,8 @@ export function parseNfeXml(xmlString: string): ParsedNfe {
         ignoreAttributes: false,
         attributeNamePrefix: "@_",
         removeNSPrefix: true,
-        parseAttributeValue: true
+        parseAttributeValue: true,
+        parseTagValue: false
     });
 
     const jsonObj = parser.parse(xmlString);
@@ -160,28 +162,32 @@ export function parseNfeXml(xmlString: string): ParsedNfe {
     const ibscbsTot = nfeNode.total?.IBSCBSTot || {};
 
     const detList = ensureArray(nfeNode.det);
-    const items: NfeItem[] = detList.map((det: Record<string, any>, index: number) => {
-        const prod = det.prod || {};
-        const imposto = det.imposto || {};
+    const items: NfeItem[] = detList.map((det: Record<string, unknown>, index: number) => {
+        const prod = (det.prod as Record<string, unknown>) || {};
+        const imposto = (det.imposto as Record<string, unknown>) || {};
 
         // Lógica de extração de ICMS (Várias tags possíveis: ICMS00, ICMS10, ICMS60, etc.)
-        const icmsNode = imposto.ICMS ? Object.values(imposto.ICMS)[0] as Record<string, any> : {};
+        const icmsNode = imposto.ICMS ? Object.values(imposto.ICMS as Record<string, unknown>)[0] as Record<string, unknown> : {};
         
         // Lógica de extração de IPI
-        let ipiNode: Record<string, any> = {};
+        let ipiNode: Record<string, unknown> = {};
         if (imposto.IPI) {
-            if (imposto.IPI.IPITrib) ipiNode = imposto.IPI.IPITrib;
-            else if (imposto.IPI.IPINT) ipiNode = imposto.IPI.IPINT;
+            const ipi = imposto.IPI as Record<string, unknown>;
+            if (ipi.IPITrib) ipiNode = ipi.IPITrib as Record<string, unknown>;
+            else if (ipi.IPINT) ipiNode = ipi.IPINT as Record<string, unknown>;
         }
 
         // Lógica de extração de PIS/COFINS
-        const pisNode = imposto.PIS ? Object.values(imposto.PIS)[0] as Record<string, any> : {};
-        const cofinsNode = imposto.COFINS ? Object.values(imposto.COFINS)[0] as Record<string, any> : {};
+        const pisNode = imposto.PIS ? Object.values(imposto.PIS as Record<string, unknown>)[0] as Record<string, unknown> : {};
+        const cofinsNode = imposto.COFINS ? Object.values(imposto.COFINS as Record<string, unknown>)[0] as Record<string, unknown> : {};
 
         // Lógica de Reforma Tributária (IBS/CBS)
         // A estrutura pode variar, mas geralmente está dentro de gIBSCBS ou similar
-        const ibsCbsNode = imposto.IBSCBS?.gIBSCBS || {};
-        const gCbs = ibsCbsNode.gCBS || {};
+        const ibsCbs = imposto.IBSCBS as Record<string, unknown> | undefined;
+        const ibsCbsNode = (ibsCbs?.gIBSCBS as Record<string, unknown>) || {};
+        const gCbs = (ibsCbsNode.gCBS as Record<string, unknown>) || {};
+        const gIbsUf = (ibsCbsNode.gIBSUF as Record<string, unknown>) || {};
+        const gIbsMun = (ibsCbsNode.gIBSMun as Record<string, unknown>) || {};
 
         return {
             nItem: parseNumberSafe(det['@_nItem']) || (index + 1),
@@ -189,6 +195,7 @@ export function parseNfeXml(xmlString: string): ParsedNfe {
             cEAN: String(prod.cEAN || ''),
             xProd: String(prod.xProd || ''),
             NCM: String(prod.NCM || ''),
+            CEST: prod.CEST ? String(prod.CEST) : undefined,
             CFOP: String(prod.CFOP || ''),
             uCom: String(prod.uCom || ''),
             qCom: parseNumberSafe(prod.qCom),
@@ -206,15 +213,15 @@ export function parseNfeXml(xmlString: string): ParsedNfe {
                 vICMS: parseNumberSafe(icmsNode?.vICMS),
                 vBCST: parseNumberSafe(icmsNode?.vBCST),
                 pICMSST: parseNumberSafe(icmsNode?.pICMSST),
-                vICMSST: parseNumberSafe(icmsNode?.vICMSST),
+                vICMSST: parseNumberSafe(icmsNode?.vICMSST) + parseNumberSafe(icmsNode?.vFCPST),
                 vIPI: parseNumberSafe(ipiNode?.vIPI),
                 pIPI: parseNumberSafe(ipiNode?.pIPI),
                 vPIS: parseNumberSafe(pisNode?.vPIS),
                 pPIS: parseNumberSafe(pisNode?.pPIS),
                 vCOFINS: parseNumberSafe(cofinsNode?.vCOFINS),
                 pCOFINS: parseNumberSafe(cofinsNode?.pCOFINS),
-                vIBS: parseNumberSafe(ibsCbsNode?.vIBS),
-                pIBS: parseNumberSafe(ibsCbsNode?.pIBS),
+                vIBS: parseNumberSafe(ibsCbsNode?.vIBS) || (parseNumberSafe(gIbsUf?.vIBSUF) + parseNumberSafe(gIbsMun?.vIBSMun)),
+                pIBS: parseNumberSafe(ibsCbsNode?.pIBS) || (parseNumberSafe(gIbsUf?.pIBSUF) + parseNumberSafe(gIbsMun?.pIBSMun)),
                 vCBS: parseNumberSafe(gCbs?.vCBS),
                 pCBS: parseNumberSafe(gCbs?.pCBS),
             }
@@ -228,7 +235,7 @@ export function parseNfeXml(xmlString: string): ParsedNfe {
             mod: String(ide.mod || ''),
             serie: String(ide.serie || ''),
             nNF: String(ide.nNF || ''),
-            dhEmi: String(ide.dhEmi || ''),
+            dhEmi: String(ide.dhEmi || ide.dEmi || ''),
             chave: String(nfeNode['@_Id'] || '').replace('NFe', ''),
         },
         emit: {
@@ -267,7 +274,7 @@ export function parseNfeXml(xmlString: string): ParsedNfe {
             vSeg: parseNumberSafe(icmsTot.vSeg),
             vDesc: parseNumberSafe(icmsTot.vDesc),
             vOutro: parseNumberSafe(icmsTot.vOutro),
-            vST: parseNumberSafe(icmsTot.vST),
+            vST: parseNumberSafe(icmsTot.vST) + parseNumberSafe(icmsTot.vFCPST),
             vIPI: parseNumberSafe(icmsTot.vIPI),
             vICMS: parseNumberSafe(icmsTot.vICMS),
             vPIS: parseNumberSafe(icmsTot.vPIS),

@@ -25,6 +25,7 @@ type TaxRegime = 'lucro_real' | 'simples_nacional';
 
 interface AnalyzedItem {
     id: string;
+    nItem: number;
     cProd: string;
     description: string;
     quantity: number;
@@ -54,7 +55,7 @@ export default function AdvancedCostAnalysisCalculator() {
     const [manualOutros, setManualOutros] = useState("");
     const [manualDesconto, setManualDesconto] = useState("");
     const [useTaxReform, setUseTaxReform] = useState(false);
-    const [taxRegime, setTaxRegime] = useState<TaxRegime>('lucro_real');
+    const [taxRegime, setTaxRegime] = useState<TaxRegime>('simples_nacional');
     const { toast } = useToast();
 
     // Sincroniza com a nota carregada no Store Global
@@ -81,6 +82,7 @@ export default function AdvancedCostAnalysisCalculator() {
 
             return {
                 id: `${currentNfe.header.chave}-${index}`,
+                nItem: item.nItem || (index + 1),
                 cProd: item.cProd,
                 description: item.xProd,
                 quantity: item.qCom,
@@ -301,7 +303,7 @@ export default function AdvancedCostAnalysisCalculator() {
                                 <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary/10">
                                     <div className="space-y-0.5">
                                         <Label htmlFor="tax-reform" className="text-sm font-bold cursor-pointer">Simular Reforma Tributária</Label>
-                                        <p className="text-[10px] text-muted-foreground">Aplica IBS/CBS (novas regras)</p>
+                                        <p className="text-[10px] text-muted-foreground">Em 2026 o destaque é informativo. Ative p/ projetar IBS/CBS no custo.</p>
                                     </div>
                                     <Switch id="tax-reform" checked={useTaxReform} onCheckedChange={toggleTaxReform} />
                                 </div>
@@ -368,7 +370,7 @@ export default function AdvancedCostAnalysisCalculator() {
                         <Table>
                             <TableHeader>
                                 <TableRow className="bg-muted/50">
-                                    <TableHead className="w-[120px] text-xs font-bold">Cód. Forn.</TableHead>
+                                    <TableHead className="w-[140px] text-xs font-bold"># XML / Cód.</TableHead>
                                     <TableHead className="min-w-[250px] text-xs font-bold">Descrição do Produto</TableHead>
                                     <TableHead className="text-right text-xs font-bold">Qtde</TableHead>
                                     <TableHead className="w-[100px] text-xs font-bold">Fator Conv.</TableHead>
@@ -383,7 +385,7 @@ export default function AdvancedCostAnalysisCalculator() {
                             <TableBody>
                                 {items.map(item => (
                                     <TableRow key={item.id} className="hover:bg-primary/5 transition-colors">
-                                        <TableCell className="font-mono text-[11px] font-bold text-primary">{item.cProd}</TableCell>
+                                        <TableCell className="font-mono text-[11px] font-bold text-primary"><div className="flex items-center gap-1.5"><Badge variant="outline" className="h-4 px-1 font-mono text-[9px] font-black border-primary/30 text-primary shrink-0">#{item.nItem}</Badge><span className="truncate">{item.cProd}</span></div></TableCell>
                                         <TableCell className="text-xs">{item.description}</TableCell>
                                         <TableCell className="text-right font-mono text-xs">{formatNumber(item.quantity)}</TableCell>
                                         <TableCell>

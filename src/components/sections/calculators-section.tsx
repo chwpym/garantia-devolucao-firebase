@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { 
     Calculator, ShoppingCart, Percent, Plus, FileScan, Tag, 
     DivideCircle, Files, Microscope, ArrowLeft, Landmark, 
-    Replace, Info, ChevronRight, Sparkles
+    Replace, Info, ChevronRight, Sparkles, FileSearch
 } from 'lucide-react';
 import AveragePriceCalculator from '@/components/calculators/average-price-calculator';
 import BatchPricingCalculator from '@/components/calculators/batch-pricing-calculator';
@@ -21,9 +21,19 @@ import NfeComparator from '../calculators/nfe-comparator';
 import TaxAnalysisCalculator from '../calculators/tax-analysis-calculator';
 import PurchaseSimulatorCalculator from '../calculators/purchase-simulator-calculator';
 import NfeProductOriginCalculator from '../calculators/nfe-origin-calculator';
+import NfeItemLocatorCalculator from '../calculators/nfe-item-locator';
 import { cn } from '@/lib/utils';
 
 const calculators = [
+  {
+    id: 'nfe-item-locator',
+    icon: FileSearch,
+    title: 'Localizador de Item XML',
+    description: 'Busca rápida Multi-XML com Nº do Item (nItem), Chave e NF de Origem.',
+    component: NfeItemLocatorCalculator,
+    color: 'text-accent-green',
+    bg: 'bg-accent-green/10'
+  },
   {
     id: 'nfe-origin-analyzer',
     icon: Info,

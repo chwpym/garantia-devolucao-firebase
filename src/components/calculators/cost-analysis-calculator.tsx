@@ -20,6 +20,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 interface AnalyzedItem {
     id: string;
+    nItem: number;
     cProd: string;
     description: string;
     quantity: number;
@@ -78,6 +79,7 @@ export default function CostAnalysisCalculator() {
 
             return {
                 id: `${currentNfe.header.chave}-${index}`,
+                nItem: item.nItem || (index + 1),
                 cProd: item.cProd,
                 description: item.xProd,
                 quantity: item.qCom,
@@ -194,7 +196,7 @@ export default function CostAnalysisCalculator() {
                  <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex flex-col md:flex-row items-center gap-6">
                     <div className="flex items-center gap-3">
                         <Switch id="tax-reform-basic" checked={useTaxReform} onCheckedChange={setUseTaxReform} />
-                        <Label htmlFor="tax-reform-basic" className="text-sm font-black cursor-pointer uppercase tracking-tighter">Simular Reforma (IBS/CBS)</Label>
+                        <div className="space-y-0.5"><Label htmlFor="tax-reform-basic" className="text-sm font-black cursor-pointer uppercase tracking-tighter block">Simular Reforma (IBS/CBS no Custo)</Label><span className="text-[10px] text-muted-foreground font-bold block">Em 2026 o destaque (0,9% CBS / 0,1% IBS) é informativo e não altera o vNF. Ative apenas para projeção.</span></div>
                     </div>
                     <div className="md:ml-auto flex gap-3">
                         <Button onClick={generatePdf} variant="outline" className="rounded-xl font-black h-10 border-border">
@@ -210,7 +212,7 @@ export default function CostAnalysisCalculator() {
                         <Table>
                             <TableHeader>
                                 <TableRow className="bg-muted border-none">
-                                    <TableHead className="text-[10px] font-black uppercase text-muted-foreground">Cód / Produto</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase text-muted-foreground"># XML / Cód / Produto</TableHead>
                                     <TableHead className="text-right text-[10px] font-black uppercase text-muted-foreground">Qtde</TableHead>
                                     <TableHead className="text-center text-[10px] font-black uppercase text-muted-foreground">Fator</TableHead>
                                     <TableHead className="text-right text-[10px] font-black uppercase text-muted-foreground">Custo NF</TableHead>
@@ -224,7 +226,7 @@ export default function CostAnalysisCalculator() {
                                     <TableRow key={item.id} className="hover:bg-accent/5 transition-colors border-border">
                                         <TableCell>
                                             <div className="flex flex-col">
-                                                <span className="font-mono text-[9px] font-black text-primary">{item.cProd}</span>
+                                                <div className="flex items-center gap-1.5"><Badge variant="outline" className="h-4 px-1 font-mono text-[9px] font-black border-primary/30 text-primary">#{item.nItem}</Badge><span className="font-mono text-[9px] font-black text-primary">{item.cProd}</span></div>
                                                 <span className="text-xs font-black text-foreground truncate max-w-[250px]">{item.description}</span>
                                             </div>
                                         </TableCell>

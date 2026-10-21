@@ -20,9 +20,11 @@ import { formatCurrency, formatNumber, formatCurrency4 } from "@/lib/utils";
 import { useNfeStore } from "@/store/use-nfe-store";
 import { NfeUploader } from "@/components/nfe/NfeUploader";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface BatchPriceItem {
     id: string;
+    nItem?: number;
     cProd: string;
     description: string;
     quantity: number;
@@ -38,12 +40,16 @@ interface BatchPriceItem {
     vICMSST?: number;
     vIBS?: number;
     vCBS?: number;
+    hasSt?: boolean;
+    cst?: string;
+    cfop?: string;
 }
 
 export default function BatchPricingCalculator() {
     const { currentNfe } = useNfeStore();
     const [items, setItems] = useState<BatchPriceItem[]>([]);
     const [globalMargin, setGlobalMargin] = useState("");
+    const [globalTax, setGlobalTax] = useState("");
     const { toast } = useToast();
 
     useEffect(() => {
@@ -79,6 +85,7 @@ export default function BatchPricingCalculator() {
 
             return {
                 id: `${currentNfe.header.chave}-${index}`,
+                nItem: item.nItem || (index + 1),
                 cProd: item.cProd,
                 description: item.xProd,
                 quantity: item.qCom,
@@ -93,7 +100,10 @@ export default function BatchPricingCalculator() {
                 vIPI,
                 vICMSST,
                 vIBS,
-                vCBS
+                vCBS,
+                hasSt: (vICMSST > 0) || ['10', '30', '60', '70', '201', '202', '203', '500'].includes(String(item.CST || '')) || /^[56]4/.test(String(item.CFOP || '')),
+                cst: item.CST,
+                cfop: item.CFOP
             };
         });
 
@@ -144,6 +154,11 @@ export default function BatchPricingCalculator() {
         if (!globalMargin) return;
         setItems(prev => prev.map(item => calculatePricing(item, 'margin', globalMargin)));
         toast({ title: "Margem Aplicada" });
+    };
+    const applyGlobalTax = () => {
+        if (!globalTax) return;
+        setItems(prev => prev.map(item => calculatePricing(item, 'impostoSobreVenda', globalTax)));
+        toast({ title: "Imposto Global Aplicado" });
     };
 
     const addItem = () => {
@@ -214,12 +229,15 @@ export default function BatchPricingCalculator() {
             {items.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                      <Card className="bg-card text-foreground border border-border shadow-xl rounded-2xl p-4">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground mb-2 block opacity-70">Margem Global</Label>
+                        <Label className="text-[10px] font-black uppercase text-muted-foreground mb-2 block opacity-70">Margem Global % / Imposto %</Label>
                         <div className="flex gap-2">
-                            <Input placeholder="%" value={globalMargin} onChange={e => setGlobalMargin(e.target.value)} className="h-10 font-black bg-background border-border" />
-                            <Button onClick={applyGlobalMargin} size="icon" className="shrink-0 bg-primary hover:bg-primary/90 text-primary-foreground">
-                                <ChevronsRight size={18} />
-                            </Button>
+                            <Input placeholder="Margem %" value={globalMargin} onChange={e => setGlobalMargin(e.target.value)} className="h-10 font-black bg-background border-border" />
+                            <Button onClick={applyGlobalMargin} size="icon" title="Aplicar Margem Global" className="shrink-0 bg-primary hover:bg-primary/90 text-primary-foreground"><ChevronsRight size={18} /></Button>
+                            <Input placeholder="Imp. %" value={globalTax} onChange={e => setGlobalTax(e.target.value)} className="h-10 font-black bg-background border-border" />
+                            <Button onClick={applyGlobalTax} size="icon" variant="outline" title="Aplicar Imposto Global" className="shrink-0 border-destructive/30 text-destructive hover:bg-destructive/10"><ChevronsRight size={18} /></Button>
+
+
+
                         </div>
                     </Card>
 
@@ -245,7 +263,7 @@ export default function BatchPricingCalculator() {
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-muted border-none">
-                                <TableHead className="text-[10px] font-black uppercase text-muted-foreground">Item / Descrição</TableHead>
+                                <TableHead className="text-[10px] font-black uppercase text-muted-foreground"># XML / Item / Descrição</TableHead>
                                 <TableHead className="text-right text-[10px] font-black uppercase text-muted-foreground">Custo Final</TableHead>
                                 <TableHead className="text-center text-[10px] font-black uppercase text-muted-foreground">Fator</TableHead>
                                 <TableHead className="text-right text-[10px] font-black uppercase text-primary">Margem %</TableHead>
@@ -260,7 +278,7 @@ export default function BatchPricingCalculator() {
                                 <TableRow key={item.id} className="hover:bg-accent/5 group border-border">
                                     <TableCell>
                                         <div className="flex flex-col">
-                                            <span className="font-mono text-[9px] font-black text-primary">{item.cProd || 'MANUAL'}</span>
+                                             <div className="flex items-center gap-1.5 flex-wrap">{item.nItem && <Badge variant="outline" className="h-4 px-1 font-mono text-[9px] font-black border-primary/30 text-primary">#{item.nItem}</Badge>}<span className="font-mono text-[9px] font-black text-primary">{item.cProd || 'MANUAL'}</span>{item.nItem && <Badge variant={item.hasSt ? "secondary" : "outline"} className="h-4 px-1 text-[8px] font-black uppercase" title={item.hasSt ? `Entrada com ST (CST ${item.cst} / CFOP ${item.cfop}) — Segrega ICMS no DAS` : `Entrada Tributada sem ST (CST ${item.cst} / CFOP ${item.cfop} - Portaria SRE 34/2026) — Paga ICMS no DAS`}>{item.hasSt ? 'COM ST' : 'SEM ST (Trib.)'}</Badge>}</div>
                                             <span className="text-xs font-black text-foreground truncate max-w-[200px]">{item.description}</span>
                                         </div>
                                     </TableCell>
@@ -297,6 +315,7 @@ export default function BatchPricingCalculator() {
                                         <Button variant="ghost" size="icon" onClick={() => setItems(prev => prev.filter(i => i.id !== item.id))} className="h-8 w-8 text-destructive opacity-0 group-hover:opacity-100 transition-opacity rounded-xl">
                                             <Trash2 size={14} />
                                         </Button>
+            
                                     </TableCell>
                                 </TableRow>
                             ))}

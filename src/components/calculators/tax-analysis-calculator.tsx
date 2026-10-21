@@ -17,6 +17,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 interface AnalyzedTaxItem {
     id: string;
+    nItem: number;
     cProd: string;
     description: string;
     ncm: string;
@@ -47,6 +48,7 @@ export default function TaxAnalysisCalculator() {
         const newItems: AnalyzedTaxItem[] = currentNfe.items.map((item, index) => {
             return {
                 id: `${currentNfe.header.chave}-${index}`,
+                nItem: item.nItem || (index + 1),
                 cProd: item.cProd,
                 description: item.xProd,
                 ncm: item.NCM || "",
@@ -194,7 +196,7 @@ export default function TaxAnalysisCalculator() {
                         <Table>
                             <TableHeader>
                                 <TableRow className="bg-muted">
-                                    <TableHead className="w-[120px] text-[10px] font-black uppercase text-muted-foreground">Cód. Forn.</TableHead>
+                                    <TableHead className="w-[140px] text-[10px] font-black uppercase text-muted-foreground"># XML / Cód.</TableHead>
                                     <TableHead className="min-w-[200px] text-[10px] font-black uppercase text-muted-foreground">Descrição</TableHead>
                                     <TableHead className="text-center text-[10px] font-black uppercase text-muted-foreground">NCM / CST</TableHead>
                                     <TableHead className="text-right text-[10px] font-black uppercase text-muted-foreground">Total Item</TableHead>
@@ -208,7 +210,7 @@ export default function TaxAnalysisCalculator() {
                             <TableBody>
                                  {items.map(item => (
                                     <TableRow key={item.id} className="hover:bg-accent/5 transition-colors">
-                                        <TableCell className="font-mono text-[10px] font-black text-muted-foreground">{item.cProd}</TableCell>
+                                        <TableCell className="font-mono text-[10px] font-black text-muted-foreground"><div className="flex items-center gap-1.5"><Badge variant="outline" className="h-4 px-1 font-mono text-[9px] font-black border-primary/30 text-primary shrink-0">#{item.nItem}</Badge><span className="truncate">{item.cProd}</span></div></TableCell>
                                         <TableCell className="text-xs font-black text-foreground truncate max-w-[250px]">{item.description}</TableCell>
                                          <TableCell className="text-center">
                                             <div className="flex flex-col">

@@ -33,6 +33,7 @@ interface SimulatedItem {
     originalQuantity: number;
     simulatedQuantity: string;
     unitCost: number;
+    nItem?: number;
     additionalCosts: number;
     ipi: number;
     icmsST: number;
@@ -136,6 +137,7 @@ export default function PurchaseSimulatorCalculator() {
 
             return {
                 id: `${currentNfe.header.chave}-${index}`,
+                nItem: item.nItem || (index + 1),
                 cProd: item.cProd,
                 description: item.xProd,
                 ...baseItem,
@@ -486,7 +488,7 @@ export default function PurchaseSimulatorCalculator() {
                                  <Table>
                                      <TableHeader>
                                         <TableRow className="bg-muted/50 hover:bg-muted/50 border-b border-border">
-                                            <TableHead className="w-[120px] text-[10px] font-black uppercase text-muted-foreground opacity-70">Cód. Forn.</TableHead>
+                                            <TableHead className="w-[140px] text-[10px] font-black uppercase text-muted-foreground opacity-70"># XML / Cód.</TableHead>
                                             <TableHead className="min-w-[200px] text-[10px] font-black uppercase text-muted-foreground opacity-70">Descrição</TableHead>
                                             <TableHead className="text-right text-[10px] font-black uppercase text-muted-foreground opacity-70">Qtde Orig.</TableHead>
                                             <TableHead className="text-right text-[10px] font-black uppercase text-primary">Qtde Sim.</TableHead>
@@ -499,7 +501,7 @@ export default function PurchaseSimulatorCalculator() {
                                      <TableBody>
                                         {items.map(item => (
                                             <TableRow key={item.id} className="hover:bg-muted/30 transition-colors group border-b border-border/50">
-                                                <TableCell className="font-mono text-[10px] font-black text-muted-foreground opacity-60">{item.cProd}</TableCell>
+                                                <TableCell className="font-mono text-[10px] font-black text-muted-foreground"><div className="flex items-center gap-1.5"><Badge variant="outline" className="h-4 px-1 font-mono text-[9px] font-black border-primary/30 text-primary shrink-0">#{item.nItem || '-'}</Badge><span className="opacity-70 truncate">{item.cProd}</span></div></TableCell>
                                                 <TableCell className="text-xs font-black">{item.description}</TableCell>
                                                 <TableCell className="text-right text-xs font-black text-muted-foreground opacity-60">{formatNumber4(item.originalQuantity)}</TableCell>
                                                 <TableCell className="text-right">

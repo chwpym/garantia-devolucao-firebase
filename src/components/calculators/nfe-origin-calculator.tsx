@@ -28,6 +28,7 @@ const ORIGEM_LEGENDA: Record<string, string> = {
 
 interface OriginItem {
     id: string;
+    nItem: number;
     cProd: string;
     description: string;
     ncm: string;
@@ -50,6 +51,7 @@ export default function NfeProductOriginCalculator() {
 
         const newItems: OriginItem[] = currentNfe.items.map((item, index) => ({
             id: `${currentNfe.header.chave}-${index}`,
+            nItem: item.nItem || (index + 1),
             cProd: item.cProd,
             description: item.xProd,
             ncm: item.NCM || "",
@@ -130,6 +132,7 @@ export default function NfeProductOriginCalculator() {
                         <Table>
                             <TableHeader>
                                 <TableRow className="bg-muted/50 border-b border-border">
+                                    <TableHead className="w-[65px] text-center text-[10px] font-black uppercase text-muted-foreground opacity-70"># XML</TableHead>
                                     <TableHead className="w-[120px] text-[10px] font-black uppercase text-muted-foreground opacity-70">Cód. Forn.</TableHead>
                                     <TableHead className="min-w-[250px] text-[10px] font-black uppercase text-muted-foreground opacity-70">Descrição do Produto</TableHead>
                                     <TableHead className="text-center text-[10px] font-black uppercase text-muted-foreground opacity-70">NCM</TableHead>
@@ -140,6 +143,7 @@ export default function NfeProductOriginCalculator() {
                             <TableBody>
                                 {items.map(item => (
                                     <TableRow key={item.id} className="hover:bg-muted/30 transition-colors border-b border-border/50">
+                                        <TableCell className="text-center"><Badge variant="outline" className="h-5 px-1.5 font-mono text-[10px] font-black border-primary/30 text-primary">#{item.nItem}</Badge></TableCell>
                                         <TableCell className="font-mono text-[10px] font-black text-primary">{item.cProd}</TableCell>
                                         <TableCell className="text-xs font-black">{item.description}</TableCell>
                                         <TableCell className="text-center font-mono text-[10px] text-muted-foreground opacity-60 font-black">{item.ncm}</TableCell>

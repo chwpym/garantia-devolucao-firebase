@@ -33,6 +33,7 @@ interface ComparisonResult {
         emitterName: string;
         quantity: number;
         unitCost: number;
+        nItem?: number;
     }>;
 }
 
@@ -47,11 +48,12 @@ export default function NfeComparator() {
 
     const getAllProducts = useCallback(() => {
        return allNfes.flatMap(nfe => 
-            nfe.items.map(item => ({
+            nfe.items.map((item, index) => ({
                 code: item.cProd,
                 description: item.xProd,
                 quantity: item.qCom,
                 unitCost: item.vUnCom,
+                nItem: item.nItem || (index + 1),
                 nfeId: nfe.header.chave,
                 nfeNumber: nfe.header.nNF || 'N/A',
                 emitterName: nfe.emit.xNome || 'N/A'
@@ -98,7 +100,8 @@ export default function NfeComparator() {
                         nfeNumber: item.nfeNumber,
                         emitterName: item.emitterName,
                         quantity: item.quantity,
-                        unitCost: item.unitCost
+                        unitCost: item.unitCost,
+                        nItem: item.nItem
                     }))
                 };
             }).filter(item => item.nfeCount > 1);
@@ -153,7 +156,8 @@ export default function NfeComparator() {
                 nfeNumber: p.nfeNumber,
                 emitterName: p.emitterName,
                 quantity: p.quantity,
-                unitCost: p.unitCost
+                unitCost: p.unitCost,
+                nItem: p.nItem
             });
             return acc;
         }, {} as Record<string, { code: string; description: string; occurrences: ComparisonResult['occurrences'] }>);
@@ -222,7 +226,7 @@ export default function NfeComparator() {
                                                 <div key={index} className="text-[9px] p-3 rounded-xl bg-accent/20 border border-border relative group/item">
                                                    <div className="flex justify-between items-center mb-1">
                                                        <span className="font-black text-muted-foreground uppercase tracking-tighter truncate max-w-[120px]">{occ.emitterName}</span>
-                                                       <span className="text-primary font-black">NF: {occ.nfeNumber}</span>
+                                                       <span className="text-primary font-black">NF: {occ.nfeNumber} • Item #{occ.nItem}</span>
                                                    </div>
                                                    <div className="flex justify-between items-center">
                                                         <span className="text-muted-foreground/70 font-bold">Qtde: {formatNumber(occ.quantity)}</span>
@@ -340,6 +344,7 @@ export default function NfeComparator() {
                                         <Table>
                                             <TableHeader>
                                                 <TableRow className="hover:bg-transparent bg-muted/50">
+                                                    <TableHead className="w-[55px] text-center text-[9px] font-black uppercase py-3 text-muted-foreground"># XML</TableHead>
                                                     <TableHead className="text-[9px] font-black uppercase py-3 text-muted-foreground">Código</TableHead>
                                                     <TableHead className="text-[9px] font-black uppercase text-muted-foreground">Descrição</TableHead>
                                                     <TableHead className="text-right text-[9px] font-black uppercase text-muted-foreground">Qtd</TableHead>
@@ -349,6 +354,7 @@ export default function NfeComparator() {
                                              <TableBody>
                                                 {nfe.items.map((prod, idx) => (
                                                     <TableRow key={`${nfe.header.chave}-${idx}`} className="hover:bg-background/80 border-border">
+                                                        <TableCell className="text-center font-mono text-[10px] font-black text-primary">#{prod.nItem || (idx + 1)}</TableCell>
                                                         <TableCell className="font-mono text-[10px] font-black text-primary">{prod.cProd}</TableCell>
                                                         <TableCell className="text-[10px] font-bold text-foreground leading-tight">{prod.xProd}</TableCell>
                                                         <TableCell className="text-right font-mono text-[10px]">{formatNumber(prod.qCom)}</TableCell>
