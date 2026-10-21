@@ -23,8 +23,7 @@ import {
     Calendar,
     X,
     CheckSquare,
-    Sparkles,
-    Trash2
+    Sparkles
 } from 'lucide-react';
 
 interface FlatXmlItem {
@@ -48,7 +47,6 @@ interface FlatXmlItem {
     vICMS: number;
     vIPI: number;
     vST: number;
-    // Dados da NF de Origem
     nNF: string;
     serie: string;
     dhEmiFormatted: string;
@@ -60,7 +58,6 @@ interface FlatXmlItem {
 
 function formatDateBr(dhEmi?: string): string {
     if (!dhEmi) return 'N/A';
-    // Tenta extrair YYYY-MM-DD
     const match = dhEmi.match(/^(\d{4})-(\d{2})-(\d{2})/);
     if (match) {
         return `${match[3]}/${match[2]}/${match[1]}`;
@@ -84,7 +81,6 @@ export default function NfeItemLocatorCalculator() {
     const [checkedUids, setCheckedUids] = useState<Record<string, boolean>>({});
     const [copiedId, setCopiedId] = useState<string | null>(null);
 
-    // Achata todos os itens de todos os XMLs carregados
     const allItems = useMemo<FlatXmlItem[]>(() => {
         return allNfes.flatMap((nfe) => {
             const chaveClean = (nfe.header.chave || '').replace(/\D/g, '');
@@ -125,7 +121,6 @@ export default function NfeItemLocatorCalculator() {
         });
     }, [allNfes]);
 
-    // Filtragem rápida (suporta busca simples ou múltiplos códigos separados por vírgula / espaço / quebra de linha)
     const filteredItems = useMemo(() => {
         return allItems.filter((item) => {
             if (selectedNfeChave !== 'ALL' && item.chave !== selectedNfeChave) {
@@ -136,7 +131,6 @@ export default function NfeItemLocatorCalculator() {
             }
             if (!searchQuery.trim()) return true;
 
-            // Se o usuário separar por vírgula ou ponto-e-vírgula, fazemos OR entre os termos (modo lista de peças da autorização)
             const rawQuery = searchQuery.trim().toLowerCase();
             const multiTerms = rawQuery.includes(',') || rawQuery.includes(';')
                 ? rawQuery.split(/[,;]+/).map((t) => t.trim()).filter(Boolean)
@@ -182,7 +176,6 @@ export default function NfeItemLocatorCalculator() {
 
     const checkedCount = useMemo(() => Object.values(checkedUids).filter(Boolean).length, [checkedUids]);
 
-    // Texto automático para Dados Adicionais (conforme exigência das Solicitações de Garantia)
     const dadosAdicionaisText = useMemo(() => {
         const baseList = checkedCount > 0
             ? allItems.filter((i) => checkedUids[i.uid])
@@ -209,54 +202,42 @@ export default function NfeItemLocatorCalculator() {
     }, [allItems, filteredItems, checkedUids, checkedCount]);
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
-            {/* Cabeçalho Principal */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="space-y-1">
-                    <h2 className="text-2xl font-black tracking-tight text-foreground flex items-center gap-2">
-                        <FileSearch className="w-6 h-6 text-primary" />
-                        Localizador de Item & Referência XML (Multi-NF)
-                    </h2>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider font-black opacity-70">
-                        Encontre a posição exata do item (<code className="text-primary">nItem</code>), Chave de Acesso e dados de origem em múltiplos XMLs
-                    </p>
-                </div>
-                <NfeUploader />
-            </div>
+        <div className="space-y-2.5 animate-in fade-in duration-300">
+            {/* Barra Única Compacta: Busca + Conferidos + Uploader + Chips de Notas */}
+            <Card className="border border-border shadow-sm rounded-xl bg-card">
+                <CardContent className="p-2.5 space-y-2">
+                    <div className="flex flex-col lg:flex-row gap-2 items-stretch lg:items-center justify-between">
+                        {/* Campo de Busca Compacto */}
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                            <Input
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Buscar Código (F000KE0P05), vários códigos por vírgula (CE10103, 343328), Descrição ou Nº NF..."
+                                className="pl-8 pr-8 h-8 font-semibold text-xs bg-background border-border focus-visible:ring-primary rounded-lg"
+                            />
+                            {searchQuery && (
+                                <button
+                                    onClick={() => setSearchQuery('')}
+                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                    title="Limpar busca"
+                                >
+                                    <X className="w-3.5 h-3.5" />
+                                </button>
+                            )}
+                        </div>
 
-            {allNfes.length > 0 ? (
-                <>
-                    {/* Barra de Filtro Rápido + Chips das Notas Carregadas */}
-                    <Card className="border border-border shadow-md rounded-2xl bg-card">
-                        <CardContent className="p-4 space-y-4">
-                            <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center">
-                                <div className="relative flex-1">
-                                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                    <Input
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        placeholder="Buscar por Código (ex: F000KE0P05), vários códigos separados por vírgula (CE10103, 343328), Descrição ou Nº da NF..."
-                                        className="pl-10 pr-9 h-11 font-bold text-sm bg-background border-border focus-visible:ring-primary rounded-xl"
-                                    />
-                                    {searchQuery && (
-                                        <button
-                                            onClick={() => setSearchQuery('')}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                                            title="Limpar busca"
-                                        >
-                                            <X className="w-4 h-4" />
-                                        </button>
-                                    )}
-                                </div>
-
-                                <div className="flex items-center gap-2 shrink-0">
+                        {/* Ações Lado a Lado */}
+                        <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+                            {allNfes.length > 0 && (
+                                <>
                                     <Button
                                         variant={showOnlyChecked ? 'default' : 'outline'}
                                         size="sm"
                                         onClick={() => setShowOnlyChecked((prev) => !prev)}
-                                        className="h-11 px-4 rounded-xl font-black text-xs gap-2"
+                                        className="h-8 px-2.5 rounded-lg font-bold text-[11px] gap-1.5"
                                     >
-                                        <CheckSquare className="w-4 h-4" />
+                                        <CheckSquare className="w-3.5 h-3.5" />
                                         Conferidos ({checkedCount})
                                     </Button>
                                     {checkedCount > 0 && (
@@ -264,26 +245,31 @@ export default function NfeItemLocatorCalculator() {
                                             variant="ghost"
                                             size="sm"
                                             onClick={() => setCheckedUids({})}
-                                            className="h-11 px-3 rounded-xl font-black text-xs text-muted-foreground hover:text-destructive"
+                                            className="h-8 px-2 rounded-lg font-bold text-[10px] text-muted-foreground hover:text-destructive"
                                             title="Desmarcar todos"
                                         >
-                                            Limpar Seleção
+                                            Limpar
                                         </Button>
                                     )}
-                                </div>
-                            </div>
+                                </>
+                            )}
+                            <NfeUploader hideSelector />
+                        </div>
+                    </div>
 
-                            {/* Filtro Rápido por NF-e carregada */}
-                            <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-border/50">
-                                <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground mr-1">
-                                    Notas Carregadas ({allNfes.length}):
+                    {/* Chips das Notas Carregadas + Contagem na mesma linha */}
+                    {allNfes.length > 0 && (
+                        <div className="flex flex-wrap items-center justify-between gap-2 pt-1.5 border-t border-border/50">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                                    NFs ({allNfes.length}):
                                 </span>
                                 <Badge
                                     variant={selectedNfeChave === 'ALL' ? 'default' : 'outline'}
                                     onClick={() => setSelectedNfeChave('ALL')}
-                                    className="cursor-pointer h-7 px-3 rounded-lg font-black text-[10px] uppercase transition-all"
+                                    className="cursor-pointer h-5 px-2 rounded-md font-bold text-[10px] uppercase transition-all"
                                 >
-                                    Todas ({allItems.length} itens)
+                                    Todas ({allItems.length})
                                 </Badge>
                                 {allNfes.map((nfe) => {
                                     const chaveClean = (nfe.header.chave || '').replace(/\D/g, '');
@@ -291,19 +277,19 @@ export default function NfeItemLocatorCalculator() {
                                     return (
                                         <div
                                             key={chaveClean || nfe.header.nNF}
-                                            className="inline-flex items-center rounded-lg border border-border overflow-hidden bg-muted/30"
+                                            className="inline-flex items-center rounded-md border border-border overflow-hidden bg-muted/30"
                                         >
                                             <button
                                                 onClick={() => setSelectedNfeChave(isSelected ? 'ALL' : chaveClean)}
-                                                className={`h-7 px-2.5 text-[10px] font-black uppercase flex items-center gap-1.5 transition-colors ${
+                                                className={`h-5 px-2 text-[10px] font-bold uppercase flex items-center gap-1 transition-colors ${
                                                     isSelected
                                                         ? 'bg-primary text-primary-foreground'
                                                         : 'hover:bg-muted text-foreground'
                                                 }`}
                                             >
-                                                <FileText className="w-3 h-3" />
+                                                <FileText className="w-2.5 h-2.5" />
                                                 NF {nfe.header.nNF}
-                                                <span className="opacity-70">({formatDateBr(nfe.header.dhEmi)})</span>
+                                                <span className="opacity-70 text-[9px]">({formatDateBr(nfe.header.dhEmi)})</span>
                                             </button>
                                             <button
                                                 onClick={() => {
@@ -311,49 +297,48 @@ export default function NfeItemLocatorCalculator() {
                                                     removeNfe(nfe.header.chave || '');
                                                 }}
                                                 title={`Remover NF ${nfe.header.nNF}`}
-                                                className="h-7 px-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                                                className="h-5 px-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                                             >
-                                                <X className="w-3 h-3" />
+                                                <X className="w-2.5 h-2.5" />
                                             </button>
                                         </div>
                                     );
                                 })}
                             </div>
-                        </CardContent>
-                    </Card>
 
-                    {/* Tabela de Resultados Otimizada para o ERP ("Documento Fiscal Referenciado") */}
-                    <div className="rounded-2xl border border-border shadow-xl overflow-hidden bg-card">
-                        <div className="bg-muted/40 px-4 py-2.5 border-b border-border flex flex-wrap items-center justify-between gap-2">
-                            <span className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">
-                                Exibindo <strong className="text-foreground">{filteredItems.length}</strong> de {allItems.length} itens nas {allNfes.length} NF-es
-                            </span>
-                            <span className="text-[10px] font-bold text-muted-foreground">
-                                Dica: Clique na <strong className="text-primary">Posição XML</strong> ou na <strong className="text-primary">Chave de Acesso</strong> para copiar em 1 clique.
+                            <span className="text-[10px] font-semibold text-muted-foreground ml-auto">
+                                Exibindo <strong className="text-foreground">{filteredItems.length}</strong> de {allItems.length} itens • Clique no <strong className="text-primary"># Item</strong> ou <strong className="text-primary">Chave</strong> p/ copiar
                             </span>
                         </div>
+                    )}
+                </CardContent>
+            </Card>
 
-                        <div className="overflow-x-auto max-h-[60vh]">
+            {allNfes.length > 0 ? (
+                <>
+                    {/* Tabela Principal Densa e Ampla */}
+                    <div className="rounded-xl border border-border shadow-md overflow-hidden bg-card">
+                        <div className="overflow-x-auto">
                             <Table>
-                                <TableHeader className="sticky top-0 bg-muted z-10 shadow-sm">
-                                    <TableRow className="border-b border-border">
-                                        <TableHead className="w-[44px] text-center text-[10px] font-black uppercase text-muted-foreground">OK</TableHead>
-                                        <TableHead className="w-[100px] text-center text-[10px] font-black uppercase text-primary">
-                                            Nº Item XML
+                                <TableHeader className="bg-muted/70">
+                                    <TableRow className="border-b border-border h-8">
+                                        <TableHead className="w-[36px] py-1.5 px-2 text-center text-[10px] font-black uppercase text-muted-foreground">OK</TableHead>
+                                        <TableHead className="w-[76px] py-1.5 px-2 text-center text-[10px] font-black uppercase text-primary">
+                                            # XML
                                         </TableHead>
-                                        <TableHead className="w-[150px] text-[10px] font-black uppercase text-muted-foreground">
+                                        <TableHead className="w-[135px] py-1.5 px-2 text-[10px] font-black uppercase text-muted-foreground">
                                             Cód. Fabricante
                                         </TableHead>
-                                        <TableHead className="min-w-[260px] text-[10px] font-black uppercase text-muted-foreground">
+                                        <TableHead className="min-w-[240px] py-1.5 px-2 text-[10px] font-black uppercase text-muted-foreground">
                                             Descrição do Produto (XML)
                                         </TableHead>
-                                        <TableHead className="w-[150px] text-[10px] font-black uppercase text-muted-foreground">
-                                            NF Origem / Emissão
+                                        <TableHead className="w-[140px] py-1.5 px-2 text-[10px] font-black uppercase text-muted-foreground">
+                                            NF Origem / Data
                                         </TableHead>
-                                        <TableHead className="min-w-[240px] text-[10px] font-black uppercase text-muted-foreground">
-                                            Chave de Acesso (44 Dígitos)
+                                        <TableHead className="w-[245px] py-1.5 px-2 text-[10px] font-black uppercase text-muted-foreground">
+                                            Chave de Acesso (44 Díg.)
                                         </TableHead>
-                                        <TableHead className="text-right text-[10px] font-black uppercase text-muted-foreground">
+                                        <TableHead className="w-[145px] py-1.5 px-2 text-right text-[10px] font-black uppercase text-muted-foreground">
                                             Qtde / Preço Un.
                                         </TableHead>
                                     </TableRow>
@@ -365,12 +350,12 @@ export default function NfeItemLocatorCalculator() {
                                             return (
                                                 <TableRow
                                                     key={item.uid}
-                                                    className={`transition-colors border-b border-border/60 ${
+                                                    className={`transition-colors border-b border-border/50 ${
                                                         isChecked ? 'bg-primary/5 hover:bg-primary/10' : 'hover:bg-muted/30'
                                                     }`}
                                                 >
-                                                    {/* Checkbox de Conferência */}
-                                                    <TableCell className="text-center">
+                                                    {/* Checkbox */}
+                                                    <TableCell className="py-1.5 px-2 text-center">
                                                         <Checkbox
                                                             checked={isChecked}
                                                             onCheckedChange={() => toggleCheck(item.uid)}
@@ -378,38 +363,38 @@ export default function NfeItemLocatorCalculator() {
                                                         />
                                                     </TableCell>
 
-                                                    {/* Posição do Item no XML (nItem) em Destaque */}
-                                                    <TableCell className="text-center">
+                                                    {/* Posição do Item no XML (nItem) */}
+                                                    <TableCell className="py-1.5 px-2 text-center">
                                                         <TooltipProvider>
                                                             <Tooltip>
                                                                 <TooltipTrigger asChild>
                                                                     <button
                                                                         onClick={() => handleCopy(String(item.nItem), 'Nº do Item XML', `nitem-${item.uid}`)}
-                                                                        className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl bg-primary text-primary-foreground font-mono text-sm font-black shadow-sm hover:scale-105 active:scale-95 transition-all"
+                                                                        className="inline-flex items-center justify-center gap-0.5 px-2 py-0.5 rounded-md bg-primary text-primary-foreground font-mono text-xs font-black shadow-sm hover:opacity-90 active:scale-95 transition-all"
                                                                     >
-                                                                        <Hash className="w-3.5 h-3.5 opacity-80" />
+                                                                        <Hash className="w-3 h-3 opacity-80" />
                                                                         {item.nItem}
                                                                         {copiedId === `nitem-${item.uid}` && (
-                                                                            <Check className="w-3.5 h-3.5 ml-0.5" />
+                                                                            <Check className="w-3 h-3 ml-0.5" />
                                                                         )}
                                                                     </button>
                                                                 </TooltipTrigger>
-                                                                <TooltipContent className="text-[11px] font-black">
-                                                                    Ordem do Item no XML (&lt;det nItem=&quot;{item.nItem}&quot;&gt;) — Clique para copiar
+                                                                <TooltipContent className="text-[10px] font-bold">
+                                                                    Posição no XML (&lt;det nItem=&quot;{item.nItem}&quot;&gt;) — Clique p/ copiar
                                                                 </TooltipContent>
                                                             </Tooltip>
                                                         </TooltipProvider>
                                                     </TableCell>
 
-                                                    {/* Código do Fabricante */}
-                                                    <TableCell>
-                                                        <div className="flex items-center gap-1.5">
-                                                            <span className="font-mono text-xs font-black text-primary break-all">
+                                                    {/* Código do Fabricante + NCM */}
+                                                    <TableCell className="py-1.5 px-2">
+                                                        <div className="flex items-center gap-1">
+                                                            <span className="font-mono text-[11px] font-black text-primary break-all leading-tight">
                                                                 {item.cProd}
                                                             </span>
                                                             <button
                                                                 onClick={() => handleCopy(item.cProd, 'Código do Produto', `cprod-${item.uid}`)}
-                                                                className="text-muted-foreground hover:text-primary transition-colors p-1 rounded"
+                                                                className="text-muted-foreground hover:text-primary transition-colors p-0.5 rounded shrink-0"
                                                                 title="Copiar código"
                                                             >
                                                                 {copiedId === `cprod-${item.uid}` ? (
@@ -419,100 +404,89 @@ export default function NfeItemLocatorCalculator() {
                                                                 )}
                                                             </button>
                                                         </div>
-                                                        <div className="flex items-center gap-1 mt-0.5">
-                                                            <span className="text-[9px] font-mono text-muted-foreground font-bold">
-                                                                NCM: {item.NCM}
-                                                            </span>
-                                                        </div>
+                                                        <span className="text-[9px] font-mono text-muted-foreground block leading-none mt-0.5">
+                                                            NCM: {item.NCM}
+                                                        </span>
                                                     </TableCell>
 
                                                     {/* Descrição Completa do Produto */}
-                                                    <TableCell>
-                                                        <p className="text-xs font-black text-foreground leading-snug">
-                                                            {item.xProd}
-                                                        </p>
-                                                        <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                                                            <Badge variant="outline" className="text-[9px] h-4 px-1.5 font-bold">
-                                                                Orig: {item.orig}
-                                                            </Badge>
-                                                            <Badge variant="outline" className="text-[9px] h-4 px-1.5 font-bold">
-                                                                CST: {item.CST}
-                                                            </Badge>
-                                                            <Badge variant="outline" className="text-[9px] h-4 px-1.5 font-bold">
-                                                                CFOP Orig: {item.CFOP}
-                                                            </Badge>
+                                                    <TableCell className="py-1.5 px-2">
+                                                        <div className="flex flex-col gap-0.5">
+                                                            <span className="text-[11px] font-bold text-foreground leading-tight">
+                                                                {item.xProd}
+                                                            </span>
+                                                            <div className="flex flex-wrap items-center gap-1">
+                                                                <span className="text-[9px] font-mono text-muted-foreground bg-muted px-1 rounded">
+                                                                    Orig:{item.orig}
+                                                                </span>
+                                                                <span className="text-[9px] font-mono text-muted-foreground bg-muted px-1 rounded">
+                                                                    CST:{item.CST}
+                                                                </span>
+                                                                <span className="text-[9px] font-mono text-muted-foreground bg-muted px-1 rounded">
+                                                                    CFOP:{item.CFOP}
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                     </TableCell>
 
-                                                    {/* Dados da NF de Origem (Número, Série, Emissão) */}
-                                                    <TableCell>
-                                                        <div className="flex flex-col gap-0.5">
-                                                            <div className="flex items-center gap-1.5">
-                                                                <Badge className="bg-foreground text-background hover:bg-foreground/90 font-mono text-[11px] font-black px-2 py-0 h-5 rounded-md">
-                                                                    NF {item.nNF}
-                                                                </Badge>
-                                                                <span className="text-[10px] font-black text-muted-foreground">
-                                                                    Série {item.serie}
-                                                                </span>
-                                                            </div>
-                                                            <span className="text-[10px] font-bold text-muted-foreground flex items-center gap-1 mt-0.5">
-                                                                <Calendar className="w-3 h-3 opacity-70" />
+                                                    {/* NF de Origem, Série e Emissão */}
+                                                    <TableCell className="py-1.5 px-2">
+                                                        <div className="flex items-center gap-1">
+                                                            <Badge className="bg-foreground text-background hover:bg-foreground/90 font-mono text-[10px] font-black px-1.5 py-0 h-4 rounded">
+                                                                NF {item.nNF}
+                                                            </Badge>
+                                                            <span className="text-[9px] font-bold text-muted-foreground">
+                                                                S:{item.serie}
+                                                            </span>
+                                                            <span className="text-[9px] font-semibold text-muted-foreground ml-0.5">
                                                                 {item.dhEmiFormatted}
                                                             </span>
-                                                            <span className="text-[9px] font-bold text-muted-foreground/80 truncate max-w-[140px]" title={item.emitNome}>
-                                                                {item.emitNome}
-                                                            </span>
                                                         </div>
+                                                        <span className="text-[9px] text-muted-foreground/80 truncate block max-w-[135px] mt-0.5" title={item.emitNome}>
+                                                            {item.emitNome}
+                                                        </span>
                                                     </TableCell>
 
-                                                    {/* Chave de Acesso Copiável em 1 Clique */}
-                                                    <TableCell>
+                                                    {/* Chave de Acesso Compacta Copiável */}
+                                                    <TableCell className="py-1.5 px-2">
                                                         {item.chave ? (
-                                                            <div className="flex flex-col gap-1">
-                                                                <span className="font-mono text-[10px] font-bold text-foreground/90 tracking-tight select-all">
-                                                                    {item.chaveFormatted}
+                                                            <div className="flex items-center gap-1.5">
+                                                                <button
+                                                                    onClick={() => handleCopy(item.chave, `Chave da NF ${item.nNF}`, `chave-${item.uid}`)}
+                                                                    className="inline-flex items-center gap-1 h-5 px-2 rounded border border-primary/30 bg-primary/5 text-primary hover:bg-primary/15 text-[9px] font-black shrink-0 transition-colors"
+                                                                    title="Copiar os 44 dígitos da Chave de Acesso"
+                                                                >
+                                                                    {copiedId === `chave-${item.uid}` ? (
+                                                                        <>
+                                                                            <Check className="w-2.5 h-2.5 text-accent-green" />
+                                                                            Copiada
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                            <KeyRound className="w-2.5 h-2.5" />
+                                                                            Copiar
+                                                                        </>
+                                                                    )}
+                                                                </button>
+                                                                <span className="font-mono text-[9px] text-muted-foreground select-all leading-tight break-all">
+                                                                    {item.chave}
                                                                 </span>
-                                                                <div>
-                                                                    <Button
-                                                                        variant="outline"
-                                                                        size="sm"
-                                                                        onClick={() => handleCopy(item.chave, `Chave da NF ${item.nNF}`, `chave-${item.uid}`)}
-                                                                        className="h-6 px-2 text-[10px] font-black rounded-lg border-primary/30 text-primary hover:bg-primary/10 gap-1"
-                                                                    >
-                                                                        {copiedId === `chave-${item.uid}` ? (
-                                                                            <>
-                                                                                <Check className="w-3 h-3 text-accent-green" />
-                                                                                Chave Copiada!
-                                                                            </>
-                                                                        ) : (
-                                                                            <>
-                                                                                <KeyRound className="w-3 h-3" />
-                                                                                Copiar Chave (44 díg.)
-                                                                            </>
-                                                                        )}
-                                                                    </Button>
-                                                                </div>
                                                             </div>
                                                         ) : (
-                                                            <span className="text-xs text-muted-foreground italic">Sem chave</span>
+                                                            <span className="text-[10px] text-muted-foreground italic">Sem chave</span>
                                                         )}
                                                     </TableCell>
 
-                                                    {/* Quantidade, Preço Unitário e Impostos de Origem */}
-                                                    <TableCell className="text-right">
-                                                        <div className="flex flex-col items-end gap-0.5">
-                                                            <span className="text-xs font-mono font-black text-foreground">
-                                                                {formatCurrency4(item.vUnCom)} <span className="text-[10px] text-muted-foreground font-bold">({formatNumber(item.qCom)} {item.uCom})</span>
+                                                    {/* Quantidade e Preço Unitário */}
+                                                    <TableCell className="py-1.5 px-2 text-right">
+                                                        <div className="flex flex-col items-end leading-tight">
+                                                            <span className="text-[11px] font-mono font-black text-foreground">
+                                                                {formatCurrency4(item.vUnCom)} <span className="text-[9px] text-muted-foreground font-semibold">({formatNumber(item.qCom)} {item.uCom})</span>
                                                             </span>
-                                                            <span className="text-[10px] font-mono font-bold text-primary">
-                                                                Total: {formatCurrency(item.vProd)}
+                                                            <span className="text-[9px] font-mono font-bold text-primary">
+                                                                Tot: {formatCurrency(item.vProd)}
+                                                                {item.vICMS > 0 ? ` | ICMS: ${formatCurrency(item.vICMS)}` : ''}
                                                             </span>
-                                                            {(item.vICMS > 0 || item.vOutro > 0 || item.vFrete > 0) && (
-                                                                <span className="text-[9px] font-mono text-muted-foreground">
-                                                                    {item.vICMS > 0 ? `ICMS: ${formatCurrency(item.vICMS)} (${item.pICMS}%) ` : ''}
-                                                                    {item.vOutro > 0 ? `| Desp: ${formatCurrency(item.vOutro)}` : ''}
-                                                                </span>
-                                                            )}
                                                         </div>
                                                     </TableCell>
                                                 </TableRow>
@@ -520,7 +494,7 @@ export default function NfeItemLocatorCalculator() {
                                         })
                                     ) : (
                                         <TableRow>
-                                            <TableCell colSpan={7} className="h-32 text-center text-muted-foreground font-bold text-sm">
+                                            <TableCell colSpan={7} className="h-24 text-center text-muted-foreground font-semibold text-xs">
                                                 Nenhum item encontrado para o filtro informado.
                                             </TableCell>
                                         </TableRow>
@@ -530,49 +504,45 @@ export default function NfeItemLocatorCalculator() {
                         </div>
                     </div>
 
-                    {/* Gerador Automático de Texto para Dados Adicionais da NF de Garantia */}
+                    {/* Barra Compacta de Dados Adicionais */}
                     {dadosAdicionaisText && (
-                        <Card className="border border-primary/20 bg-primary/5 rounded-2xl shadow-sm">
-                            <CardContent className="p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                                <div className="space-y-1 flex-1">
-                                    <div className="flex items-center gap-2">
-                                        <Sparkles className="w-4 h-4 text-primary" />
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-primary">
-                                            Sugestão Automática para Dados Adicionais (CFOP 5949 / Garantia)
-                                        </span>
-                                    </div>
-                                    <p className="text-xs font-mono font-bold text-foreground bg-background/80 p-2.5 rounded-xl border border-border select-all">
-                                        {dadosAdicionaisText}
-                                    </p>
-                                </div>
-                                <Button
-                                    variant="default"
-                                    size="sm"
-                                    onClick={() => handleCopy(dadosAdicionaisText, 'Dados Adicionais', 'dados-adicionais')}
-                                    className="rounded-xl font-black text-xs h-10 px-4 shrink-0 gap-2"
-                                >
-                                    {copiedId === 'dados-adicionais' ? (
-                                        <>
-                                            <Check className="w-4 h-4" /> Copiado!
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Copy className="w-4 h-4" /> Copiar Dados Adicionais
-                                        </>
-                                    )}
-                                </Button>
-                            </CardContent>
-                        </Card>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-3 py-2 rounded-xl border border-primary/20 bg-primary/5">
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                                <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" />
+                                <span className="text-[10px] font-black uppercase text-primary shrink-0">
+                                    Dados Adicionais (CFOP 5949):
+                                </span>
+                                <span className="text-[11px] font-mono text-foreground truncate select-all" title={dadosAdicionaisText}>
+                                    {dadosAdicionaisText}
+                                </span>
+                            </div>
+                            <Button
+                                variant="default"
+                                size="sm"
+                                onClick={() => handleCopy(dadosAdicionaisText, 'Dados Adicionais', 'dados-adicionais')}
+                                className="rounded-lg font-bold text-[10px] h-7 px-2.5 shrink-0 gap-1"
+                            >
+                                {copiedId === 'dados-adicionais' ? (
+                                    <>
+                                        <Check className="w-3 h-3" /> Copiado!
+                                    </>
+                                ) : (
+                                    <>
+                                        <Copy className="w-3 h-3" /> Copiar Texto
+                                    </>
+                                )}
+                            </Button>
+                        </div>
                     )}
                 </>
             ) : (
-                <div className="flex flex-col items-center justify-center py-24 border-2 border-dashed rounded-3xl bg-muted/20 border-border text-center">
-                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                        <FileSearch className="w-8 h-8 text-primary opacity-70" />
+                <div className="flex flex-col items-center justify-center py-16 border-2 border-dashed rounded-2xl bg-muted/20 border-border text-center">
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+                        <FileSearch className="w-6 h-6 text-primary opacity-70" />
                     </div>
-                    <h3 className="text-xl font-black text-foreground">Importe os XMLs das Notas de Compra</h3>
-                    <p className="text-sm text-muted-foreground max-w-md mt-2 font-medium">
-                        Você pode selecionar vários arquivos XML de uma só vez (ex: as 7 notas da Solicitação de Garantia) para buscar peças instantaneamente e ver a posição exata do item no XML (<code className="text-primary font-bold">nItem</code>) e a Chave de Acesso.
+                    <h3 className="text-base font-black text-foreground">Importe os XMLs das Notas de Compra</h3>
+                    <p className="text-xs text-muted-foreground max-w-md mt-1 font-medium">
+                        Selecione vários arquivos XML de uma só vez para buscar peças instantaneamente e copiar o <code className="text-primary font-bold">nItem</code> e a Chave de Acesso.
                     </p>
                 </div>
             )}

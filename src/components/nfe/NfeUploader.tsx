@@ -7,13 +7,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useNfeParser } from '@/hooks/use-nfe-parser';
 import { useNfeStore } from '@/store/use-nfe-store';
 
-export function NfeUploader() {
+interface NfeUploaderProps {
+    hideSelector?: boolean;
+}
+
+export function NfeUploader({ hideSelector = false }: NfeUploaderProps) {
     const { currentNfe, allNfes, setCurrentNfe, clearAll } = useNfeStore();
     const { handleFileChange, fileInputRef } = useNfeParser();
 
     return (
-        <div className="flex flex-wrap items-center gap-2">
-            {allNfes.length > 1 && (
+        <div className="flex flex-wrap items-center gap-1.5">
+            {!hideSelector && allNfes.length > 1 && (
                 <Select
                     value={currentNfe?.header.chave || allNfes[0]?.header.chave}
                     onValueChange={(chave) => {
@@ -21,8 +25,8 @@ export function NfeUploader() {
                         if (found) setCurrentNfe(found);
                     }}
                 >
-                    <SelectTrigger className="h-10 w-[210px] rounded-xl text-xs font-black border-border bg-background/80 shadow-sm">
-                        <FileText className="mr-1.5 h-3.5 w-3.5 text-primary shrink-0" />
+                    <SelectTrigger className="h-8 w-[190px] rounded-lg text-[11px] font-bold border-border bg-background/80 shadow-sm px-2.5">
+                        <FileText className="mr-1.5 h-3 w-3 text-primary shrink-0" />
                         <SelectValue placeholder="Selecionar NF-e" />
                     </SelectTrigger>
                     <SelectContent>
@@ -39,9 +43,10 @@ export function NfeUploader() {
                 <Button 
                     onClick={() => fileInputRef.current?.click()} 
                     variant="outline"
-                    className="h-10 px-4 shadow-sm border-primary/20 text-primary hover:bg-primary/5 transition-all bg-background/50 backdrop-blur-sm rounded-xl font-black text-xs"
+                    size="sm"
+                    className="h-8 px-3 shadow-sm border-primary/20 text-primary hover:bg-primary/5 transition-all bg-background/50 backdrop-blur-sm rounded-lg font-bold text-[11px]"
                 >
-                    <Upload className="mr-2 h-4 w-4" />
+                    <Upload className="mr-1.5 h-3.5 w-3.5" />
                     {allNfes.length > 0 ? "Adicionar XMLs" : "Importar XMLs"}
                 </Button>
                 <Input 
@@ -55,17 +60,17 @@ export function NfeUploader() {
             </div>
 
             {allNfes.length > 0 && (
-                <div className="flex items-center gap-1.5 p-1.5 px-3 border rounded-full bg-accent/30 border-border animate-in fade-in slide-in-from-right-1">
+                <div className="flex items-center gap-1 px-2.5 h-8 border rounded-lg bg-accent/30 border-border animate-in fade-in slide-in-from-right-1">
                     <span className="text-[10px] font-black text-foreground/70 uppercase tracking-tighter">
                         {allNfes.length} XML{allNfes.length > 1 ? 's' : ''}
                     </span>
-                    <div className="h-3 w-[1px] bg-border mx-1" />
+                    <div className="h-3 w-[1px] bg-border mx-0.5" />
                     <Button 
                         variant="ghost" 
                         size="icon" 
                         onClick={clearAll} 
                         title="Limpar todos os XMLs"
-                        className="h-6 w-6 text-destructive hover:bg-destructive/10 rounded-full"
+                        className="h-5 w-5 text-destructive hover:bg-destructive/10 rounded-full"
                     >
                         <FileX className="h-3 w-3" />
                     </Button>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -152,30 +151,35 @@ export default function CalculatorsSection() {
 
     if (activeCalculator && ActiveCalculatorComponent) {
         return (
-             <div className="space-y-8 animate-in fade-in duration-500">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-card p-6 rounded-[2rem] shadow-md border border-border">
-                    <div>
-                         <Button 
+            <div className="space-y-3 animate-in fade-in duration-300">
+                <div className="flex flex-wrap items-center justify-between gap-3 bg-card px-4 py-2.5 rounded-xl shadow-sm border border-border">
+                    <div className="flex items-center gap-3">
+                        <Button 
                             variant="ghost" 
+                            size="sm"
                             onClick={() => setActiveCalculatorId(null)} 
-                            className="mb-4 -ml-2 text-muted-foreground hover:text-primary transition-colors font-black uppercase text-[10px] tracking-widest"
+                            className="h-8 px-2.5 text-muted-foreground hover:text-primary transition-colors font-bold uppercase text-[10px] tracking-wider"
                         >
-                            <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para o Painel
+                            <ArrowLeft className="mr-1.5 h-3.5 w-3.5" /> Voltar
                         </Button>
-                        <div className="flex items-center gap-4">
-                            <div className={cn("p-3 rounded-2xl shadow-inner", activeCalculator.bg)}>
-                                <activeCalculator.icon className={cn("h-7 w-7", activeCalculator.color)} />
+                        <div className="h-4 w-[1px] bg-border" />
+                        <div className="flex items-center gap-2.5">
+                            <div className={cn("p-1.5 rounded-lg", activeCalculator.bg)}>
+                                <activeCalculator.icon className={cn("h-4 w-4", activeCalculator.color)} />
                             </div>
-                            <h1 className="text-3xl font-black tracking-tight text-foreground">{activeCalculator.title}</h1>
+                            <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-2">
+                                <h1 className="text-sm font-black tracking-tight text-foreground">{activeCalculator.title}</h1>
+                                <span className="hidden md:inline text-muted-foreground/40 text-xs">•</span>
+                                <p className="text-muted-foreground font-semibold text-[11px]">
+                                    {activeCalculator.description}
+                                </p>
+                            </div>
                         </div>
-                        <p className="text-muted-foreground mt-3 max-w-2xl font-black opacity-70 text-xs uppercase tracking-wide">
-                            {activeCalculator.description}
-                        </p>
                     </div>
                 </div>
                 <ActiveCalculatorComponent />
             </div>
-        )
+        );
     }
 
   return (
