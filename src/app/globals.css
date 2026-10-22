@@ -2,162 +2,179 @@
 @config "../../tailwind.config.ts";
 
 @layer base {
+  /* Claro Padrão: Manhã Tempestuosa (Figma Combinação #1 - Stormy Morning) */
   :root {
-    --background: 240 5.9% 97%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 210 33% 96.5%;
+    --foreground: 210 29% 16%;
  
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 210 29% 16%;
  
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 210 29% 16%;
  
-    --primary: 258 84% 68%;
+    --primary: 210 25% 32%;
     --primary-foreground: 210 40% 98%;
  
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 222.2 84% 4.9%;
+    --secondary: 210 32% 89%;
+    --secondary-foreground: 210 29% 16%;
  
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
+    --muted: 210 28% 92%;
+    --muted-foreground: 210 18% 42%;
  
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 222.2 84% 4.9%;
+    --accent: 210 38% 90%;
+    --accent-foreground: 210 29% 16%;
  
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 210 40% 98%;
 
-    --accent-blue: 221 83% 60%;
+    --accent-blue: 208 65% 48%;
     --accent-blue-foreground: 210 40% 98%;
 
-    --accent-green: 142 71% 45%;
-    --accent-green-foreground: 142 71% 95%;
+    --accent-green: 152 60% 38%;
+    --accent-green-foreground: 152 60% 96%;
 
-    --accent-green-dark: 142 80% 30%;
-    --accent-green-dark-foreground: 142 71% 95%;
+    --accent-green-dark: 152 65% 26%;
+    --accent-green-dark-foreground: 152 60% 96%;
 
-    --third: 32 95% 62%;
+    --third: 32 85% 55%;
  
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --input-calc: 240 5.9% 90%;
-    --ring: 258 84% 60%;
+    --border: 210 24% 84%;
+    --input: 210 24% 84%;
+    --input-calc: 210 28% 93%;
+    --ring: 210 25% 32%;
  
     --radius: 0.5rem;
 
-    --chart-1: 258 84% 68%;
-    --chart-2: 32 95% 62%;
-    --chart-3: 160 84% 39%;
-    --chart-4: 204 80% 51%;
-    --chart-5: 0 84% 60%;
+    --chart-1: 210 25% 32%;
+    --chart-2: 208 35% 54%;
+    --chart-3: 152 60% 38%;
+    --chart-4: 210 78% 68%;
+    --chart-5: 32 85% 55%;
   }
  
+  /* Escuro Padrão: Tempestade Noturna (Stormy Morning Dark) */
   [data-theme='dark'] {
-    --background: 224 71.4% 4.1%;
-    --foreground: 210 40% 98%;
+    --background: 212 28% 12%;
+    --foreground: 210 33% 94%;
  
-    --card: 215 28% 17%;
-    --card-foreground: 210 40% 98%;
+    --card: 212 26% 16.5%;
+    --card-foreground: 210 33% 94%;
  
-    --popover: 215 28% 17%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 212 26% 16.5%;
+    --popover-foreground: 210 33% 94%;
  
-    --primary: 258 84% 75%;
-    --primary-foreground: 210 20% 98%;
+    --primary: 210 78% 72%;
+    --primary-foreground: 212 32% 11%;
  
-    --secondary: 215 28% 17%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 212 25% 22%;
+    --secondary-foreground: 210 33% 94%;
  
-    --muted: 215 28% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 212 24% 20%;
+    --muted-foreground: 210 18% 66%;
  
-    --accent: 215 28% 22%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 212 26% 25%;
+    --accent-foreground: 210 33% 96%;
  
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 68% 54%;
     --destructive-foreground: 210 40% 98%;
 
-    --accent-blue: 221 83% 60%;
+    --accent-blue: 210 78% 64%;
     --accent-blue-foreground: 210 40% 98%;
     
-    --accent-green: 142 71% 45%;
-    --accent-green-foreground: 142 71% 95%;
+    --accent-green: 152 58% 46%;
+    --accent-green-foreground: 152 60% 96%;
 
-    --accent-green-dark: 142 80% 20%;
-    --accent-green-dark-foreground: 142 71% 95%;
+    --accent-green-dark: 152 65% 20%;
+    --accent-green-dark-foreground: 152 60% 96%;
 
-    --third: 32 95% 72%;
+    --third: 34 88% 66%;
  
-    --border: 215 28% 11%;
-    --input: 222 47% 11%;
-    --input-calc: 215 28% 17%;
-    --ring: 258 84% 75%;
+    --border: 212 22% 24%;
+    --input: 212 28% 14%;
+    --input-calc: 212 26% 18%;
+    --ring: 210 78% 72%;
 
-    --chart-1: 258 84% 75%;
-    --chart-2: 32 95% 72%;
-    --chart-3: 160 84% 49%;
-    --chart-4: 204 80% 61%;
-    --chart-4: 204 80% 61%;
-    --chart-5: 0 84% 70%;
+    --chart-1: 210 78% 72%;
+    --chart-2: 208 35% 58%;
+    --chart-3: 152 58% 46%;
+    --chart-4: 34 88% 66%;
+    --chart-5: 0 68% 60%;
   }
 
-  /* Tokyo Night Theme */
-  [data-theme='tokyo'] {
-    --background: 234 44% 14%;
-    --foreground: 230 46% 75%;
-    --card: 234 44% 20%;
-    --card-foreground: 230 46% 75%;
-    --popover: 234 44% 20%;
-    --popover-foreground: 230 46% 75%;
-    --primary: 221 92% 72%;
-    --primary-foreground: 234 44% 14%;
-    --secondary: 234 44% 25%;
-    --secondary-foreground: 230 46% 75%;
-    --muted: 234 44% 25%;
-    --muted-foreground: 230 25% 60%;
-    --accent: 234 44% 30%;
-    --accent-foreground: 230 46% 75%;
-    --destructive: 354 85% 65%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 234 44% 25%;
-    --input: 234 44% 15%;
-    --input-calc: 234 44% 20%;
-    --ring: 221 92% 72%;
-    --accent-blue: 221 83% 60%;
-    --accent-green: 142 71% 45%;
-    --accent-green-dark: 142 80% 15%;
-    --third: 32 95% 72%;
+  /* Sal & Pimenta (Figma Combinação #56 - Salt and Pepper Light) */
+  [data-theme='salt'] {
+    --background: 240 5% 95.5%;
+    --foreground: 240 6% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 6% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 6% 12%;
+    --primary: 240 6% 18%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 5% 88%;
+    --secondary-foreground: 240 6% 12%;
+    --muted: 240 5% 91%;
+    --muted-foreground: 240 4% 44%;
+    --accent: 240 5% 89%;
+    --accent-foreground: 240 6% 12%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5% 84%;
+    --input: 240 5% 84%;
+    --input-calc: 240 5% 92%;
+    --ring: 240 6% 18%;
+    --accent-blue: 215 65% 48%;
+    --accent-blue-foreground: 0 0% 98%;
+    --accent-green: 150 55% 38%;
+    --accent-green-foreground: 150 55% 96%;
+    --accent-green-dark: 150 60% 25%;
+    --accent-green-dark-foreground: 150 55% 96%;
+    --third: 30 80% 52%;
+    --chart-1: 240 6% 18%;
+    --chart-2: 240 4% 48%;
+    --chart-3: 150 55% 38%;
+    --chart-4: 215 65% 48%;
+    --chart-5: 30 80% 52%;
   }
 
-  /* Ayu Dark Theme */
-  [data-theme='ayu'] {
-    --background: 222 28% 7%;
-    --foreground: 46 15% 73%;
-    --card: 222 28% 12%;
-    --card-foreground: 46 15% 73%;
-    --popover: 222 28% 12%;
-    --popover-foreground: 46 15% 73%;
-    --primary: 41 78% 61%;
-    --primary-foreground: 222 28% 7%;
-    --secondary: 222 28% 15%;
-    --secondary-foreground: 46 15% 73%;
-    --muted: 222 28% 15%;
-    --muted-foreground: 46 5% 50%;
-    --accent: 222 28% 20%;
-    --accent-foreground: 46 15% 73%;
-    --destructive: 1 80% 60%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 222 28% 15%;
-    --input: 222 28% 10%;
-    --input-calc: 222 28% 12%;
-    --ring: 41 78% 61%;
-    --accent-blue: 221 83% 60%;
-    --accent-green: 142 71% 45%;
-    --accent-green-dark: 142 80% 10%;
-    --third: 32 95% 72%;
+  /* Pimenta Preta / Onyx (Figma Combinação #56 - Salt and Pepper Dark Matte) */
+  [data-theme='pepper'] {
+    --background: 240 5% 9%;
+    --foreground: 0 0% 93%;
+    --card: 240 5% 13.5%;
+    --card-foreground: 0 0% 93%;
+    --popover: 240 5% 13.5%;
+    --popover-foreground: 0 0% 93%;
+    --primary: 240 5% 84%;
+    --primary-foreground: 240 6% 10%;
+    --secondary: 240 5% 19%;
+    --secondary-foreground: 0 0% 93%;
+    --muted: 240 5% 17%;
+    --muted-foreground: 240 4% 62%;
+    --accent: 240 5% 22%;
+    --accent-foreground: 0 0% 96%;
+    --destructive: 0 68% 54%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5% 21%;
+    --input: 240 5% 11%;
+    --input-calc: 240 5% 15%;
+    --ring: 240 5% 84%;
+    --accent-blue: 212 72% 62%;
+    --accent-blue-foreground: 0 0% 98%;
+    --accent-green: 150 55% 45%;
+    --accent-green-foreground: 150 55% 96%;
+    --accent-green-dark: 150 60% 18%;
+    --accent-green-dark-foreground: 150 55% 96%;
+    --third: 34 85% 65%;
+    --chart-1: 240 5% 84%;
+    --chart-2: 240 4% 55%;
+    --chart-3: 150 55% 45%;
+    --chart-4: 212 72% 62%;
+    --chart-5: 34 85% 65%;
   }
 
-  /* Dracula Theme */
+  /* Dracula Theme (Revisado - Lavanda Suave sem Rosa Choque) */
   [data-theme='dracula'] {
     --background: 231 15% 18%;
     --foreground: 60 30% 96%;
@@ -165,24 +182,32 @@
     --card-foreground: 60 30% 96%;
     --popover: 231 15% 24%;
     --popover-foreground: 60 30% 96%;
-    --primary: 326 100% 74%;
-    --primary-foreground: 231 15% 18%;
-    --secondary: 231 15% 32%;
+    --primary: 252 72% 75%;
+    --primary-foreground: 231 15% 15%;
+    --secondary: 231 15% 30%;
     --secondary-foreground: 60 30% 96%;
-    --muted: 231 15% 32%;
-    --muted-foreground: 231 25% 66%;
-    --accent: 231 15% 40%;
+    --muted: 231 15% 28%;
+    --muted-foreground: 231 22% 68%;
+    --accent: 231 16% 35%;
     --accent-foreground: 60 30% 96%;
-    --destructive: 0 100% 67%;
+    --destructive: 0 82% 63%;
     --destructive-foreground: 210 40% 98%;
-    --border: 231 15% 32%;
+    --border: 231 15% 30%;
     --input: 231 15% 20%;
     --input-calc: 231 15% 24%;
-    --ring: 326 100% 74%;
-    --accent-blue: 221 83% 60%;
-    --accent-green: 142 71% 45%;
-    --accent-green-dark: 142 80% 15%;
-    --third: 32 95% 72%;
+    --ring: 252 72% 75%;
+    --accent-blue: 198 85% 68%;
+    --accent-blue-foreground: 231 15% 15%;
+    --accent-green: 142 65% 48%;
+    --accent-green-foreground: 142 71% 95%;
+    --accent-green-dark: 142 70% 18%;
+    --accent-green-dark-foreground: 142 71% 95%;
+    --third: 32 90% 70%;
+    --chart-1: 252 72% 75%;
+    --chart-2: 198 85% 68%;
+    --chart-3: 142 65% 48%;
+    --chart-4: 32 90% 70%;
+    --chart-5: 0 82% 63%;
   }
 
 }

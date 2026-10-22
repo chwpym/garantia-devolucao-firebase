@@ -44,7 +44,12 @@ export default function RootLayout({
       <head />
       <body className="font-body antialiased" suppressHydrationWarning>
         <AuthProvider>
-          <ThemeProvider attribute="data-theme" defaultTheme="system" enableSystem>
+          <ThemeProvider
+            attribute="data-theme"
+            defaultTheme="system"
+            enableSystem
+            themes={['light', 'dark', 'salt', 'pepper', 'dracula']}
+          >
             <TaskProvider>
               {children}
             </TaskProvider>
