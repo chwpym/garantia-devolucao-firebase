@@ -87,13 +87,13 @@ export default function XmlSearchSection() {
     const loadCertificados = async () => {
         try {
             const list = await db.getAllCertificados();
-            const mapped: CertificadoItem[] = list.map((cert: Record<string, unknown>) => ({
-                id: cert.id as number,
-                empresa: cert.alias as string,
-                cnpj: cert.cnpj as string,
-                senha: cert.senha as string | undefined,
+            const mapped: CertificadoItem[] = list.map((cert) => ({
+                id: cert.id,
+                empresa: cert.alias,
+                cnpj: cert.cnpj,
+                senha: cert.senha,
                 hasPassword: !!cert.senha,
-                fileBase64: cert.arquivo as string | undefined
+                fileBase64: cert.arquivo
             }));
             setCertificados(mapped);
         } catch (error) {
