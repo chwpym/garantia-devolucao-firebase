@@ -72,14 +72,14 @@ export default function NfeProductOriginCalculator() {
             {/* Header Padronizado */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1">
-                    <h2 className="text-2xl font-black tracking-tight text-foreground flex items-center gap-2">
+                    <h2 className="text-2xl font-semibold tracking-tight text-foreground flex items-center gap-2">
                         <Globe className="w-6 h-6 text-primary" />
                         Origem da Mercadoria
                     </h2>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider font-black opacity-70">Análise de Nacionalidade e Conteúdo de Importação</p>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold opacity-70">Análise de Nacionalidade e Conteúdo de Importação</p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setIsLegendOpen(true)} className="h-9 shadow-sm border-border hover:bg-muted font-black rounded-xl">
+                    <Button variant="outline" size="sm" onClick={() => setIsLegendOpen(true)} className="h-9 shadow-sm border-border hover:bg-muted font-semibold rounded-xl">
                         <HelpCircle className="mr-2 h-4 w-4" /> Legenda de Origens
                     </Button>
                     <NfeUploader />
@@ -94,8 +94,8 @@ export default function NfeProductOriginCalculator() {
                                 <Globe size={24} />
                             </div>
                             <div className="space-y-0.5">
-                                <span className="text-[10px] font-black uppercase opacity-80">Nacionais</span>
-                                <p className="text-2xl font-black">{items.filter(i => ['0', '3', '4', '5', '8'].includes(i.orig)).length}</p>
+                                <span className="text-xs font-semibold uppercase opacity-80">Nacionais</span>
+                                <p className="text-2xl font-semibold">{items.filter(i => ['0', '3', '4', '5', '8'].includes(i.orig)).length}</p>
                             </div>
                         </CardContent>
                     </Card>
@@ -106,8 +106,8 @@ export default function NfeProductOriginCalculator() {
                                 <PackageSearch size={24} className="text-primary" />
                             </div>
                             <div className="space-y-0.5">
-                                <span className="text-[10px] font-black uppercase opacity-60">Importados / Adq. Interno</span>
-                                <p className="text-2xl font-black text-primary">{items.filter(i => ['1', '2', '6', '7'].includes(i.orig)).length}</p>
+                                <span className="text-xs font-semibold uppercase opacity-60">Importados / Adq. Interno</span>
+                                <p className="text-2xl font-semibold text-primary">{items.filter(i => ['1', '2', '6', '7'].includes(i.orig)).length}</p>
                             </div>
                         </CardContent>
                     </Card>
@@ -118,8 +118,8 @@ export default function NfeProductOriginCalculator() {
                                 <FileText size={24} />
                             </div>
                             <div className="space-y-0.5">
-                                <span className="text-[10px] font-black uppercase opacity-80">Total de Itens</span>
-                                <p className="text-2xl font-black">{items.length}</p>
+                                <span className="text-xs font-semibold uppercase opacity-80">Total de Itens</span>
+                                <p className="text-2xl font-semibold">{items.length}</p>
                             </div>
                         </CardContent>
                     </Card>
@@ -132,40 +132,40 @@ export default function NfeProductOriginCalculator() {
                         <Table>
                             <TableHeader>
                                 <TableRow className="bg-muted/50 border-b border-border">
-                                    <TableHead className="w-[65px] text-center text-[10px] font-black uppercase text-muted-foreground opacity-70"># XML</TableHead>
-                                    <TableHead className="w-[120px] text-[10px] font-black uppercase text-muted-foreground opacity-70">Cód. Forn.</TableHead>
-                                    <TableHead className="min-w-[250px] text-[10px] font-black uppercase text-muted-foreground opacity-70">Descrição do Produto</TableHead>
-                                    <TableHead className="text-center text-[10px] font-black uppercase text-muted-foreground opacity-70">NCM</TableHead>
-                                    <TableHead className="text-center text-[10px] font-black uppercase text-muted-foreground opacity-70">Origem (Tabela A)</TableHead>
-                                    <TableHead className="text-center text-[10px] font-black uppercase text-muted-foreground opacity-70">CST/CFOP</TableHead>
+                                    <TableHead className="w-[65px] text-center text-xs font-semibold uppercase text-muted-foreground opacity-70"># XML</TableHead>
+                                    <TableHead className="w-[120px] text-xs font-semibold uppercase text-muted-foreground opacity-70">Cód. Forn.</TableHead>
+                                    <TableHead className="min-w-[250px] text-xs font-semibold uppercase text-muted-foreground opacity-70">Descrição do Produto</TableHead>
+                                    <TableHead className="text-center text-xs font-semibold uppercase text-muted-foreground opacity-70">NCM</TableHead>
+                                    <TableHead className="text-center text-xs font-semibold uppercase text-muted-foreground opacity-70">Origem (Tabela A)</TableHead>
+                                    <TableHead className="text-center text-xs font-semibold uppercase text-muted-foreground opacity-70">CST/CFOP</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {items.map(item => (
                                     <TableRow key={item.id} className="hover:bg-muted/30 transition-colors border-b border-border/50">
-                                        <TableCell className="text-center"><Badge variant="outline" className="h-5 px-1.5 font-mono text-[10px] font-black border-primary/30 text-primary">#{item.nItem}</Badge></TableCell>
-                                        <TableCell className="font-mono text-[10px] font-black text-primary">{item.cProd}</TableCell>
-                                        <TableCell className="text-xs font-black">{item.description}</TableCell>
-                                        <TableCell className="text-center font-mono text-[10px] text-muted-foreground opacity-60 font-black">{item.ncm}</TableCell>
+                                        <TableCell className="text-center"><Badge variant="outline" className="h-5 px-1.5 font-mono text-xs font-semibold border-primary/30 text-primary">#{item.nItem}</Badge></TableCell>
+                                        <TableCell className="font-mono text-xs font-semibold text-primary">{item.cProd}</TableCell>
+                                        <TableCell className="text-xs font-semibold">{item.description}</TableCell>
+                                        <TableCell className="text-center font-mono text-xs text-muted-foreground opacity-60 font-semibold">{item.ncm}</TableCell>
                                         <TableCell className="text-center">
                                             <TooltipProvider>
                                                 <Tooltip>
                                                     <TooltipTrigger>
-                                                        <Badge variant={['0', '4', '5'].includes(item.orig) ? "secondary" : "default"} className="h-6 w-6 p-0 flex items-center justify-center font-black rounded-lg">
+                                                        <Badge variant={['0', '4', '5'].includes(item.orig) ? "secondary" : "default"} className="h-6 w-6 p-0 flex items-center justify-center font-semibold rounded-lg">
                                                             {item.orig}
                                                         </Badge>
                                                     </TooltipTrigger>
                                                     <TooltipContent className="max-w-xs p-3 rounded-xl border border-border shadow-2xl bg-card text-foreground">
-                                                        <p className="text-[10px] font-black uppercase border-b border-border mb-1 pb-1 opacity-70">Origem do Produto</p>
-                                                        <p className="text-xs leading-tight font-black">{ORIGEM_LEGENDA[item.orig] || "Não identificada"}</p>
+                                                        <p className="text-xs font-semibold uppercase border-b border-border mb-1 pb-1 opacity-70">Origem do Produto</p>
+                                                        <p className="text-xs leading-tight font-semibold">{ORIGEM_LEGENDA[item.orig] || "Não identificada"}</p>
                                                     </TooltipContent>
                                                 </Tooltip>
                                             </TooltipProvider>
                                         </TableCell>
                                         <TableCell className="text-center">
                                             <div className="flex flex-col items-center">
-                                                <span className="text-[10px] font-mono font-black text-foreground">{item.cst}</span>
-                                                <span className="text-[9px] text-muted-foreground font-black opacity-60 uppercase">CFOP: {item.cfop}</span>
+                                                <span className="text-xs font-mono font-semibold text-foreground">{item.cst}</span>
+                                                <span className="text-xs text-muted-foreground font-semibold opacity-60 uppercase">CFOP: {item.cfop}</span>
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -179,7 +179,7 @@ export default function NfeProductOriginCalculator() {
                     <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
                         <Globe className="w-8 h-8 text-muted-foreground opacity-50" />
                     </div>
-                    <h3 className="text-xl font-black text-foreground">Aguardando Importação</h3>
+                    <h3 className="text-xl font-semibold text-foreground">Aguardando Importação</h3>
                     <p className="text-sm text-muted-foreground max-w-sm mt-2 font-medium">Carregue o XML para mapear automaticamente a origem de cada produto conforme a legislação vigente.</p>
                 </div>
             )}
@@ -187,10 +187,10 @@ export default function NfeProductOriginCalculator() {
             <Dialog open={isLegendOpen} onOpenChange={setIsLegendOpen}>
                 <DialogContent className="max-w-md rounded-2xl border border-border shadow-2xl bg-card text-foreground">
                     <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2 text-primary font-black">
+                        <DialogTitle className="flex items-center gap-2 text-primary font-semibold">
                             <Landmark className="h-5 w-5" /> Tabela A - Origem
                         </DialogTitle>
-                        <DialogDescription className="text-[10px] font-black uppercase opacity-70">
+                        <DialogDescription className="text-xs font-semibold uppercase opacity-70">
                             Definição dos códigos de origem utilizados no ICMS
                         </DialogDescription>
                     </DialogHeader>
@@ -198,10 +198,10 @@ export default function NfeProductOriginCalculator() {
                         <div className="space-y-2">
                             {Object.entries(ORIGEM_LEGENDA).map(([key, label]) => (
                                 <div key={key} className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 border border-border/50">
-                                    <Badge className="h-6 w-6 p-0 shrink-0 flex items-center justify-center font-black rounded-lg bg-primary text-primary-foreground">
+                                    <Badge className="h-6 w-6 p-0 shrink-0 flex items-center justify-center font-semibold rounded-lg bg-primary text-primary-foreground">
                                         {key}
                                     </Badge>
-                                    <span className="text-[11px] leading-snug font-black text-foreground opacity-80">{label}</span>
+                                    <span className="text-xs leading-snug font-semibold text-foreground opacity-80">{label}</span>
                                 </div>
                             ))}
                         </div>

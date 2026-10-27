@@ -380,7 +380,7 @@ export default function PurchaseSimulatorCalculator() {
                     {/* Toolbar Padronizada */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="space-y-1">
-                            <h2 className="text-2xl font-black tracking-tight text-foreground flex items-center gap-2">
+                            <h2 className="text-2xl font-semibold tracking-tight text-foreground flex items-center gap-2">
                                 <Calculator className="w-6 h-6 text-primary" />
                                 Simulador de Compras
                             </h2>
@@ -391,7 +391,7 @@ export default function PurchaseSimulatorCalculator() {
                             {items.length > 0 && (
                                 <Dialog>
                                     <DialogTrigger asChild>
-                                         <Button variant="outline" className="shadow-sm border-primary/20 text-primary hover:bg-primary/5 font-black rounded-xl h-10 transition-all">
+                                         <Button variant="outline" className="shadow-sm border-primary/20 text-primary hover:bg-primary/5 font-semibold rounded-xl h-10 transition-all">
                                              <Save className="mr-2 h-4 w-4" /> Salvar Projeção
                                          </Button>
                                     </DialogTrigger>
@@ -401,11 +401,11 @@ export default function PurchaseSimulatorCalculator() {
                                             <DialogDescription>Dê um nome para identificar esta simulação posteriormente.</DialogDescription>
                                         </DialogHeader>
                                          <div className="py-4">
-                                            <Label className="text-[10px] font-black uppercase text-muted-foreground opacity-70 mb-2 block tracking-widest">Identificação da Simulação</Label>
-                                            <Input value={simulationName} onChange={(e) => setSimulationName(e.target.value)} placeholder="Ex: Projeção Estoque Mínimo" className="h-11 font-black bg-background border-border" />
+                                            <Label className="text-xs font-semibold uppercase text-muted-foreground opacity-70 mb-2 block tracking-wide">Identificação da Simulação</Label>
+                                            <Input value={simulationName} onChange={(e) => setSimulationName(e.target.value)} placeholder="Ex: Projeção Estoque Mínimo" className="h-11 font-semibold bg-background border-border" />
                                         </div>
                                          <DialogFooter>
-                                            <Button onClick={handleSaveSimulation} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-xl h-11">
+                                            <Button onClick={handleSaveSimulation} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-xl h-11">
                                                 Confirmar e Salvar
                                             </Button>
                                         </DialogFooter>
@@ -424,8 +424,8 @@ export default function PurchaseSimulatorCalculator() {
                                             <ShoppingCart size={24} className="opacity-70" />
                                         </div>
                                         <div>
-                                            <span className="text-[10px] font-bold uppercase opacity-60">Total Original (NF)</span>
-                                            <p className="text-2xl font-black">{formatCurrency(originalNfeTotalCost)}</p>
+                                            <span className="text-xs font-bold uppercase opacity-60">Total Original (NF)</span>
+                                            <p className="text-2xl font-semibold">{formatCurrency(originalNfeTotalCost)}</p>
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -436,8 +436,8 @@ export default function PurchaseSimulatorCalculator() {
                                             <Calculator size={24} />
                                         </div>
                                         <div>
-                                            <span className="text-[10px] font-bold uppercase opacity-80">Total Simulado</span>
-                                            <p className="text-2xl font-black">{formatCurrency(totals.simulatedTotalCost)}</p>
+                                            <span className="text-xs font-bold uppercase opacity-80">Total Simulado</span>
+                                            <p className="text-2xl font-semibold">{formatCurrency(totals.simulatedTotalCost)}</p>
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -451,8 +451,8 @@ export default function PurchaseSimulatorCalculator() {
                                             <TrendingDown size={24} />
                                         </div>
                                         <div>
-                                            <span className="text-[10px] font-bold uppercase opacity-80">Diferença / Economia</span>
-                                            <p className="text-2xl font-black">{formatCurrency(originalNfeTotalCost - totals.simulatedTotalCost)}</p>
+                                            <span className="text-xs font-bold uppercase opacity-80">Diferença / Economia</span>
+                                            <p className="text-2xl font-semibold">{formatCurrency(originalNfeTotalCost - totals.simulatedTotalCost)}</p>
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -460,26 +460,26 @@ export default function PurchaseSimulatorCalculator() {
 
                             <div className="flex flex-wrap items-center gap-4 bg-card p-5 rounded-2xl border shadow-sm border-border/50">
                                 <div className="flex flex-1 items-center gap-4">
-                                    <Label className="text-[10px] font-black uppercase text-muted-foreground whitespace-nowrap opacity-70 tracking-widest">Rateio Global:</Label>
+                                    <Label className="text-xs font-semibold uppercase text-muted-foreground whitespace-nowrap opacity-70 tracking-wide">Rateio Global:</Label>
                                     <div className="grid grid-cols-4 gap-3 flex-1 max-w-lg">
                                         <div className="space-y-1">
-                                            <Input placeholder="Frete" value={manualFrete} onChange={e => setManualFrete(e.target.value)} className="h-10 text-xs font-black bg-background border-border focus:ring-2 focus:ring-primary/20 transition-all text-center" />
+                                            <Input placeholder="Frete" value={manualFrete} onChange={e => setManualFrete(e.target.value)} className="h-10 text-xs font-semibold bg-background border-border focus:ring-2 focus:ring-primary/20 transition-all text-center" />
                                         </div>
                                         <div className="space-y-1">
-                                            <Input placeholder="Seguro" value={manualSeguro} onChange={e => setManualSeguro(e.target.value)} className="h-10 text-xs font-black bg-background border-border focus:ring-2 focus:ring-primary/20 transition-all text-center" />
+                                            <Input placeholder="Seguro" value={manualSeguro} onChange={e => setManualSeguro(e.target.value)} className="h-10 text-xs font-semibold bg-background border-border focus:ring-2 focus:ring-primary/20 transition-all text-center" />
                                         </div>
                                         <div className="space-y-1">
-                                            <Input placeholder="Outros" value={manualOutros} onChange={e => setManualOutros(e.target.value)} className="h-10 text-xs font-black bg-background border-border focus:ring-2 focus:ring-primary/20 transition-all text-center" />
+                                            <Input placeholder="Outros" value={manualOutros} onChange={e => setManualOutros(e.target.value)} className="h-10 text-xs font-semibold bg-background border-border focus:ring-2 focus:ring-primary/20 transition-all text-center" />
                                         </div>
                                         <div className="space-y-1">
-                                            <Input placeholder="Desconto" value={manualDesconto} onChange={e => setManualDesconto(e.target.value)} className="h-10 text-xs font-black bg-background border-destructive/30 focus:border-destructive focus:ring-2 focus:ring-destructive/10 transition-all text-center" />
+                                            <Input placeholder="Desconto" value={manualDesconto} onChange={e => setManualDesconto(e.target.value)} className="h-10 text-xs font-semibold bg-background border-destructive/30 focus:border-destructive focus:ring-2 focus:ring-destructive/10 transition-all text-center" />
                                         </div>
                                     </div>
-                                    <Button onClick={applyManualRateio} size="sm" variant="default" className="h-10 font-black text-[10px] uppercase px-6 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-md">Aplicar Rateio</Button>
+                                    <Button onClick={applyManualRateio} size="sm" variant="default" className="h-10 font-semibold text-xs uppercase px-6 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-md">Aplicar Rateio</Button>
                                 </div>
                                 <div className="h-8 w-[1px] bg-border/50 hidden md:block"></div>
                                 <div className="flex items-center gap-3">
-                                    <Label className="text-[10px] font-black uppercase text-primary">Reforma (IBS/CBS)</Label>
+                                    <Label className="text-xs font-semibold uppercase text-primary">Reforma (IBS/CBS)</Label>
                                     <Switch checked={useTaxReform} onCheckedChange={toggleTaxReform} />
                                 </div>
                             </div>
@@ -488,32 +488,32 @@ export default function PurchaseSimulatorCalculator() {
                                  <Table>
                                      <TableHeader>
                                         <TableRow className="bg-muted/50 hover:bg-muted/50 border-b border-border">
-                                            <TableHead className="w-[140px] text-[10px] font-black uppercase text-muted-foreground opacity-70"># XML / Cód.</TableHead>
-                                            <TableHead className="min-w-[200px] text-[10px] font-black uppercase text-muted-foreground opacity-70">Descrição</TableHead>
-                                            <TableHead className="text-right text-[10px] font-black uppercase text-muted-foreground opacity-70">Qtde Orig.</TableHead>
-                                            <TableHead className="text-right text-[10px] font-black uppercase text-primary">Qtde Sim.</TableHead>
-                                            <TableHead className="text-right text-[10px] font-black uppercase text-muted-foreground opacity-70">Custo Un. Final</TableHead>
-                                            <TableHead className="text-right text-[10px] font-black uppercase text-muted-foreground opacity-70">Total Orig.</TableHead>
-                                            <TableHead className="text-right text-[10px] font-black uppercase text-primary">Total Sim.</TableHead>
+                                            <TableHead className="w-[140px] text-xs font-semibold uppercase text-muted-foreground opacity-70"># XML / Cód.</TableHead>
+                                            <TableHead className="min-w-[200px] text-xs font-semibold uppercase text-muted-foreground opacity-70">Descrição</TableHead>
+                                            <TableHead className="text-right text-xs font-semibold uppercase text-muted-foreground opacity-70">Qtde Orig.</TableHead>
+                                            <TableHead className="text-right text-xs font-semibold uppercase text-primary">Qtde Sim.</TableHead>
+                                            <TableHead className="text-right text-xs font-semibold uppercase text-muted-foreground opacity-70">Custo Un. Final</TableHead>
+                                            <TableHead className="text-right text-xs font-semibold uppercase text-muted-foreground opacity-70">Total Orig.</TableHead>
+                                            <TableHead className="text-right text-xs font-semibold uppercase text-primary">Total Sim.</TableHead>
                                             <TableHead className="w-12"></TableHead>
                                         </TableRow>
                                     </TableHeader>
                                      <TableBody>
                                         {items.map(item => (
                                             <TableRow key={item.id} className="hover:bg-muted/30 transition-colors group border-b border-border/50">
-                                                <TableCell className="font-mono text-[10px] font-black text-muted-foreground"><div className="flex items-center gap-1.5"><Badge variant="outline" className="h-4 px-1 font-mono text-[9px] font-black border-primary/30 text-primary shrink-0">#{item.nItem || '-'}</Badge><span className="opacity-70 truncate">{item.cProd}</span></div></TableCell>
-                                                <TableCell className="text-xs font-black">{item.description}</TableCell>
-                                                <TableCell className="text-right text-xs font-black text-muted-foreground opacity-60">{formatNumber4(item.originalQuantity)}</TableCell>
+                                                <TableCell className="font-mono text-xs font-semibold text-muted-foreground"><div className="flex items-center gap-1.5"><Badge variant="outline" className="h-4 px-1 font-mono text-xs font-semibold border-primary/30 text-primary shrink-0">#{item.nItem || '-'}</Badge><span className="opacity-70 truncate">{item.cProd}</span></div></TableCell>
+                                                <TableCell className="text-xs font-semibold">{item.description}</TableCell>
+                                                <TableCell className="text-right text-xs font-semibold text-muted-foreground opacity-60">{formatNumber4(item.originalQuantity)}</TableCell>
                                                 <TableCell className="text-right">
                                                     <Input
                                                         value={item.simulatedQuantity}
                                                         onChange={(e) => handleQuantityChange(item.id, e.target.value)}
-                                                        className="h-9 w-24 ml-auto text-right font-black text-xs bg-primary/5 border-primary/20 focus:bg-background focus:ring-primary/20"
+                                                        className="h-9 w-24 ml-auto text-right font-semibold text-xs bg-primary/5 border-primary/20 focus:bg-background focus:ring-primary/20"
                                                     />
                                                 </TableCell>
-                                                <TableCell className="text-right text-xs font-mono font-black">{formatCurrency4(item.finalUnitCost)}</TableCell>
-                                                <TableCell className="text-right text-xs font-black text-muted-foreground opacity-60">{formatCurrency(item.originalTotalCost)}</TableCell>
-                                                <TableCell className="text-right text-xs font-black text-primary">{formatCurrency(item.simulatedTotalCost)}</TableCell>
+                                                <TableCell className="text-right text-xs font-mono font-semibold">{formatCurrency4(item.finalUnitCost)}</TableCell>
+                                                <TableCell className="text-right text-xs font-semibold text-muted-foreground opacity-60">{formatCurrency(item.originalTotalCost)}</TableCell>
+                                                <TableCell className="text-right text-xs font-semibold text-primary">{formatCurrency(item.simulatedTotalCost)}</TableCell>
                                                 <TableCell>
                                                     <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.id)} className="opacity-0 group-hover:opacity-100 transition-opacity">
                                                         <Trash2 className="h-4 w-4 text-destructive" />
@@ -524,9 +524,9 @@ export default function PurchaseSimulatorCalculator() {
                                     </TableBody>
                                     <TableFooter className="bg-muted/20">
                                         <TableRow>
-                                            <TableHead colSpan={5} className="text-right text-[10px] font-black uppercase opacity-60">Totais da Projeção:</TableHead>
+                                            <TableHead colSpan={5} className="text-right text-xs font-semibold uppercase opacity-60">Totais da Projeção:</TableHead>
                                             <TableCell className="text-right text-xs font-bold">{formatCurrency(originalNfeTotalCost)}</TableCell>
-                                            <TableCell className="text-right text-xs font-black text-primary">{formatCurrency(totals.simulatedTotalCost)}</TableCell>
+                                            <TableCell className="text-right text-xs font-semibold text-primary">{formatCurrency(totals.simulatedTotalCost)}</TableCell>
                                             <TableCell></TableCell>
                                         </TableRow>
                                     </TableFooter>
@@ -534,10 +534,10 @@ export default function PurchaseSimulatorCalculator() {
                             </div>
 
                             <div className="flex justify-end gap-2">
-                                <Button onClick={generatePdf} variant="outline" className="shadow-sm border-border hover:bg-muted font-black rounded-xl">
+                                <Button onClick={generatePdf} variant="outline" className="shadow-sm border-border hover:bg-muted font-semibold rounded-xl">
                                     <Printer className="mr-2 h-4 w-4" /> Exportar PDF
                                 </Button>
-                                <Button onClick={clearData} variant="ghost" className="text-destructive hover:text-destructive hover:bg-destructive/10 font-black rounded-xl">
+                                <Button onClick={clearData} variant="ghost" className="text-destructive hover:text-destructive hover:bg-destructive/10 font-semibold rounded-xl">
                                     <X className="mr-2 h-4 w-4" /> Descartar Tudo
                                 </Button>
                             </div>
@@ -549,7 +549,7 @@ export default function PurchaseSimulatorCalculator() {
                             <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
                                 <ShoppingCart className="w-8 h-8 text-muted-foreground opacity-50" />
                             </div>
-                            <h3 className="text-xl font-black text-foreground">Pronto para Simular?</h3>
+                            <h3 className="text-xl font-semibold text-foreground">Pronto para Simular?</h3>
                             <p className="text-sm text-muted-foreground max-w-sm mt-2 font-medium">Importe uma NF-e para projetar custos baseados em diferentes quantidades de compra e rateios personalizados.</p>
                         </div>
                     )}
@@ -560,13 +560,13 @@ export default function PurchaseSimulatorCalculator() {
                         <CardHeader className="bg-muted/30 pb-8 border-b border-border">
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                 <div>
-                                    <CardTitle className="text-xl font-black">Histórico de Simulações</CardTitle>
+                                    <CardTitle className="text-xl font-semibold">Histórico de Simulações</CardTitle>
                                     <CardDescription className="font-medium">Gestão de projeções salvas e análise de economia acumulada.</CardDescription>
                                 </div>
                                 <div className="flex flex-wrap gap-2">
                                     <div className="relative w-full md:w-64">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                        <Input placeholder="Buscar por NF-e ou Fornecedor..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-9 h-10 bg-background border-border font-black text-xs" />
+                                        <Input placeholder="Buscar por NF-e ou Fornecedor..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-9 h-10 bg-background border-border font-semibold text-xs" />
                                     </div>
                                     <DatePickerWithRange date={savedSimsDateRange} setDate={setSavedSimsDateRange} />
                                     <Button onClick={() => { setSearchQuery(""); setSavedSimsDateRange(undefined); }} variant="ghost" size="icon" className="h-10 w-10">
@@ -583,22 +583,22 @@ export default function PurchaseSimulatorCalculator() {
                                     <Table>
                                         <TableHeader>
                                             <TableRow className="bg-muted/50 border-b border-border">
-                                                <TableHead className="text-[10px] font-black uppercase text-muted-foreground opacity-70">Simulação</TableHead>
-                                                <TableHead className="text-[10px] font-black uppercase text-muted-foreground opacity-70">Fornecedor</TableHead>
-                                                <TableHead className="text-[10px] font-black uppercase text-center text-muted-foreground opacity-70">NF-e</TableHead>
-                                                <TableHead className="text-[10px] font-black uppercase text-center text-muted-foreground opacity-70">Data</TableHead>
-                                                <TableHead className="text-[10px] font-black uppercase text-right text-primary">Economia</TableHead>
+                                                <TableHead className="text-xs font-semibold uppercase text-muted-foreground opacity-70">Simulação</TableHead>
+                                                <TableHead className="text-xs font-semibold uppercase text-muted-foreground opacity-70">Fornecedor</TableHead>
+                                                <TableHead className="text-xs font-semibold uppercase text-center text-muted-foreground opacity-70">NF-e</TableHead>
+                                                <TableHead className="text-xs font-semibold uppercase text-center text-muted-foreground opacity-70">Data</TableHead>
+                                                <TableHead className="text-xs font-semibold uppercase text-right text-primary">Economia</TableHead>
                                                 <TableHead className="w-32 text-right"></TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
                                             {filteredSimulations.length > 0 ? filteredSimulations.map(sim => (
                                                 <TableRow key={sim.id} className="hover:bg-muted/30 border-b border-border/50">
-                                                    <TableCell className="font-black text-xs">{sim.simulationName}</TableCell>
+                                                    <TableCell className="font-semibold text-xs">{sim.simulationName}</TableCell>
                                                     <TableCell className="text-xs font-medium">{sim.nfeInfo.emitterName}</TableCell>
-                                                    <TableCell className="text-center font-mono text-[10px] font-black">#{sim.nfeInfo.nfeNumber}</TableCell>
-                                                    <TableCell className="text-center text-[10px] font-black">{formatDate(parseISO(sim.createdAt), 'dd/MM/yyyy')}</TableCell>
-                                                    <TableCell className="text-right text-xs font-black text-accent-green">{formatCurrency(sim.originalTotalCost - sim.simulatedTotalCost)}</TableCell>
+                                                    <TableCell className="text-center font-mono text-xs font-semibold">#{sim.nfeInfo.nfeNumber}</TableCell>
+                                                    <TableCell className="text-center text-xs font-semibold">{formatDate(parseISO(sim.createdAt), 'dd/MM/yyyy')}</TableCell>
+                                                    <TableCell className="text-right text-xs font-semibold text-accent-green">{formatCurrency(sim.originalTotalCost - sim.simulatedTotalCost)}</TableCell>
                                                     <TableCell className="text-right flex gap-1 justify-end p-2">
                                                         <Button variant="ghost" size="sm" onClick={() => handleLoadSimulation(sim)} className="h-8 w-8 p-0 rounded-lg">
                                                             <Edit className="h-4 w-4" />
@@ -627,8 +627,8 @@ export default function PurchaseSimulatorCalculator() {
                         <AlertDialogDescription>Esta ação é irreversível e removerá permanentemente os dados de &quot;{deleteTarget?.simulationName}&quot; do seu banco de dados local.</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel className="rounded-xl font-black">Manter</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeleteSimulation} className="bg-destructive hover:bg-destructive/90 rounded-xl font-black text-destructive-foreground">Confirmar Exclusão</AlertDialogAction>
+                        <AlertDialogCancel className="rounded-xl font-semibold">Manter</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteSimulation} className="bg-destructive hover:bg-destructive/90 rounded-xl font-semibold text-destructive-foreground">Confirmar Exclusão</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

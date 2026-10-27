@@ -234,7 +234,7 @@ export default function NfeItemLocatorCalculator() {
                                         variant={showOnlyChecked ? 'default' : 'outline'}
                                         size="sm"
                                         onClick={() => setShowOnlyChecked((prev) => !prev)}
-                                        className="h-8 px-2.5 rounded-lg font-bold text-[11px] gap-1.5"
+                                        className="h-8 px-2.5 rounded-lg font-bold text-xs gap-1.5"
                                     >
                                         <CheckSquare className="w-3.5 h-3.5" />
                                         Conferidos ({checkedCount})
@@ -244,7 +244,7 @@ export default function NfeItemLocatorCalculator() {
                                             variant="ghost"
                                             size="sm"
                                             onClick={() => setCheckedUids({})}
-                                            className="h-8 px-2 rounded-lg font-bold text-[10px] text-muted-foreground hover:text-destructive"
+                                            className="h-8 px-2 rounded-lg font-bold text-xs text-muted-foreground hover:text-destructive"
                                             title="Desmarcar todos"
                                         >
                                             Limpar
@@ -260,13 +260,13 @@ export default function NfeItemLocatorCalculator() {
                     {allNfes.length > 0 && (
                         <div className="flex flex-wrap items-center justify-between gap-2 pt-1.5 border-t border-border/50">
                             <div className="flex flex-wrap items-center gap-1.5">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                                     NFs ({allNfes.length}):
                                 </span>
                                 <Badge
                                     variant={selectedNfeChave === 'ALL' ? 'default' : 'outline'}
                                     onClick={() => setSelectedNfeChave('ALL')}
-                                    className="cursor-pointer h-5 px-2 rounded-md font-bold text-[10px] uppercase transition-all"
+                                    className="cursor-pointer h-5 px-2 rounded-md font-bold text-xs uppercase transition-all"
                                 >
                                     Todas ({allItems.length})
                                 </Badge>
@@ -280,7 +280,7 @@ export default function NfeItemLocatorCalculator() {
                                         >
                                             <button
                                                 onClick={() => setSelectedNfeChave(isSelected ? 'ALL' : chaveClean)}
-                                                className={`h-5 px-2 text-[10px] font-bold uppercase flex items-center gap-1 transition-colors whitespace-nowrap ${
+                                                className={`h-5 px-2 text-xs font-bold uppercase flex items-center gap-1 transition-colors whitespace-nowrap ${
                                                     isSelected
                                                         ? 'bg-primary text-primary-foreground'
                                                         : 'hover:bg-muted text-foreground'
@@ -288,7 +288,7 @@ export default function NfeItemLocatorCalculator() {
                                             >
                                                 <FileText className="w-2.5 h-2.5 shrink-0" />
                                                 NF {nfe.header.nNF}
-                                                <span className="opacity-70 text-[9px]">({formatDateBr(nfe.header.dhEmi)})</span>
+                                                <span className="opacity-70 text-xs">({formatDateBr(nfe.header.dhEmi)})</span>
                                             </button>
                                             <button
                                                 onClick={() => {
@@ -305,7 +305,7 @@ export default function NfeItemLocatorCalculator() {
                                 })}
                             </div>
 
-                            <span className="text-[10px] font-semibold text-muted-foreground ml-auto">
+                            <span className="text-xs font-semibold text-muted-foreground ml-auto">
                                 Exibindo <strong className="text-foreground">{filteredItems.length}</strong> de {allItems.length} itens • Clique no <strong className="text-primary"># Item</strong> ou <strong className="text-primary">Chave</strong> p/ copiar
                             </span>
                         </div>
@@ -321,23 +321,23 @@ export default function NfeItemLocatorCalculator() {
                             <Table>
                                 <TableHeader className="bg-muted/70">
                                     <TableRow className="border-b border-border h-8">
-                                        <TableHead className="w-[38px] py-1.5 px-2 text-center text-[10px] font-black uppercase text-muted-foreground">OK</TableHead>
-                                        <TableHead className="w-[68px] py-1.5 px-2 text-center text-[10px] font-black uppercase text-primary whitespace-nowrap">
+                                        <TableHead className="w-[38px] py-1.5 px-2 text-center text-xs font-semibold uppercase text-muted-foreground">OK</TableHead>
+                                        <TableHead className="w-[68px] py-1.5 px-2 text-center text-xs font-semibold uppercase text-primary whitespace-nowrap">
                                             # XML
                                         </TableHead>
-                                        <TableHead className="w-[130px] py-1.5 px-2 text-[10px] font-black uppercase text-muted-foreground whitespace-nowrap">
+                                        <TableHead className="w-[130px] py-1.5 px-2 text-xs font-semibold uppercase text-muted-foreground whitespace-nowrap">
                                             Cód. Fabricante
                                         </TableHead>
-                                        <TableHead className="w-[28%] max-w-[290px] py-1.5 px-2 text-[10px] font-black uppercase text-muted-foreground">
+                                        <TableHead className="w-[28%] max-w-[290px] py-1.5 px-2 text-xs font-semibold uppercase text-muted-foreground">
                                             Descrição do Produto (XML)
                                         </TableHead>
-                                        <TableHead className="min-w-[205px] py-1.5 px-3 text-[10px] font-black uppercase text-muted-foreground whitespace-nowrap">
+                                        <TableHead className="min-w-[205px] py-1.5 px-3 text-xs font-semibold uppercase text-muted-foreground whitespace-nowrap">
                                             NF Origem / Data
                                         </TableHead>
-                                        <TableHead className="min-w-[235px] py-1.5 px-2 text-[10px] font-black uppercase text-muted-foreground whitespace-nowrap">
+                                        <TableHead className="min-w-[235px] py-1.5 px-2 text-xs font-semibold uppercase text-muted-foreground whitespace-nowrap">
                                             Chave de Acesso (44 Díg.)
                                         </TableHead>
-                                        <TableHead className="w-[140px] py-1.5 px-2 text-right text-[10px] font-black uppercase text-muted-foreground whitespace-nowrap">
+                                        <TableHead className="w-[140px] py-1.5 px-2 text-right text-xs font-semibold uppercase text-muted-foreground whitespace-nowrap">
                                             Qtde / Preço Un.
                                         </TableHead>
                                     </TableRow>
@@ -381,7 +381,7 @@ export default function NfeItemLocatorCalculator() {
                                                                     <button
                                                                         onClick={() => handleCopy(String(item.nItem), 'Nº do Item XML', `nitem-${item.uid}`)}
                                                                         className={cn(
-                                                                            "inline-flex items-center justify-center gap-0.5 px-2 py-0.5 rounded-md font-mono text-xs font-black shadow-sm hover:opacity-90 active:scale-95 transition-all whitespace-nowrap",
+                                                                            "inline-flex items-center justify-center gap-0.5 px-2 py-0.5 rounded-md font-mono text-xs font-semibold shadow-sm hover:opacity-90 active:scale-95 transition-all whitespace-nowrap",
                                                                             isChecked
                                                                                 ? "bg-muted text-muted-foreground line-through"
                                                                                 : "bg-primary text-primary-foreground"
@@ -394,7 +394,7 @@ export default function NfeItemLocatorCalculator() {
                                                                         )}
                                                                     </button>
                                                                 </TooltipTrigger>
-                                                                <TooltipContent className="text-[10px] font-bold">
+                                                                <TooltipContent className="text-xs font-bold">
                                                                     Posição no XML (&lt;det nItem=&quot;{item.nItem}&quot;&gt;) — Clique p/ copiar
                                                                 </TooltipContent>
                                                             </Tooltip>
@@ -409,7 +409,7 @@ export default function NfeItemLocatorCalculator() {
                                                         <div className="flex items-center gap-1">
                                                             <span
                                                                 className={cn(
-                                                                    "font-mono text-[11px] font-black break-all leading-tight",
+                                                                    "font-mono text-xs font-semibold break-all leading-tight",
                                                                     isChecked ? "line-through text-muted-foreground" : "text-primary"
                                                                 )}
                                                             >
@@ -427,7 +427,7 @@ export default function NfeItemLocatorCalculator() {
                                                                 )}
                                                             </button>
                                                         </div>
-                                                        <span className={cn("text-[9px] font-mono text-muted-foreground block leading-none mt-0.5", isChecked && "line-through")}>
+                                                        <span className={cn("text-xs font-mono text-muted-foreground block leading-none mt-0.5", isChecked && "line-through")}>
                                                             NCM: {item.NCM}
                                                         </span>
                                                     </TableCell>
@@ -437,7 +437,7 @@ export default function NfeItemLocatorCalculator() {
                                                         <div className="flex flex-col gap-0.5">
                                                             <span
                                                                 className={cn(
-                                                                    "text-[11px] font-bold leading-tight truncate",
+                                                                    "text-xs font-bold leading-tight truncate",
                                                                     isChecked ? "line-through text-muted-foreground" : "text-foreground"
                                                                 )}
                                                                 title={item.xProd}
@@ -445,13 +445,13 @@ export default function NfeItemLocatorCalculator() {
                                                                 {item.xProd}
                                                             </span>
                                                             <div className="flex flex-wrap items-center gap-1">
-                                                                <span className="text-[9px] font-mono text-muted-foreground bg-muted px-1 rounded">
+                                                                <span className="text-xs font-mono text-muted-foreground bg-muted px-1 rounded">
                                                                     Orig:{item.orig}
                                                                 </span>
-                                                                <span className="text-[9px] font-mono text-muted-foreground bg-muted px-1 rounded">
+                                                                <span className="text-xs font-mono text-muted-foreground bg-muted px-1 rounded">
                                                                     CST:{item.CST}
                                                                 </span>
-                                                                <span className="text-[9px] font-mono text-muted-foreground bg-muted px-1 rounded">
+                                                                <span className="text-xs font-mono text-muted-foreground bg-muted px-1 rounded">
                                                                     CFOP:{item.CFOP}
                                                                 </span>
                                                             </div>
@@ -463,7 +463,7 @@ export default function NfeItemLocatorCalculator() {
                                                         <div className="flex items-center gap-1.5 flex-nowrap">
                                                             <span
                                                                 className={cn(
-                                                                    "inline-flex items-center font-mono text-[10px] font-black px-1.5 py-0.5 rounded whitespace-nowrap shrink-0",
+                                                                    "inline-flex items-center font-mono text-xs font-semibold px-1.5 py-0.5 rounded whitespace-nowrap shrink-0",
                                                                     isChecked
                                                                         ? "bg-muted text-muted-foreground line-through"
                                                                         : "bg-foreground text-background"
@@ -471,16 +471,16 @@ export default function NfeItemLocatorCalculator() {
                                                             >
                                                                 NF {item.nNF}
                                                             </span>
-                                                            <span className={cn("text-[10px] font-bold text-muted-foreground whitespace-nowrap shrink-0", isChecked && "line-through")}>
+                                                            <span className={cn("text-xs font-bold text-muted-foreground whitespace-nowrap shrink-0", isChecked && "line-through")}>
                                                                 S:{item.serie}
                                                             </span>
-                                                            <span className={cn("text-[10px] font-semibold text-muted-foreground whitespace-nowrap shrink-0", isChecked && "line-through")}>
+                                                            <span className={cn("text-xs font-semibold text-muted-foreground whitespace-nowrap shrink-0", isChecked && "line-through")}>
                                                                 {item.dhEmiFormatted}
                                                             </span>
                                                         </div>
                                                         <span
                                                             className={cn(
-                                                                "text-[9px] text-muted-foreground/80 truncate block max-w-[195px] mt-0.5",
+                                                                "text-xs text-muted-foreground/80 truncate block max-w-[195px] mt-0.5",
                                                                 isChecked && "line-through"
                                                             )}
                                                             title={item.emitNome}
@@ -498,7 +498,7 @@ export default function NfeItemLocatorCalculator() {
                                                             <div className="flex items-center gap-1.5">
                                                                 <button
                                                                     onClick={() => handleCopy(item.chave, `Chave da NF ${item.nNF}`, `chave-${item.uid}`)}
-                                                                    className="inline-flex items-center gap-1 h-5 px-2 rounded border border-primary/30 bg-primary/5 text-primary hover:bg-primary/15 text-[9px] font-black shrink-0 transition-colors"
+                                                                    className="inline-flex items-center gap-1 h-5 px-2 rounded border border-primary/30 bg-primary/5 text-primary hover:bg-primary/15 text-xs font-semibold shrink-0 transition-colors"
                                                                     title="Copiar os 44 dígitos da Chave de Acesso"
                                                                 >
                                                                     {copiedId === `chave-${item.uid}` ? (
@@ -515,7 +515,7 @@ export default function NfeItemLocatorCalculator() {
                                                                 </button>
                                                                 <span
                                                                     className={cn(
-                                                                        "font-mono text-[9px] text-muted-foreground select-all leading-tight break-all",
+                                                                        "font-mono text-xs text-muted-foreground select-all leading-tight break-all",
                                                                         isChecked && "line-through"
                                                                     )}
                                                                 >
@@ -523,7 +523,7 @@ export default function NfeItemLocatorCalculator() {
                                                                 </span>
                                                             </div>
                                                         ) : (
-                                                            <span className="text-[10px] text-muted-foreground italic">Sem chave</span>
+                                                            <span className="text-xs text-muted-foreground italic">Sem chave</span>
                                                         )}
                                                     </TableCell>
 
@@ -532,15 +532,15 @@ export default function NfeItemLocatorCalculator() {
                                                         <div className="flex flex-col items-end leading-tight">
                                                             <span
                                                                 className={cn(
-                                                                    "text-[11px] font-mono font-black",
+                                                                    "text-xs font-mono font-semibold",
                                                                     isChecked ? "line-through text-muted-foreground" : "text-foreground"
                                                                 )}
                                                             >
-                                                                {formatCurrency4(item.vUnCom)} <span className="text-[9px] text-muted-foreground font-semibold">({formatNumber(item.qCom)} {item.uCom})</span>
+                                                                {formatCurrency4(item.vUnCom)} <span className="text-xs text-muted-foreground font-semibold">({formatNumber(item.qCom)} {item.uCom})</span>
                                                             </span>
                                                             <span
                                                                 className={cn(
-                                                                    "text-[9px] font-mono font-bold",
+                                                                    "text-xs font-mono font-bold",
                                                                     isChecked ? "line-through text-muted-foreground" : "text-primary"
                                                                 )}
                                                             >
@@ -569,10 +569,10 @@ export default function NfeItemLocatorCalculator() {
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-3 py-2 rounded-xl border border-primary/20 bg-primary/5">
                             <div className="flex items-center gap-2 min-w-0 flex-1">
                                 <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" />
-                                <span className="text-[10px] font-black uppercase text-primary shrink-0">
+                                <span className="text-xs font-semibold uppercase text-primary shrink-0">
                                     Dados Adicionais (CFOP 5949):
                                 </span>
-                                <span className="text-[11px] font-mono text-foreground truncate select-all" title={dadosAdicionaisText}>
+                                <span className="text-xs font-mono text-foreground truncate select-all" title={dadosAdicionaisText}>
                                     {dadosAdicionaisText}
                                 </span>
                             </div>
@@ -580,7 +580,7 @@ export default function NfeItemLocatorCalculator() {
                                 variant="default"
                                 size="sm"
                                 onClick={() => handleCopy(dadosAdicionaisText, 'Dados Adicionais', 'dados-adicionais')}
-                                className="rounded-lg font-bold text-[10px] h-7 px-2.5 shrink-0 gap-1"
+                                className="rounded-lg font-bold text-xs h-7 px-2.5 shrink-0 gap-1"
                             >
                                 {copiedId === 'dados-adicionais' ? (
                                     <>
@@ -600,7 +600,7 @@ export default function NfeItemLocatorCalculator() {
                     <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3">
                         <FileSearch className="w-6 h-6 text-primary opacity-70" />
                     </div>
-                    <h3 className="text-base font-black text-foreground">Importe os XMLs das Notas de Compra</h3>
+                    <h3 className="text-base font-semibold text-foreground">Importe os XMLs das Notas de Compra</h3>
                     <p className="text-xs text-muted-foreground max-w-md mt-1 font-medium">
                         Selecione vários arquivos XML de uma só vez para buscar peças instantaneamente e copiar o <code className="text-primary font-bold">nItem</code> e a Chave de Acesso.
                     </p>

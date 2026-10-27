@@ -187,7 +187,7 @@ export default function NfeComparator() {
         return (
          <Card className="mt-8 border border-border shadow-2xl overflow-hidden rounded-3xl bg-card">
             <CardHeader className="bg-foreground text-background p-6">
-                <CardTitle className="text-xl font-black flex items-center gap-3">
+                <CardTitle className="text-xl font-semibold flex items-center gap-3">
                     <GitCompareArrows size={24} className="text-primary" />
                     {title}
                 </CardTitle>
@@ -197,11 +197,11 @@ export default function NfeComparator() {
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-muted border-none">
-                                <TableHead className="text-[10px] font-black uppercase text-muted-foreground py-4 px-6">Produto / SKU</TableHead>
-                                <TableHead className="text-center text-[10px] font-black uppercase text-muted-foreground">Fontes</TableHead>
-                                <TableHead className="text-right text-[10px] font-black uppercase text-muted-foreground">Volume Total</TableHead>
-                                <TableHead className="text-right text-[10px] font-black uppercase text-primary">Investimento</TableHead>
-                                <TableHead className="text-[10px] font-black uppercase text-muted-foreground px-6">Detalhamento por Nota</TableHead>
+                                <TableHead className="text-xs font-semibold uppercase text-muted-foreground py-4 px-6">Produto / SKU</TableHead>
+                                <TableHead className="text-center text-xs font-semibold uppercase text-muted-foreground">Fontes</TableHead>
+                                <TableHead className="text-right text-xs font-semibold uppercase text-muted-foreground">Volume Total</TableHead>
+                                <TableHead className="text-right text-xs font-semibold uppercase text-primary">Investimento</TableHead>
+                                <TableHead className="text-xs font-semibold uppercase text-muted-foreground px-6">Detalhamento por Nota</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -209,24 +209,24 @@ export default function NfeComparator() {
                                 <TableRow key={`${result.code}-${result.description}`} className="hover:bg-accent/5 transition-colors border-border">
                                     <TableCell className="px-6 py-4">
                                         <div className="flex flex-col">
-                                            <span className="text-xs font-black text-foreground leading-tight mb-1">{result.description}</span>
-                                            <span className="font-mono text-[10px] font-black text-primary">{result.code}</span>
+                                            <span className="text-xs font-semibold text-foreground leading-tight mb-1">{result.description}</span>
+                                            <span className="font-mono text-xs font-semibold text-primary">{result.code}</span>
                                         </div>
                                     </TableCell>
                                      <TableCell className="text-center">
-                                        <Badge variant="secondary" className="bg-accent text-accent-foreground font-black text-[10px] rounded-lg border-none">
+                                        <Badge variant="secondary" className="bg-accent text-accent-foreground font-semibold text-xs rounded-lg border-none">
                                             {result.nfeCount} XMLS
                                         </Badge>
                                     </TableCell>
-                                     <TableCell className="text-right font-black text-xs text-muted-foreground">{formatNumber(result.totalQuantity)}</TableCell>
-                                    <TableCell className="text-right font-black text-xs text-primary">{formatCurrency(result.totalValue)}</TableCell>
+                                     <TableCell className="text-right font-semibold text-xs text-muted-foreground">{formatNumber(result.totalQuantity)}</TableCell>
+                                    <TableCell className="text-right font-semibold text-xs text-primary">{formatCurrency(result.totalValue)}</TableCell>
                                      <TableCell className="px-6">
                                         <div className="flex flex-col gap-2 py-2">
                                             {result.occurrences.map((occ, index) => (
-                                                <div key={index} className="text-[9px] p-3 rounded-xl bg-accent/20 border border-border relative group/item">
+                                                <div key={index} className="text-xs p-3 rounded-xl bg-accent/20 border border-border relative group/item">
                                                    <div className="flex justify-between items-center mb-1">
-                                                       <span className="font-black text-muted-foreground uppercase tracking-tighter truncate max-w-[120px]">{occ.emitterName}</span>
-                                                       <span className="text-primary font-black">NF: {occ.nfeNumber} • Item #{occ.nItem}</span>
+                                                       <span className="font-semibold text-muted-foreground uppercase tracking-tighter truncate max-w-[120px]">{occ.emitterName}</span>
+                                                       <span className="text-primary font-semibold">NF: {occ.nfeNumber} • Item #{occ.nItem}</span>
                                                    </div>
                                                    <div className="flex justify-between items-center">
                                                         <span className="text-muted-foreground/70 font-bold">Qtde: {formatNumber(occ.quantity)}</span>
@@ -242,8 +242,8 @@ export default function NfeComparator() {
                     </Table>
                 </div>
                  <div className="bg-foreground text-background p-6 flex justify-between items-center">
-                    <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Investimento Total nos Resultados</span>
-                    <span className="text-2xl font-black text-accent-green">{formatCurrency(grandTotalValue)}</span>
+                    <span className="text-xs font-semibold uppercase tracking-wide opacity-60">Investimento Total nos Resultados</span>
+                    <span className="text-2xl font-semibold text-accent-green">{formatCurrency(grandTotalValue)}</span>
                 </div>
             </CardContent>
         </Card>
@@ -254,10 +254,10 @@ export default function NfeComparator() {
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                  <div className="space-y-1">
-                    <h2 className="text-2xl font-black tracking-tight flex items-center gap-2">
+                    <h2 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
                         <GitCompareArrows className="w-6 h-6 text-primary" /> Comparador Estratégico de NF-e
                     </h2>
-                    <p className="text-xs text-muted-foreground uppercase font-black tracking-wider opacity-70">Histórico de Preços e Análise de Divergências entre Notas</p>
+                    <p className="text-xs text-muted-foreground uppercase font-semibold tracking-wider opacity-70">Histórico de Preços e Análise de Divergências entre Notas</p>
                 </div>
                 <NfeUploader />
             </div>
@@ -265,7 +265,7 @@ export default function NfeComparator() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <Card className="md:col-span-1 border border-border shadow-xl rounded-3xl bg-card p-6 space-y-6">
                     <div className="space-y-4">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest flex items-center gap-2">
+                        <Label className="text-xs font-semibold uppercase text-muted-foreground tracking-wide flex items-center gap-2">
                             <History size={14} /> Pesquisar Histórico
                         </Label>
                         <div className="relative">
@@ -275,21 +275,21 @@ export default function NfeComparator() {
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                                className="pl-10 h-11 font-black text-sm bg-background border-border focus:border-primary rounded-xl transition-all"
+                                className="pl-10 h-11 font-semibold text-sm bg-background border-border focus:border-primary rounded-xl transition-all"
                             />
                         </div>
                         <div className="flex gap-2">
-                            <Button onClick={handleSearch} disabled={isSearching || !allNfes.length} className="flex-1 h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-xl">
+                            <Button onClick={handleSearch} disabled={isSearching || !allNfes.length} className="flex-1 h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-xl">
                                 {isSearching ? "Buscando..." : "Buscar Agora"}
                             </Button>
                             {allNfes.length > 1 && (
-                                <Button onClick={handleCompare} variant="outline" disabled={isComparing} className="flex-1 h-11 border-primary/20 text-primary font-black rounded-xl">
+                                <Button onClick={handleCompare} variant="outline" disabled={isComparing} className="flex-1 h-11 border-primary/20 text-primary font-semibold rounded-xl">
                                     Comparar
                                 </Button>
                             )}
                         </div>
                         {allNfes.length > 0 && (
-                            <Button onClick={clearAll} variant="ghost" className="w-full text-destructive hover:bg-destructive/10 font-black text-[10px] uppercase tracking-widest rounded-xl">
+                            <Button onClick={clearAll} variant="ghost" className="w-full text-destructive hover:bg-destructive/10 font-semibold text-xs uppercase tracking-wide rounded-xl">
                                 <Trash2 size={14} className="mr-2" /> Limpar Tudo
                             </Button>
                         )}
@@ -301,19 +301,19 @@ export default function NfeComparator() {
                     </div>
                     <div className="relative z-10 space-y-6">
                         <div className="flex items-center gap-3">
-                            <Badge className="bg-primary text-primary-foreground font-black rounded-lg border-none px-3 h-8 text-sm shadow-md">
+                            <Badge className="bg-primary text-primary-foreground font-semibold rounded-lg border-none px-3 h-8 text-sm shadow-md">
                                 {allNfes.length} XMLS
                             </Badge>
-                            <h3 className="text-xl font-black tracking-tight">Fluxo de Dados Ativo</h3>
+                            <h3 className="text-xl font-semibold tracking-tight">Fluxo de Dados Ativo</h3>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
                             <div className="space-y-1">
-                                <span className="text-[9px] font-black uppercase opacity-60">Total Produtos</span>
-                                <p className="text-xl font-black">{allNfes.reduce((acc, n) => acc + n.items.length, 0)}</p>
+                                <span className="text-xs font-semibold uppercase opacity-60">Total Produtos</span>
+                                <p className="text-xl font-semibold">{allNfes.reduce((acc, n) => acc + n.items.length, 0)}</p>
                             </div>
                             <div className="space-y-1">
-                                <span className="text-[9px] font-black uppercase opacity-60">Investimento</span>
-                                <p className="text-xl font-black text-accent-green">{formatCurrency(allNfes.reduce((acc, n) => acc + n.totals.vNF, 0))}</p>
+                                <span className="text-xs font-semibold uppercase opacity-60">Investimento</span>
+                                <p className="text-xl font-semibold text-accent-green">{formatCurrency(allNfes.reduce((acc, n) => acc + n.totals.vNF, 0))}</p>
                             </div>
                         </div>
                     </div>
@@ -328,12 +328,12 @@ export default function NfeComparator() {
                                 <AccordionTrigger className="hover:no-underline py-5 group transition-all">
                                     <div className="flex flex-col text-left gap-1">
                                       <div className="flex items-center gap-2">
-                                          <span className="font-black text-foreground uppercase text-[10px] tracking-widest opacity-80">
+                                          <span className="font-semibold text-foreground uppercase text-xs tracking-wide opacity-80">
                                               {nfe.emit.xNome}
                                           </span>
-                                          <Badge variant="outline" className="text-[9px] font-black border-border">NF {nfe.header.nNF}</Badge>
+                                          <Badge variant="outline" className="text-xs font-semibold border-border">NF {nfe.header.nNF}</Badge>
                                       </div>
-                                      <div className="flex items-center gap-4 text-[10px] text-muted-foreground font-black uppercase tracking-tighter">
+                                      <div className="flex items-center gap-4 text-xs text-muted-foreground font-semibold uppercase tracking-tighter">
                                           <span className="flex items-center gap-1"><Files size={10} /> {nfe.items.length} Itens</span>
                                           <span className="flex items-center gap-1 text-accent-green"><DollarSign size={10} /> {formatCurrency(nfe.totals.vNF)}</span>
                                       </div>
@@ -344,21 +344,21 @@ export default function NfeComparator() {
                                         <Table>
                                             <TableHeader>
                                                 <TableRow className="hover:bg-transparent bg-muted/50">
-                                                    <TableHead className="w-[55px] text-center text-[9px] font-black uppercase py-3 text-muted-foreground"># XML</TableHead>
-                                                    <TableHead className="text-[9px] font-black uppercase py-3 text-muted-foreground">Código</TableHead>
-                                                    <TableHead className="text-[9px] font-black uppercase text-muted-foreground">Descrição</TableHead>
-                                                    <TableHead className="text-right text-[9px] font-black uppercase text-muted-foreground">Qtd</TableHead>
-                                                    <TableHead className="text-right text-[9px] font-black uppercase text-muted-foreground">Custo Unit.</TableHead>
+                                                    <TableHead className="w-[55px] text-center text-xs font-semibold uppercase py-3 text-muted-foreground"># XML</TableHead>
+                                                    <TableHead className="text-xs font-semibold uppercase py-3 text-muted-foreground">Código</TableHead>
+                                                    <TableHead className="text-xs font-semibold uppercase text-muted-foreground">Descrição</TableHead>
+                                                    <TableHead className="text-right text-xs font-semibold uppercase text-muted-foreground">Qtd</TableHead>
+                                                    <TableHead className="text-right text-xs font-semibold uppercase text-muted-foreground">Custo Unit.</TableHead>
                                                 </TableRow>
                                             </TableHeader>
                                              <TableBody>
                                                 {nfe.items.map((prod, idx) => (
                                                     <TableRow key={`${nfe.header.chave}-${idx}`} className="hover:bg-background/80 border-border">
-                                                        <TableCell className="text-center font-mono text-[10px] font-black text-primary">#{prod.nItem || (idx + 1)}</TableCell>
-                                                        <TableCell className="font-mono text-[10px] font-black text-primary">{prod.cProd}</TableCell>
-                                                        <TableCell className="text-[10px] font-bold text-foreground leading-tight">{prod.xProd}</TableCell>
-                                                        <TableCell className="text-right font-mono text-[10px]">{formatNumber(prod.qCom)}</TableCell>
-                                                        <TableCell className="text-right font-mono text-[10px] font-black text-foreground">{formatCurrency4(prod.vUnCom)}</TableCell>
+                                                        <TableCell className="text-center font-mono text-xs font-semibold text-primary">#{prod.nItem || (idx + 1)}</TableCell>
+                                                        <TableCell className="font-mono text-xs font-semibold text-primary">{prod.cProd}</TableCell>
+                                                        <TableCell className="text-xs font-bold text-foreground leading-tight">{prod.xProd}</TableCell>
+                                                        <TableCell className="text-right font-mono text-xs">{formatNumber(prod.qCom)}</TableCell>
+                                                        <TableCell className="text-right font-mono text-xs font-semibold text-foreground">{formatCurrency4(prod.vUnCom)}</TableCell>
                                                     </TableRow>
                                                 ))}
                                             </TableBody>
@@ -379,7 +379,7 @@ export default function NfeComparator() {
                      <div className="w-16 h-16 rounded-3xl bg-primary/10 flex items-center justify-center mb-6">
                         <GitCompareArrows className="w-8 h-8 text-primary opacity-50" />
                     </div>
-                    <h3 className="text-xl font-black text-foreground">Comparação Inteligente</h3>
+                    <h3 className="text-xl font-semibold text-foreground">Comparação Inteligente</h3>
                     <p className="text-sm text-muted-foreground max-w-sm mt-2 font-medium">Importe dois ou mais arquivos XML para cruzar dados de fornecedores e auditar variações de custos unitários.</p>
                 </div>
             )}

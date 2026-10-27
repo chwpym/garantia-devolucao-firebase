@@ -43,7 +43,7 @@ export default function UnitCostCalculator() {
              <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-primary/10 text-primary mb-2">
                 <Calculator size={24} />
             </div>
-            <h2 className="text-2xl font-black tracking-tight">Custo Unitário</h2>
+            <h2 className="text-2xl font-semibold tracking-tight">Custo Unitário</h2>
             <p className="text-sm text-muted-foreground">Calcule rapidamente o custo individual baseado no valor total da compra.</p>
         </div>
 
@@ -51,21 +51,21 @@ export default function UnitCostCalculator() {
             <CardContent className="p-8 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest opacity-70">Valor Total da Compra</Label>
+                        <Label className="text-xs font-semibold uppercase text-muted-foreground tracking-wide opacity-70">Valor Total da Compra</Label>
                         <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-black text-sm">R$</span>
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold text-sm">R$</span>
                             <Input 
                                 type="number" 
                                 step="0.01"
                                 placeholder="0,00" 
                                 value={totalValue} 
                                 onChange={e => setTotalValue(e.target.value)} 
-                                className="h-12 pl-10 font-black text-lg bg-background border-border transition-all"
+                                className="h-12 pl-10 font-semibold text-lg bg-background border-border transition-all"
                             />
                         </div>
                     </div>
                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest opacity-70">Quantidade de Itens</Label>
+                        <Label className="text-xs font-semibold uppercase text-muted-foreground tracking-wide opacity-70">Quantidade de Itens</Label>
                         <div className="relative">
                             <Input 
                                 type="number" 
@@ -73,9 +73,9 @@ export default function UnitCostCalculator() {
                                 placeholder="0" 
                                 value={quantity} 
                                 onChange={e => setQuantity(e.target.value)} 
-                                className="h-12 font-black text-lg bg-background border-border transition-all"
+                                className="h-12 font-semibold text-lg bg-background border-border transition-all"
                             />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-black text-xs uppercase">Unidades</span>
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold text-xs uppercase">Unidades</span>
                         </div>
                     </div>
                 </div>
@@ -86,14 +86,14 @@ export default function UnitCostCalculator() {
                             <div className="absolute right-[-10px] bottom-[-10px] opacity-10 group-hover:scale-110 transition-transform">
                                 <ArrowRightLeft size={80} />
                             </div>
-                            <span className="text-[10px] font-black uppercase opacity-60 tracking-widest block mb-1">Custo por Item</span>
+                            <span className="text-xs font-semibold uppercase opacity-60 tracking-wide block mb-1">Custo por Item</span>
                             <div className="flex items-center justify-between gap-4">
-                                <p className="text-4xl font-black">{formatCurrency4(unitCost)}</p>
+                                <p className="text-4xl font-semibold">{formatCurrency4(unitCost)}</p>
                                 <Button 
                                     variant="secondary" 
                                     size="sm" 
                                     onClick={() => handleCopy(unitCost)}
-                                    className="bg-background/10 hover:bg-background/20 text-background border-none h-10 px-4 rounded-xl font-black"
+                                    className="bg-background/10 hover:bg-background/20 text-background border-none h-10 px-4 rounded-xl font-semibold"
                                 >
                                     <Copy className="mr-2 h-4 w-4" /> Copiar
                                 </Button>
@@ -107,7 +107,7 @@ export default function UnitCostCalculator() {
                 )}
 
                  <div className="flex justify-center pt-2">
-                    <Button variant="ghost" onClick={handleClear} className="text-destructive hover:text-destructive hover:bg-destructive/10 font-black text-xs uppercase tracking-widest rounded-xl">
+                    <Button variant="ghost" onClick={handleClear} className="text-destructive hover:text-destructive hover:bg-destructive/10 font-semibold text-xs uppercase tracking-wide rounded-xl">
                         <Trash2 className="mr-2 h-4 w-4" /> Limpar Campos
                     </Button>
                 </div>

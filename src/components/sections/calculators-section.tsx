@@ -168,7 +168,7 @@ export default function CalculatorsSection() {
                             variant="ghost" 
                             size="sm"
                             onClick={() => setActiveCalculatorId(null)} 
-                            className="h-8 px-2.5 text-muted-foreground hover:text-primary transition-colors font-bold uppercase text-[10px] tracking-wider"
+                            className="h-8 px-2.5 text-muted-foreground hover:text-primary transition-colors font-bold uppercase text-xs tracking-wider"
                         >
                             <ArrowLeft className="mr-1.5 h-3.5 w-3.5" /> Voltar
                         </Button>
@@ -178,9 +178,9 @@ export default function CalculatorsSection() {
                                 <activeCalculator.icon className={cn("h-4 w-4", activeCalculator.color)} />
                             </div>
                             <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-2">
-                                <h1 className="text-sm font-black tracking-tight text-foreground">{activeCalculator.title}</h1>
+                                <h1 className="text-sm font-semibold tracking-tight text-foreground">{activeCalculator.title}</h1>
                                 <span className="hidden md:inline text-muted-foreground/40 text-xs">•</span>
-                                <p className="text-muted-foreground font-semibold text-[11px]">
+                                <p className="text-muted-foreground font-semibold text-xs">
                                     {activeCalculator.description}
                                 </p>
                             </div>
@@ -201,15 +201,15 @@ export default function CalculatorsSection() {
                 </div>
                 <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl md:text-3xl font-black tracking-tight">Fiscal Calculator Suite</h1>
+                        <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Fiscal Calculator Suite</h1>
                         <p className="text-background/80 mt-1 text-xs font-bold uppercase tracking-wide opacity-75">
                             Ferramentas inteligentes para auditoria fiscal, análise de custos e formação de preços estratégica.
                         </p>
                     </div>
                     <div className="flex shrink-0">
                         <div className="bg-background/10 backdrop-blur-md py-2 px-4 rounded-xl border border-background/20 flex items-center gap-3">
-                            <span className="text-[10px] font-black uppercase tracking-widest opacity-70">Ferramentas</span>
-                            <p className="text-xl font-black">{calculators.length}</p>
+                            <span className="text-xs font-semibold uppercase tracking-wide opacity-70">Ferramentas</span>
+                            <p className="text-xl font-semibold">{calculators.length}</p>
                         </div>
                     </div>
                 </div>
@@ -232,7 +232,7 @@ export default function CalculatorsSection() {
                                     <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 duration-300 border border-border/10", calc.bg)}>
                                         <calc.icon className={cn("h-4 w-4", calc.color)} />
                                     </div>
-                                    <h3 className="text-sm font-black tracking-tight text-foreground group-hover:text-primary transition-colors truncate">
+                                    <h3 className="text-sm font-semibold tracking-tight text-foreground group-hover:text-primary transition-colors truncate">
                                         {calc.title}
                                     </h3>
                                 </div>
@@ -242,7 +242,7 @@ export default function CalculatorsSection() {
                             </div>
 
                             {/* Descrição Compacta */}
-                            <p className="text-muted-foreground font-semibold text-[11px] leading-snug line-clamp-2 opacity-80">
+                            <p className="text-muted-foreground font-semibold text-xs leading-snug line-clamp-2 opacity-80">
                                 {calc.description}
                             </p>
                         </div>

@@ -216,10 +216,10 @@ export default function BatchPricingCalculator() {
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                  <div className="space-y-1">
-                    <h2 className="text-2xl font-black tracking-tight flex items-center gap-2 text-foreground">
+                    <h2 className="text-2xl font-semibold tracking-tight flex items-center gap-2 text-foreground">
                         <Tag className="w-6 h-6 text-primary" /> Precificação em Lote
                     </h2>
-                    <p className="text-xs text-muted-foreground uppercase font-black tracking-wider opacity-70">Gestão de Margens e Markup Estratégico</p>
+                    <p className="text-xs text-muted-foreground uppercase font-semibold tracking-wider opacity-70">Gestão de Margens e Markup Estratégico</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <NfeUploader />
@@ -229,11 +229,11 @@ export default function BatchPricingCalculator() {
             {items.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                      <Card className="bg-card text-foreground border border-border shadow-xl rounded-2xl p-4">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground mb-2 block opacity-70">Margem Global % / Imposto %</Label>
+                        <Label className="text-xs font-semibold uppercase text-muted-foreground mb-2 block opacity-70">Margem Global % / Imposto %</Label>
                         <div className="flex gap-2">
-                            <Input placeholder="Margem %" value={globalMargin} onChange={e => setGlobalMargin(e.target.value)} className="h-10 font-black bg-background border-border" />
+                            <Input placeholder="Margem %" value={globalMargin} onChange={e => setGlobalMargin(e.target.value)} className="h-10 font-semibold bg-background border-border" />
                             <Button onClick={applyGlobalMargin} size="icon" title="Aplicar Margem Global" className="shrink-0 bg-primary hover:bg-primary/90 text-primary-foreground"><ChevronsRight size={18} /></Button>
-                            <Input placeholder="Imp. %" value={globalTax} onChange={e => setGlobalTax(e.target.value)} className="h-10 font-black bg-background border-border" />
+                            <Input placeholder="Imp. %" value={globalTax} onChange={e => setGlobalTax(e.target.value)} className="h-10 font-semibold bg-background border-border" />
                             <Button onClick={applyGlobalTax} size="icon" variant="outline" title="Aplicar Imposto Global" className="shrink-0 border-destructive/30 text-destructive hover:bg-destructive/10"><ChevronsRight size={18} /></Button>
 
 
@@ -242,18 +242,18 @@ export default function BatchPricingCalculator() {
                     </Card>
 
                      <Card className="bg-foreground text-background border-none shadow-xl rounded-2xl p-4 flex flex-col justify-center">
-                        <span className="text-[10px] font-black uppercase opacity-60">Investimento Total</span>
-                        <p className="text-xl font-black">{formatCurrency(totals.totalCost)}</p>
+                        <span className="text-xs font-semibold uppercase opacity-60">Investimento Total</span>
+                        <p className="text-xl font-semibold">{formatCurrency(totals.totalCost)}</p>
                     </Card>
 
                      <Card className="bg-primary text-primary-foreground border-none shadow-xl rounded-2xl p-4 flex flex-col justify-center">
-                        <span className="text-[10px] font-black uppercase opacity-70">Venda Total Prevista</span>
-                        <p className="text-xl font-black">{formatCurrency(totals.totalSale)}</p>
+                        <span className="text-xs font-semibold uppercase opacity-70">Venda Total Prevista</span>
+                        <p className="text-xl font-semibold">{formatCurrency(totals.totalSale)}</p>
                     </Card>
 
                      <Card className="bg-accent-green text-background border-none shadow-xl rounded-2xl p-4 flex flex-col justify-center">
-                        <span className="text-[10px] font-black uppercase opacity-70">Margem Média Geral</span>
-                        <p className="text-xl font-black">{formatNumber(totals.avgMargin)}%</p>
+                        <span className="text-xs font-semibold uppercase opacity-70">Margem Média Geral</span>
+                        <p className="text-xl font-semibold">{formatNumber(totals.avgMargin)}%</p>
                     </Card>
                 </div>
             )}
@@ -263,13 +263,13 @@ export default function BatchPricingCalculator() {
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-muted border-none">
-                                <TableHead className="text-[10px] font-black uppercase text-muted-foreground"># XML / Item / Descrição</TableHead>
-                                <TableHead className="text-right text-[10px] font-black uppercase text-muted-foreground">Custo Final</TableHead>
-                                <TableHead className="text-center text-[10px] font-black uppercase text-muted-foreground">Fator</TableHead>
-                                <TableHead className="text-right text-[10px] font-black uppercase text-primary">Margem %</TableHead>
-                                <TableHead className="text-right text-[10px] font-black uppercase text-destructive">Imposto %</TableHead>
-                                <TableHead className="text-right text-[10px] font-black uppercase text-accent-green">P. Venda</TableHead>
-                                <TableHead className="text-right text-[10px] font-black uppercase text-muted-foreground">Venda Total</TableHead>
+                                <TableHead className="text-xs font-semibold uppercase text-muted-foreground"># XML / Item / Descrição</TableHead>
+                                <TableHead className="text-right text-xs font-semibold uppercase text-muted-foreground">Custo Final</TableHead>
+                                <TableHead className="text-center text-xs font-semibold uppercase text-muted-foreground">Fator</TableHead>
+                                <TableHead className="text-right text-xs font-semibold uppercase text-primary">Margem %</TableHead>
+                                <TableHead className="text-right text-xs font-semibold uppercase text-destructive">Imposto %</TableHead>
+                                <TableHead className="text-right text-xs font-semibold uppercase text-accent-green">P. Venda</TableHead>
+                                <TableHead className="text-right text-xs font-semibold uppercase text-muted-foreground">Venda Total</TableHead>
                                 <TableHead className="w-12"></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -278,16 +278,16 @@ export default function BatchPricingCalculator() {
                                 <TableRow key={item.id} className="hover:bg-accent/5 group border-border">
                                     <TableCell>
                                         <div className="flex flex-col">
-                                             <div className="flex items-center gap-1.5 flex-wrap">{item.nItem && <Badge variant="outline" className="h-4 px-1 font-mono text-[9px] font-black border-primary/30 text-primary">#{item.nItem}</Badge>}<span className="font-mono text-[9px] font-black text-primary">{item.cProd || 'MANUAL'}</span>{item.nItem && <Badge variant={item.hasSt ? "secondary" : "outline"} className="h-4 px-1 text-[8px] font-black uppercase" title={item.hasSt ? `Entrada com ST (CST ${item.cst} / CFOP ${item.cfop}) — Segrega ICMS no DAS` : `Entrada Tributada sem ST (CST ${item.cst} / CFOP ${item.cfop} - Portaria SRE 34/2026) — Paga ICMS no DAS`}>{item.hasSt ? 'COM ST' : 'SEM ST (Trib.)'}</Badge>}</div>
-                                            <span className="text-xs font-black text-foreground truncate max-w-[200px]">{item.description}</span>
+                                             <div className="flex items-center gap-1.5 flex-wrap">{item.nItem && <Badge variant="outline" className="h-4 px-1 font-mono text-xs font-semibold border-primary/30 text-primary">#{item.nItem}</Badge>}<span className="font-mono text-xs font-semibold text-primary">{item.cProd || 'MANUAL'}</span>{item.nItem && <Badge variant={item.hasSt ? "secondary" : "outline"} className="h-4 px-1 text-xs font-semibold uppercase" title={item.hasSt ? `Entrada com ST (CST ${item.cst} / CFOP ${item.cfop}) — Segrega ICMS no DAS` : `Entrada Tributada sem ST (CST ${item.cst} / CFOP ${item.cfop} - Portaria SRE 34/2026) — Paga ICMS no DAS`}>{item.hasSt ? 'COM ST' : 'SEM ST (Trib.)'}</Badge>}</div>
+                                            <span className="text-xs font-semibold text-foreground truncate max-w-[200px]">{item.description}</span>
                                         </div>
                                     </TableCell>
-                                 <TableCell className="text-right font-mono text-xs font-black text-muted-foreground">
+                                 <TableCell className="text-right font-mono text-xs font-semibold text-muted-foreground">
                                         <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger className="cursor-help border-b border-dotted border-border">{formatCurrency4(item.finalUnitCost)}</TooltipTrigger>
                                                 <TooltipContent className="p-3 rounded-xl border-none shadow-2xl bg-foreground text-background">
-                                                    <div className="text-[10px] space-y-1 font-black">
+                                                    <div className="text-xs space-y-1 font-semibold">
                                                         <div className="flex justify-between gap-6"><span>IPI:</span> <span>{formatCurrency4(item.vIPI || 0)}</span></div>
                                                         <div className="flex justify-between gap-6"><span>ICMS-ST:</span> <span>{formatCurrency4(item.vICMSST || 0)}</span></div>
                                                         <div className="flex justify-between gap-6 text-accent-green"><span>Desconto:</span> <span>-{formatCurrency4(item.descontoUnit || 0)}</span></div>
@@ -297,18 +297,18 @@ export default function BatchPricingCalculator() {
                                         </TooltipProvider>
                                     </TableCell>
                                      <TableCell>
-                                        <Input value={item.fatorConversao} onChange={e => handleItemChange(item.id, 'fatorConversao', e.target.value)} className="h-8 w-16 mx-auto text-center font-black text-xs bg-background border-border" />
+                                        <Input value={item.fatorConversao} onChange={e => handleItemChange(item.id, 'fatorConversao', e.target.value)} className="h-8 w-16 mx-auto text-center font-semibold text-xs bg-background border-border" />
                                     </TableCell>
                                      <TableCell>
-                                        <Input value={item.margin} onChange={e => handleItemChange(item.id, 'margin', e.target.value)} className="h-8 w-20 ml-auto text-right font-black text-xs bg-primary/5 border-primary/20 text-primary" />
+                                        <Input value={item.margin} onChange={e => handleItemChange(item.id, 'margin', e.target.value)} className="h-8 w-20 ml-auto text-right font-semibold text-xs bg-primary/5 border-primary/20 text-primary" />
                                     </TableCell>
                                      <TableCell>
-                                        <Input value={item.impostoSobreVenda} onChange={e => handleItemChange(item.id, 'impostoSobreVenda', e.target.value)} className="h-8 w-16 ml-auto text-right font-black text-xs bg-destructive/5 border-destructive/20 text-destructive" />
+                                        <Input value={item.impostoSobreVenda} onChange={e => handleItemChange(item.id, 'impostoSobreVenda', e.target.value)} className="h-8 w-16 ml-auto text-right font-semibold text-xs bg-destructive/5 border-destructive/20 text-destructive" />
                                     </TableCell>
                                      <TableCell>
-                                        <Input value={item.price} onChange={e => handleItemChange(item.id, 'price', e.target.value)} className="h-8 w-24 ml-auto text-right font-black text-xs bg-accent-green/5 border-accent-green/20 text-accent-green" />
+                                        <Input value={item.price} onChange={e => handleItemChange(item.id, 'price', e.target.value)} className="h-8 w-24 ml-auto text-right font-semibold text-xs bg-accent-green/5 border-accent-green/20 text-accent-green" />
                                     </TableCell>
-                                     <TableCell className="text-right font-black text-xs text-foreground">
+                                     <TableCell className="text-right font-semibold text-xs text-foreground">
                                         {formatCurrency((parseFloat(item.price) || 0) * item.quantity * (parseFloat(item.fatorConversao) || 1))}
                                     </TableCell>
                                      <TableCell>
@@ -326,10 +326,10 @@ export default function BatchPricingCalculator() {
 
             {items.length > 0 && (
                  <div className="flex justify-between items-center bg-card p-4 rounded-2xl border border-border">
-                    <Button onClick={addItem} variant="outline" className="rounded-xl border-dashed font-black">
+                    <Button onClick={addItem} variant="outline" className="rounded-xl border-dashed font-semibold">
                         <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Item Manual
                     </Button>
-                    <Button onClick={generatePdf} className="bg-foreground text-background rounded-xl font-black shadow-lg">
+                    <Button onClick={generatePdf} className="bg-foreground text-background rounded-xl font-semibold shadow-lg">
                         <Printer className="mr-2 h-4 w-4" /> Exportar Tabela Completa (PDF)
                     </Button>
                 </div>

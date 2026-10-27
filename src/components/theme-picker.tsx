@@ -26,6 +26,15 @@ const themes = [
     primaryHex: "#3D5266",
   },
   {
+    id: "corporate",
+    name: "Azul Corporativo",
+    subtitle: "Claro • Marinho & Cerúleo",
+    group: "light",
+    icon: Sun,
+    bgHex: "#EDEFF3",
+    primaryHex: "#438EB9",
+  },
+  {
     id: "salt",
     name: "Sal & Pimenta",
     subtitle: "Claro • Minimalista",

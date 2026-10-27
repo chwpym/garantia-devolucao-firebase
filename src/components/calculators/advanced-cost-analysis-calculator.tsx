@@ -269,7 +269,7 @@ export default function AdvancedCostAnalysisCalculator() {
             {/* Header Padronizado */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1">
-                    <h2 className="text-2xl font-black tracking-tight text-foreground flex items-center gap-2">
+                    <h2 className="text-2xl font-semibold tracking-tight text-foreground flex items-center gap-2">
                         <Calculator className="w-6 h-6 text-primary" />
                         Análise Técnica Pro
                     </h2>
@@ -303,7 +303,7 @@ export default function AdvancedCostAnalysisCalculator() {
                                 <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary/10">
                                     <div className="space-y-0.5">
                                         <Label htmlFor="tax-reform" className="text-sm font-bold cursor-pointer">Simular Reforma Tributária</Label>
-                                        <p className="text-[10px] text-muted-foreground">Em 2026 o destaque é informativo. Ative p/ projetar IBS/CBS no custo.</p>
+                                        <p className="text-xs text-muted-foreground">Em 2026 o destaque é informativo. Ative p/ projetar IBS/CBS no custo.</p>
                                     </div>
                                     <Switch id="tax-reform" checked={useTaxReform} onCheckedChange={toggleTaxReform} />
                                 </div>
@@ -316,11 +316,11 @@ export default function AdvancedCostAnalysisCalculator() {
                                 </Label>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="space-y-1">
-                                        <Label className="text-[10px] uppercase text-muted-foreground font-bold">Frete Extra</Label>
+                                        <Label className="text-xs uppercase text-muted-foreground font-bold">Frete Extra</Label>
                                         <Input placeholder="R$ 0,00" value={manualFrete} onChange={e => setManualFrete(e.target.value)} className="h-9 font-mono" />
                                     </div>
                                     <div className="space-y-1">
-                                        <Label className="text-[10px] uppercase text-muted-foreground font-bold">Outros Custos</Label>
+                                        <Label className="text-xs uppercase text-muted-foreground font-bold">Outros Custos</Label>
                                         <Input placeholder="R$ 0,00" value={manualOutros} onChange={e => setManualOutros(e.target.value)} className="h-9 font-mono" />
                                     </div>
                                 </div>
@@ -336,20 +336,20 @@ export default function AdvancedCostAnalysisCalculator() {
                         <CardContent className="p-6">
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
                                 <div className="space-y-1">
-                                    <span className="text-[10px] uppercase font-bold text-muted-foreground opacity-60">Total Mercadorias</span>
-                                    <p className="text-lg font-black">{formatCurrency(totals.totalCost)}</p>
+                                    <span className="text-xs uppercase font-bold text-muted-foreground opacity-60">Total Mercadorias</span>
+                                    <p className="text-lg font-semibold">{formatCurrency(totals.totalCost)}</p>
                                 </div>
                                 <div className="space-y-1">
-                                    <span className="text-[10px] uppercase font-bold text-muted-foreground opacity-60">Impostos Somados</span>
-                                    <p className="text-lg font-black text-destructive">{formatCurrency(totals.totalIPI + totals.totalST)}</p>
+                                    <span className="text-xs uppercase font-bold text-muted-foreground opacity-60">Impostos Somados</span>
+                                    <p className="text-lg font-semibold text-destructive">{formatCurrency(totals.totalIPI + totals.totalST)}</p>
                                 </div>
                                 <div className="space-y-1">
-                                    <span className="text-[10px] uppercase font-bold text-muted-foreground opacity-60">Créditos (PIS/COF)</span>
-                                    <p className="text-lg font-black text-accent-green">-{formatCurrency(taxRegime === 'lucro_real' ? totals.totalPIS + totals.totalCOFINS : 0)}</p>
+                                    <span className="text-xs uppercase font-bold text-muted-foreground opacity-60">Créditos (PIS/COF)</span>
+                                    <p className="text-lg font-semibold text-accent-green">-{formatCurrency(taxRegime === 'lucro_real' ? totals.totalPIS + totals.totalCOFINS : 0)}</p>
                                 </div>
                                 <div className="space-y-1 p-3 rounded-lg bg-primary/10 border border-primary/20 shadow-inner">
-                                    <span className="text-[10px] uppercase font-black text-primary opacity-80">Custo Final Líquido</span>
-                                    <p className="text-xl font-black text-primary">{formatCurrency(totals.finalTotalCost)}</p>
+                                    <span className="text-xs uppercase font-semibold text-primary opacity-80">Custo Final Líquido</span>
+                                    <p className="text-xl font-semibold text-primary">{formatCurrency(totals.finalTotalCost)}</p>
                                 </div>
                             </div>
 
@@ -377,15 +377,15 @@ export default function AdvancedCostAnalysisCalculator() {
                                     <TableHead className="text-right text-xs font-bold">Custo Orig.</TableHead>
                                     <TableHead className="text-right text-xs font-bold">IPI/ST</TableHead>
                                     <TableHead className="text-right text-xs font-bold">Despesas</TableHead>
-                                    <TableHead className="text-right text-xs font-black text-accent-green">Créditos</TableHead>
-                                    <TableHead className="text-right text-xs font-black text-primary">C. Un. Final</TableHead>
-                                    <TableHead className="text-right text-xs font-black text-foreground opacity-70">C. Un. Conv.</TableHead>
+                                    <TableHead className="text-right text-xs font-semibold text-accent-green">Créditos</TableHead>
+                                    <TableHead className="text-right text-xs font-semibold text-primary">C. Un. Final</TableHead>
+                                    <TableHead className="text-right text-xs font-semibold text-foreground opacity-70">C. Un. Conv.</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {items.map(item => (
                                     <TableRow key={item.id} className="hover:bg-primary/5 transition-colors">
-                                        <TableCell className="font-mono text-[11px] font-bold text-primary"><div className="flex items-center gap-1.5"><Badge variant="outline" className="h-4 px-1 font-mono text-[9px] font-black border-primary/30 text-primary shrink-0">#{item.nItem}</Badge><span className="truncate">{item.cProd}</span></div></TableCell>
+                                        <TableCell className="font-mono text-xs font-bold text-primary"><div className="flex items-center gap-1.5"><Badge variant="outline" className="h-4 px-1 font-mono text-xs font-semibold border-primary/30 text-primary shrink-0">#{item.nItem}</Badge><span className="truncate">{item.cProd}</span></div></TableCell>
                                         <TableCell className="text-xs">{item.description}</TableCell>
                                         <TableCell className="text-right font-mono text-xs">{formatNumber(item.quantity)}</TableCell>
                                         <TableCell>
@@ -402,8 +402,8 @@ export default function AdvancedCostAnalysisCalculator() {
                                         <TableCell className="text-right font-mono text-xs text-accent-green font-bold">
                                             {taxRegime === 'lucro_real' ? formatCurrency(item.pis + item.cofins + (useTaxReform ? item.vIBS + item.vCBS : 0)) : 'R$ 0,00'}
                                         </TableCell>
-                                        <TableCell className="text-right font-mono text-xs font-black text-primary">{formatCurrency4(item.finalUnitCost)}</TableCell>
-                                        <TableCell className="text-right font-mono text-xs font-black text-foreground opacity-70">{formatCurrency4(item.convertedUnitCost)}</TableCell>
+                                        <TableCell className="text-right font-mono text-xs font-semibold text-primary">{formatCurrency4(item.finalUnitCost)}</TableCell>
+                                        <TableCell className="text-right font-mono text-xs font-semibold text-foreground opacity-70">{formatCurrency4(item.convertedUnitCost)}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>

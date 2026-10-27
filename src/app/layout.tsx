@@ -48,7 +48,7 @@ export default function RootLayout({
             attribute="data-theme"
             defaultTheme="system"
             enableSystem
-            themes={['light', 'dark', 'salt', 'pepper', 'dracula']}
+            themes={['light', 'corporate', 'salt', 'dark', 'pepper', 'dracula']}
           >
             <TaskProvider>
               {children}

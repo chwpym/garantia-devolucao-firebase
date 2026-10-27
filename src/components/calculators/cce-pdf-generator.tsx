@@ -518,7 +518,7 @@ export default function CcePdfGenerator() {
                 <CardHeader className="pb-3">
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                         <div>
-                            <CardTitle className="text-base font-black flex items-center gap-2">
+                            <CardTitle className="text-base font-semibold flex items-center gap-2">
                                 <FileText className="h-4 w-4 text-primary" />
                                 Gerador de PDF de Carta de Correção (CC-e SEFAZ)
                             </CardTitle>
@@ -624,13 +624,13 @@ export default function CcePdfGenerator() {
                         <div className="flex flex-wrap items-center gap-2 text-xs">
                             <span className="text-muted-foreground font-semibold">Arquivos carregados:</span>
                             {filesLoaded.map((name, i) => (
-                                <Badge key={i} variant="secondary" className="gap-1 font-mono text-[11px]">
+                                <Badge key={i} variant="secondary" className="gap-1 font-mono text-xs">
                                     <CheckCircle2 className="h-3 w-3 text-emerald-500" />
                                     {name}
                                 </Badge>
                             ))}
                             {cceData && (
-                                <Badge variant={cceData.hasPed && cceData.hasRec ? 'default' : 'outline'} className="text-[11px]">
+                                <Badge variant={cceData.hasPed && cceData.hasRec ? 'default' : 'outline'} className="text-xs">
                                     {cceData.hasPed && cceData.hasRec
                                         ? 'Completo (Pedido + Autorização SEFAZ)'
                                         : cceData.hasPed
@@ -657,7 +657,7 @@ export default function CcePdfGenerator() {
                     <div className="mx-auto w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-3">
                         <Upload className="h-6 w-6" />
                     </div>
-                    <h3 className="text-sm font-black text-foreground">
+                    <h3 className="text-sm font-semibold text-foreground">
                         Arraste os arquivos XML da Carta de Correção aqui ou clique para selecionar
                     </h3>
                     <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">
@@ -682,19 +682,19 @@ export default function CcePdfGenerator() {
                     {/* Box 1 */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-2 bg-[#F5EFE2] border border-[#C9B28B] p-2">
                         <div>
-                            <div className="text-[11px] text-[#7A5230] mb-0.5">Orgão Recepção do Evento</div>
+                            <div className="text-xs text-[#7A5230] mb-0.5">Orgão Recepção do Evento</div>
                             <div className="bg-white border border-[#D6C6AA] px-2 py-1 text-xs text-neutral-900">
                                 {cceData.orgaoLabel}
                             </div>
                         </div>
                         <div>
-                            <div className="text-[11px] text-[#7A5230] mb-0.5">Ambiente</div>
+                            <div className="text-xs text-[#7A5230] mb-0.5">Ambiente</div>
                             <div className="bg-white border border-[#D6C6AA] px-2 py-1 text-xs text-neutral-900">
                                 {cceData.ambienteLabel}
                             </div>
                         </div>
                         <div>
-                            <div className="text-[11px] text-[#7A5230] mb-0.5">Versão</div>
+                            <div className="text-xs text-[#7A5230] mb-0.5">Versão</div>
                             <div className="bg-white border border-[#D6C6AA] px-2 py-1 text-xs text-neutral-900">
                                 {cceData.versao}
                             </div>
@@ -705,13 +705,13 @@ export default function CcePdfGenerator() {
                     <div className="bg-[#F5EFE2] border border-[#C9B28B] p-2 space-y-2">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                             <div>
-                                <div className="text-[11px] text-[#7A5230] mb-0.5">Chave de Acesso</div>
+                                <div className="text-xs text-[#7A5230] mb-0.5">Chave de Acesso</div>
                                 <div className="bg-white border border-[#D6C6AA] px-2 py-1 text-xs font-mono text-neutral-900 break-all">
                                     {cceData.chNFe}
                                 </div>
                             </div>
                             <div>
-                                <div className="text-[11px] text-[#7A5230] mb-0.5">Id do Evento</div>
+                                <div className="text-xs text-[#7A5230] mb-0.5">Id do Evento</div>
                                 <div className="bg-white border border-[#D6C6AA] px-2 py-1 text-xs font-mono text-neutral-900 break-all">
                                     {cceData.idEvento}
                                 </div>
@@ -720,13 +720,13 @@ export default function CcePdfGenerator() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                             <div>
-                                <div className="text-[11px] text-[#7A5230] mb-0.5">Autor Evento (CNPJ / CPF)</div>
+                                <div className="text-xs text-[#7A5230] mb-0.5">Autor Evento (CNPJ / CPF)</div>
                                 <div className="bg-white border border-[#D6C6AA] px-2 py-1 text-xs text-neutral-900">
                                     {cceData.cnpjAutor}
                                 </div>
                             </div>
                             <div>
-                                <div className="text-[11px] text-[#7A5230] mb-0.5">Data Evento</div>
+                                <div className="text-xs text-[#7A5230] mb-0.5">Data Evento</div>
                                 <div className="bg-white border border-[#D6C6AA] px-2 py-1 text-xs text-neutral-900">
                                     {cceData.dhEventoFormatted}
                                 </div>
@@ -737,13 +737,13 @@ export default function CcePdfGenerator() {
                     {/* Box 3 */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 bg-[#F5EFE2] border border-[#C9B28B] p-2">
                         <div>
-                            <div className="text-[11px] text-[#7A5230] mb-0.5">Tipo de Evento</div>
+                            <div className="text-xs text-[#7A5230] mb-0.5">Tipo de Evento</div>
                             <div className="bg-white border border-[#D6C6AA] px-2 py-1 text-xs text-neutral-900">
                                 {cceData.tipoEventoLabel}
                             </div>
                         </div>
                         <div>
-                            <div className="text-[11px] text-[#7A5230] mb-0.5">Sequencial do Evento</div>
+                            <div className="text-xs text-[#7A5230] mb-0.5">Sequencial do Evento</div>
                             <div className="bg-white border border-[#D6C6AA] px-2 py-1 text-xs text-neutral-900">
                                 {cceData.nSeqEvento}
                             </div>
@@ -756,13 +756,13 @@ export default function CcePdfGenerator() {
                         <div className="space-y-2.5">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 bg-[#F5EFE2] border border-[#C9B28B] p-2">
                                 <div>
-                                    <div className="text-[11px] text-[#7A5230] mb-0.5">Descrição do Evento</div>
+                                    <div className="text-xs text-[#7A5230] mb-0.5">Descrição do Evento</div>
                                     <div className="bg-white border border-[#D6C6AA] px-2 py-1 text-xs text-neutral-900">
                                         {cceData.descEvento}
                                     </div>
                                 </div>
                                 <div>
-                                    <div className="text-[11px] text-[#7A5230] mb-0.5">Versão</div>
+                                    <div className="text-xs text-[#7A5230] mb-0.5">Versão</div>
                                     <div className="bg-white border border-[#D6C6AA] px-2 py-1 text-xs text-neutral-900">
                                         {cceData.verEvento}
                                     </div>
@@ -770,7 +770,7 @@ export default function CcePdfGenerator() {
                             </div>
 
                             <div className="bg-[#F5EFE2] border border-[#C9B28B] p-2">
-                                <div className="text-[11px] text-[#7A5230] mb-0.5">Texto da Carta de Correção</div>
+                                <div className="text-xs text-[#7A5230] mb-0.5">Texto da Carta de Correção</div>
                                 <div className="bg-white border border-[#D6C6AA] px-2 py-1.5 text-xs text-neutral-900 whitespace-pre-wrap">
                                     {cceData.xCorrecao || '(Sem texto de correção - carregue o arquivo *-ped.xml)'}
                                 </div>
@@ -783,19 +783,19 @@ export default function CcePdfGenerator() {
                         <h3 className="text-sm font-bold text-[#99541E] mb-1.5">Autorização pela SEFAZ</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-2 bg-[#F5EFE2] border border-[#C9B28B] p-2 text-left">
                             <div>
-                                <div className="text-[11px] text-[#7A5230] mb-0.5">Mensagem de Autorização</div>
+                                <div className="text-xs text-[#7A5230] mb-0.5">Mensagem de Autorização</div>
                                 <div className="bg-white border border-[#D6C6AA] px-2 py-1 text-xs text-neutral-900">
                                     {cceData.mensagemAutorizacao}
                                 </div>
                             </div>
                             <div>
-                                <div className="text-[11px] text-[#7A5230] mb-0.5">Protocolo</div>
+                                <div className="text-xs text-[#7A5230] mb-0.5">Protocolo</div>
                                 <div className="bg-white border border-[#D6C6AA] px-2 py-1 text-xs font-mono text-neutral-900">
                                     {cceData.nProt}
                                 </div>
                             </div>
                             <div>
-                                <div className="text-[11px] text-[#7A5230] mb-0.5">Data/Hora Autorização</div>
+                                <div className="text-xs text-[#7A5230] mb-0.5">Data/Hora Autorização</div>
                                 <div className="bg-white border border-[#D6C6AA] px-2 py-1 text-xs text-neutral-900">
                                     {cceData.dhRegEventoFormatted}
                                 </div>
@@ -807,7 +807,7 @@ export default function CcePdfGenerator() {
                     <div className="pt-1 text-center">
                         <h3 className="text-sm font-bold text-[#99541E] mb-1.5">Condições de uso da Carta de Correção</h3>
                         <div className="bg-[#F5EFE2] border border-[#C9B28B] p-2 text-left">
-                            <div className="bg-white border border-[#D6C6AA] px-2.5 py-2 text-[11px] leading-snug text-neutral-900">
+                            <div className="bg-white border border-[#D6C6AA] px-2.5 py-2 text-xs leading-snug text-neutral-900">
                                 {cceData.xCondUso}
                             </div>
                         </div>
