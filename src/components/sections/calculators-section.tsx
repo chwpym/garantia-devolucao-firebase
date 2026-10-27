@@ -31,8 +31,8 @@ const calculators = [
     title: 'PDF Carta de Correção (CC-e)',
     description: 'Une os XMLs (ped + rec) da CC-e e gera o PDF idêntico ao site da SEFAZ.',
     component: CcePdfGenerator,
-    color: 'text-accent-green',
-    bg: 'bg-accent-green/10'
+    color: 'text-primary',
+    bg: 'bg-primary/10'
   },
   {
     id: 'nfe-item-locator',
@@ -40,8 +40,8 @@ const calculators = [
     title: 'Localizador de Item XML',
     description: 'Busca rápida Multi-XML com Nº do Item (nItem), Chave e NF de Origem.',
     component: NfeItemLocatorCalculator,
-    color: 'text-accent-green',
-    bg: 'bg-accent-green/10'
+    color: 'text-primary',
+    bg: 'bg-primary/10'
   },
   {
     id: 'nfe-origin-analyzer',
@@ -76,8 +76,8 @@ const calculators = [
     title: 'Análise de Custo',
     description: 'Decomposição de custos com rateio automático de despesas.',
     component: CostAnalysisCalculator,
-    color: 'text-accent-green',
-    bg: 'bg-accent-green/10'
+    color: 'text-primary',
+    bg: 'bg-primary/10'
   },
   {
     id: 'advanced-cost-analysis',
@@ -94,8 +94,8 @@ const calculators = [
     title: 'Comparador de XMLs',
     description: 'Compare variações de preços entre múltiplas notas fiscais.',
     component: NfeComparator,
-    color: 'text-foreground/70',
-    bg: 'bg-muted/50'
+    color: 'text-primary',
+    bg: 'bg-primary/10'
   },
   {
     id: 'batch-pricing',

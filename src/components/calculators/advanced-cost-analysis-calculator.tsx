@@ -1,22 +1,18 @@
-
 'use client';
 
 import { useState, useMemo, useEffect } from "react";
 import jsPDF from "jspdf";
-import autoTable, { RowInput, Styles } from "jspdf-autotable";
-import type { UserOptions } from "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Printer, Info, Calculator, FileCheck, History } from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
+import { Printer, Calculator, FileCheck, History } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { formatCurrency, formatNumber, formatCurrency4, formatNumber4 } from "@/lib/utils";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { formatCurrency, formatNumber, formatCurrency4 } from "@/lib/utils";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useNfeStore } from "@/store/use-nfe-store";
 import { NfeUploader } from "@/components/nfe/NfeUploader";
 import { Card, CardContent } from "@/components/ui/card";
@@ -58,7 +54,6 @@ export default function AdvancedCostAnalysisCalculator() {
     const [taxRegime, setTaxRegime] = useState<TaxRegime>('simples_nacional');
     const { toast } = useToast();
 
-    // Sincroniza com a nota carregada no Store Global
     useEffect(() => {
         if (!currentNfe) {
             setItems([]);
@@ -74,7 +69,6 @@ export default function AdvancedCostAnalysisCalculator() {
         const newItems: AnalyzedItem[] = currentNfe.items.map((item, index) => {
             const itemWeight = totalProdFromXml > 0 ? item.vProd / totalProdFromXml : 0;
 
-            // Rateio proporcional automático dos valores da nota se não estiverem discriminados no item
             const freteRateado = item.vFrete || (totalFrete * itemWeight);
             const seguroRateado = item.vSeg || (totalSeguro * itemWeight);
             const descontoRateado = item.vDesc || (totalDesconto * itemWeight);
@@ -98,7 +92,7 @@ export default function AdvancedCostAnalysisCalculator() {
                 cofins: item.taxes.vCOFINS || 0,
                 vIBS: item.taxes.vIBS || 0,
                 vCBS: item.taxes.vCBS || 0,
-                finalUnitCost: 0, // Calculado no recalculate
+                finalUnitCost: 0,
                 finalTotalCost: 0,
                 conversionFactor: "1",
                 convertedUnitCost: 0
@@ -116,14 +110,10 @@ export default function AdvancedCostAnalysisCalculator() {
 
     const recalculateCosts = (currentItems: AnalyzedItem[], regime: TaxRegime, taxReform: boolean): AnalyzedItem[] => {
         return currentItems.map(item => {
-            // Custo base: Valor Mercadoria + IPI + ST + Frete + Seguro + Outras - Desconto
             const baseTotalCost = item.totalCost + item.ipi + item.icmsST + item.frete + item.seguro + item.outras - item.desconto;
-            
-            // Na Reforma Tributária, IBS/CBS são somados ao custo se a reforma estiver ativa
             const taxReformValue = taxReform ? (item.vIBS + item.vCBS) : 0;
             let finalTotalCost = baseTotalCost + taxReformValue;
 
-            // No Lucro Real, o PIS/COFINS (e IBS/CBS se reforma ativa) são créditos recuperáveis e devem ser subtraídos do custo
             if (regime === 'lucro_real') {
                 finalTotalCost -= (item.pis + item.cofins);
                 if (taxReform) {
@@ -264,6 +254,8 @@ export default function AdvancedCostAnalysisCalculator() {
         doc.save(`analise_custo_${currentNfe?.header.nNF || 'nfe'}.pdf`);
     };
 
+    const totalCreditAmount = taxRegime === 'lucro_real' ? totals.totalPIS + totals.totalCOFINS : 0;
+
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
             {/* Header Padronizado */}
@@ -273,7 +265,7 @@ export default function AdvancedCostAnalysisCalculator() {
                         <Calculator className="w-6 h-6 text-primary" />
                         Análise Técnica Pro
                     </h2>
-                    <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider opacity-70">Cálculo profundo de custo unitário com rateio, impostos e créditos</p>
+                    <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider opacity-70">Cálculo profundo de custo unitário com rateio, impostos e créditos</p>
                 </div>
                 <NfeUploader />
             </div>
@@ -285,7 +277,7 @@ export default function AdvancedCostAnalysisCalculator() {
                         <CardContent className="p-6 space-y-6">
                             <div className="space-y-4">
                                 <div className="space-y-2">
-                                    <Label className="text-sm font-bold flex items-center gap-2">
+                                    <Label className="text-sm font-semibold flex items-center gap-2">
                                         <FileCheck className="w-4 h-4 text-primary" />
                                         Configurações de Imposto
                                     </Label>
@@ -302,7 +294,7 @@ export default function AdvancedCostAnalysisCalculator() {
 
                                 <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary/10">
                                     <div className="space-y-0.5">
-                                        <Label htmlFor="tax-reform" className="text-sm font-bold cursor-pointer">Simular Reforma Tributária</Label>
+                                        <Label htmlFor="tax-reform" className="text-sm font-semibold cursor-pointer">Simular Reforma Tributária</Label>
                                         <p className="text-xs text-muted-foreground">Em 2026 o destaque é informativo. Ative p/ projetar IBS/CBS no custo.</p>
                                     </div>
                                     <Switch id="tax-reform" checked={useTaxReform} onCheckedChange={toggleTaxReform} />
@@ -310,17 +302,17 @@ export default function AdvancedCostAnalysisCalculator() {
                             </div>
 
                             <div className="space-y-4 pt-4 border-t">
-                                <Label className="text-sm font-bold flex items-center gap-2">
+                                <Label className="text-sm font-semibold flex items-center gap-2">
                                     <History className="w-4 h-4 text-primary" />
                                     Rateio Manual Extra
                                 </Label>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="space-y-1">
-                                        <Label className="text-xs uppercase text-muted-foreground font-bold">Frete Extra</Label>
+                                        <Label className="text-xs uppercase text-muted-foreground font-semibold">Frete Extra</Label>
                                         <Input placeholder="R$ 0,00" value={manualFrete} onChange={e => setManualFrete(e.target.value)} className="h-9 font-mono" />
                                     </div>
                                     <div className="space-y-1">
-                                        <Label className="text-xs uppercase text-muted-foreground font-bold">Outros Custos</Label>
+                                        <Label className="text-xs uppercase text-muted-foreground font-semibold">Outros Custos</Label>
                                         <Input placeholder="R$ 0,00" value={manualOutros} onChange={e => setManualOutros(e.target.value)} className="h-9 font-mono" />
                                     </div>
                                 </div>
@@ -336,16 +328,16 @@ export default function AdvancedCostAnalysisCalculator() {
                         <CardContent className="p-6">
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
                                 <div className="space-y-1">
-                                    <span className="text-xs uppercase font-bold text-muted-foreground opacity-60">Total Mercadorias</span>
-                                    <p className="text-lg font-semibold">{formatCurrency(totals.totalCost)}</p>
+                                    <span className="text-xs uppercase font-semibold text-muted-foreground">Total Mercadorias</span>
+                                    <p className="text-lg font-semibold text-foreground">{formatCurrency(totals.totalCost)}</p>
                                 </div>
                                 <div className="space-y-1">
-                                    <span className="text-xs uppercase font-bold text-muted-foreground opacity-60">Impostos Somados</span>
-                                    <p className="text-lg font-semibold text-destructive">{formatCurrency(totals.totalIPI + totals.totalST)}</p>
+                                    <span className="text-xs uppercase font-semibold text-muted-foreground">Impostos Somados (+)</span>
+                                    <p className={(totals.totalIPI + totals.totalST) > 0 ? "text-lg font-semibold text-destructive" : "text-lg font-semibold text-muted-foreground"}>{formatCurrency(totals.totalIPI + totals.totalST)}</p>
                                 </div>
                                 <div className="space-y-1">
-                                    <span className="text-xs uppercase font-bold text-muted-foreground opacity-60">Créditos (PIS/COF)</span>
-                                    <p className="text-lg font-semibold text-accent-green">-{formatCurrency(taxRegime === 'lucro_real' ? totals.totalPIS + totals.totalCOFINS : 0)}</p>
+                                    <span className="text-xs uppercase font-semibold text-muted-foreground">Créditos (PIS/COF)</span>
+                                    <p className={totalCreditAmount > 0 ? "text-lg font-semibold text-accent-green" : "text-lg font-semibold text-muted-foreground"}>-{formatCurrency(totalCreditAmount)}</p>
                                 </div>
                                 <div className="space-y-1 p-3 rounded-lg bg-primary/10 border border-primary/20 shadow-inner">
                                     <span className="text-xs uppercase font-semibold text-primary opacity-80">Custo Final Líquido</span>
@@ -370,42 +362,47 @@ export default function AdvancedCostAnalysisCalculator() {
                         <Table>
                             <TableHeader>
                                 <TableRow className="bg-muted/50">
-                                    <TableHead className="w-[140px] text-xs font-bold"># XML / Cód.</TableHead>
-                                    <TableHead className="min-w-[250px] text-xs font-bold">Descrição do Produto</TableHead>
-                                    <TableHead className="text-right text-xs font-bold">Qtde</TableHead>
-                                    <TableHead className="w-[100px] text-xs font-bold">Fator Conv.</TableHead>
-                                    <TableHead className="text-right text-xs font-bold">Custo Orig.</TableHead>
-                                    <TableHead className="text-right text-xs font-bold">IPI/ST</TableHead>
-                                    <TableHead className="text-right text-xs font-bold">Despesas</TableHead>
-                                    <TableHead className="text-right text-xs font-semibold text-accent-green">Créditos</TableHead>
+                                    <TableHead className="w-[140px] text-xs font-semibold text-muted-foreground"># XML / Cód.</TableHead>
+                                    <TableHead className="min-w-[250px] text-xs font-semibold text-muted-foreground">Descrição do Produto</TableHead>
+                                    <TableHead className="text-right text-xs font-semibold text-muted-foreground">Qtde</TableHead>
+                                    <TableHead className="w-[100px] text-xs font-semibold text-muted-foreground">Fator Conv.</TableHead>
+                                    <TableHead className="text-right text-xs font-semibold text-muted-foreground">Custo Orig.</TableHead>
+                                    <TableHead className="text-right text-xs font-semibold text-muted-foreground">IPI/ST (+)</TableHead>
+                                    <TableHead className="text-right text-xs font-semibold text-muted-foreground">Despesas</TableHead>
+                                    <TableHead className="text-right text-xs font-semibold text-muted-foreground">Créditos (-)</TableHead>
                                     <TableHead className="text-right text-xs font-semibold text-primary">C. Un. Final</TableHead>
                                     <TableHead className="text-right text-xs font-semibold text-foreground opacity-70">C. Un. Conv.</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {items.map(item => (
-                                    <TableRow key={item.id} className="hover:bg-primary/5 transition-colors">
-                                        <TableCell className="font-mono text-xs font-bold text-primary"><div className="flex items-center gap-1.5"><Badge variant="outline" className="h-4 px-1 font-mono text-xs font-semibold border-primary/30 text-primary shrink-0">#{item.nItem}</Badge><span className="truncate">{item.cProd}</span></div></TableCell>
-                                        <TableCell className="text-xs">{item.description}</TableCell>
-                                        <TableCell className="text-right font-mono text-xs">{formatNumber(item.quantity)}</TableCell>
-                                        <TableCell>
-                                            <Input
-                                                type="text"
-                                                className="h-8 text-right font-mono text-xs focus-visible:ring-primary"
-                                                value={item.conversionFactor}
-                                                onChange={(e) => handleConversionFactorChange(item.id, e.target.value)}
-                                            />
-                                        </TableCell>
-                                        <TableCell className="text-right font-mono text-xs">{formatCurrency4(item.unitCost)}</TableCell>
-                                        <TableCell className="text-right font-mono text-xs text-destructive">{formatCurrency(item.ipi + item.icmsST)}</TableCell>
-                                        <TableCell className="text-right font-mono text-xs">{formatCurrency(item.frete + item.seguro + item.outras - item.desconto)}</TableCell>
-                                        <TableCell className="text-right font-mono text-xs text-accent-green font-bold">
-                                            {taxRegime === 'lucro_real' ? formatCurrency(item.pis + item.cofins + (useTaxReform ? item.vIBS + item.vCBS : 0)) : 'R$ 0,00'}
-                                        </TableCell>
-                                        <TableCell className="text-right font-mono text-xs font-semibold text-primary">{formatCurrency4(item.finalUnitCost)}</TableCell>
-                                        <TableCell className="text-right font-mono text-xs font-semibold text-foreground opacity-70">{formatCurrency4(item.convertedUnitCost)}</TableCell>
-                                    </TableRow>
-                                ))}
+                                {items.map(item => {
+                                    const itemIpiSt = item.ipi + item.icmsST;
+                                    const itemDespesas = item.frete + item.seguro + item.outras - item.desconto;
+                                    const itemCredit = taxRegime === 'lucro_real' ? item.pis + item.cofins + (useTaxReform ? item.vIBS + item.vCBS : 0) : 0;
+                                    return (
+                                        <TableRow key={item.id} className="hover:bg-primary/5 transition-colors">
+                                            <TableCell className="font-mono text-xs font-semibold text-primary"><div className="flex items-center gap-1.5"><Badge variant="outline" className="h-4 px-1 font-mono text-xs font-semibold border-primary/30 text-primary shrink-0">#{item.nItem}</Badge><span className="truncate">{item.cProd}</span></div></TableCell>
+                                            <TableCell className="text-xs font-semibold text-foreground">{item.description}</TableCell>
+                                            <TableCell className="text-right font-mono text-xs">{formatNumber(item.quantity)}</TableCell>
+                                            <TableCell>
+                                                <Input
+                                                    type="text"
+                                                    className="h-8 text-right font-mono text-xs focus-visible:ring-primary"
+                                                    value={item.conversionFactor}
+                                                    onChange={(e) => handleConversionFactorChange(item.id, e.target.value)}
+                                                />
+                                            </TableCell>
+                                            <TableCell className="text-right font-mono text-xs">{formatCurrency4(item.unitCost)}</TableCell>
+                                            <TableCell className={itemIpiSt > 0 ? "text-right font-mono text-xs font-semibold text-destructive" : "text-right font-mono text-xs text-muted-foreground/60"}>{formatCurrency(itemIpiSt)}</TableCell>
+                                            <TableCell className={itemDespesas !== 0 ? "text-right font-mono text-xs" : "text-right font-mono text-xs text-muted-foreground/60"}>{formatCurrency(itemDespesas)}</TableCell>
+                                            <TableCell className={itemCredit > 0 ? "text-right font-mono text-xs text-accent-green font-semibold" : "text-right font-mono text-xs text-muted-foreground/60"}>
+                                                {formatCurrency(itemCredit)}
+                                            </TableCell>
+                                            <TableCell className="text-right font-mono text-xs font-semibold text-primary">{formatCurrency4(item.finalUnitCost)}</TableCell>
+                                            <TableCell className="text-right font-mono text-xs font-semibold text-foreground opacity-70">{formatCurrency4(item.convertedUnitCost)}</TableCell>
+                                        </TableRow>
+                                    );
+                                })}
                             </TableBody>
                         </Table>
                     </div>
@@ -417,11 +414,10 @@ export default function AdvancedCostAnalysisCalculator() {
                     <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
                         <Calculator className="w-8 h-8 text-primary/40" />
                     </div>
-                    <h3 className="text-lg font-bold text-muted-foreground">Nenhuma NF-e carregada</h3>
-                    <p className="text-sm text-muted-foreground max-w-xs mt-1">Carregue um arquivo XML para iniciar a análise técnica de custos</p>
+                    <h3 className="text-lg font-semibold text-muted-foreground">Nenhuma NF-e carregada</h3>
+                    <p className="text-sm text-muted-foreground/60 max-w-xs mt-1">Carregue um arquivo XML no topo da página para iniciar os cálculos automáticos.</p>
                 </div>
             )}
         </div>
     );
 }
-

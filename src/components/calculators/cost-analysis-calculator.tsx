@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useEffect } from "react";
@@ -6,8 +5,8 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Printer, Calculator, FileText, ArrowDownToLine, RefreshCw, Info, PieChart, TrendingDown, DollarSign } from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
+import { Printer, FileText, PieChart, DollarSign } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatNumber, formatCurrency4 } from "@/lib/utils";
 import { useNfeStore } from "@/store/use-nfe-store";
@@ -16,7 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 
 interface AnalyzedItem {
     id: string;
@@ -160,14 +159,14 @@ export default function CostAnalysisCalculator() {
                     <h2 className="text-2xl font-semibold tracking-tight flex items-center gap-2 text-foreground">
                         <PieChart className="w-6 h-6 text-primary" /> Análise de Custo
                     </h2>
-                    <p className="text-xs text-muted-foreground uppercase font-semibold tracking-wider opacity-70">Descomposição de Encargos e Rateio de NF-e</p>
+                    <p className="text-xs text-muted-foreground uppercase font-semibold tracking-wider opacity-70">Decomposição de Encargos e Rateio de NF-e</p>
                 </div>
                 <NfeUploader />
             </div>
 
             {items.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                     <Card className="bg-card text-foreground border border-border shadow-xl rounded-2xl p-5 overflow-hidden relative group">
+                     <Card className="bg-card text-foreground border border-border shadow-lg rounded-2xl p-5 overflow-hidden relative group">
                         <div className="absolute right-[-10px] top-[-10px] opacity-5 group-hover:scale-110 transition-transform">
                             <DollarSign size={80} />
                         </div>
@@ -175,18 +174,18 @@ export default function CostAnalysisCalculator() {
                         <p className="text-2xl font-semibold text-foreground">{formatCurrency(totals.totalCost)}</p>
                     </Card>
 
-                     <Card className="bg-destructive text-destructive-foreground border-none shadow-xl rounded-2xl p-5 overflow-hidden relative">
-                        <span className="text-xs font-semibold uppercase opacity-70 block mb-1">Encargos (+)</span>
-                        <p className="text-2xl font-semibold">{formatCurrency(totals.totalExtras)}</p>
+                     <Card className="bg-card text-foreground border border-border shadow-lg rounded-2xl p-5 overflow-hidden relative">
+                        <span className="text-xs font-semibold uppercase text-muted-foreground block mb-1">Encargos (+)</span>
+                        <p className={totals.totalExtras > 0 ? "text-2xl font-semibold text-destructive" : "text-2xl font-semibold text-muted-foreground"}>{formatCurrency(totals.totalExtras)}</p>
                     </Card>
  
-                    <Card className="bg-primary text-primary-foreground border-none shadow-xl rounded-2xl p-5 overflow-hidden relative">
-                        <span className="text-xs font-semibold uppercase opacity-70 block mb-1">Descontos (-)</span>
-                        <p className="text-2xl font-semibold">{formatCurrency(totals.totalDesconto)}</p>
+                    <Card className="bg-card text-foreground border border-border shadow-lg rounded-2xl p-5 overflow-hidden relative">
+                        <span className="text-xs font-semibold uppercase text-muted-foreground block mb-1">Descontos (-)</span>
+                        <p className={totals.totalDesconto > 0 ? "text-2xl font-semibold text-accent-green" : "text-2xl font-semibold text-muted-foreground"}>{formatCurrency(totals.totalDesconto)}</p>
                     </Card>
  
-                    <Card className="bg-accent-green text-background border-none shadow-xl rounded-2xl p-5 overflow-hidden relative">
-                        <span className="text-xs font-semibold uppercase opacity-70 block mb-1">Custo Real Final</span>
+                    <Card className="bg-primary text-primary-foreground border-none shadow-lg rounded-2xl p-5 overflow-hidden relative">
+                        <span className="text-xs font-semibold uppercase opacity-80 block mb-1">Custo Real Final</span>
                         <p className="text-2xl font-semibold">{formatCurrency(totals.finalTotal)}</p>
                     </Card>
                 </div>
@@ -196,7 +195,7 @@ export default function CostAnalysisCalculator() {
                  <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex flex-col md:flex-row items-center gap-6">
                     <div className="flex items-center gap-3">
                         <Switch id="tax-reform-basic" checked={useTaxReform} onCheckedChange={setUseTaxReform} />
-                        <div className="space-y-0.5"><Label htmlFor="tax-reform-basic" className="text-sm font-semibold cursor-pointer uppercase tracking-tighter block">Simular Reforma (IBS/CBS no Custo)</Label><span className="text-xs text-muted-foreground font-bold block">Em 2026 o destaque (0,9% CBS / 0,1% IBS) é informativo e não altera o vNF. Ative apenas para projeção.</span></div>
+                        <div className="space-y-0.5"><Label htmlFor="tax-reform-basic" className="text-sm font-semibold cursor-pointer uppercase tracking-tighter block">Simular Reforma (IBS/CBS no Custo)</Label><span className="text-xs text-muted-foreground font-medium block">Em 2026 o destaque (0,9% CBS / 0,1% IBS) é informativo e não altera o vNF. Ative apenas para projeção.</span></div>
                     </div>
                     <div className="md:ml-auto flex gap-3">
                         <Button onClick={generatePdf} variant="outline" className="rounded-xl font-semibold h-10 border-border">
@@ -216,72 +215,75 @@ export default function CostAnalysisCalculator() {
                                     <TableHead className="text-right text-xs font-semibold uppercase text-muted-foreground">Qtde</TableHead>
                                     <TableHead className="text-center text-xs font-semibold uppercase text-muted-foreground">Fator</TableHead>
                                     <TableHead className="text-right text-xs font-semibold uppercase text-muted-foreground">Custo NF</TableHead>
-                                    <TableHead className="text-right text-xs font-semibold uppercase text-destructive">Encargos (+)</TableHead>
+                                    <TableHead className="text-right text-xs font-semibold uppercase text-muted-foreground">Encargos (+)</TableHead>
                                     <TableHead className="text-right text-xs font-semibold uppercase text-primary">C. Un. Final</TableHead>
-                                    <TableHead className="text-right text-xs font-semibold uppercase text-accent-green">Invest. Total</TableHead>
+                                    <TableHead className="text-right text-xs font-semibold uppercase text-foreground">Invest. Total</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {items.map(item => (
-                                    <TableRow key={item.id} className="hover:bg-accent/5 transition-colors border-border">
-                                        <TableCell>
-                                            <div className="flex flex-col">
-                                                <div className="flex items-center gap-1.5"><Badge variant="outline" className="h-4 px-1 font-mono text-xs font-semibold border-primary/30 text-primary">#{item.nItem}</Badge><span className="font-mono text-xs font-semibold text-primary">{item.cProd}</span></div>
-                                                <span className="text-xs font-semibold text-foreground truncate max-w-[250px]">{item.description}</span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-right font-mono text-xs font-bold">{formatNumber(item.quantity)}</TableCell>
-                                        <TableCell>
-                                            <Input 
-                                                value={item.conversionFactor} 
-                                                onChange={e => handleFactorChange(item.id, e.target.value)}
-                                                className="h-8 w-16 mx-auto text-center font-semibold text-xs bg-background border-border"
-                                            />
-                                        </TableCell>
-                                        <TableCell className="text-right font-mono text-xs font-semibold text-muted-foreground">{formatCurrency4(item.unitCost)}</TableCell>
-                                        <TableCell className="text-right">
-                                            <TooltipProvider>
-                                                <Tooltip>
-                                                    <TooltipTrigger className="text-xs font-semibold text-rose-600 border-b border-dotted border-rose-200">
-                                                        {formatCurrency4(item.ipi + item.icmsST + item.frete + item.seguro + item.outras + (useTaxReform ? (item.vIBS + item.vCBS) : 0))}
-                                                    </TooltipTrigger>
-                                                    <TooltipContent className="p-4 rounded-2xl border-none shadow-2xl bg-slate-900 text-white w-64">
-                                                        <div className="space-y-2 text-xs">
-                                                            <p className="font-semibold border-b border-white/10 pb-1 uppercase tracking-wider">Composição de Encargos</p>
-                                                            <div className="flex justify-between"><span>IPI / ICMS-ST:</span> <span>{formatCurrency4(item.ipi + item.icmsST)}</span></div>
-                                                            <div className="flex justify-between"><span>Frete / Seguro:</span> <span>{formatCurrency4(item.frete + item.seguro)}</span></div>
-                                                            <div className="flex justify-between"><span>Outras Despesas:</span> <span>{formatCurrency4(item.outras)}</span></div>
-                                                            {useTaxReform && (
-                                                                <div className="flex justify-between text-indigo-400 font-bold border-t border-white/10 pt-1">
-                                                                    <span>IBS/CBS (Reforma):</span> <span>{formatCurrency4(item.vIBS + item.vCBS)}</span>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            </TooltipProvider>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex flex-col items-end">
-                                                <span className="text-xs font-semibold text-primary">{formatCurrency4(item.finalUnitCost)}</span>
-                                                {parseFloat(item.conversionFactor) !== 1 && (
-                                                    <span className="text-xs text-muted-foreground font-bold italic">Un. Conv: {formatCurrency4(item.convertedUnitCost)}</span>
-                                                )}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-right text-xs font-semibold text-accent-green">{formatCurrency(item.finalTotalCost)}</TableCell>
-                                    </TableRow>
-                                ))}
+                                {items.map(item => {
+                                    const itemExtras = item.ipi + item.icmsST + item.frete + item.seguro + item.outras + (useTaxReform ? (item.vIBS + item.vCBS) : 0);
+                                    return (
+                                        <TableRow key={item.id} className="hover:bg-accent/5 transition-colors border-border">
+                                            <TableCell>
+                                                <div className="flex flex-col">
+                                                    <div className="flex items-center gap-1.5"><Badge variant="outline" className="h-4 px-1 font-mono text-xs font-semibold border-primary/30 text-primary">#{item.nItem}</Badge><span className="font-mono text-xs font-semibold text-primary">{item.cProd}</span></div>
+                                                    <span className="text-xs font-semibold text-foreground truncate max-w-[250px]">{item.description}</span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-right font-mono text-xs font-semibold">{formatNumber(item.quantity)}</TableCell>
+                                            <TableCell>
+                                                <Input 
+                                                    value={item.conversionFactor} 
+                                                    onChange={e => handleFactorChange(item.id, e.target.value)}
+                                                    className="h-8 w-16 mx-auto text-center font-semibold text-xs bg-background border-border"
+                                                />
+                                            </TableCell>
+                                            <TableCell className="text-right font-mono text-xs font-semibold text-muted-foreground">{formatCurrency4(item.unitCost)}</TableCell>
+                                            <TableCell className="text-right">
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger className={itemExtras > 0 ? "text-xs font-semibold text-destructive border-b border-dotted border-destructive/40" : "text-xs font-medium text-muted-foreground/60"}>
+                                                            {formatCurrency4(itemExtras)}
+                                                        </TooltipTrigger>
+                                                        <TooltipContent className="p-4 rounded-2xl border-none shadow-2xl bg-foreground text-background w-64">
+                                                            <div className="space-y-2 text-xs">
+                                                                <p className="font-semibold border-b border-background/10 pb-1 uppercase tracking-wider">Composição de Encargos</p>
+                                                                <div className="flex justify-between"><span>IPI / ICMS-ST:</span> <span>{formatCurrency4(item.ipi + item.icmsST)}</span></div>
+                                                                <div className="flex justify-between"><span>Frete / Seguro:</span> <span>{formatCurrency4(item.frete + item.seguro)}</span></div>
+                                                                <div className="flex justify-between"><span>Outras Despesas:</span> <span>{formatCurrency4(item.outras)}</span></div>
+                                                                {useTaxReform && (
+                                                                    <div className="flex justify-between font-bold border-t border-background/10 pt-1">
+                                                                        <span>IBS/CBS (Reforma):</span> <span>{formatCurrency4(item.vIBS + item.vCBS)}</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <div className="flex flex-col items-end">
+                                                    <span className="text-xs font-semibold text-primary">{formatCurrency4(item.finalUnitCost)}</span>
+                                                    {parseFloat(item.conversionFactor) !== 1 && (
+                                                        <span className="text-[11px] text-muted-foreground font-medium italic">Un. Conv: {formatCurrency4(item.convertedUnitCost)}</span>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-right text-xs font-semibold text-foreground">{formatCurrency(item.finalTotalCost)}</TableCell>
+                                        </TableRow>
+                                    );
+                                })}
                             </TableBody>
                         </Table>
                     </div>
                 </div>
             ) : (
-                <div className="flex flex-col items-center justify-center py-24 border-2 border-dashed rounded-3xl bg-muted/20 border-muted-foreground/10 text-center">
-                    <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-900/30 flex items-center justify-center mb-4">
-                        <FileText className="w-8 h-8 text-slate-400 opacity-50" />
+                <div className="flex flex-col items-center justify-center py-24 border-2 border-dashed rounded-3xl bg-muted/20 border-border text-center">
+                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                        <FileText className="w-8 h-8 text-muted-foreground opacity-50" />
                     </div>
-                    <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">Análise de Custo por Item</h3>
+                    <h3 className="text-xl font-semibold text-foreground">Análise de Custo por Item</h3>
                     <p className="text-sm text-muted-foreground max-w-sm mt-2">Carregue um XML para decompor o custo de cada produto, considerando todos os impostos e taxas da nota.</p>
                 </div>
             )}

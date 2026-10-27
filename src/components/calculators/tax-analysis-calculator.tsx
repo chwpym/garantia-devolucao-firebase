@@ -1,14 +1,13 @@
-
 'use client';
 
 import { useState, useMemo, useEffect } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { Button } from "@/components/ui/button";
-import { Printer, ShieldCheck, FileText, Landmark, Info } from "lucide-react";
+import { Printer, ShieldCheck, Landmark } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { formatCurrency, formatNumber, formatCurrency4 } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import { useNfeStore } from "@/store/use-nfe-store";
 import { NfeUploader } from "@/components/nfe/NfeUploader";
 import { Badge } from "@/components/ui/badge";
@@ -150,22 +149,22 @@ export default function TaxAnalysisCalculator() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                      <Card className="bg-card text-foreground shadow-lg border border-border overflow-hidden relative">
                         <CardContent className="p-4 space-y-1">
-                            <span className="text-xs font-semibold uppercase opacity-60">Total ICMS + ST</span>
-                            <p className="text-2xl font-semibold text-primary">{formatCurrency(totals.icms + totals.st)}</p>
+                            <span className="text-xs font-semibold uppercase text-muted-foreground">Total ICMS + ST</span>
+                            <p className="text-2xl font-semibold text-foreground">{formatCurrency(totals.icms + totals.st)}</p>
                         </CardContent>
                     </Card>
  
                     <Card className="bg-card text-foreground shadow-lg border border-border overflow-hidden relative">
                         <CardContent className="p-4 space-y-1">
-                            <span className="text-xs font-semibold uppercase opacity-60">Total IPI</span>
-                            <p className="text-2xl font-semibold text-destructive">{formatCurrency(totals.ipi)}</p>
+                            <span className="text-xs font-semibold uppercase text-muted-foreground">Total IPI (+)</span>
+                            <p className={totals.ipi > 0 ? "text-2xl font-semibold text-destructive" : "text-2xl font-semibold text-muted-foreground"}>{formatCurrency(totals.ipi)}</p>
                         </CardContent>
                     </Card>
  
                     <Card className="bg-card text-foreground shadow-lg border border-border overflow-hidden relative">
                         <CardContent className="p-4 space-y-1">
-                            <span className="text-xs font-semibold uppercase opacity-60">PIS / COFINS Total</span>
-                            <p className="text-2xl font-semibold text-accent-green">{formatCurrency(totals.pis + totals.cofins)}</p>
+                            <span className="text-xs font-semibold uppercase text-muted-foreground">Crédito PIS / COFINS</span>
+                            <p className={(totals.pis + totals.cofins) > 0 ? "text-2xl font-semibold text-accent-green" : "text-2xl font-semibold text-muted-foreground"}>{formatCurrency(totals.pis + totals.cofins)}</p>
                         </CardContent>
                     </Card>
 
@@ -200,10 +199,10 @@ export default function TaxAnalysisCalculator() {
                                     <TableHead className="min-w-[200px] text-xs font-semibold uppercase text-muted-foreground">Descrição</TableHead>
                                     <TableHead className="text-center text-xs font-semibold uppercase text-muted-foreground">NCM / CST</TableHead>
                                     <TableHead className="text-right text-xs font-semibold uppercase text-muted-foreground">Total Item</TableHead>
-                                    <TableHead className="text-right text-xs font-semibold uppercase text-primary">ICMS</TableHead>
-                                    <TableHead className="text-right text-xs font-semibold uppercase text-primary">ST</TableHead>
-                                    <TableHead className="text-right text-xs font-semibold uppercase text-destructive">IPI</TableHead>
-                                    <TableHead className="text-right text-xs font-semibold uppercase text-accent-green">PIS/COF</TableHead>
+                                    <TableHead className="text-right text-xs font-semibold uppercase text-muted-foreground">ICMS</TableHead>
+                                    <TableHead className="text-right text-xs font-semibold uppercase text-muted-foreground">ST</TableHead>
+                                    <TableHead className="text-right text-xs font-semibold uppercase text-muted-foreground">IPI (+)</TableHead>
+                                    <TableHead className="text-right text-xs font-semibold uppercase text-muted-foreground">PIS/COF</TableHead>
                                     <TableHead className="text-right text-xs font-semibold uppercase text-primary">IBS/CBS</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -214,28 +213,28 @@ export default function TaxAnalysisCalculator() {
                                         <TableCell className="text-xs font-semibold text-foreground truncate max-w-[250px]">{item.description}</TableCell>
                                          <TableCell className="text-center">
                                             <div className="flex flex-col">
-                                                <span className="text-xs font-mono font-semibold text-muted-foreground opacity-50">{item.ncm}</span>
+                                                <span className="text-xs font-mono font-semibold text-muted-foreground opacity-70">{item.ncm}</span>
                                                 <Badge variant="outline" className="text-xs h-4 px-1 mx-auto font-semibold border-border">{item.cst}</Badge>
                                             </div>
                                         </TableCell>
-                                         <TableCell className="text-right text-xs font-mono font-semibold">{formatCurrency(item.totalCost)}</TableCell>
+                                         <TableCell className="text-right text-xs font-mono font-semibold text-foreground">{formatCurrency(item.totalCost)}</TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex flex-col items-end">
-                                                <span className="text-xs font-semibold text-primary">{formatCurrency(item.icms.value)}</span>
-                                                <span className="text-xs text-muted-foreground font-bold">{item.icms.rate}%</span>
+                                                <span className={item.icms.value > 0 ? "text-xs font-semibold text-foreground" : "text-xs font-medium text-muted-foreground/60"}>{formatCurrency(item.icms.value)}</span>
+                                                <span className="text-[11px] text-muted-foreground">{item.icms.rate}%</span>
                                             </div>
                                         </TableCell>
-                                        <TableCell className="text-right text-xs font-semibold text-primary">{formatCurrency(item.st)}</TableCell>
+                                        <TableCell className={item.st > 0 ? "text-right text-xs font-semibold text-foreground" : "text-right text-xs font-medium text-muted-foreground/60"}>{formatCurrency(item.st)}</TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex flex-col items-end">
-                                                <span className="text-xs font-bold text-rose-600">{formatCurrency(item.ipi.value)}</span>
-                                                <span className="text-xs text-muted-foreground">{item.ipi.rate}%</span>
+                                                <span className={item.ipi.value > 0 ? "text-xs font-semibold text-destructive" : "text-xs font-medium text-muted-foreground/60"}>{formatCurrency(item.ipi.value)}</span>
+                                                <span className="text-[11px] text-muted-foreground">{item.ipi.rate}%</span>
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <TooltipProvider>
                                                 <Tooltip>
-                                                    <TooltipTrigger className="text-xs font-semibold text-accent-green underline decoration-dotted">
+                                                    <TooltipTrigger className={(item.pis.value + item.cofins.value) > 0 ? "text-xs font-semibold text-accent-green underline decoration-dotted" : "text-xs font-medium text-muted-foreground/60"}>
                                                         {formatCurrency(item.pis.value + item.cofins.value)}
                                                     </TooltipTrigger>
                                                     <TooltipContent className="p-2 text-xs space-y-1">
@@ -248,7 +247,7 @@ export default function TaxAnalysisCalculator() {
                                         <TableCell className="text-right">
                                             <div className="flex flex-col items-end">
                                                 <span className="text-xs font-semibold text-primary">{formatCurrency(item.ibs.value + item.cbs.value)}</span>
-                                                <span className="text-xs text-primary opacity-70 font-semibold">Σ {item.ibs.rate + item.cbs.rate}%</span>
+                                                <span className="text-[11px] text-primary opacity-75 font-medium">Σ {item.ibs.rate + item.cbs.rate}%</span>
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -279,9 +278,3 @@ export default function TaxAnalysisCalculator() {
         </div>
     );
 }
-
-
-
-
-
-
