@@ -14,8 +14,8 @@ import {
     Trash2,
     CheckCircle2,
     FileCode2,
-    Sparkles,
-    Printer
+    RectangleVertical,
+    RectangleHorizontal
 } from 'lucide-react';
 
 const ORGAO_IBGE_MAP: Record<string, string> = {
@@ -52,6 +52,8 @@ const ORGAO_IBGE_MAP: Record<string, string> = {
 
 const CONDICOES_USO_PADRAO =
     'A Carta de Correcao e disciplinada pelo paragrafo 1o-A do art. 7o do Convenio S/N, de 15 de dezembro de 1970 e pode ser utilizada para regularizacao de erro ocorrido na emissao de documento fiscal, desde que o erro nao esteja relacionado com: I - as variaveis que determinam o valor do imposto tais como: base de calculo, aliquota, diferenca de preco, quantidade, valor da operacao ou da prestacao; II - a correcao de dados cadastrais que implique mudanca do remetente ou do destinatario; III - a data de emissao ou de saida.';
+
+export type CcePdfOrientation = 'portrait' | 'landscape';
 
 export interface CceParsedData {
     cOrgao: string;
@@ -102,7 +104,6 @@ function formatCnpjCpf(val?: string): string {
 
 function formatSefazDateTime(isoStr?: string): string {
     if (!isoStr) return '';
-    // Ex: 2026-10-27T10:48:27-03:00 -> 27/10/2026 às 10:48:27-03:00
     const match = isoStr.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}:\d{2}:\d{2})(.*)$/);
     if (match) {
         return `${match[3]}/${match[2]}/${match[1]} às ${match[4]}${match[5] || ''}`;
@@ -228,160 +229,192 @@ export function parseCceXmlFiles(xmlContents: string[]): CceParsedData | null {
     };
 }
 
-export function generateCceSefazPdf(data: CceParsedData): jsPDF {
-    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-    const pageW = doc.internal.pageSize.getWidth(); // 297
-    const margin = 10;
-    const contentW = pageW - margin * 2; // 277
-    let y = 12;
+interface FieldSpec {
+    label?: string;
+    value: string;
+    widthRatio: number;
+    minHeight?: number;
+}
 
-    const drawSectionTitle = (title: string) => {
-        y += 3;
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(10.5);
-        doc.setTextColor(148, 74, 22); // Marrom SEFAZ (#944A16)
-        doc.text(title, pageW / 2, y, { align: 'center' });
+export function generateCceSefazPdf(
+    data: CceParsedData,
+    orientation: CcePdfOrientation = 'portrait'
+): jsPDF {
+    const doc = new jsPDF({ orientation, unit: 'mm', format: 'a4' });
+    const pageW = doc.internal.pageSize.getWidth();
+    const isPortrait = orientation === 'portrait';
+    const margin = isPortrait ? 12 : 10;
+    const contentW = pageW - margin * 2;
+    let y = isPortrait ? 18 : 12;
+
+    const valueFontSize = isPortrait ? 7.1 : 8.2;
+    const labelFontSize = isPortrait ? 6.8 : 7.5;
+
+    const drawSectionTitle = (title: string, align: 'center' | 'left' = 'center') => {
         y += 3.5;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(isPortrait ? 9.5 : 10.5);
+        doc.setTextColor(153, 84, 30); // #99541E (Marrom SEFAZ)
+        if (align === 'left') {
+            doc.text(title, margin, y);
+        } else {
+            doc.text(title, pageW / 2, y, { align: 'center' });
+        }
+        y += 3.2;
     };
 
-    const drawFieldRow = (
-        fields: { label: string; value: string; widthRatio: number; minHeight?: number; boldValue?: boolean }[]
-    ) => {
-        const labelH = 5.2;
-        doc.setFontSize(8);
-        let maxValH = 6.2;
+    // Allows drawing 1 or multiple rows inside a single beige SEFAZ container box
+    const drawBeigeContainer = (rows: FieldSpec[][]) => {
+        const rowMetrics = rows.map((fields) => {
+            const hasLabels = fields.some((f) => !!f.label);
+            const labelH = hasLabels ? 4.8 : 1.5;
+            let maxValH = 5.6;
 
-        // Calculate required height for multiline text
-        const splitValues = fields.map((f) => {
-            const boxW = contentW * f.widthRatio - 4;
-            const lines = doc.splitTextToSize(f.value || '-', boxW);
-            const h = Math.max(f.minHeight || 6.2, lines.length * 4 + 2.5);
-            if (h > maxValH) maxValH = h;
-            return lines;
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(valueFontSize);
+
+            const splitValues = fields.map((f) => {
+                const boxW = contentW * f.widthRatio - 4;
+                const lines = doc.splitTextToSize(f.value || '-', boxW);
+                const h = Math.max(f.minHeight || 5.6, lines.length * 3.6 + 2.2);
+                if (h > maxValH) maxValH = h;
+                return lines;
+            });
+
+            return {
+                fields,
+                hasLabels,
+                labelH,
+                maxValH,
+                splitValues,
+                rowH: labelH + maxValH + 1.6,
+            };
         });
 
-        const totalRowH = labelH + maxValH + 2;
+        const totalContainerH = rowMetrics.reduce((acc, r) => acc + r.rowH, 0) + 0.6;
 
-        // Outer beige block
-        doc.setFillColor(243, 234, 216); // #F3EAD8
-        doc.setDrawColor(214, 199, 169); // #D6C7A9
-        doc.setLineWidth(0.25);
-        doc.rect(margin, y, contentW, totalRowH, 'FD');
+        // Outer beige block (#F5EFE2 border #C9B28B)
+        doc.setFillColor(245, 239, 226);
+        doc.setDrawColor(201, 178, 139);
+        doc.setLineWidth(0.3);
+        doc.rect(margin, y, contentW, totalContainerH, 'FD');
 
-        let curX = margin;
-        fields.forEach((f, idx) => {
-            const cellW = contentW * f.widthRatio;
+        let curY = y;
+        rowMetrics.forEach((rm) => {
+            let curX = margin;
+            rm.fields.forEach((f, idx) => {
+                const cellW = contentW * f.widthRatio;
 
-            // Label
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(7.5);
-            doc.setTextColor(115, 85, 50); // #735532
-            doc.text(f.label, curX + 2, y + 3.8);
+                if (rm.hasLabels && f.label) {
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(labelFontSize);
+                    doc.setTextColor(122, 82, 48); // #7A5230
+                    doc.text(f.label, curX + 2, curY + 3.5);
+                }
 
-            // White value input box inside cell
-            const valBoxX = curX + 1.5;
-            const valBoxY = y + labelH;
-            const valBoxW = cellW - 3;
-            const valBoxH = maxValH;
+                const valBoxX = curX + 1.5;
+                const valBoxY = curY + rm.labelH;
+                const valBoxW = cellW - 3;
+                const valBoxH = rm.maxValH;
 
-            doc.setFillColor(255, 255, 255);
-            doc.setDrawColor(218, 206, 182);
-            doc.rect(valBoxX, valBoxY, valBoxW, valBoxH, 'FD');
+                doc.setFillColor(255, 255, 255);
+                doc.setDrawColor(214, 198, 170);
+                doc.setLineWidth(0.2);
+                doc.rect(valBoxX, valBoxY, valBoxW, valBoxH, 'FD');
 
-            // Value text
-            doc.setFont('helvetica', f.boldValue ? 'bold' : 'normal');
-            doc.setFontSize(8.2);
-            doc.setTextColor(20, 20, 20);
-            doc.text(splitValues[idx], valBoxX + 2, valBoxY + 4.1);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(valueFontSize);
+                doc.setTextColor(15, 15, 15);
+                doc.text(rm.splitValues[idx], valBoxX + 1.8, valBoxY + 3.8);
 
-            curX += cellW;
+                curX += cellW;
+            });
+            curY += rm.rowH;
         });
 
-        y += totalRowH + 2.2;
+        y += totalContainerH + 2.8;
     };
 
-    // Main Header
-    drawSectionTitle('Carta de Correção');
+    // Main Title
+    drawSectionTitle('Carta de Correção', 'center');
 
-    // Subtitle badge with NF number if available
-    if (data.nNF) {
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(8);
-        doc.setTextColor(90, 90, 90);
-        doc.text(
-            `Documento Auxiliar da Carta de Correção Eletrônica (CC-e) • NF-e Nº ${data.nNF} (Série ${data.serie || '1'})`,
-            pageW / 2,
-            y,
-            { align: 'center' }
-        );
-        y += 3;
-    }
-
-    // Row 1: Orgão | Ambiente | Versão
-    drawFieldRow([
-        { label: 'Orgão Recepção do Evento', value: data.orgaoLabel, widthRatio: 0.34 },
-        { label: 'Ambiente', value: data.ambienteLabel, widthRatio: 0.33 },
-        { label: 'Versão', value: data.versao, widthRatio: 0.33 },
+    // Box 1: Orgão | Ambiente | Versão
+    drawBeigeContainer([
+        [
+            { label: 'Orgão Recepção do Evento', value: data.orgaoLabel, widthRatio: 0.35 },
+            { label: 'Ambiente', value: data.ambienteLabel, widthRatio: 0.35 },
+            { label: 'Versão', value: data.versao, widthRatio: 0.3 },
+        ],
     ]);
 
-    // Row 2: Chave de Acesso | Id do Evento
-    drawFieldRow([
-        { label: 'Chave de Acesso', value: data.chNFe, widthRatio: 0.5, boldValue: true },
-        { label: 'Id do Evento', value: data.idEvento, widthRatio: 0.5 },
+    // Box 2 (2 rows inside the same beige container, identical to SEFAZ print):
+    // Row 1: Chave de Acesso | Id do Evento
+    // Row 2: Autor Evento (CNPJ / CPF) | Data Evento
+    drawBeigeContainer([
+        [
+            { label: 'Chave de Acesso', value: data.chNFe, widthRatio: 0.48 },
+            { label: 'Id do Evento', value: data.idEvento, widthRatio: 0.52 },
+        ],
+        [
+            { label: 'Autor Evento (CNPJ / CPF)', value: data.cnpjAutor, widthRatio: 0.48 },
+            { label: 'Data Evento', value: data.dhEventoFormatted, widthRatio: 0.52 },
+        ],
     ]);
 
-    // Row 3: Autor Evento | Data Evento (and Destinatário if present)
-    drawFieldRow([
-        { label: 'Autor Evento (CNPJ / CPF)', value: data.cnpjAutor, widthRatio: 0.5 },
-        { label: 'Data Evento', value: data.dhEventoFormatted, widthRatio: 0.5 },
+    // Box 3: Tipo de Evento | Sequencial do Evento
+    drawBeigeContainer([
+        [
+            { label: 'Tipo de Evento', value: data.tipoEventoLabel, widthRatio: 0.48 },
+            { label: 'Sequencial do Evento', value: data.nSeqEvento, widthRatio: 0.52 },
+        ],
     ]);
 
-    // Row 4: Tipo de Evento | Sequencial do Evento
-    drawFieldRow([
-        { label: 'Tipo de Evento', value: data.tipoEventoLabel, widthRatio: 0.5 },
-        { label: 'Sequencial do Evento', value: data.nSeqEvento, widthRatio: 0.5 },
+    // Section: Detalhes do Evento (Left aligned like SEFAZ)
+    drawSectionTitle('Detalhes do Evento', 'left');
+
+    // Box 4: Descrição do Evento | Versão
+    drawBeigeContainer([
+        [
+            { label: 'Descrição do Evento', value: data.descEvento, widthRatio: 0.48 },
+            { label: 'Versão', value: data.verEvento, widthRatio: 0.52 },
+        ],
     ]);
 
-    // Section: Detalhes do Evento
-    drawSectionTitle('Detalhes do Evento');
-
-    // Row 5: Descrição do Evento | Versão
-    drawFieldRow([
-        { label: 'Descrição do Evento', value: data.descEvento, widthRatio: 0.5 },
-        { label: 'Versão', value: data.verEvento, widthRatio: 0.5 },
+    // Box 5: Texto da Carta de Correção
+    drawBeigeContainer([
+        [
+            {
+                label: 'Texto da Carta de Correção',
+                value: data.xCorrecao || '(Sem texto de correção no XML informado)',
+                widthRatio: 1.0,
+            },
+        ],
     ]);
 
-    // Row 6: Texto da Carta de Correção
-    drawFieldRow([
-        {
-            label: 'Texto da Carta de Correção',
-            value: data.xCorrecao || '(Sem texto de correção no XML informado)',
-            widthRatio: 1.0,
-            minHeight: 10,
-            boldValue: true,
-        },
+    // Section: Autorização pela SEFAZ (Centered)
+    drawSectionTitle('Autorização pela SEFAZ', 'center');
+
+    // Box 6: Mensagem de Autorização | Protocolo | Data/Hora Autorização
+    drawBeigeContainer([
+        [
+            { label: 'Mensagem de Autorização', value: data.mensagemAutorizacao, widthRatio: 0.46 },
+            { label: 'Protocolo', value: data.nProt, widthRatio: 0.22 },
+            { label: 'Data/Hora Autorização', value: data.dhRegEventoFormatted, widthRatio: 0.32 },
+        ],
     ]);
 
-    // Section: Autorização pela SEFAZ
-    drawSectionTitle('Autorização pela SEFAZ');
+    // Section: Condições de uso da Carta de Correção (Centered)
+    drawSectionTitle('Condições de uso da Carta de Correção', 'center');
 
-    // Row 7: Mensagem de Autorização | Protocolo | Data/Hora Autorização
-    drawFieldRow([
-        { label: 'Mensagem de Autorização', value: data.mensagemAutorizacao, widthRatio: 0.45, boldValue: true },
-        { label: 'Protocolo', value: data.nProt, widthRatio: 0.25, boldValue: true },
-        { label: 'Data/Hora Autorização', value: data.dhRegEventoFormatted, widthRatio: 0.3 },
-    ]);
-
-    // Section: Condições de uso da Carta de Correção
-    drawSectionTitle('Condições de uso da Carta de Correção');
-
-    drawFieldRow([
-        {
-            label: 'Texto Legal (Art. 7º do Convênio S/N de 15/12/1970)',
-            value: data.xCondUso,
-            widthRatio: 1.0,
-            minHeight: 12,
-        },
+    // Box 7: No label, directly white box inside beige frame (identical to SEFAZ)
+    drawBeigeContainer([
+        [
+            {
+                value: data.xCondUso,
+                widthRatio: 1.0,
+                minHeight: 13,
+            },
+        ],
     ]);
 
     return doc;
@@ -393,6 +426,7 @@ export default function CcePdfGenerator() {
     const [filesLoaded, setFilesLoaded] = useState<string[]>([]);
     const [rawXmls, setRawXmls] = useState<string[]>([]);
     const [cceData, setCceData] = useState<CceParsedData | null>(null);
+    const [orientation, setOrientation] = useState<CcePdfOrientation>('portrait');
 
     const handleFilesSelected = async (fileList: FileList | null) => {
         if (!fileList || fileList.length === 0) return;
@@ -441,18 +475,18 @@ export default function CcePdfGenerator() {
 
     const handleDownloadPdf = () => {
         if (!cceData) return;
-        const doc = generateCceSefazPdf(cceData);
+        const doc = generateCceSefazPdf(cceData, orientation);
         const nfPart = cceData.nNF ? `NFe-${cceData.nNF.replace(/\D/g, '')}` : cceData.chNFe.slice(0, 12);
         doc.save(`Carta-de-Correcao-${nfPart}-Seq${cceData.nSeqEvento}.pdf`);
         toast({
             title: 'PDF Gerado!',
-            description: 'O PDF da Carta de Correção foi baixado com sucesso.',
+            description: `O PDF da Carta de Correção (${orientation === 'portrait' ? 'Retrato' : 'Paisagem'}) foi baixado.`,
         });
     };
 
     const handlePreviewPdf = () => {
         if (!cceData) return;
-        const doc = generateCceSefazPdf(cceData);
+        const doc = generateCceSefazPdf(cceData, orientation);
         const blobUrl = doc.output('bloburl');
         window.open(blobUrl, '_blank');
     };
@@ -482,7 +516,7 @@ export default function CcePdfGenerator() {
             {/* Upload Bar */}
             <Card className="border-border shadow-sm">
                 <CardHeader className="pb-3">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                         <div>
                             <CardTitle className="text-base font-black flex items-center gap-2">
                                 <FileText className="h-4 w-4 text-primary" />
@@ -494,6 +528,32 @@ export default function CcePdfGenerator() {
                         </div>
 
                         <div className="flex flex-wrap items-center gap-2">
+                            {/* Orientation selector (Portrait default) */}
+                            <div className="flex items-center bg-muted p-0.5 rounded-lg border border-border">
+                                <Button
+                                    type="button"
+                                    variant={orientation === 'portrait' ? 'default' : 'ghost'}
+                                    size="sm"
+                                    onClick={() => setOrientation('portrait')}
+                                    className="h-7 px-2.5 text-xs gap-1 font-bold"
+                                    title="Formato A4 Retrato (Em pé - Igual à impressão do site da SEFAZ)"
+                                >
+                                    <RectangleVertical className="h-3.5 w-3.5" />
+                                    Retrato (Padrão)
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant={orientation === 'landscape' ? 'default' : 'ghost'}
+                                    size="sm"
+                                    onClick={() => setOrientation('landscape')}
+                                    className="h-7 px-2.5 text-xs gap-1 font-bold"
+                                    title="Formato A4 Paisagem (Deitado)"
+                                >
+                                    <RectangleHorizontal className="h-3.5 w-3.5" />
+                                    Paisagem
+                                </Button>
+                            </div>
+
                             <input
                                 ref={fileInputRef}
                                 type="file"
@@ -530,7 +590,7 @@ export default function CcePdfGenerator() {
                                         className="gap-1.5 font-bold bg-emerald-600 hover:bg-emerald-700 text-white"
                                     >
                                         <Download className="h-4 w-4" />
-                                        Baixar PDF (Modelo SEFAZ)
+                                        Baixar PDF
                                     </Button>
                                     {cceData.hasPed && cceData.hasRec && (
                                         <Button
@@ -541,7 +601,7 @@ export default function CcePdfGenerator() {
                                             title="Une o -ped.xml e -rec.xml em um único procEventoNFe.xml padrão"
                                         >
                                             <FileCode2 className="h-3.5 w-3.5" />
-                                            Baixar XML Unificado
+                                            XML Unificado
                                         </Button>
                                     )}
                                     <Button
@@ -601,88 +661,90 @@ export default function CcePdfGenerator() {
                         Arraste os arquivos XML da Carta de Correção aqui ou clique para selecionar
                     </h3>
                     <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">
-                        Você pode selecionar os 2 arquivos juntos (ex: <code>928-cce-ped.xml</code> e <code>928-cce-rec.xml</code>) para gerar o espelho idêntico ao site da SEFAZ em PDF.
+                        Você pode selecionar os 2 arquivos juntos (ex: <code>928-cce-ped.xml</code> e <code>928-cce-rec.xml</code>) para gerar o espelho idêntico ao site da SEFAZ em PDF (Retrato ou Paisagem).
                     </p>
                 </div>
             )}
 
             {/* SEFAZ Fidelity Preview */}
             {cceData && (
-                <div className="rounded-xl border border-[#D6C7A9] bg-white p-5 shadow-md space-y-3 text-black">
-                    <div className="text-center space-y-0.5">
-                        <h2 className="text-base font-bold text-[#944A16]">Carta de Correção</h2>
-                        {cceData.nNF && (
-                            <p className="text-xs text-neutral-600 font-medium">
-                                NF-e Nº <span className="font-bold text-neutral-900">{cceData.nNF}</span> • Série {cceData.serie || '1'}
-                            </p>
-                        )}
+                <div
+                    className={
+                        orientation === 'portrait'
+                            ? 'mx-auto max-w-[794px] rounded-xl border border-[#C9B28B] bg-white p-6 shadow-md space-y-3 text-black'
+                            : 'rounded-xl border border-[#C9B28B] bg-white p-5 shadow-md space-y-3 text-black'
+                    }
+                >
+                    <div className="text-center">
+                        <h2 className="text-base font-bold text-[#99541E]">Carta de Correção</h2>
                     </div>
 
-                    {/* Row 1 */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 bg-[#F3EAD8] border border-[#D6C7A9] p-2 rounded">
+                    {/* Box 1 */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 bg-[#F5EFE2] border border-[#C9B28B] p-2">
                         <div>
-                            <div className="text-[11px] font-bold text-[#735532] mb-0.5">Orgão Recepção do Evento</div>
-                            <div className="bg-white border border-[#DACEB6] px-2 py-1 text-xs font-medium text-neutral-900">
+                            <div className="text-[11px] text-[#7A5230] mb-0.5">Orgão Recepção do Evento</div>
+                            <div className="bg-white border border-[#D6C6AA] px-2 py-1 text-xs text-neutral-900">
                                 {cceData.orgaoLabel}
                             </div>
                         </div>
                         <div>
-                            <div className="text-[11px] font-bold text-[#735532] mb-0.5">Ambiente</div>
-                            <div className="bg-white border border-[#DACEB6] px-2 py-1 text-xs font-medium text-neutral-900">
+                            <div className="text-[11px] text-[#7A5230] mb-0.5">Ambiente</div>
+                            <div className="bg-white border border-[#D6C6AA] px-2 py-1 text-xs text-neutral-900">
                                 {cceData.ambienteLabel}
                             </div>
                         </div>
                         <div>
-                            <div className="text-[11px] font-bold text-[#735532] mb-0.5">Versão</div>
-                            <div className="bg-white border border-[#DACEB6] px-2 py-1 text-xs font-medium text-neutral-900">
+                            <div className="text-[11px] text-[#7A5230] mb-0.5">Versão</div>
+                            <div className="bg-white border border-[#D6C6AA] px-2 py-1 text-xs text-neutral-900">
                                 {cceData.versao}
                             </div>
                         </div>
                     </div>
 
-                    {/* Row 2 */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 bg-[#F3EAD8] border border-[#D6C7A9] p-2 rounded">
-                        <div>
-                            <div className="text-[11px] font-bold text-[#735532] mb-0.5">Chave de Acesso</div>
-                            <div className="bg-white border border-[#DACEB6] px-2 py-1 text-xs font-bold font-mono text-neutral-900 break-all">
-                                {cceData.chNFe}
+                    {/* Box 2 (2 rows combined inside the same beige box, just like SEFAZ) */}
+                    <div className="bg-[#F5EFE2] border border-[#C9B28B] p-2 space-y-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            <div>
+                                <div className="text-[11px] text-[#7A5230] mb-0.5">Chave de Acesso</div>
+                                <div className="bg-white border border-[#D6C6AA] px-2 py-1 text-xs font-mono text-neutral-900 break-all">
+                                    {cceData.chNFe}
+                                </div>
+                            </div>
+                            <div>
+                                <div className="text-[11px] text-[#7A5230] mb-0.5">Id do Evento</div>
+                                <div className="bg-white border border-[#D6C6AA] px-2 py-1 text-xs font-mono text-neutral-900 break-all">
+                                    {cceData.idEvento}
+                                </div>
                             </div>
                         </div>
-                        <div>
-                            <div className="text-[11px] font-bold text-[#735532] mb-0.5">Id do Evento</div>
-                            <div className="bg-white border border-[#DACEB6] px-2 py-1 text-xs font-mono text-neutral-900 break-all">
-                                {cceData.idEvento}
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            <div>
+                                <div className="text-[11px] text-[#7A5230] mb-0.5">Autor Evento (CNPJ / CPF)</div>
+                                <div className="bg-white border border-[#D6C6AA] px-2 py-1 text-xs text-neutral-900">
+                                    {cceData.cnpjAutor}
+                                </div>
+                            </div>
+                            <div>
+                                <div className="text-[11px] text-[#7A5230] mb-0.5">Data Evento</div>
+                                <div className="bg-white border border-[#D6C6AA] px-2 py-1 text-xs text-neutral-900">
+                                    {cceData.dhEventoFormatted}
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Row 3 */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 bg-[#F3EAD8] border border-[#D6C7A9] p-2 rounded">
+                    {/* Box 3 */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 bg-[#F5EFE2] border border-[#C9B28B] p-2">
                         <div>
-                            <div className="text-[11px] font-bold text-[#735532] mb-0.5">Autor Evento (CNPJ / CPF)</div>
-                            <div className="bg-white border border-[#DACEB6] px-2 py-1 text-xs font-medium text-neutral-900">
-                                {cceData.cnpjAutor}
-                            </div>
-                        </div>
-                        <div>
-                            <div className="text-[11px] font-bold text-[#735532] mb-0.5">Data Evento</div>
-                            <div className="bg-white border border-[#DACEB6] px-2 py-1 text-xs font-medium text-neutral-900">
-                                {cceData.dhEventoFormatted}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Row 4 */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 bg-[#F3EAD8] border border-[#D6C7A9] p-2 rounded">
-                        <div>
-                            <div className="text-[11px] font-bold text-[#735532] mb-0.5">Tipo de Evento</div>
-                            <div className="bg-white border border-[#DACEB6] px-2 py-1 text-xs font-medium text-neutral-900">
+                            <div className="text-[11px] text-[#7A5230] mb-0.5">Tipo de Evento</div>
+                            <div className="bg-white border border-[#D6C6AA] px-2 py-1 text-xs text-neutral-900">
                                 {cceData.tipoEventoLabel}
                             </div>
                         </div>
                         <div>
-                            <div className="text-[11px] font-bold text-[#735532] mb-0.5">Sequencial do Evento</div>
-                            <div className="bg-white border border-[#DACEB6] px-2 py-1 text-xs font-medium text-neutral-900">
+                            <div className="text-[11px] text-[#7A5230] mb-0.5">Sequencial do Evento</div>
+                            <div className="bg-white border border-[#D6C6AA] px-2 py-1 text-xs text-neutral-900">
                                 {cceData.nSeqEvento}
                             </div>
                         </div>
@@ -690,26 +752,26 @@ export default function CcePdfGenerator() {
 
                     {/* Section: Detalhes do Evento */}
                     <div className="pt-1">
-                        <h3 className="text-sm font-bold text-[#944A16] mb-1.5">Detalhes do Evento</h3>
-                        <div className="space-y-2">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 bg-[#F3EAD8] border border-[#D6C7A9] p-2 rounded">
+                        <h3 className="text-sm font-bold text-[#99541E] mb-1.5 text-left">Detalhes do Evento</h3>
+                        <div className="space-y-2.5">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 bg-[#F5EFE2] border border-[#C9B28B] p-2">
                                 <div>
-                                    <div className="text-[11px] font-bold text-[#735532] mb-0.5">Descrição do Evento</div>
-                                    <div className="bg-white border border-[#DACEB6] px-2 py-1 text-xs font-medium text-neutral-900">
+                                    <div className="text-[11px] text-[#7A5230] mb-0.5">Descrição do Evento</div>
+                                    <div className="bg-white border border-[#D6C6AA] px-2 py-1 text-xs text-neutral-900">
                                         {cceData.descEvento}
                                     </div>
                                 </div>
                                 <div>
-                                    <div className="text-[11px] font-bold text-[#735532] mb-0.5">Versão</div>
-                                    <div className="bg-white border border-[#DACEB6] px-2 py-1 text-xs font-medium text-neutral-900">
+                                    <div className="text-[11px] text-[#7A5230] mb-0.5">Versão</div>
+                                    <div className="bg-white border border-[#D6C6AA] px-2 py-1 text-xs text-neutral-900">
                                         {cceData.verEvento}
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="bg-[#F3EAD8] border border-[#D6C7A9] p-2 rounded">
-                                <div className="text-[11px] font-bold text-[#735532] mb-0.5">Texto da Carta de Correção</div>
-                                <div className="bg-white border border-[#DACEB6] px-2.5 py-2 text-xs font-bold text-neutral-900 whitespace-pre-wrap">
+                            <div className="bg-[#F5EFE2] border border-[#C9B28B] p-2">
+                                <div className="text-[11px] text-[#7A5230] mb-0.5">Texto da Carta de Correção</div>
+                                <div className="bg-white border border-[#D6C6AA] px-2 py-1.5 text-xs text-neutral-900 whitespace-pre-wrap">
                                     {cceData.xCorrecao || '(Sem texto de correção - carregue o arquivo *-ped.xml)'}
                                 </div>
                             </div>
@@ -718,23 +780,23 @@ export default function CcePdfGenerator() {
 
                     {/* Section: Autorização pela SEFAZ */}
                     <div className="pt-1 text-center">
-                        <h3 className="text-sm font-bold text-[#944A16] mb-1.5">Autorização pela SEFAZ</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 bg-[#F3EAD8] border border-[#D6C7A9] p-2 rounded text-left">
+                        <h3 className="text-sm font-bold text-[#99541E] mb-1.5">Autorização pela SEFAZ</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 bg-[#F5EFE2] border border-[#C9B28B] p-2 text-left">
                             <div>
-                                <div className="text-[11px] font-bold text-[#735532] mb-0.5">Mensagem de Autorização</div>
-                                <div className="bg-white border border-[#DACEB6] px-2 py-1 text-xs font-bold text-neutral-900">
+                                <div className="text-[11px] text-[#7A5230] mb-0.5">Mensagem de Autorização</div>
+                                <div className="bg-white border border-[#D6C6AA] px-2 py-1 text-xs text-neutral-900">
                                     {cceData.mensagemAutorizacao}
                                 </div>
                             </div>
                             <div>
-                                <div className="text-[11px] font-bold text-[#735532] mb-0.5">Protocolo</div>
-                                <div className="bg-white border border-[#DACEB6] px-2 py-1 text-xs font-bold font-mono text-neutral-900">
+                                <div className="text-[11px] text-[#7A5230] mb-0.5">Protocolo</div>
+                                <div className="bg-white border border-[#D6C6AA] px-2 py-1 text-xs font-mono text-neutral-900">
                                     {cceData.nProt}
                                 </div>
                             </div>
                             <div>
-                                <div className="text-[11px] font-bold text-[#735532] mb-0.5">Data/Hora Autorização</div>
-                                <div className="bg-white border border-[#DACEB6] px-2 py-1 text-xs font-medium text-neutral-900">
+                                <div className="text-[11px] text-[#7A5230] mb-0.5">Data/Hora Autorização</div>
+                                <div className="bg-white border border-[#D6C6AA] px-2 py-1 text-xs text-neutral-900">
                                     {cceData.dhRegEventoFormatted}
                                 </div>
                             </div>
@@ -743,9 +805,9 @@ export default function CcePdfGenerator() {
 
                     {/* Section: Condições de uso */}
                     <div className="pt-1 text-center">
-                        <h3 className="text-sm font-bold text-[#944A16] mb-1.5">Condições de uso da Carta de Correção</h3>
-                        <div className="bg-[#F3EAD8] border border-[#D6C7A9] p-2 rounded text-left">
-                            <div className="bg-white border border-[#DACEB6] px-2.5 py-2 text-[11px] leading-relaxed text-neutral-800">
+                        <h3 className="text-sm font-bold text-[#99541E] mb-1.5">Condições de uso da Carta de Correção</h3>
+                        <div className="bg-[#F5EFE2] border border-[#C9B28B] p-2 text-left">
+                            <div className="bg-white border border-[#D6C6AA] px-2.5 py-2 text-[11px] leading-snug text-neutral-900">
                                 {cceData.xCondUso}
                             </div>
                         </div>
