@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { 
     Calculator, ShoppingCart, Percent, Plus, FileScan, Tag, 
     DivideCircle, Files, Microscope, ArrowLeft, Landmark, 
-    Replace, Info, ChevronRight, Sparkles, FileSearch
+    Replace, Info, ChevronRight, Sparkles, FileSearch, FileCheck2
 } from 'lucide-react';
 import AveragePriceCalculator from '@/components/calculators/average-price-calculator';
 import BatchPricingCalculator from '@/components/calculators/batch-pricing-calculator';
@@ -21,9 +21,19 @@ import TaxAnalysisCalculator from '../calculators/tax-analysis-calculator';
 import PurchaseSimulatorCalculator from '../calculators/purchase-simulator-calculator';
 import NfeProductOriginCalculator from '../calculators/nfe-origin-calculator';
 import NfeItemLocatorCalculator from '../calculators/nfe-item-locator';
+import CcePdfGenerator from '../calculators/cce-pdf-generator';
 import { cn } from '@/lib/utils';
 
 const calculators = [
+  {
+    id: 'cce-pdf-generator',
+    icon: FileCheck2,
+    title: 'PDF Carta de Correção (CC-e)',
+    description: 'Une os XMLs (ped + rec) da CC-e e gera o PDF idêntico ao site da SEFAZ.',
+    component: CcePdfGenerator,
+    color: 'text-accent-green',
+    bg: 'bg-accent-green/10'
+  },
   {
     id: 'nfe-item-locator',
     icon: FileSearch,

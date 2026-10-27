@@ -7,21 +7,33 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Checkbox } from '@/components/ui/checkbox';
-import { FileText, ShieldCheck, Plus, Trash2, Search, Key, Download, Eye, ShoppingCart, ListChecks, FilePlus } from 'lucide-react';
+import { FileText, ShieldCheck, Plus, Trash2, Search, Key, Download, Eye, FilePlus, FileCheck2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import * as db from '@/lib/db'; // Assuming IndexedDB has get/set capabilities
+import * as db from '@/lib/db';
+import CcePdfGenerator from '@/components/calculators/cce-pdf-generator';
 
 interface CertificadoItem {
     id?: number;
     empresa: string;
     cnpj: string;
     hasPassword?: boolean;
-    senha?: string; // Salvar senha em memória para remover prompt duplo
+    senha?: string;
     nomeArquivo?: string;
-    fileBase64?: string; // Manter em memória para o teste
+    fileBase64?: string;
+}
+
+interface NotaSefaz {
+    id: string;
+    numero: string;
+    emissor: string;
+    data: string;
+    valor: number;
+    xml: string;
+}
+
+interface NcmResult {
+    codigo: string;
+    descricao: string;
 }
 
 export default function XmlSearchSection() {
@@ -40,19 +52,14 @@ export default function XmlSearchSection() {
 
     // Consulta states
     const [selectedCertIndex, setSelectedCertIndex] = useState<string>('');
-    const [notas, setNotas] = useState<any[]>([]);
+    const [notas, setNotas] = useState<NotaSefaz[]>([]);
     const [ultNSU, setUltNSU] = useState<string>('0');
     const [meuDanfeKey, setMeuDanfeKey] = useState<string>('');
 
-        // NCM states
+    // NCM states
     const [searchNcm, setSearchNcm] = useState<string>('');
-    const [ncmResult, setNcmResult] = useState<any>(null);
+    const [ncmResult, setNcmResult] = useState<NcmResult | null>(null);
     const [loadingNcm, setLoadingNcm] = useState<boolean>(false);
-
-    // Products states
-    const [selectedNotaXml, setSelectedNotaXml] = useState<string | null>(null);
-    const [isProductsModalOpen, setIsProductsModalOpen] = useState(false);
-    const [selectedNotaNumero, setSelectedNotaNumero] = useState<string>('');
 
     useEffect(() => {
         loadCertificados();
@@ -80,13 +87,13 @@ export default function XmlSearchSection() {
     const loadCertificados = async () => {
         try {
             const list = await db.getAllCertificados();
-            const mapped: CertificadoItem[] = list.map((cert: any) => ({
-                id: cert.id,
-                empresa: cert.alias,
-                cnpj: cert.cnpj,
-                senha: cert.senha,
+            const mapped: CertificadoItem[] = list.map((cert: Record<string, unknown>) => ({
+                id: cert.id as number,
+                empresa: cert.alias as string,
+                cnpj: cert.cnpj as string,
+                senha: cert.senha as string | undefined,
                 hasPassword: !!cert.senha,
-                fileBase64: cert.arquivo
+                fileBase64: cert.arquivo as string | undefined
             }));
             setCertificados(mapped);
         } catch (error) {
@@ -107,7 +114,7 @@ export default function XmlSearchSection() {
         const reader = new FileReader();
         reader.onloadend = () => {
             const base64String = reader.result as string;
-            setFileBase64(base64String.split(',')[1]); // Only base64 data
+            setFileBase64(base64String.split(',')[1]);
         };
         reader.readAsDataURL(file);
     };
@@ -227,58 +234,12 @@ export default function XmlSearchSection() {
         URL.revokeObjectURL(url);
     };
 
-    const parseProductsFromXml = (xmlString: string) => {
-        if (!xmlString) return [];
-        try {
-            const parser = new DOMParser();
-            const xmlDoc = parser.parseFromString(xmlString, "text/xml");
-            const items = xmlDoc.getElementsByTagName("det");
-            const products = [];
-
-            for (let i = 0; i < items.length; i++) {
-                const item = items[i];
-                const xProd = item.getElementsByTagName("xProd")[0]?.textContent || 'N/A';
-                const ncm = item.getElementsByTagName("NCM")[0]?.textContent || 'N/A';
-                const vUnCom = item.getElementsByTagName("vUnCom")[0]?.textContent || '0';
-                const qCom = item.getElementsByTagName("qCom")[0]?.textContent || '0';
-
-                const icmsNode = item.getElementsByTagName("ICMS")[0];
-                let orig = 'N/A';
-                let cst = 'N/A';
-
-                if (icmsNode) {
-                    const origNode = icmsNode.getElementsByTagName("orig")[0];
-                    if (origNode) orig = origNode.textContent || 'N/A';
-
-                    // CST ou CSOSN
-                    const cstNode = icmsNode.getElementsByTagName("CST")[0] || icmsNode.getElementsByTagName("CSOSN")[0];
-                    if (cstNode) cst = cstNode.textContent || 'N/A';
-                }
-
-                products.push({
-                    item: i + 1,
-                    xProd,
-                    ncm,
-                    orig,
-                    cst,
-                    qCom: parseFloat(qCom).toFixed(2),
-                    vUnCom: parseFloat(vUnCom).toFixed(2)
-                });
-            }
-            return products;
-        } catch (e) {
-            console.error("Erro ao converter XML:", e);
-            return [];
-        }
-    };
-
     const handleVisualizarDanfe = async (xmlString?: string) => {
         if (!xmlString) {
             toast({ title: 'Erro', description: 'Conteúdo do XML não disponí­vel..', variant: 'destructive' });
             return;
         }
 
-        // Se tiver API Key do MeuDanfe cadastrada, usa ela via API v2 (fetch)
         if (meuDanfeKey) {
             setLoading(true);
             try {
@@ -316,7 +277,6 @@ export default function XmlSearchSection() {
             return;
         }
 
-        // FALLBACK: Usando o WebDanfe via POST para converter XML em DANFE na hora em nova aba
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = 'https://www.webdanfe.com.br/danfe/GeraDanfe.php';
@@ -373,17 +333,20 @@ export default function XmlSearchSection() {
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">Buscador de XML SEFAZ</h1>
                 <p className="text-sm text-muted-foreground">
-                    Gerencie certificados e busque Notas Fiscais Eletronícas emitidas contra seu CNPJ.
+                    Gerencie certificados, busque Notas Fiscais Eletrônicas e gere PDFs de Carta de Correção (CC-e).
                 </p>
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-3 max-w-lg">
+                <TabsList className="grid w-full grid-cols-4 max-w-2xl">
                     <TabsTrigger value="certificados" className="flex items-center gap-2">
                         <ShieldCheck className="h-4 w-4" /> Certificados
                     </TabsTrigger>
                     <TabsTrigger value="consulta" className="flex items-center gap-2">
                         <Search className="h-4 w-4" /> Consultar
+                    </TabsTrigger>
+                    <TabsTrigger value="cce" className="flex items-center gap-2">
+                        <FileCheck2 className="h-4 w-4" /> Carta de Correção
                     </TabsTrigger>
                     <TabsTrigger value="ncm" className="flex items-center gap-2">
                         <FileText className="h-4 w-4" /> Consultar NCM
@@ -585,6 +548,11 @@ export default function XmlSearchSection() {
                     </Card>
                 </TabsContent>
 
+                {/* --- ABA CARTA DE CORREÇÃO (CC-e) --- */}
+                <TabsContent value="cce" className="space-y-4 pt-4">
+                    <CcePdfGenerator />
+                </TabsContent>
+
                 {/* --- ABA CONSULTA NCM --- */}
                 <TabsContent value="ncm" className="space-y-4 pt-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -676,6 +644,3 @@ export default function XmlSearchSection() {
         </div>
     );
 }
-
-
-
