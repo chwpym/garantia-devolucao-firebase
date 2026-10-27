@@ -419,7 +419,7 @@ export default function LotesSection({ onNavigateToLote }: LotesSectionProps) {
                           <span className="hidden sm:inline">{tab.title}</span>
                           <span className="sm:hidden">{tab.title.split(' ')[0]}</span>
                         </span>
-                        {count > 0 && <Badge variant="secondary" className="px-1.5 py-0 text-[10px] bg-muted">{count}</Badge>}
+                        {count > 0 && <Badge variant="secondary" className="px-1.5 py-0 text-[10px] bg-muted text-foreground">{count}</Badge>}
                       </TabsTrigger>
                     );
                   })}
